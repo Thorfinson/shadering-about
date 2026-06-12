@@ -16,3 +16,4 @@ goal_image.png
 # OS noise
 Thumbs.db
 .DS_Store
+.claude/
