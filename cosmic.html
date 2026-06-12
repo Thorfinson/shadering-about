@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cosmic Filament — clustered knowledge graph</title>
+<style>
+  :root {
+    --bg: #050308;
+    --ink: #f4eef8;
+    --muted: rgba(244, 238, 248, 0.55);
+    --rule: rgba(244, 238, 248, 0.10);
+    --accent: #ff7ad6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--ink);
+               font-family: "Inter", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif; }
+
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { width: 100%; height: 100%; display: block; }
+
+  /* Bottom-left legend */
+  #legend {
+    position: fixed; left: 16px; bottom: 16px;
+    display: grid; grid-auto-flow: row; gap: 6px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(244, 238, 248, 0.75);
+    background: rgba(0, 0, 0, 0.40);
+    padding: 12px 14px; border-radius: 6px;
+    border: 1px solid var(--rule);
+    pointer-events: none;
+  }
+  #legend .row    { display: flex; align-items: center; gap: 10px; }
+  #legend .swatch { width: 12px; height: 12px; border-radius: 999px; }
+
+  #hint {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(244, 238, 248, 0.45);
+    pointer-events: none;
+  }
+
+  /* Right-side panel */
+  #ui {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 340px;
+    background: rgba(8, 6, 14, 0.85);
+    backdrop-filter: blur(8px);
+    border-left: 1px solid var(--rule);
+    overflow-y: auto;
+    transition: transform 200ms ease;
+    z-index: 10;
+  }
+  #ui.collapsed { transform: translateX(100%); }
+  #ui-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 11;
+    background: rgba(8, 6, 14, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font: inherit; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 4px;
+    cursor: pointer;
+  }
+  #ui-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  #ui.collapsed ~ #ui-toggle { right: 16px; }
+
+  #ui section { padding: 16px; border-bottom: 1px solid var(--rule); }
+  #ui section h2 {
+    margin: 0 0 12px;
+    font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--ink); font-weight: 500;
+  }
+  #ui section h3 {
+    margin: 14px 0 8px;
+    font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--muted); font-weight: 500;
+  }
+
+  /* Sliders */
+  .ui-row {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+    margin-bottom: 8px;
+  }
+  .ui-row .name {
+    grid-column: 1 / -1;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .ui-row input[type="range"] {
+    accent-color: var(--accent);
+    width: 100%; height: 18px; padding: 0; margin: 0;
+  }
+  .ui-row .val {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 11px; min-width: 5ch; text-align: right;
+    color: var(--ink); opacity: 0.85;
+  }
+
+  /* Pills (radio groups) */
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .pills label {
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .pills label.active { color: var(--ink); border-color: var(--accent); }
+  .pills input { display: none; }
+
+  /* Cluster cards */
+  .cluster {
+    background: rgba(244, 238, 248, 0.03);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .cluster .head {
+    display: grid; grid-template-columns: 24px 1fr auto;
+    align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .cluster .swatch {
+    width: 24px; height: 24px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+  }
+  .cluster input[type="text"] {
+    background: transparent; border: 0;
+    color: var(--ink); font: inherit; font-size: 12px;
+    border-bottom: 1px solid var(--rule);
+    padding: 2px 0;
+    width: 100%;
+  }
+  .cluster input[type="text"]:focus { outline: none; border-color: var(--accent); }
+  .cluster .remove {
+    background: transparent; border: 1px solid var(--rule);
+    color: var(--muted); border-radius: 4px;
+    font: inherit; font-size: 10px;
+    padding: 4px 8px; cursor: pointer;
+  }
+  .cluster .remove:hover { color: #ff5a76; border-color: #ff5a76; }
+  .cluster input[type="color"] {
+    appearance: none; -webkit-appearance: none;
+    width: 24px; height: 24px; padding: 0; margin: 0;
+    background: transparent; border: none; cursor: pointer;
+  }
+  .cluster input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  .cluster input[type="color"]::-webkit-color-swatch        { border: 0; border-radius: 999px; }
+  .cluster input[type="color"]::-moz-color-swatch           { border: 0; border-radius: 999px; }
+
+  .add-btn {
+    width: 100%;
+    background: transparent; border: 1px dashed var(--rule);
+    color: var(--muted); border-radius: 4px;
+    font: inherit; font-size: 10px;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    padding: 8px; cursor: pointer;
+  }
+  .add-btn:hover { color: var(--ink); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="stage"><canvas id="cv"></canvas></div>
+
+<div id="legend"></div>
+<div id="hint">drag to pan · wheel to zoom</div>
+<button id="ui-toggle">Panel</button>
+
+<aside id="ui">
+  <section>
+    <h2>Data</h2>
+    <div id="clusters-list"></div>
+    <button class="add-btn" id="add-cluster">+ Add cluster</button>
+  </section>
+
+  <section>
+    <h2>Params</h2>
+
+    <h3>Atmosphere &amp; blend</h3>
+    <div class="ui-row">
+      <span class="name">Base colour (empty regions)</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input id="base-color" type="color" value="#120d2e"
+               style="width:24px;height:24px;padding:0;border:0;background:transparent;cursor:pointer;" />
+        <span class="val" id="base-color-val">#120d2e</span>
+      </div>
+    </div>
+    <div class="pills" id="blend-pills"></div>
+
+    <h3>Constellation</h3>
+    <div id="g-constellation"></div>
+
+    <h3>Caustic — visual</h3>
+    <div id="g-caustic"></div>
+
+    <h3>Caustic — heightmap mapping</h3>
+    <div id="g-mapping"></div>
+
+    <h3>Composite</h3>
+    <div id="g-composite"></div>
+  </section>
+</aside>
+
+<script type="module">
+  import { CosmicFilament, DEFAULT_UNIFORMS } from "./cosmic-filament.js";
+
+  // ------------------------------------------------------------
+  // Cluster state — each cluster's data (positions) is derived
+  // deterministically from (center, spread, count, seed) so
+  // edits are stable: change center → slide; change spread → fan;
+  // change count → grow/shrink without scrambling the rest.
+  // ------------------------------------------------------------
+  const STARTING_CLUSTERS = [
+    { id: "knowledge", name: "Knowledge Base",  color: [0.20, 0.78, 1.00], center: [+3.72, +1.50], spread: 1.40, count: 48, seed: 1 },
+    { id: "active",    name: "Active Projects", color: [1.00, 0.55, 0.30], center: [+0.71, +0.40], spread: 1.42, count: 68, seed: 2 },
+    { id: "creative",  name: "Creative",        color: [0.95, 0.42, 0.78], center: [-2.70, +1.29], spread: 1.17, count: 27, seed: 3 },
+    { id: "research",  name: "Research",        color: [0.62, 0.45, 1.00], center: [-1.98, -2.17], spread: 1.23, count: 41, seed: 4 },
+    { id: "drafts",    name: "Drafts",          color: [0.40, 0.95, 0.65], center: [+3.78, -2.40], spread: 1.20, count: 35, seed: 5 },
+  ];
+  let clusters = STARTING_CLUSTERS.map(c => ({ ...c }));   // shallow copy so we can mutate
+  let nextSeed = 6;
+
+  // Deterministic Gaussian generator for cluster star positions.
+  function srand(seed) {
+    let s = (seed | 0) || 1;
+    return () => { s = (s * 1664525 + 1013904223) | 0; return ((s >>> 0) / 4294967296); };
+  }
+  function gauss(rng) {
+    let u = 0, v = 0;
+    while (u === 0) u = rng();
+    while (v === 0) v = rng();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function buildClusterStars(c) {
+    const rng = srand(c.seed * 1000003);
+    const stars = [];
+    for (let i = 0; i < c.count; i++) {
+      stars.push({
+        id: `${c.id}-${i}`,
+        x: c.center[0] + gauss(rng) * c.spread * 0.55,
+        y: c.center[1] + gauss(rng) * c.spread * 0.55,
+      });
+    }
+    return stars;
+  }
+  function clustersToData() {
+    return clusters.map(c => ({
+      id: c.id, name: c.name, color: c.color, stars: buildClusterStars(c),
+    }));
+  }
+
+  // ------------------------------------------------------------
+  // Init renderer
+  // ------------------------------------------------------------
+  const canvas = document.getElementById("cv");
+  const fx = new CosmicFilament(canvas, { palette: 2 });
+  fx.setData(clustersToData());
+  fx.resetCamera(1.4);
+  fx.enableInteraction();
+  fx.start();
+  // Debug hook for headless testing.
+  window.__fx = fx;
+
+  function refreshData() {
+    fx.setData(clustersToData());
+    refreshLegend();
+  }
+
+  // ------------------------------------------------------------
+  // Legend
+  // ------------------------------------------------------------
+  const legend = document.getElementById("legend");
+  function refreshLegend() {
+    legend.replaceChildren();
+    for (const c of clusters) {
+      const row = document.createElement("div");
+      row.className = "row";
+      const sw = document.createElement("span");
+      sw.className = "swatch";
+      sw.style.background = `rgb(${(c.color[0]*255)|0}, ${(c.color[1]*255)|0}, ${(c.color[2]*255)|0})`;
+      const lbl = document.createElement("span");
+      lbl.textContent = c.name;
+      row.append(sw, lbl);
+      legend.append(row);
+    }
+  }
+  refreshLegend();
+
+  // ------------------------------------------------------------
+  // Color helpers — hex ↔ rgb01
+  // ------------------------------------------------------------
+  function rgbToHex([r, g, b]) {
+    const toHex = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+  function hexToRgb(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+    if (!m) return [1, 1, 1];
+    const v = parseInt(m[1], 16);
+    return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+  }
+
+  // ------------------------------------------------------------
+  // Cluster editor
+  // ------------------------------------------------------------
+  const clustersList = document.getElementById("clusters-list");
+  function buildClusterCard(idx) {
+    const c = clusters[idx];
+    const card = document.createElement("div");
+    card.className = "cluster";
+
+    // header: color + name + remove
+    const head = document.createElement("div");
+    head.className = "head";
+    const colorIn = document.createElement("input");
+    colorIn.type = "color";
+    colorIn.value = rgbToHex(c.color);
+    colorIn.addEventListener("input", () => {
+      c.color = hexToRgb(colorIn.value);
+      refreshData();
+    });
+    const nameIn = document.createElement("input");
+    nameIn.type = "text";
+    nameIn.value = c.name;
+    nameIn.addEventListener("input", () => {
+      c.name = nameIn.value || c.id;
+      refreshLegend();
+    });
+    const remove = document.createElement("button");
+    remove.className = "remove";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => {
+      clusters.splice(idx, 1);
+      rebuildClusterList();
+      refreshData();
+    });
+    head.append(colorIn, nameIn, remove);
+    card.append(head);
+
+    // sliders for center.x / center.y / spread / count
+    function slider(label, min, max, step, get, set, decimals = 2) {
+      const row = document.createElement("label");
+      row.className = "ui-row";
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = label;
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gridTemplateColumns = "1fr auto";
+      wrap.style.gap = "10px";
+      wrap.style.alignItems = "center";
+      const sld = document.createElement("input");
+      sld.type = "range";
+      sld.min = min; sld.max = max; sld.step = step;
+      sld.value = get();
+      const val = document.createElement("span");
+      val.className = "val";
+      const apply = () => {
+        const v = parseFloat(sld.value);
+        val.textContent = v.toFixed(decimals);
+        set(v);
+        refreshData();
+      };
+      sld.addEventListener("input", apply);
+      val.textContent = parseFloat(sld.value).toFixed(decimals);
+      wrap.append(sld, val);
+      row.append(name, wrap);
+      return row;
+    }
+    card.append(slider("Center X", -6, +6, 0.01, () => c.center[0], v => c.center[0] = v));
+    card.append(slider("Center Y", -4, +4, 0.01, () => c.center[1], v => c.center[1] = v));
+    card.append(slider("Spread",   0.1, 2.5, 0.01, () => c.spread,    v => c.spread    = v));
+    card.append(slider("Count",     2, 80, 1,    () => c.count,     v => c.count     = v | 0, 0));
+    return card;
+  }
+  function rebuildClusterList() {
+    clustersList.replaceChildren();
+    for (let i = 0; i < clusters.length; i++) clustersList.append(buildClusterCard(i));
+  }
+  rebuildClusterList();
+
+  document.getElementById("add-cluster").addEventListener("click", () => {
+    clusters.push({
+      id: `cluster-${nextSeed}`,
+      name: `Cluster ${nextSeed}`,
+      color: [0.6 + Math.random() * 0.3, 0.6 + Math.random() * 0.3, 0.6 + Math.random() * 0.3],
+      center: [(Math.random() - 0.5) * 6, (Math.random() - 0.5) * 4],
+      spread: 0.6,
+      count: 12,
+      seed: nextSeed++,
+    });
+    rebuildClusterList();
+    refreshData();
+  });
+
+  // ------------------------------------------------------------
+  // Param sliders
+  // ------------------------------------------------------------
+  function paramSlider(host, label, min, max, step, target, name, decimals = 2) {
+    const row = document.createElement("label");
+    row.className = "ui-row";
+    const lbl = document.createElement("span");
+    lbl.className = "name";
+    lbl.textContent = label;
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gridTemplateColumns = "1fr auto";
+    wrap.style.gap = "10px";
+    wrap.style.alignItems = "center";
+    const sld = document.createElement("input");
+    sld.type = "range";
+    sld.min = min; sld.max = max; sld.step = step;
+    sld.value = DEFAULT_UNIFORMS[target][name];
+    const val = document.createElement("span");
+    val.className = "val";
+    const apply = () => {
+      const v = parseFloat(sld.value);
+      val.textContent = v.toFixed(decimals);
+      fx.setUniform(target, name, v);
+    };
+    sld.addEventListener("input", apply);
+    val.textContent = parseFloat(sld.value).toFixed(decimals);
+    wrap.append(sld, val);
+    row.append(lbl, wrap);
+    host.append(row);
+  }
+
+  // Constellation
+  const gC = document.getElementById("g-constellation");
+  paramSlider(gC, "Line thickness",  20, 240, 1,    "constellation", "uLineThick",  0);
+  paramSlider(gC, "Star brightness", 0.3, 3.0, 0.01, "constellation", "uStarBright");
+  paramSlider(gC, "Halo radius",     0.3, 2.0, 0.01, "constellation", "uHaloRadius");
+  paramSlider(gC, "Wobble",          0.0, 0.10, 0.001,"constellation", "uWobbleAmp", 3);
+
+  // Caustic visual
+  const gCa = document.getElementById("g-caustic");
+  paramSlider(gCa, "Cell density",       4, 50, 0.1, "caustic", "uScale", 1);
+  paramSlider(gCa, "Colour field gain",  0.0, 3.0, 0.01, "caustic", "uColorFieldGain");
+  paramSlider(gCa, "Base illum",         0.05, 0.80, 0.01, "caustic", "uBase");
+  paramSlider(gCa, "Hot blowout",        0.0, 3.0, 0.01, "caustic", "uHot");
+  paramSlider(gCa, "Saturation",         0.6, 1.6, 0.01, "caustic", "uSat");
+  paramSlider(gCa, "Exposure",           0.3, 2.0, 0.01, "caustic", "uExposure");
+  paramSlider(gCa, "Constellation lift", 0.0, 2.0, 0.01, "caustic", "uCurveStr");
+  paramSlider(gCa, "Constellation sharp",3.0, 80.0, 0.5, "caustic", "uCurveThick", 1);
+  paramSlider(gCa, "Hill multiplier",    0.0, 4.0, 0.01, "caustic", "uMacroHill");
+  paramSlider(gCa, "Macro floor",        0.0, 1.0, 0.01, "caustic", "uMacroFloor");
+  paramSlider(gCa, "Warp swirl",         0.0, 1.5, 0.01, "caustic", "uWarp");
+  paramSlider(gCa, "Beam lift",          0.0, 3.0, 0.01, "caustic", "uBeamLift");
+  paramSlider(gCa, "Curve fade",         0.0, 1.0, 0.01, "caustic", "uCurveFade");
+  paramSlider(gCa, "Curve range",        0.5, 30.0, 0.05, "caustic", "uCurveFadeRange");
+  paramSlider(gCa, "Sparkle",            0.0, 6.0, 0.05, "caustic", "uSparkle");
+
+  // Caustic heightmap mapping
+  const gM = document.getElementById("g-mapping");
+  paramSlider(gM, "Height gain",      0.0, 3.0, 0.01, "caustic", "uHeightGain");
+  paramSlider(gM, "Height sharpness", 0.3, 4.0, 0.01, "caustic", "uHeightSharp");
+  paramSlider(gM, "Height floor",     0.0, 0.5, 0.01, "caustic", "uHeightFloor");
+  paramSlider(gM, "Stroke width",     0.0, 1.0, 0.01, "caustic", "uHeightWidth");
+  paramSlider(gM, "Drop-off softness",0.3, 4.0, 0.01, "caustic", "uHeightSoftness");
+  paramSlider(gM, "Bleed",            0.0, 1.0, 0.01, "caustic", "uHeightBleed");
+
+  // Composite
+  const gComp = document.getElementById("g-composite");
+  paramSlider(gComp, "Overlay mix", 0.0, 2.0, 0.01, "composite", "uOverlayMix");
+  paramSlider(gComp, "Blur",        0.0, 1.0, 0.01, "composite", "uBlur");
+
+  // Palette pills
+  function pills(host, options, getInitial, onChange) {
+    options.forEach(opt => {
+      const lab = document.createElement("label");
+      lab.dataset.value = String(opt.value);
+      const inp = document.createElement("input");
+      inp.type = "radio"; inp.name = host.id; inp.value = String(opt.value);
+      if (opt.value === getInitial()) { lab.classList.add("active"); inp.checked = true; }
+      const txt = document.createTextNode(opt.label);
+      lab.append(inp, txt);
+      lab.addEventListener("click", () => {
+        host.querySelectorAll("label").forEach(l => l.classList.remove("active"));
+        lab.classList.add("active");
+        inp.checked = true;
+        onChange(opt.value);
+      });
+      host.append(lab);
+    });
+  }
+  pills(
+    document.getElementById("blend-pills"),
+    [{ label: "Additive", value: 0 }, { label: "Screen", value: 1 }, { label: "Mix", value: 2 }],
+    () => DEFAULT_UNIFORMS.composite.uBlendMode,
+    v => fx.setUniform("composite", "uBlendMode", v)
+  );
+
+  // Base colour picker — fallback caustic tint where no cluster is near.
+  (() => {
+    const inp = document.getElementById("base-color");
+    const lbl = document.getElementById("base-color-val");
+    const init = DEFAULT_UNIFORMS.baseColor;
+    inp.value = rgbToHex(init);
+    lbl.textContent = inp.value;
+    inp.addEventListener("input", () => {
+      lbl.textContent = inp.value;
+      fx.values.baseColor = hexToRgb(inp.value);
+    });
+  })();
+
+  // Colour field bleed — how widely cluster colours smear into the caustic.
+  // Lives at top-level (not inside a target group), so route directly.
+  (() => {
+    const host = document.getElementById("g-mapping");
+    const row = document.createElement("label");
+    row.className = "ui-row";
+    const lbl = document.createElement("span");
+    lbl.className = "name";
+    lbl.textContent = "Colour field bleed";
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gridTemplateColumns = "1fr auto";
+    wrap.style.gap = "10px";
+    wrap.style.alignItems = "center";
+    const sld = document.createElement("input");
+    sld.type = "range"; sld.min = 0.5; sld.max = 6.0; sld.step = 0.01;
+    sld.value = DEFAULT_UNIFORMS.colorFieldBleed;
+    const val = document.createElement("span");
+    val.className = "val";
+    const apply = () => {
+      const v = parseFloat(sld.value);
+      val.textContent = v.toFixed(2);
+      fx.values.colorFieldBleed = v;
+    };
+    sld.addEventListener("input", apply);
+    val.textContent = parseFloat(sld.value).toFixed(2);
+    wrap.append(sld, val);
+    row.append(lbl, wrap);
+    host.append(row);
+  })();
+
+  // ------------------------------------------------------------
+  // Panel toggle
+  // ------------------------------------------------------------
+  const ui = document.getElementById("ui");
+  const uiToggle = document.getElementById("ui-toggle");
+  uiToggle.addEventListener("click", () => ui.classList.toggle("collapsed"));
+
+  // Pause when tab is hidden
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) fx.stop(); else fx.start();
+  });
+</script>
+
+</body>
+</html>

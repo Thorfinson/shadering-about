@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shadering — Cosmic Web Studies</title>
+<style>
+  :root {
+    --bg: #050308;
+    --ink: #f4eef8;
+    --muted: rgba(244, 238, 248, 0.55);
+    --rule: rgba(244, 238, 248, 0.12);
+    --accent: #d585ff;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Inter", "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  header.site {
+    position: relative;
+    z-index: 2;
+    padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px) clamp(40px, 6vw, 96px);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 6vw, 64px);
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  .brand em {
+    font-style: normal;
+    background: linear-gradient(90deg, #d585ff 0%, #ffae5a 60%, #2fd1ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .meta {
+    text-align: right;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .meta strong { color: var(--ink); font-weight: 500; letter-spacing: 0.18em; }
+
+  .panel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 348 / 164;
+    max-height: 92vh;
+    overflow: hidden;
+    background: #000;
+  }
+  .panel canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .panel .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    padding: clamp(16px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.85);
+    mix-blend-mode: screen;
+  }
+  .panel .tag {
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+  .panel .title {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(22px, 3.4vw, 44px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    max-width: 22ch;
+    line-height: 1.05;
+  }
+
+  .controls {
+    padding: clamp(18px, 2.4vw, 28px) clamp(20px, 5vw, 64px) clamp(28px, 3.5vw, 44px);
+    border-bottom: 1px solid var(--rule);
+    background: rgba(244, 238, 248, 0.02);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px clamp(24px, 3vw, 40px);
+  }
+  .controls h2 {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .controls h2 b { color: var(--ink); font-weight: 500; }
+  .controls label { display: grid; gap: 6px; }
+  .controls .name {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .controls .row { display: flex; align-items: center; gap: 12px; }
+  .controls input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 18px;
+  }
+  .controls .val {
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 11px;
+    min-width: 5ch;
+    text-align: right;
+    opacity: 0.85;
+  }
+  .controls .reset {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    justify-self: end;
+    grid-column: -2 / -1;
+  }
+  .controls .reset:hover { color: var(--ink); border-color: var(--ink); }
+
+  footer.site {
+    padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 64px);
+    color: var(--muted);
+    font-size: 13px;
+    display: grid;
+    gap: 8px;
+  }
+  footer.site b { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <h1 class="brand">
+    Shader<em>ing</em><br />
+    cosmic web — playground
+  </h1>
+  <div class="meta">
+    <div><strong>03</strong> live shaders</div>
+    <div>WebGL · GLSL · drag the sliders</div>
+  </div>
+</header>
+
+<!-- ============ STUDY 01 — TRIANGULATED AURORA (new: combines 02 + 03) ============ -->
+<section class="panel" data-shader="tri-aurora">
+  <canvas id="c1"></canvas>
+  <div class="overlay">
+    <div class="tag">study 01 — triangulated aurora</div>
+    <div>
+      <div class="title">Voronoi cell centers, triangulated. Cells brighten the closer they sit to the imagined beam.</div>
+    </div>
+  </div>
+</section>
+<div class="controls" data-for="c1">
+  <h2><b>study 01</b> · 3‑nearest delaunay triangles · filled · beam</h2>
+  <label>
+    <span class="name">Density</span>
+    <div class="row">
+      <input type="range" data-canvas="c1" data-uniform="uScale" data-decimals="2"
+             min="0.8" max="12" step="0.1" value="1.8" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam angle</span>
+    <div class="row">
+      <input type="range" data-canvas="c1" data-uniform="uBeamAngle" data-decimals="2"
+             min="-1.5" max="1.5" step="0.01" value="-0.32" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam offset</span>
+    <div class="row">
+      <input type="range" data-canvas="c1" data-uniform="uBeamY" data-decimals="2"
+             min="-0.40" max="0.40" step="0.01" value="0.06" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam intensity</span>
+    <div class="row">
+      <input type="range" data-canvas="c1" data-uniform="uBeamPower" data-decimals="2"
+             min="0" max="3" step="0.01" value="1.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam size</span>
+    <div class="row">
+      <input type="range" data-canvas="c1" data-uniform="uBeamSize" data-decimals="3"
+             min="0.02" max="0.60" step="0.005" value="0.180" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <button type="button" class="reset" data-reset-for="c1">Reset</button>
+</div>
+
+<!-- ============ STUDY 02 — AURORA (Voronoi cells + beam) ============ -->
+<section class="panel" data-shader="aurora">
+  <canvas id="c2"></canvas>
+  <div class="overlay">
+    <div class="tag">study 02 — aurora</div>
+    <div>
+      <div class="title">Beam flows along the cell network — cells brighten the closer they sit to the imagined line.</div>
+    </div>
+  </div>
+</section>
+<div class="controls" data-for="c2">
+  <h2><b>study 02</b> · voronoi · filled cells · beam</h2>
+  <label>
+    <span class="name">Density</span>
+    <div class="row">
+      <input type="range" data-canvas="c2" data-uniform="uScale" data-decimals="1"
+             min="3" max="20" step="0.1" value="6.5" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam angle</span>
+    <div class="row">
+      <input type="range" data-canvas="c2" data-uniform="uBeamAngle" data-decimals="2"
+             min="-1.5" max="1.5" step="0.01" value="-0.32" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam offset</span>
+    <div class="row">
+      <input type="range" data-canvas="c2" data-uniform="uBeamY" data-decimals="2"
+             min="-0.40" max="0.40" step="0.01" value="0.06" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam intensity</span>
+    <div class="row">
+      <input type="range" data-canvas="c2" data-uniform="uBeamPower" data-decimals="2"
+             min="0" max="3" step="0.01" value="1.0" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Beam size</span>
+    <div class="row">
+      <input type="range" data-canvas="c2" data-uniform="uBeamSize" data-decimals="3"
+             min="0.02" max="0.60" step="0.005" value="0.180" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <button type="button" class="reset" data-reset-for="c2">Reset</button>
+</div>
+
+<!-- ============ STUDY 03 — KNN CONSTELLATION ============ -->
+<section class="panel" data-shader="knn-constellation">
+  <canvas id="c3"></canvas>
+  <div class="overlay">
+    <div class="tag">study 03 — knn constellation</div>
+    <div>
+      <div class="title">Hand‑placed stars. All‑pairs threshold = effective KNN.</div>
+    </div>
+  </div>
+</section>
+<div class="controls" data-for="c3">
+  <h2><b>study 03</b> · hand‑placed stars · all‑pairs distance threshold</h2>
+  <label>
+    <span class="name">Zoom</span>
+    <div class="row">
+      <input type="range" data-canvas="c3" data-uniform="uScale" data-decimals="2"
+             min="1" max="5" step="0.05" value="2.6" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Connection threshold</span>
+    <div class="row">
+      <input type="range" data-canvas="c3" data-uniform="uThresh" data-decimals="2"
+             min="0.30" max="2.40" step="0.01" value="1.05" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Line thickness</span>
+    <div class="row">
+      <input type="range" data-canvas="c3" data-uniform="uLineThick" data-decimals="0"
+             min="40" max="240" step="1" value="110" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Star brightness</span>
+    <div class="row">
+      <input type="range" data-canvas="c3" data-uniform="uStarBright" data-decimals="2"
+             min="0.30" max="3.00" step="0.01" value="1.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <label>
+    <span class="name">Star count</span>
+    <div class="row">
+      <input type="range" data-canvas="c3" data-uniform="uStarCount" data-decimals="0"
+             min="6" max="40" step="1" value="32" />
+      <span class="val"></span>
+    </div>
+  </label>
+  <button type="button" class="reset" data-reset-for="c3">Reset</button>
+</div>
+
+<footer class="site">
+  <div><b>Shadering / 2026</b> — three GPU sketches with live parameter controls. Drag sliders to retune; values apply to uniforms in real time.</div>
+  <div>Each panel renders at native device resolution. No images, no video — only math evaluated per pixel, per frame.</div>
+</footer>
+
+<script>
+"use strict";
+
+const VERT_SRC = `
+attribute vec2 aPosition;
+varying vec2 vUv;
+void main() {
+  vUv = aPosition * 0.5 + 0.5;
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+`;
+
+const FRAG_HEADER = `
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;
+uniform vec2  uResolution;
+
+vec2 hash22(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)),
+           dot(p, vec2(269.5, 183.3)));
+  return fract(sin(p) * 43758.5453);
+}
+float hash12(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+vec4 voronoi(vec2 x, float jitter, float t) {
+  vec2 n = floor(x);
+  vec2 f = fract(x);
+  vec2 mg = vec2(0.0);
+  vec2 mr = vec2(0.0);
+  vec2 mid = vec2(0.0);
+  float md = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      o = 0.5 + jitter * (sin(t + 6.2831 * o) * 0.5);
+      vec2 r = g + o - f;
+      float d = dot(r, r);
+      if (d < md) { md = d; mr = r; mg = g; mid = n + g + o; }
+    }
+  }
+  float ed = 8.0;
+  for (int j = -2; j <= 2; j++) {
+    for (int i = -2; i <= 2; i++) {
+      vec2 g = mg + vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      o = 0.5 + jitter * (sin(t + 6.2831 * o) * 0.5);
+      vec2 r = g + o - f;
+      if (dot(mr - r, mr - r) > 0.00001) {
+        ed = min(ed, dot(0.5 * (mr + r), normalize(r - mr)));
+      }
+    }
+  }
+  return vec4(ed, mid, length(mr));
+}
+
+float distSeg(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  return length(p - (a + ab * h));
+}
+
+vec2 jitterPoint(vec2 cell, float t) {
+  vec2 o = hash22(cell);
+  return cell + 0.5 + 0.42 * sin(t + 6.2831 * o);
+}
+
+float crossFlare(vec2 d, float thickness) {
+  float horiz = exp(-d.y * d.y * thickness) * exp(-abs(d.x) * 0.6);
+  float vert  = exp(-d.x * d.x * thickness) * exp(-abs(d.y) * 0.6);
+  return horiz + vert;
+}
+`;
+
+// ------------------------------------------------------------------
+// Study 01 — TRIANGULATED AURORA (proper merge of 02 + 03)
+//   Vertices: Voronoi cell centers (jittered grid points).
+//   Triangulation: each unit quad of the cell-center grid is split by
+//     the diagonal vBR↔vTL into two triangles. A cross-product test on
+//     the pixel decides which side of the diagonal it's on. Stable
+//     per-triangle — adjacent pixels in the same triangle agree.
+//   Fill:  hash of the 3 cell IDs (commutative sum) drives the Aurora
+//     palette. Each triangle has one stable color.
+//   Edges: distance to the nearest of the 3 triangle sides → bright
+//     core + glow. These are the lines connecting cell centers.
+//   Stars: distance to the nearest of the 3 vertices → star at every
+//     cell center, with a halo, like study 03.
+//   Beam:  triangle centroid distance to the imagined line drives a
+//     fill brightness boost; triangle edges inside the beam band glow.
+// ------------------------------------------------------------------
+const FRAG_TRI_AURORA = FRAG_HEADER + `
+uniform float uScale;
+uniform float uBeamAngle;
+uniform float uBeamY;
+uniform float uBeamPower;
+uniform float uBeamSize;
+
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 np = vec2((uv.x - 0.5) * aspect, uv.y - 0.5);
+  vec2 p  = np * uScale;
+
+  float t = uTime * 0.05;
+
+  // PASS 1 — find the 3 nearest jittered cell centers. The 3-nearest
+  // set is constant within each Delaunay triangle, so its centroid is a
+  // stable per-triangle key for the fill color.
+  vec2 cell = floor(p);
+  float d1 = 8.0, d2 = 8.0, d3 = 8.0;
+  vec2 vA = vec2(0.0), vB = vec2(0.0), vC = vec2(0.0);
+  vec2 idA = vec2(0.0);
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 c = cell + vec2(float(i), float(j));
+      vec2 q = jitterPoint(c, t);
+      float d = length(q - p);
+      if (d < d1) {
+        d3 = d2; vC = vB;
+        d2 = d1; vB = vA;
+        d1 = d;  vA = q;  idA = c;
+      } else if (d < d2) {
+        d3 = d2; vC = vB;
+        d2 = d;  vB = q;
+      } else if (d < d3) {
+        d3 = d;  vC = q;
+      }
+    }
+  }
+
+  // PASS 2 — draw spokes from vA to each of its 8 surrounding cells
+  // within a distance threshold. Lines are anchored at known cell
+  // centers (= the stars), so they cannot extend past their endpoints.
+  // Adjacent cells render the same lines (symmetric threshold), so
+  // every line A↔B is drawn from both A's and B's regions and joins
+  // continuously at the Voronoi edge. No stray segments by construction.
+  float netEdge = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      if (i == 0 && j == 0) continue;
+      vec2 cN = idA + vec2(float(i), float(j));
+      vec2 vN = jitterPoint(cN, t);
+      if (length(vN - vA) < 1.55) {
+        netEdge = min(netEdge, distSeg(p, vA, vN));
+      }
+    }
+  }
+
+  // Per-triangle color: smooth diagonal gradient (orange→pink→violet)
+  // shifted by a small, stable per-triangle hash. The hash key is the
+  // centroid of the 3-nearest cells — constant within each Delaunay
+  // triangle, so each triangle reads as one distinct color while
+  // neighbors stay near the gradient (no noisy flicker).
+  vec2  triCentroid = (vA + vB + vC) / 3.0;
+  float triShift    = (hash12(triCentroid) - 0.5) * 0.18;
+  float gradT = clamp(
+      0.5 + (np.x + np.y) * 0.40 + triShift,
+      0.0, 1.0);
+  vec3 orange = vec3(1.00, 0.55, 0.30);
+  vec3 pink   = vec3(0.95, 0.42, 0.72);
+  vec3 violet = vec3(0.52, 0.30, 0.95);
+  vec3 triCol = (gradT < 0.5)
+      ? mix(orange, pink,   gradT * 2.0)
+      : mix(pink,   violet, (gradT - 0.5) * 2.0);
+
+  // ===== Beam: cells near the imagined line brighten =====
+  float lineDist = abs(np.x * sin(uBeamAngle) - np.y * cos(uBeamAngle) + uBeamY);
+  vec2  cellNp = vA / max(uScale, 1e-3);
+  float cellLineDist = abs(cellNp.x * sin(uBeamAngle) - cellNp.y * cos(uBeamAngle) + uBeamY);
+  float cellBoost = smoothstep(uBeamSize * 3.3, 0.0, cellLineDist);
+
+  // Subtle, smooth fill — no per-triangle brightness flicker.
+  float fill = 0.32;
+  fill *= 1.0 + cellBoost * 1.6 * uBeamPower;
+
+  vec3 col = triCol * fill;
+
+  // Triangle-net edges — bright, thin, no glow bleeding into fills.
+  float edgeCore = 1.0 - smoothstep(0.0, 0.012, netEdge);
+  float edgeGlow = exp(-netEdge * 22.0) * 0.40;
+  col += vec3(1.0, 0.94, 1.0) * edgeCore * 1.6;
+  col += triCol * edgeGlow;
+
+  // Bright star at every cell center — these are the net's nodes.
+  float starSeed = hash12(idA);
+  float starR    = 0.08 + 0.06 * starSeed;
+  float starCore = 1.0 - smoothstep(0.0, starR, d1);
+  float starHalo = exp(-d1 * 5.0) * (0.45 + 0.55 * starSeed);
+  col += vec3(1.0, 0.97, 1.0) * starCore * 2.2;
+  col += triCol * starHalo * 0.8;
+
+  // ===== Beam: net edges inside the band glow strongly =====
+  float bandMask = smoothstep(uBeamSize, 0.0, lineDist);
+  float edgeBeam = exp(-netEdge * 60.0) * bandMask;
+  vec3  beamColor = mix(vec3(1.0, 0.85, 1.0), vec3(1.0, 0.7, 0.55), 0.4);
+  col += beamColor * edgeBeam * 2.6 * uBeamPower;
+
+  // Beam-tinted bloom on the cells themselves so the beam is
+  // unmistakable even where no edge happens to fall inside the band.
+  col += beamColor * cellBoost * 0.65 * uBeamPower;
+
+  // Sparkles riding the beam
+  float along = np.x * cos(uBeamAngle) + np.y * sin(uBeamAngle);
+  float spark = step(0.985, hash12(vec2(floor(along * 80.0), floor(uTime * 1.2))));
+  col += beamColor * spark * edgeBeam * 1.6 * uBeamPower;
+
+  // Slice band — top/bottom soft fade
+  float band = smoothstep(0.0, 0.18, uv.y) * smoothstep(1.0, 0.82, uv.y);
+  col *= 0.55 + 0.6 * band;
+  col = col / (1.0 + col * 0.7);
+  col = pow(col, vec3(0.92));
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ------------------------------------------------------------------
+// Study 02 — AURORA (filled Voronoi cells + beam)
+// ------------------------------------------------------------------
+const FRAG_AURORA = FRAG_HEADER + `
+uniform float uScale;
+uniform float uBeamAngle;
+uniform float uBeamY;
+uniform float uBeamPower;
+uniform float uBeamSize;
+
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.5) * uScale;
+
+  float t = uTime * 0.04;
+  vec4 v = voronoi(p, 0.55, t);
+  float edge   = v.x;
+  vec2  id     = v.yz;
+  float cdist  = v.w;
+
+  float h1 = hash12(floor(id * 5.7));
+  float h2 = hash12(floor(id * 5.7 + 19.0));
+
+  vec3 orange = vec3(1.00, 0.55, 0.30);
+  vec3 pink   = vec3(0.95, 0.42, 0.72);
+  vec3 violet = vec3(0.52, 0.30, 0.95);
+
+  vec3 cellCol;
+  if (h1 < 0.40)      cellCol = mix(orange, pink, h2);
+  else if (h1 < 0.72) cellCol = mix(pink,   violet, h2);
+  else                cellCol = mix(violet, orange, h2);
+
+  float side = smoothstep(-0.3, 0.6, uv.x - 0.5);
+  vec3 sideTint = mix(vec3(1.00, 0.55, 0.30), vec3(0.55, 0.35, 0.95), side);
+  cellCol = mix(cellCol, sideTint, 0.45);
+
+  // Beam line in np-space
+  vec2  np = vec2((uv.x - 0.5) * aspect, (uv.y - 0.5));
+  float lineDist = abs(np.x * sin(uBeamAngle) - np.y * cos(uBeamAngle) + uBeamY);
+  vec2  cellNp = id / max(uScale, 1e-3);
+  float cellLineDist = abs(cellNp.x * sin(uBeamAngle) - cellNp.y * cos(uBeamAngle) + uBeamY);
+  float cellBoost = smoothstep(uBeamSize * 3.3, 0.0, cellLineDist);
+
+  float fill = 0.45 + 0.55 * h1 * (0.7 + 0.3 * (1.0 - cdist));
+  fill *= 1.0 + cellBoost * 0.7 * uBeamPower;
+
+  float edgeCore = 1.0 - smoothstep(0.0, 0.010, edge);
+  float edgeGlow = exp(-edge * 16.0) * 0.55;
+
+  vec3 col = cellCol * fill;
+  col += vec3(1.0, 0.92, 1.0) * edgeCore * 0.9;
+  col += cellCol * edgeGlow;
+
+  float beads = 1.0 - smoothstep(0.0, 0.025, edge);
+  beads *= step(0.78, hash12(floor(id * 17.0)));
+  col += vec3(1.0, 0.95, 1.0) * beads * 0.6;
+
+  float bandMask = smoothstep(uBeamSize, 0.0, lineDist);
+  float edgeBeam = exp(-edge * 60.0) * bandMask;
+  vec3  beamColor = mix(vec3(1.0, 0.85, 1.0), vec3(1.0, 0.7, 0.55), 0.4);
+  col += beamColor * edgeBeam * 2.6 * uBeamPower;
+
+  float along = np.x * cos(uBeamAngle) + np.y * sin(uBeamAngle);
+  float spark = step(0.985, hash12(vec2(floor(along * 80.0), floor(uTime * 1.2))));
+  col += beamColor * spark * edgeBeam * 1.6 * uBeamPower;
+
+  float band = smoothstep(0.0, 0.18, uv.y) * smoothstep(1.0, 0.82, uv.y);
+  col *= 0.55 + 0.6 * band;
+  col = col / (1.0 + col * 0.7);
+  col = pow(col, vec3(0.92));
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ------------------------------------------------------------------
+// Study 03 — KNN CONSTELLATION (hand-placed stars, all-pairs threshold)
+// ------------------------------------------------------------------
+const FRAG_KNN_CONSTELLATION = FRAG_HEADER + `
+uniform float uScale;
+uniform float uThresh;
+uniform float uLineThick;
+uniform float uStarBright;
+uniform float uStarCount;
+
+const int N_STARS_MAX = 40;
+
+vec2 starPos(float i, float t) {
+  vec2 base = vec2(
+    sin(i * 7.31)             * 2.50,
+    cos(i * 11.21 + 1.30)     * 1.25
+  );
+  return base + vec2(sin(i * 5.0 + t) * 0.05,
+                     cos(i * 7.0 - t) * 0.04);
+}
+
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.5) * uScale;
+
+  float t = uTime * 0.5;
+
+  float starCore = 0.0;
+  float starHalo = 0.0;
+  float flare    = 0.0;
+  for (int i = 0; i < N_STARS_MAX; i++) {
+    if (float(i) >= uStarCount) break;
+    float fi   = float(i);
+    float seed = fract(fi * 0.6180339);
+    vec2  sp   = starPos(fi, t);
+    vec2  d    = p - sp;
+    float r    = length(d);
+    float k    = 0.4 + 0.6 * seed;
+    starCore += exp(-r * 60.0) * k * 1.3;
+    starHalo += exp(-r *  6.0) * 0.08 * k;
+    if (seed > 0.55) {
+      flare += crossFlare(d * 9.0, 18.0) * (seed - 0.4) * 0.6;
+    }
+  }
+
+  float edges = 0.0;
+  for (int i = 0; i < N_STARS_MAX; i++) {
+    if (float(i) >= uStarCount) break;
+    for (int j = 0; j < N_STARS_MAX; j++) {
+      if (float(j) >= uStarCount) break;
+      if (j > i) {
+        vec2 a = starPos(float(i), t);
+        vec2 b = starPos(float(j), t);
+        float lab = length(a - b);
+        if (lab < uThresh) {
+          float dseg = distSeg(p, a, b);
+          edges += exp(-dseg * uLineThick) * smoothstep(uThresh, uThresh * 0.5, lab);
+        }
+      }
+    }
+  }
+
+  vec3 deep = vec3(0.01, 0.06, 0.13);
+  vec3 cyan = vec3(0.20, 0.78, 1.00);
+  vec3 ice  = vec3(0.85, 0.98, 1.00);
+
+  float wash = exp(-length(p) * 0.8) * 0.18;
+
+  vec3 col = deep * 0.7;
+  col += cyan * (edges * 0.9 + starHalo * uStarBright + wash);
+  col += ice  * (starCore * uStarBright + flare * uStarBright);
+
+  float vig = smoothstep(1.25, 0.35, length(uv - 0.5));
+  col *= 0.55 + 0.5 * vig;
+  col = col / (1.0 + col * 0.8);
+  col = pow(col, vec3(0.92));
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ------------------------------------------------------------------
+// Renderer
+// ------------------------------------------------------------------
+function compile(gl, type, source) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, source);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(sh);
+    gl.deleteShader(sh);
+    throw new Error("Shader compile error: " + log);
+  }
+  return sh;
+}
+function link(gl, vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, vs);
+  gl.attachShader(p, fs);
+  gl.bindAttribLocation(p, 0, "aPosition");
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    throw new Error("Link error: " + gl.getProgramInfoLog(p));
+  }
+  return p;
+}
+
+function makeRenderer(canvas, fragSrc, uniformDefaults = {}, dprMax = 2) {
+  const gl = canvas.getContext("webgl", {
+    antialias: false,
+    premultipliedAlpha: false,
+    powerPreference: "high-performance",
+  });
+  if (!gl) {
+    canvas.replaceWith(Object.assign(document.createElement("div"), {
+      textContent: "WebGL not available",
+      style: "color:#fff;display:grid;place-items:center;height:100%",
+    }));
+    return null;
+  }
+
+  const vs = compile(gl, gl.VERTEX_SHADER, VERT_SRC);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc);
+  const program = link(gl, vs, fs);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,  1, -1, -1,  1,
+    -1,  1,  1, -1,  1,  1,
+  ]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  const uTime = gl.getUniformLocation(program, "uTime");
+  const uRes  = gl.getUniformLocation(program, "uResolution");
+
+  const customs = {};
+  for (const name of Object.keys(uniformDefaults)) {
+    customs[name] = {
+      loc: gl.getUniformLocation(program, name),
+      value: uniformDefaults[name],
+    };
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, dprMax);
+    const w = Math.max(1, Math.floor(canvas.clientWidth  * dpr));
+    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+  }
+
+  let visible = true;
+  const io = new IntersectionObserver(entries => {
+    visible = entries[0].isIntersecting;
+  }, { threshold: 0 });
+  io.observe(canvas);
+
+  return {
+    draw(time) {
+      if (!visible) return;
+      resize();
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.useProgram(program);
+      gl.uniform1f(uTime, time);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      for (const name in customs) {
+        const u = customs[name];
+        if (u.loc !== null) gl.uniform1f(u.loc, u.value);
+      }
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    },
+    setUniform(name, value) {
+      if (customs[name]) customs[name].value = value;
+    },
+  };
+}
+
+const UNIFORMS = {
+  c1: { uScale: 1.80, uBeamAngle: -0.32, uBeamY: 0.06, uBeamPower: 1.00, uBeamSize: 0.18 },
+  c2: { uScale: 6.50, uBeamAngle: -0.32, uBeamY: 0.06, uBeamPower: 1.00, uBeamSize: 0.18 },
+  c3: { uScale: 2.60, uThresh: 1.05, uLineThick: 110, uStarBright: 1.00, uStarCount: 32 },
+};
+
+const renderers = {
+  c1: makeRenderer(document.getElementById("c1"), FRAG_TRI_AURORA,        UNIFORMS.c1),
+  c2: makeRenderer(document.getElementById("c2"), FRAG_AURORA,            UNIFORMS.c2),
+  // dprMax=1 for c3 — the O(N²) star-pair loop is heavy.
+  c3: makeRenderer(document.getElementById("c3"), FRAG_KNN_CONSTELLATION, UNIFORMS.c3, 1),
+};
+
+function bindSlider(slider) {
+  const canvasId = slider.dataset.canvas;
+  const uName    = slider.dataset.uniform;
+  const decimals = parseInt(slider.dataset.decimals || "2", 10);
+  const valSpan  = slider.parentElement.querySelector(".val");
+  const renderer = renderers[canvasId];
+
+  function apply() {
+    const v = parseFloat(slider.value);
+    if (valSpan) valSpan.textContent = v.toFixed(decimals);
+    if (renderer) renderer.setUniform(uName, v);
+  }
+  slider.addEventListener("input", apply);
+  apply();
+}
+document.querySelectorAll(".controls input[type=range]").forEach(bindSlider);
+
+document.querySelectorAll(".controls .reset").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const canvasId = btn.dataset.resetFor;
+    const defaults = UNIFORMS[canvasId];
+    if (!defaults) return;
+    document.querySelectorAll(`.controls input[data-canvas="${canvasId}"]`).forEach(slider => {
+      const uName = slider.dataset.uniform;
+      if (uName in defaults) {
+        slider.value = String(defaults[uName]);
+        slider.dispatchEvent(new Event("input"));
+      }
+    });
+  });
+});
+
+const start = performance.now();
+function frame(now) {
+  const t = (now - start) / 1000;
+  for (const id in renderers) {
+    const r = renderers[id];
+    if (r) r.draw(t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aqua — 16-bit underwater study</title>
+<style>
+  :root {
+    --bg: #02060f;
+    --ink: #dff7ff;
+    --muted: rgba(223, 247, 255, 0.55);
+    --rule: rgba(223, 247, 255, 0.12);
+    --accent: #4fd9e6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--ink);
+               font-family: "Inter", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif; }
+
+  #stage { position: fixed; inset: 0; }
+  #stage canvas {
+    width: 100%; height: 100%; display: block;
+    /* keep the chunky pixels crisp when the backing store is upscaled */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Bottom-left title block */
+  #legend {
+    position: fixed; left: 16px; bottom: 16px;
+    display: grid; gap: 4px;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(2, 6, 15, 0.42);
+    padding: 12px 14px; border-radius: 6px;
+    border: 1px solid var(--rule);
+    pointer-events: none;
+  }
+  #legend b { color: var(--ink); font-weight: 600; letter-spacing: 0.22em; }
+
+  /* Right-side panel (cosmic.html layout) */
+  #ui {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 320px;
+    background: rgba(2, 8, 18, 0.82);
+    backdrop-filter: blur(8px);
+    border-left: 1px solid var(--rule);
+    overflow-y: auto;
+    transition: transform 200ms ease;
+    z-index: 10;
+  }
+  #ui.collapsed { transform: translateX(100%); }
+  #ui-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 11;
+    background: rgba(2, 8, 18, 0.82);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font: inherit; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 4px;
+    cursor: pointer;
+  }
+  #ui-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  #ui section { padding: 14px 16px; border-bottom: 1px solid var(--rule); }
+  #ui h2 {
+    margin: 0 0 12px;
+    font-size: 11px; letter-spacing: 0.30em; text-transform: uppercase;
+    color: var(--ink); font-weight: 600;
+  }
+
+  .ui-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin-bottom: 9px; }
+  .ui-row .name {
+    grid-column: 1 / -1;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .ui-row .ctl { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+                 grid-column: 1 / -1; }
+  .ui-row input[type="range"] { accent-color: var(--accent); width: 100%; height: 18px; margin: 0; }
+  .ui-row input[type="color"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 24px; padding: 0; margin: 0;
+    border: 1px solid var(--rule); border-radius: 4px;
+    background: transparent; cursor: pointer;
+  }
+  .ui-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+  .ui-row input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 2px; }
+  .ui-row input[type="color"]::-moz-color-swatch { border: 0; border-radius: 2px; }
+  .ui-row .val {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 11px; min-width: 5ch; text-align: right;
+    color: var(--ink); opacity: 0.85;
+  }
+
+  .reset {
+    width: 100%;
+    background: transparent; border: 1px solid var(--rule);
+    color: var(--muted); border-radius: 4px;
+    font: inherit; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+    padding: 9px; cursor: pointer; margin-top: 4px;
+  }
+  .reset:hover { color: var(--ink); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="stage"><canvas id="cv"></canvas></div>
+
+<div id="legend">
+  <div><b>Aqua</b></div>
+  <div>16-bit · caustics · god rays · bubbles</div>
+</div>
+
+<button id="ui-toggle">Panel</button>
+<aside id="ui"></aside>
+
+<script>
+"use strict";
+
+// ============================================================
+// Vertex — fullscreen quad (two triangles), passes UV through.
+// ============================================================
+const VERT_SRC = `
+attribute vec2 aPosition;
+varying vec2 vUv;
+void main() {
+  vUv = aPosition * 0.5 + 0.5;   // 0..1, (0,0) bottom-left
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+`;
+
+// ============================================================
+// Fragment — underwater scene, rendered as 16-bit pixel art.
+//
+// The whole scene is reduced to a single scalar "value" field v
+// (depth gradient + caustics + god rays + bubble rims). That value
+// is ordered-dithered (Bayer 8x8), quantized to a few steps, and
+// mapped through a cohesive cool ocean palette ramp — so every
+// pixel lands on one of N hand-tuned colours, the way a SNES-era
+// background would. Coordinates are snapped to a chunky grid first
+// so caustics, rays and bubbles all align to the same pixels.
+// ============================================================
+const FRAG_SRC = `
+precision highp float;
+varying vec2 vUv;
+uniform vec2  uResolution;
+uniform float uTime;
+
+// render
+uniform float uPixelSize;   // device px per art-pixel (chunkiness)
+uniform float uLevels;      // posterization steps -> (levels+1) palette colours
+uniform float uDither;      // 0 = hard banding, 1 = full ordered dither
+
+// colour — a single picked water colour drives the whole palette
+uniform vec3 uWaterColor;
+
+// water body
+uniform float uSurface;     // surface brightness
+uniform float uDepth;       // how fast it darkens toward the deep
+uniform float uShimmer;     // animated surface band
+
+// caustics
+uniform float uCausticScale;
+uniform float uCausticSpeed;
+uniform float uCausticInten;
+uniform float uCausticReach;  // how deep the caustics carry
+uniform float uPerspective;   // 0 = flat 2D field, 1 = receding floor plane
+
+// god rays
+uniform float uRayInten;
+uniform float uRayAngle;
+uniform float uRaySharp;
+uniform float uRayDensity;
+uniform float uRayReach;
+
+// bubbles
+uniform float uBubbleCount;
+uniform float uBubbleSpeed;
+uniform float uBubbleSize;
+uniform float uBubbleWobble;
+
+// marine snow
+uniform float uSnow;        // amount
+uniform float uSnowDensity; // particle count scale
+uniform float uSnowSpeed;   // sink speed
+uniform float uSnowJitter;  // 0 = on a grid, 1 = scattered within each cell
+
+// light & atmosphere
+uniform float uGlow;        // sun-pool brightness
+uniform float uGlowSize;    // pool tightness (bigger = tighter)
+uniform float uHaze;        // distance haze near the light
+uniform float uVignette;    // corner darkening
+
+// warm accent
+uniform vec3  uAccentColor; // warm glow colour
+uniform float uAccent;      // warm glow amount
+
+const float TAU = 6.28318530718;
+const int   MAX_BUBBLES = 64;
+
+float hash12(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+vec2  hash22(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+  return fract(sin(p) * 43758.5453);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  float a = hash12(i), b = hash12(i + vec2(1.0, 0.0));
+  float c = hash12(i + vec2(0.0, 1.0)), d = hash12(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+// Ordered Bayer dither, built recursively from a 2x2 cell — pure float
+// math (no const-array indexing) so it runs on SwiftShader too.
+float bayer2(vec2 a) { a = floor(a); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
+float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+float bayer8(vec2 a) { return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+
+// Ocean ramp built entirely from the picked water colour: deep = a darkened
+// tint of it, mid = the colour itself, surface/highlights = brightened toward
+// white (so caustics, rays, bubbles and snow read as pale foam regardless of
+// hue). Pick teal, blue, warm evening — the whole scene follows. 6 stops / 5
+// linear segments keeps the banding crisp for the 16-bit look.
+vec3 palette(float t) {
+  t = clamp(t, 0.0, 1.0);
+  vec3 b  = uWaterColor;
+  vec3 c0 = b * 0.10;                   // abyss
+  vec3 c1 = b * 0.30;
+  vec3 c2 = b * 0.62;
+  vec3 c3 = b;                          // mid water = the picked colour
+  vec3 c4 = mix(b, vec3(1.0), 0.45);    // lit
+  vec3 c5 = mix(b, vec3(1.0), 0.80);    // highlight / foam
+  float s = t * 5.0;
+  if (s < 1.0) return mix(c0, c1, s);
+  if (s < 2.0) return mix(c1, c2, s - 1.0);
+  if (s < 3.0) return mix(c2, c3, s - 2.0);
+  if (s < 4.0) return mix(c3, c4, s - 3.0);
+  return mix(c4, c5, s - 4.0);
+}
+
+// "A simple water caustic effect" — David Hoskins (CC BY-NC-SA 3.0),
+// inspired by akohdr's "Fluid Fields". Three matrix-folded fract-distance
+// samples; the min of the three forms an organic, NON-tiling caustic network
+// — irregular bright pools separated by thin dark cracks, naturally wavy and
+// flowing as the time term (k.w) drives the fold. No lattice, no warp hacks.
+float caustic(vec2 p, float time) {
+  // gentle breathing of the sample scale, like a shifting surface
+  vec4 k = vec4(p * (sin(time * 0.2) * 0.10 + 1.0), 0.0, time * 0.2);
+  mat3 m = mat3(-2.0, -1.0, 2.0,
+                 3.0, -2.0, 1.0,
+                 1.0,  2.0, 2.0);
+  k.xyw *= m * 0.5; float a = length(0.5 - fract(k.xyw));
+  k.xyw *= m * 0.4; float b = length(0.5 - fract(k.xyw));
+  k.xyw *= m * 0.3; float c = length(0.5 - fract(k.xyw));
+  return clamp(pow(min(min(a, b), c), 7.0) * 25.0, 0.0, 1.0);
+}
+
+// God rays: radial sun shafts fanning out from off-screen sun sources.
+// Adapted from the well-known Shadertoy "god rays" (Elias Daler lineage):
+// beam strength is driven by the angle between the sun->pixel direction
+// and a reference direction, animated by two sin/cos seeds, then
+// attenuated by distance from the sun. Two sources overlap for a richer,
+// less regular shaft pattern.
+float rayStrength(vec2 src, vec2 refDir, vec2 coord,
+                  float seedA, float seedB, float speed, float scale) {
+  vec2  s2c  = coord - src;
+  float cosA = dot(normalize(s2c), refDir);
+  float a = clamp(
+      (0.45 + 0.15 * sin(cosA * seedA + uTime * speed)) +
+      (0.30 + 0.20 * cos(-cosA * seedB + uTime * speed)),
+      0.0, 1.0);
+  float distAtt = clamp((scale - length(s2c)) / scale, 0.5, 1.0);
+  return a * distAtt;
+}
+
+float godRays(vec2 uv, float aspect) {
+  vec2 res   = vec2(aspect, 1.0);
+  vec2 coord = vec2(uv.x * aspect, 1.0 - uv.y);   // y downward, 0 at the surface
+  float sx   = uRayAngle;                          // horizontal sun offset
+  float sm   = uRayDensity / 4.2;                  // beam-frequency scale
+
+  vec2 src1 = vec2(res.x * (0.70 + sx), res.y * -0.40);
+  vec2 src2 = vec2(res.x * (0.80 + sx), res.y * -0.60);
+  vec2 dir1 = normalize(vec2(1.0, -0.116));
+  vec2 dir2 = normalize(vec2(1.0,  0.241));
+
+  float r1 = rayStrength(src1, dir1, coord, 36.2214 * sm, 21.11349 * sm, 1.5, res.x);
+  float r2 = rayStrength(src2, dir2, coord, 22.39910 * sm, 18.02340 * sm, 1.1, res.x);
+  float r  = r1 * 0.5 + r2 * 0.4;
+
+  // Lift the contrast hard so valleys go fully dark and the shafts read as
+  // thin, countable beams, then sharpen with the user's exponent.
+  r = clamp((r - 0.30) / 0.52, 0.0, 1.0);
+  return pow(r, uRaySharp);
+}
+
+// Bubbles rising from the deep — chunky rings with an upper-left
+// highlight. Returns rim+fill; hiOut carries the bright specular dot.
+float bubbles(vec2 uv, float time, float aspect, out float hiOut) {
+  float field = 0.0;
+  float hi = 0.0;
+  for (int n = 0; n < MAX_BUBBLES; n++) {
+    if (float(n) >= uBubbleCount) break;
+    float fn = float(n);
+    vec2  h    = hash22(vec2(fn * 1.7, 9.3));
+    float lane = h.x;
+    float speed = (0.05 + h.y * 0.12) * uBubbleSpeed;
+    float seed  = hash12(vec2(fn, 4.1));
+    float size  = mix(0.006, 0.020, seed) * uBubbleSize;
+    float phase = hash12(vec2(fn, 17.0));
+    float yy    = fract(phase + time * speed);                 // 0 deep -> 1 surface
+    float wob   = sin(time * 1.1 + fn * 2.7 + yy * 8.0) * 0.025 * uBubbleWobble * (0.4 + seed);
+    vec2  bpos  = vec2(lane + wob, yy);
+
+    vec2  d  = (uv - bpos) * vec2(aspect, 1.0);
+    float r  = length(d);
+    float rim  = smoothstep(size * 0.45, 0.0, abs(r - size));   // hollow ring
+    float fill = smoothstep(size, 0.0, r) * 0.12;               // faint glassy interior
+    float life = smoothstep(0.0, 0.05, yy) * smoothstep(1.0, 0.86, yy);
+    field += (rim + fill) * life;
+
+    vec2  hp = bpos + vec2(-size * 0.4, size * 0.4);            // highlight upper-left
+    float hd = length((uv - hp) * vec2(aspect, 1.0));
+    hi += smoothstep(size * 0.35, 0.0, hd) * life;
+  }
+  hiOut = hi;
+  return field;
+}
+
+// Marine snow — fine drifting particulate. A few hashed grids at different
+// scales/speeds give parallax depth; each lit cell is a sub-pixel speck that
+// sinks slowly with a gentle sway.
+float snowLayer(vec2 uv, float time, float aspect, float dens, float speed, float seed) {
+  vec2 q = vec2(uv.x * aspect, uv.y);
+  q.y += time * speed;                                   // sink
+  q.x += sin((uv.y + seed) * 5.0 + time * 0.2) * 0.015;  // sway
+  q *= dens;
+  vec2 cellp = floor(q);
+  float on = step(0.80, hash12(cellp + seed * 1.3));     // ~20% of cells lit
+  // Scatter each speck within its cell so the particles don't sit on a lattice.
+  vec2  jit = (hash22(cellp + seed) - 0.5) * uSnowJitter;
+  vec2  f   = fract(q) - 0.5 - jit;
+  float d   = length(f);
+  float br  = hash12(cellp + seed + 9.1);
+  float rad = 0.26 * (0.55 + 0.9 * br);                  // varied speck size
+  return smoothstep(rad, 0.0, d) * on * (0.45 + 0.55 * br);
+}
+float marineSnow(vec2 uv, float time, float aspect) {
+  float dens = 70.0 * uSnowDensity;
+  float sp   = uSnowSpeed;
+  float s = 0.0;
+  s += snowLayer(uv, time, aspect, dens * 0.7, 0.010 * sp, 11.0) * 0.7;
+  s += snowLayer(uv, time, aspect, dens * 1.1, 0.018 * sp, 27.0) * 0.9;
+  s += snowLayer(uv, time, aspect, dens * 1.6, 0.028 * sp, 41.0) * 1.0;
+  return s;
+}
+
+void main() {
+  float aspect = uResolution.x / uResolution.y;
+
+  // --- Snap to a chunky pixel grid; everything below uses snapped uv. ---
+  vec2 cells = max(floor(uResolution / max(uPixelSize, 1.0)), vec2(1.0));
+  vec2 cell  = floor(vUv * cells);
+  vec2 uv    = (cell + 0.5) / cells;
+
+  float time = uTime;
+
+  // --- Base water column: lighter near the surface (top), darker deep, but
+  //     a raised floor keeps the whole column moody rather than fading to
+  //     black — like the goal image. ---
+  float surfaceT = pow(clamp(uv.y, 0.0, 1.0), uDepth);
+  float v = mix(0.12, uSurface, surfaceT);
+  v += (vnoise(uv * vec2(3.0, 2.0) + time * 0.05) - 0.5) * 0.06;   // slow body movement
+
+  float depth = 1.0 - uv.y;
+
+  // --- Light volume: a soft radial pool of light around the point where the
+  //     sun enters (top, shifted by the sun offset), so brightness gathers
+  //     there and falls off outward — a light source, not a flat gradient. ---
+  vec2  sunPos  = vec2(0.5 + uRayAngle * 0.6, 1.02);
+  float sunDist = length((uv - sunPos) * vec2(aspect * 0.8, 1.0));
+  float glow    = exp(-sunDist * sunDist * uGlowSize);
+  v += glow * uGlow;
+
+  // --- Caustics. Optionally projected onto a receding floor plane so the
+  //     cells foreshorten with distance (isometric depth) instead of reading
+  //     as a flat 2D field: large in the foreground (bottom), compressed
+  //     toward the far horizon (top). uPerspective blends flat <-> floor. ---
+  vec2  flatUv  = vec2((uv.x - 0.5) * aspect, uv.y);
+  // Depth grows toward the BOTTOM: near/large caustics at the top, receding to
+  // small, dense cells at the far bottom (vanishing point at the bottom edge).
+  float zdepth  = 0.14 / max(0.04 + uv.y, 0.03);
+  // Drift the floor texture along the depth axis (the +time direction reads as
+  // the surface light flowing toward the viewer / up out of the distance).
+  vec2  floorUv = vec2((uv.x - 0.5) * aspect * zdepth * 2.6,
+                       zdepth + time * uCausticSpeed * 0.10);
+  vec2  cuv = mix(flatUv, floorUv, uPerspective) * uCausticScale;
+  float ca  = caustic(cuv, time * uCausticSpeed);
+  float caFall = exp(-depth * (4.0 / max(uCausticReach, 0.1)));
+  v += ca * uCausticInten * caFall * 0.45;
+
+  // --- God rays: radial sun shafts. Brightest near the surface, carried
+  //     down into the mid-water (uRayReach) where they have contrast. ---
+  float gr = godRays(uv, aspect);
+  float grFall = pow(clamp(uv.y, 0.0, 1.0), 1.0 / max(uRayReach, 0.1));
+  float rays = gr * grFall;
+  v += rays * uRayInten * 0.65;
+
+  // --- Surface shimmer band at the very top. ---
+  float surfBand = smoothstep(0.84, 1.0, uv.y);
+  float shimmer  = surfBand * (0.5 + 0.5 * sin(uv.x * 38.0 + time * 2.0
+                   + vnoise(vec2(uv.x * 12.0, time)) * 4.0));
+  v += shimmer * uShimmer * 0.30;
+
+  // --- Atmospheric haze: near the light pool the water reads hazier (lower
+  //     contrast), like distance haze, while the periphery stays contrasty. ---
+  v = mix(v, 0.62, glow * uHaze);
+
+  // --- Marine snow, light-reactive: dust is dim in shadow and lights up inside
+  //     the god-ray beams and the sun pool (glowing motes in the light). ---
+  float dust = marineSnow(uv, time, aspect);
+  float dustLight = 0.35 + 1.7 * rays + 0.9 * glow;
+  v += dust * uSnow * dustLight * 0.5;
+
+  // --- Bubbles rising from the deep. ---
+  float bubHi;
+  float bub = bubbles(uv, time, aspect, bubHi);
+  v += bub * 0.55 + bubHi * 0.95;
+
+  // --- Vignette: darken the corners to focus the light pool (depth cue). ---
+  float vig = smoothstep(1.30, 0.45, length((uv - 0.5) * vec2(aspect, 1.0)));
+  v *= mix(1.0, vig, uVignette);
+
+  v = clamp(v, 0.0, 1.0);
+
+  // --- 16-bit treatment: ordered dither -> posterize -> palette ramp. ---
+  float steps = max(uLevels, 1.0);
+  float b  = mix(0.5, bayer8(cell), uDither);
+  float vq = clamp(floor(v * steps + b), 0.0, steps) / steps;
+
+  vec3 col = palette(vq);
+
+  // --- Warm accent glow: soft warm pools low in the frame (distant warmth /
+  //     bioluminescence) for cool-vs-warm depth. Dithered with the same Bayer
+  //     threshold so it bands with the palette instead of reading as a smooth
+  //     gradient. ---
+  float acc = exp(-length((uv - vec2(0.72, 0.07)) * vec2(aspect * 0.7, 1.0)) * 3.0)
+            + 0.7 * exp(-length((uv - vec2(0.24, 0.04)) * vec2(aspect * 0.7, 1.0)) * 3.6);
+  float accQ = clamp(floor(clamp(acc, 0.0, 1.0) * uAccent * steps + b), 0.0, steps) / steps;
+  col = mix(col, uAccentColor, accQ);
+
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ============================================================
+// Renderer (self-contained, mirrors index.html's makeRenderer).
+// dprMax = 1 so the backing store stays at CSS resolution — pixel
+// art wants 1:1 chunky pixels, not hi-dpi smoothing.
+// ============================================================
+function compile(gl, type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(sh);
+    gl.deleteShader(sh);
+    throw new Error("Shader compile error: " + log);
+  }
+  return sh;
+}
+function link(gl, vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, vs);
+  gl.attachShader(p, fs);
+  gl.bindAttribLocation(p, 0, "aPosition");
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    throw new Error("Link error: " + gl.getProgramInfoLog(p));
+  }
+  return p;
+}
+
+function makeRenderer(canvas, fragSrc, uniformDefaults, dprMax) {
+  const gl = canvas.getContext("webgl", {
+    antialias: false,
+    premultipliedAlpha: false,
+    powerPreference: "high-performance",
+  });
+  if (!gl) {
+    canvas.replaceWith(Object.assign(document.createElement("div"), {
+      textContent: "WebGL not available",
+      style: "color:#fff;display:grid;place-items:center;height:100%",
+    }));
+    return null;
+  }
+
+  const vs = compile(gl, gl.VERTEX_SHADER, VERT_SRC);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc);
+  const program = link(gl, vs, fs);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,  1, -1, -1,  1,
+    -1,  1,  1, -1,  1,  1,
+  ]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  const uTime = gl.getUniformLocation(program, "uTime");
+  const uRes  = gl.getUniformLocation(program, "uResolution");
+
+  const customs = {};
+  for (const name of Object.keys(uniformDefaults)) {
+    customs[name] = { loc: gl.getUniformLocation(program, name), value: uniformDefaults[name] };
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, dprMax || 1);
+    const w = Math.max(1, Math.floor(canvas.clientWidth  * dpr));
+    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+  }
+
+  return {
+    draw(time) {
+      resize();
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.useProgram(program);
+      gl.uniform1f(uTime, time);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      for (const name in customs) {
+        const u = customs[name];
+        if (u.loc === null) continue;
+        if (Array.isArray(u.value)) gl.uniform3f(u.loc, u.value[0], u.value[1], u.value[2]);
+        else gl.uniform1f(u.loc, u.value);
+      }
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    },
+    setUniform(name, value) { if (customs[name]) customs[name].value = value; },
+    values: customs,
+  };
+}
+
+// ============================================================
+// Controls — declarative slider config drives both the uniform
+// defaults and the generated panel (DRY).
+// ============================================================
+const CONTROLS = [
+  { group: "Render", items: [
+    { u: "uPixelSize",     label: "Pixel size",        min: 2,   max: 14,  step: 1,    val: 3,    dec: 0 },
+    { u: "uLevels",        label: "Colour levels",     min: 3,   max: 16,  step: 1,    val: 16,   dec: 0 },
+    { u: "uDither",        label: "Dither",            min: 0,   max: 1,   step: 0.05, val: 1.0,  dec: 2 },
+  ]},
+  { group: "Colour", items: [
+    { u: "uWaterColor",    label: "Water colour",      type: "color", val: [0.0667, 0.3333, 0.6000] },
+  ]},
+  { group: "Water", items: [
+    { u: "uSurface",       label: "Surface light",     min: 0.3, max: 1.5, step: 0.01, val: 0.67, dec: 2 },
+    { u: "uDepth",         label: "Depth falloff",     min: 0.4, max: 3.0, step: 0.01, val: 1.12, dec: 2 },
+    { u: "uShimmer",       label: "Surface shimmer",   min: 0,   max: 1,   step: 0.01, val: 0.31, dec: 2 },
+  ]},
+  { group: "Caustics", items: [
+    { u: "uCausticScale",  label: "Scale",             min: 1,   max: 48,  step: 0.1,  val: 16.0, dec: 1 },
+    { u: "uCausticSpeed",  label: "Speed",             min: 0,   max: 2,   step: 0.01, val: 0.15, dec: 2 },
+    { u: "uCausticInten",  label: "Intensity",         min: 0,   max: 2,   step: 0.01, val: 1.00, dec: 2 },
+    { u: "uCausticReach",  label: "Depth reach",       min: 0.2, max: 1.5, step: 0.01, val: 0.70, dec: 2 },
+    { u: "uPerspective",   label: "Perspective",       min: 0,   max: 1,   step: 0.01, val: 0.00, dec: 2 },
+  ]},
+  { group: "God rays", items: [
+    { u: "uRayInten",      label: "Intensity",         min: 0,   max: 2,   step: 0.01, val: 2.00, dec: 2 },
+    { u: "uRayAngle",      label: "Sun offset",        min: -1.0,max: 0.5, step: 0.01, val: -0.60,dec: 2 },
+    { u: "uRaySharp",      label: "Beam sharpness",    min: 1,   max: 5,   step: 0.05, val: 1.90, dec: 2 },
+    { u: "uRayDensity",    label: "Beam frequency",    min: 1,   max: 16,  step: 0.1,  val: 10.7, dec: 1 },
+    { u: "uRayReach",      label: "Depth reach",       min: 0.2, max: 1.5, step: 0.01, val: 0.82, dec: 2 },
+  ]},
+  { group: "Light", items: [
+    { u: "uGlow",          label: "Sun glow",          min: 0,   max: 1.5, step: 0.01, val: 0.45, dec: 2 },
+    { u: "uGlowSize",      label: "Glow tightness",    min: 0.3, max: 6.0, step: 0.05, val: 1.60, dec: 2 },
+    { u: "uHaze",          label: "Haze",              min: 0,   max: 1,   step: 0.01, val: 0.30, dec: 2 },
+    { u: "uVignette",      label: "Vignette",          min: 0,   max: 1,   step: 0.01, val: 0.45, dec: 2 },
+  ]},
+  { group: "Accent", items: [
+    { u: "uAccent",        label: "Warm glow",         min: 0,   max: 1.5, step: 0.01, val: 0.35, dec: 2 },
+    { u: "uAccentColor",   label: "Glow colour",       type: "color", val: [1.0, 0.50, 0.20] },
+  ]},
+  { group: "Bubbles", items: [
+    { u: "uBubbleCount",   label: "Count",             min: 0,   max: 64,  step: 1,    val: 64,   dec: 0 },
+    { u: "uBubbleSpeed",   label: "Rise speed",        min: 0.2, max: 3,   step: 0.01, val: 0.35, dec: 2 },
+    { u: "uBubbleSize",    label: "Size",              min: 0.1, max: 2.5, step: 0.01, val: 0.20, dec: 2 },
+    { u: "uBubbleWobble",  label: "Wobble",            min: 0,   max: 2,   step: 0.01, val: 0.34, dec: 2 },
+  ]},
+  { group: "Marine snow", items: [
+    { u: "uSnow",          label: "Amount",            min: 0,   max: 1.5, step: 0.01, val: 0.34, dec: 2 },
+    { u: "uSnowDensity",   label: "Density",           min: 0.3, max: 2.5, step: 0.01, val: 1.06, dec: 2 },
+    { u: "uSnowSpeed",     label: "Fall speed",        min: 0,   max: 3,   step: 0.01, val: 0.34, dec: 2 },
+    { u: "uSnowJitter",    label: "Randomness",        min: 0,   max: 1,   step: 0.01, val: 0.90, dec: 2 },
+  ]},
+];
+
+const DEFAULTS = {};
+for (const g of CONTROLS) for (const it of g.items) DEFAULTS[it.u] = it.val;
+
+const canvas = document.getElementById("cv");
+const fx = makeRenderer(canvas, FRAG_SRC, DEFAULTS, 1);
+window.__aqua = fx;   // debug/screenshot hook
+
+// --- Colour helpers: hex <-> rgb01 (matches cosmic.html) ---
+function rgbToHex([r, g, b]) {
+  const h = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0");
+  return `#${h(r)}${h(g)}${h(b)}`;
+}
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return [1, 1, 1];
+  const v = parseInt(m[1], 16);
+  return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+}
+
+// --- Build the panel ---
+const ui = document.getElementById("ui");
+function buildColorRow(section, it) {
+  const row = document.createElement("div");
+  row.className = "ui-row";
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = it.label;
+  const ctl = document.createElement("div");
+  ctl.className = "ctl";
+  const inp = document.createElement("input");
+  inp.type = "color";
+  inp.value = rgbToHex(it.val);
+  inp.dataset.uniform = it.u;
+  const val = document.createElement("span");
+  val.className = "val";
+  val.textContent = inp.value;
+  const apply = () => {
+    val.textContent = inp.value;
+    if (fx) fx.setUniform(it.u, hexToRgb(inp.value));
+  };
+  inp.addEventListener("input", apply);
+  ctl.append(inp, val);
+  row.append(name, ctl);
+  section.append(row);
+}
+function buildSliderRow(section, it) {
+  const row = document.createElement("div");
+  row.className = "ui-row";
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = it.label;
+  const ctl = document.createElement("div");
+  ctl.className = "ctl";
+  const sld = document.createElement("input");
+  sld.type = "range";
+  sld.min = it.min; sld.max = it.max; sld.step = it.step; sld.value = it.val;
+  sld.dataset.uniform = it.u; sld.dataset.dec = it.dec;
+  const val = document.createElement("span");
+  val.className = "val";
+  val.textContent = Number(it.val).toFixed(it.dec);
+  const apply = () => {
+    const x = parseFloat(sld.value);
+    val.textContent = x.toFixed(it.dec);
+    if (fx) fx.setUniform(it.u, x);
+  };
+  sld.addEventListener("input", apply);
+  ctl.append(sld, val);
+  row.append(name, ctl);
+  section.append(row);
+}
+function buildPanel() {
+  for (const g of CONTROLS) {
+    const section = document.createElement("section");
+    const h2 = document.createElement("h2");
+    h2.textContent = g.group;
+    section.append(h2);
+    for (const it of g.items) {
+      if (it.type === "color") buildColorRow(section, it);
+      else buildSliderRow(section, it);
+    }
+    ui.append(section);
+  }
+  // Reset
+  const resetSection = document.createElement("section");
+  const reset = document.createElement("button");
+  reset.className = "reset";
+  reset.textContent = "Reset all";
+  reset.addEventListener("click", () => {
+    ui.querySelectorAll('input[type="range"]').forEach(sld => {
+      sld.value = String(DEFAULTS[sld.dataset.uniform]);
+      sld.dispatchEvent(new Event("input"));
+    });
+    ui.querySelectorAll('input[type="color"]').forEach(inp => {
+      inp.value = rgbToHex(DEFAULTS[inp.dataset.uniform]);
+      inp.dispatchEvent(new Event("input"));
+    });
+  });
+  resetSection.append(reset);
+  ui.append(resetSection);
+}
+buildPanel();
+
+// Panel toggle
+document.getElementById("ui-toggle").addEventListener("click", () => {
+  ui.classList.toggle("collapsed");
+});
+
+// ============================================================
+// Animation loop — pause when the tab is hidden.
+// ============================================================
+let running = true;
+const start = performance.now();
+function frame(now) {
+  if (running && fx) fx.draw((now - start) / 1000);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+document.addEventListener("visibilitychange", () => { running = !document.hidden; });
+</script>
+</body>
+</html>

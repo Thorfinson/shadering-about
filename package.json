@@ -1,0 +1,14 @@
+{
+  "name": "shadering",
+  "version": "1.0.0",
+  "description": "Standalone generative-art and shader studies: cosmic webs, HDR caustics, and procedural underwater islands.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "shots": "node tools/screenshot.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  },
+  "license": "MIT"
+}

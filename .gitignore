@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Local scratch files (legacy capture scripts, test renders)
+_*
+
+# Local-only reference material (third-party art, not for redistribution)
+goal_image.png
+
+# Backups
+* - BACKUP*
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS noise
+Thumbs.db
+.DS_Store

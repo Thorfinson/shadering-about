@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reef — procedural underwater isometric islands</title>
+<style>
+  :root {
+    --bg: #02080f;
+    --ink: #dff7ff;
+    --muted: rgba(223, 247, 255, 0.55);
+    --rule: rgba(223, 247, 255, 0.12);
+    --accent: #4fd9e6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--ink);
+               font-family: "Inter", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif; overflow: hidden; }
+
+  #stage { position: fixed; inset: 0; }
+  #cv {
+    width: 100%; height: 100%; display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Bottom-left title block */
+  #legend {
+    position: fixed; left: 16px; bottom: 16px;
+    display: grid; gap: 4px;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(2, 6, 15, 0.42);
+    padding: 12px 14px; border-radius: 6px;
+    border: 1px solid var(--rule);
+    pointer-events: none;
+    z-index: 9;
+  }
+  #legend b { color: var(--ink); font-weight: 600; letter-spacing: 0.22em; }
+
+  /* Right-side control panel */
+  #ui {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 318px;
+    background: rgba(2, 8, 18, 0.86);
+    backdrop-filter: blur(8px);
+    border-left: 1px solid var(--rule);
+    overflow-y: auto;
+    transition: transform 200ms ease;
+    z-index: 10;
+    padding: 18px 16px 40px;
+  }
+  #ui.collapsed { transform: translateX(100%); }
+  #ui h1 { font-size: 13px; letter-spacing: 0.24em; text-transform: uppercase; margin: 0 0 2px; }
+  #ui .sub { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  #ui .row { margin-bottom: 11px; }
+  #ui label { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.06em;
+              color: var(--muted); margin-bottom: 4px; }
+  #ui label .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+  #ui input[type=range] { width: 100%; accent-color: var(--accent); height: 16px; }
+  #ui select, #ui input[type=number] {
+    width: 100%; background: rgba(255,255,255,0.04); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 4px; padding: 6px 8px; font: inherit; font-size: 12px;
+  }
+  #ui .btnrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 6px; }
+  #ui button {
+    background: rgba(79, 217, 230, 0.12); color: var(--ink);
+    border: 1px solid rgba(79, 217, 230, 0.4); border-radius: 4px;
+    font: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 9px 8px; cursor: pointer; transition: background 120ms ease;
+  }
+  #ui button:hover { background: rgba(79, 217, 230, 0.24); }
+  #ui button.wide { grid-column: 1 / -1; }
+  #ui .group { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  #ui .group-title { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+
+  #ui-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 11;
+    background: rgba(2, 8, 18, 0.82);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font: inherit; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 4px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div id="stage"><canvas id="cv"></canvas></div>
+
+  <div id="legend">
+    <b>Reef</b>
+    <span>Procedural underwater isometric islands</span>
+    <span id="legend-stats" style="color:var(--muted)"></span>
+  </div>
+
+  <button id="ui-toggle">Controls</button>
+  <div id="ui">
+    <h1>Reef</h1>
+    <div class="sub">Procedural island generator</div>
+    <div id="controls"></div>
+    <div class="btnrow">
+      <button id="btn-seed">Random seed</button>
+      <button id="btn-regen">Regenerate</button>
+      <button id="btn-png" class="wide">Download PNG</button>
+    </div>
+  </div>
+
+<script>
+"use strict";
+/* ============================================================================
+   Reef — procedural generator for underwater isometric islands.
+
+   Pipeline (top-down world space -> quantized contours -> isometric 2.5D):
+     IslandConfig          parameter container + archetype presets
+     generateFootprintSDF  metaballs (ellipses) -> mass field
+     applyDomainWarp       fBm domain warp of sample coordinates
+     generateHeightmap     distance-to-edge profile + fBm/ridge/roughness
+     quantizeHeightmap     continuous height -> integer contour levels
+     extractContours       interpolated marching squares -> closed loops
+     projectIsometric      (x,y,z) grid -> screen
+     buildTopAndSideFaces  per-slab top polygon + extruded side walls
+     generateMasks         plateau / cliff / reef / deep / slope
+     scatterProps          Poisson-disk scatter filtered by mask
+     renderIsland          paint one island (shadow, slabs, props, structures)
+
+   Everything is deterministic from `config.seed`.
+   Sections are delimited by banner comments below.
+   ========================================================================== */
+
+/* ───────────────────────────── 1. math utils ───────────────────────────── */
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp  = (a, b, t) => a + (b - a) * t;
+const smoothstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0 || 1e-9), 0, 1); return t * t * (3 - 2 * t); };
+const smootherstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0 || 1e-9), 0, 1); return t * t * t * (t * (t * 6 - 15) + 10); };
+const TAU = Math.PI * 2;
+
+// rgb helpers — colors are plain {r,g,b} 0..255
+const rgb = (r, g, b) => ({ r, g, b });
+const css = (c, a = 1) => `rgba(${c.r | 0},${c.g | 0},${c.b | 0},${a})`;
+const mix = (a, b, t) => rgb(lerp(a.r, b.r, t), lerp(a.g, b.g, t), lerp(a.b, b.b, t));
+const scale = (c, s) => rgb(clamp(c.r * s, 0, 255), clamp(c.g * s, 0, 255), clamp(c.b * s, 0, 255));
+const shift = (c, dr, dg, db) => rgb(clamp(c.r + dr, 0, 255), clamp(c.g + dg, 0, 255), clamp(c.b + db, 0, 255));
+// sample a ramp (array of {r,g,b}) at t in [0,1]
+function rampAt(ramp, t) {
+  t = clamp(t, 0, 1) * (ramp.length - 1);
+  const i = Math.floor(t), f = t - i;
+  return i >= ramp.length - 1 ? ramp[ramp.length - 1] : mix(ramp[i], ramp[i + 1], f);
+}
+
+/* ─────────────────────── 2. seeded RNG + value noise ────────────────────── */
+// mulberry32: small fast deterministic PRNG
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const makeRNG = (seed) => mulberry32((seed >>> 0) || 1);
+// integer hash for lattice noise
+function hash2i(x, y, seed) {
+  let h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(seed | 0, 1274126177);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+// 2D value noise with smootherstep interpolation
+function valueNoise2(x, y, seed) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);
+  const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+  const a = hash2i(xi, yi, seed), b = hash2i(xi + 1, yi, seed);
+  const c = hash2i(xi, yi + 1, seed), d = hash2i(xi + 1, yi + 1, seed);
+  return (a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v;
+}
+// fractal Brownian motion (sum of octaves), returns ~[0,1]
+function fbm2(x, y, seed, oct = 4, lac = 2.0, gain = 0.5) {
+  let amp = 0.5, freq = 1, sum = 0, norm = 0;
+  for (let o = 0; o < oct; o++) {
+    sum += amp * valueNoise2(x * freq, y * freq, seed + o * 101);
+    norm += amp; amp *= gain; freq *= lac;
+  }
+  return sum / norm;
+}
+// ridge noise — sharp creases, good for rocky ridges
+function ridge2(x, y, seed, oct = 4, lac = 2.0, gain = 0.5) {
+  let amp = 0.5, freq = 1, sum = 0, norm = 0;
+  for (let o = 0; o < oct; o++) {
+    const n = 1 - Math.abs(2 * valueNoise2(x * freq, y * freq, seed + o * 71) - 1);
+    sum += amp * n * n; norm += amp; amp *= gain; freq *= lac;
+  }
+  return sum / norm;
+}
+// domain warp: offset (x,y) by a noise vector. Returns warped [x,y].
+function applyDomainWarp(x, y, seed, strength) {
+  if (strength <= 0) return [x, y];
+  const wx = fbm2(x + 0.0, y + 0.0, seed + 13, 3) - 0.5;
+  const wy = fbm2(x + 5.2, y + 1.3, seed + 91, 3) - 0.5;
+  return [x + strength * 2 * wx, y + strength * 2 * wy];
+}
+
+/* ───────────────────────── 3. IslandConfig + presets ────────────────────── */
+class IslandConfig {
+  constructor(overrides = {}) { Object.assign(this, IslandConfig.defaults(), overrides); }
+  static defaults() {
+    return {
+      seed: 1337,
+      island_count: 5,
+      radius_min: 0.12,
+      radius_max: 0.23,
+      blob_count: 4,
+      elongation: 1.35,
+      warp_strength: 0.55,
+      edge_noise: 0.45,
+      plateau_size: 0.34,
+      cliff_steepness: 0.62,
+      reef_width: 0.16,
+      height_scale: 9,
+      depth_offset: 3,
+      layer_height: 0.125,
+      roughness: 0.45,
+      prop_density: 0.8,
+      archetype: 'mixed',
+    };
+  }
+  clone(over = {}) { return new IslandConfig(Object.assign({}, this, over)); }
+}
+
+// Per-archetype parameter biases + palettes + prop mix.
+// topRamp goes from lowest visible layer -> plateau top.
+const ARCHETYPES = {
+  round_reef: {
+    bias: { elongation: 1.05, plateau_size: 0.3, reef_width: 0.22, cliff_steepness: 0.5, roughness: 0.5 },
+    topRamp: [rgb(20, 70, 76), rgb(28, 104, 92), rgb(54, 150, 110), rgb(120, 196, 140), rgb(196, 214, 150)],
+    sideTint: rgb(8, 40, 58),
+    props: { coral: 0.52, anemone: 0.14, kelp: 0.12, rock: 0.14, ruin: 0, building: 0, vent: 0 },
+    lights: false, lava: false,
+  },
+  long_reef: {
+    bias: { elongation: 2.2, plateau_size: 0.24, reef_width: 0.2, cliff_steepness: 0.45, roughness: 0.55 },
+    topRamp: [rgb(18, 66, 74), rgb(26, 100, 96), rgb(48, 146, 116), rgb(110, 190, 148), rgb(188, 210, 152)],
+    sideTint: rgb(8, 38, 56),
+    props: { coral: 0.5, anemone: 0.16, kelp: 0.16, rock: 0.12, ruin: 0, building: 0, vent: 0 },
+    lights: false, lava: false,
+  },
+  ruins_island: {
+    bias: { elongation: 1.2, plateau_size: 0.5, reef_width: 0.12, cliff_steepness: 0.72, roughness: 0.32 },
+    topRamp: [rgb(24, 64, 70), rgb(44, 92, 90), rgb(86, 120, 112), rgb(140, 156, 142), rgb(186, 192, 174)],
+    sideTint: rgb(14, 44, 56),
+    props: { coral: 0.16, anemone: 0.06, kelp: 0.12, rock: 0.18, ruin: 0.48, building: 0, vent: 0 },
+    lights: true, lava: false, godrays: true,
+  },
+  base_island: {
+    bias: { elongation: 1.15, plateau_size: 0.46, reef_width: 0.14, cliff_steepness: 0.7, roughness: 0.34 },
+    topRamp: [rgb(22, 62, 70), rgb(40, 96, 92), rgb(70, 128, 110), rgb(126, 168, 138), rgb(190, 200, 160)],
+    sideTint: rgb(12, 42, 56),
+    props: { coral: 0.2, anemone: 0.08, kelp: 0.12, rock: 0.16, ruin: 0.04, building: 0.4, vent: 0 },
+    lights: true, lava: false,
+  },
+  volcanic: {
+    bias: { elongation: 1.1, plateau_size: 0.42, reef_width: 0.1, cliff_steepness: 0.85, roughness: 0.6, crater: true },
+    topRamp: [rgb(34, 26, 34), rgb(52, 36, 44), rgb(74, 46, 52), rgb(96, 58, 56), rgb(120, 74, 60)],
+    sideTint: rgb(20, 16, 26),
+    props: { coral: 0.14, anemone: 0.04, kelp: 0.06, rock: 0.4, ruin: 0, building: 0, vent: 0.36 },
+    lights: false, lava: true,
+  },
+};
+const ARCHETYPE_KEYS = ['round_reef', 'long_reef', 'ruins_island', 'base_island', 'volcanic'];
+const CORAL_COLORS = [rgb(244, 138, 96), rgb(236, 96, 120), rgb(248, 196, 92), rgb(168, 110, 220),
+                      rgb(96, 206, 196), rgb(238, 124, 180), rgb(120, 210, 120)];
+
+/* ───────────────────────── 4. footprint (metaballs) ─────────────────────── */
+// Build a set of ellipse "blobs" describing the island footprint in normalised
+// space centred at (0,0) with extent roughly [-1,1].
+function generateFootprintSDF(rng, archeBias, params) {
+  const blobs = [];
+  const n = Math.max(1, params.blob_count | 0);
+  const elong = (archeBias.elongation ?? params.elongation);
+  // primary central blob
+  blobs.push({ cx: 0, cy: 0, rx: 0.62 * elong, ry: 0.62, rot: rng() * TAU, strength: 1.2, sign: 1 });
+  // satellite blobs scattered around the centre
+  for (let i = 1; i < n; i++) {
+    const ang = rng() * TAU;
+    const dist = 0.25 + rng() * 0.5;
+    const r = 0.3 + rng() * 0.4;
+    blobs.push({
+      cx: Math.cos(ang) * dist * elong,
+      cy: Math.sin(ang) * dist,
+      rx: r * elong * (0.7 + rng() * 0.5),
+      ry: r * (0.7 + rng() * 0.5),
+      rot: rng() * TAU,
+      strength: 0.6 + rng() * 0.7,
+      sign: 1,
+    });
+  }
+  // volcanic caldera: negative blob carves the centre
+  if (archeBias.crater) {
+    blobs.push({ cx: 0, cy: 0, rx: 0.3, ry: 0.3, rot: 0, strength: 0.9, sign: -1, crater: true });
+  }
+  return blobs;
+}
+// Evaluate the metaball mass field at normalised (x,y). >iso => inside.
+function footprintField(blobs, x, y) {
+  let f = 0;
+  for (const b of blobs) {
+    if (b.crater) continue; // crater handled in heightmap, not footprint
+    const dx = x - b.cx, dy = y - b.cy;
+    const c = Math.cos(-b.rot), s = Math.sin(-b.rot);
+    const lx = (dx * c - dy * s) / b.rx;
+    const ly = (dx * s + dy * c) / b.ry;
+    const d2 = lx * lx + ly * ly;
+    f += b.sign * b.strength * Math.exp(-d2 * 2.4); // gaussian falloff
+  }
+  return f;
+}
+
+/* ──────────────────────────── 5. distance field ─────────────────────────── */
+// Chamfer 2-pass distance transform: distance (in cells) from each inside cell
+// to the nearest outside cell (the footprint edge). Outside cells = 0.
+function distanceTransform(inside, W, H) {
+  const INF = 1e9, D = 1, D2 = 1.4142136;
+  const d = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i++) d[i] = inside[i] ? INF : 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (d[i] === 0) continue;
+    let m = d[i];
+    if (x > 0)            m = Math.min(m, d[i - 1] + D);
+    if (y > 0)            m = Math.min(m, d[i - W] + D);
+    if (x > 0 && y > 0)   m = Math.min(m, d[i - W - 1] + D2);
+    if (x < W - 1 && y > 0) m = Math.min(m, d[i - W + 1] + D2);
+    d[i] = m;
+  }
+  for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) {
+    const i = y * W + x; if (d[i] === 0) continue;
+    let m = d[i];
+    if (x < W - 1)              m = Math.min(m, d[i + 1] + D);
+    if (y < H - 1)              m = Math.min(m, d[i + W] + D);
+    if (x < W - 1 && y < H - 1) m = Math.min(m, d[i + W + 1] + D2);
+    if (x > 0 && y < H - 1)     m = Math.min(m, d[i + W - 1] + D2);
+    d[i] = m;
+  }
+  return d;
+}
+
+/* ───────────────────────────── 6. heightmap ─────────────────────────────── */
+// Convert footprint -> continuous height grid (0 = sea edge, 1 = plateau top).
+// Uses distance-to-edge profile + fBm + ridge + roughness; edge_noise &
+// warp_strength distort the outline organically.
+function generateHeightmap(island) {
+  const { G, params, blobs, archeBias, noiseSeed } = island;
+  const half = G / 2;
+  const wspan = 2.2;                // normalised world extent the grid covers
+  const inside = new Uint8Array(G * G);
+  const field = new Float32Array(G * G);
+  const iso = 0.5;
+
+  // pass 1 — footprint mask (warp + edge noise applied to the field)
+  for (let gy = 0; gy < G; gy++) {
+    for (let gx = 0; gx < G; gx++) {
+      let nx = (gx - half) / half * wspan;
+      let ny = (gy - half) / half * wspan;
+      [nx, ny] = applyDomainWarp(nx, ny, noiseSeed, params.warp_strength);
+      let f = footprintField(blobs, nx, ny);
+      if (params.edge_noise > 0)
+        f += params.edge_noise * 0.6 * (fbm2(nx * 1.6 + 9, ny * 1.6 - 4, noiseSeed + 5, 4) - 0.5);
+      // hard fade near the grid border so every contour closes inside the array
+      const bx = Math.min(gx, G - 1 - gx), by = Math.min(gy, G - 1 - gy);
+      const border = Math.min(bx, by);
+      if (border < 4) f -= (4 - border) * 0.6;
+      field[gy * G + gx] = f;
+      inside[gy * G + gx] = f > iso ? 1 : 0;
+    }
+  }
+
+  // distance-to-edge
+  const dist = distanceTransform(inside, G, G);
+  let dMax = 0;
+  for (let i = 0; i < dist.length; i++) if (dist[i] > dMax) dMax = dist[i];
+  dMax = Math.max(dMax, 1);
+  island.dist = dist; island.dMax = dMax;
+
+  // profile bands
+  const reefEnd = clamp(params.reef_width, 0.02, 0.45);
+  const plateauStart = clamp(1 - params.plateau_size, reefEnd + 0.08, 0.95);
+  const ramp = (plateauStart - reefEnd);
+  const transition = ramp * (1 - params.cliff_steepness * 0.72);
+  const rampEnd = reefEnd + Math.max(0.04, transition);
+  const shelfH = 0.16;
+
+  const height = new Float32Array(G * G);
+  for (let i = 0; i < G * G; i++) {
+    if (!inside[i]) { height[i] = 0; continue; }
+    const dn = clamp(dist[i] / dMax, 0, 1);
+    let h;
+    if (dn < reefEnd) {
+      h = smoothstep(0, reefEnd, dn) * shelfH;
+    } else if (dn < rampEnd) {
+      h = shelfH + smootherstep(reefEnd, rampEnd, dn) * (1 - shelfH);
+    } else {
+      h = 1;
+    }
+    const gx = i % G, gy = (i / G) | 0;
+    const nx = (gx - half) / half * wspan, ny = (gy - half) / half * wspan;
+    // roughness: more on slopes/reef, less on the plateau (keeps tops buildable)
+    const slopeBand = 1 - smoothstep(rampEnd, 1, dn);
+    const rough = (fbm2(nx * 3.1, ny * 3.1, noiseSeed + 21, 5) - 0.5);
+    const ridge = ridge2(nx * 2.2, ny * 2.2, noiseSeed + 33, 4) - 0.45;
+    h += rough * params.roughness * 0.22 * lerp(0.35, 1, slopeBand);
+    h += ridge * params.roughness * 0.16 * slopeBand;
+    // volcanic caldera: carve a central crater into a ring
+    if (archeBias.crater) {
+      const crater = smoothstep(0.55, 1, dn);
+      h -= crater * 0.72;
+    }
+    height[i] = clamp(h, 0, 1.15);
+  }
+
+  // light smoothing pass to remove single-cell spikes
+  const sm = new Float32Array(G * G);
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) {
+    const i = gy * G + gx;
+    let s = height[i] * 4, w = 4;
+    if (gx > 0)     { s += height[i - 1]; w++; }
+    if (gx < G - 1) { s += height[i + 1]; w++; }
+    if (gy > 0)     { s += height[i - G]; w++; }
+    if (gy < G - 1) { s += height[i + G]; w++; }
+    sm[i] = s / w;
+  }
+  island.height = sm;
+  // slope grid (gradient magnitude) for masks
+  const slope = new Float32Array(G * G);
+  for (let gy = 1; gy < G - 1; gy++) for (let gx = 1; gx < G - 1; gx++) {
+    const i = gy * G + gx;
+    const dx = sm[i + 1] - sm[i - 1], dy = sm[i + G] - sm[i - G];
+    slope[i] = Math.hypot(dx, dy);
+  }
+  island.slope = slope;
+  return sm;
+}
+
+// bilinear sample of the height grid at continuous grid coords
+function sampleHeight(island, gx, gy) {
+  const { height, G } = island;
+  gx = clamp(gx, 0, G - 1.001); gy = clamp(gy, 0, G - 1.001);
+  const x0 = gx | 0, y0 = gy | 0, x1 = x0 + 1, y1 = y0 + 1;
+  const fx = gx - x0, fy = gy - y0;
+  const h00 = height[y0 * G + x0], h10 = height[y0 * G + x1];
+  const h01 = height[y1 * G + x0], h11 = height[y1 * G + x1];
+  return (h00 * (1 - fx) + h10 * fx) * (1 - fy) + (h01 * (1 - fx) + h11 * fx) * fy;
+}
+
+/* ──────────────────────────── 7. quantize ───────────────────────────────── */
+function quantizeHeightmap(island) {
+  const { height, G } = island;
+  const nLevels = island.nLevels;
+  const levels = new Int16Array(G * G);
+  for (let i = 0; i < G * G; i++) levels[i] = clamp(Math.round(height[i] * nLevels), 0, nLevels);
+  island.levels = levels;
+  return levels;
+}
+
+/* ─────────────────────── 8. marching squares contours ───────────────────── */
+function interpEdge(iso, ax, ay, av, bx, by, bv) {
+  let t = (iso - av) / (bv - av);
+  if (!isFinite(t)) t = 0.5;
+  t = clamp(t, 0, 1);
+  return [ax + (bx - ax) * t, ay + (by - ay) * t];
+}
+// Interpolated marching squares on a scalar field at `iso`. Returns array of
+// closed loops (each an array of [x,y] grid points).
+function extractContours(field, W, H, iso) {
+  const segs = [];
+  for (let y = 0; y < H - 1; y++) {
+    for (let x = 0; x < W - 1; x++) {
+      const tl = field[y * W + x],     tr = field[y * W + x + 1];
+      const bl = field[(y + 1) * W + x], br = field[(y + 1) * W + x + 1];
+      const Atl = tl >= iso, Atr = tr >= iso, Abr = br >= iso, Abl = bl >= iso;
+      let code = (Atl ? 1 : 0) | (Atr ? 2 : 0) | (Abr ? 4 : 0) | (Abl ? 8 : 0);
+      if (code === 0 || code === 15) continue;
+      const T = () => interpEdge(iso, x, y, tl, x + 1, y, tr);
+      const R = () => interpEdge(iso, x + 1, y, tr, x + 1, y + 1, br);
+      const B = () => interpEdge(iso, x, y + 1, bl, x + 1, y + 1, br);
+      const L = () => interpEdge(iso, x, y, tl, x, y + 1, bl);
+      // which edges are crossed
+      const cross = [];
+      if (Atl !== Atr) cross.push(T);
+      if (Atr !== Abr) cross.push(R);
+      if (Abl !== Abr) cross.push(B);
+      if (Atl !== Abl) cross.push(L);
+      if (cross.length === 2) {
+        segs.push([cross[0](), cross[1]()]);
+      } else if (cross.length === 4) {
+        const center = (tl + tr + br + bl) / 4;
+        const pT = T(), pR = R(), pB = B(), pL = L();
+        if (center >= iso) { segs.push([pT, pR]); segs.push([pB, pL]); }
+        else               { segs.push([pT, pL]); segs.push([pB, pR]); }
+      }
+    }
+  }
+  return stitchLoops(segs);
+}
+function ptKey(p) { return ((p[0] * 256) | 0) + ',' + ((p[1] * 256) | 0); }
+function stitchLoops(segs) {
+  const map = new Map();
+  segs.forEach((s, i) => {
+    for (const e of [0, 1]) { const k = ptKey(s[e]); if (!map.has(k)) map.set(k, []); map.get(k).push({ i, e }); }
+  });
+  const used = new Array(segs.length).fill(false);
+  const loops = [];
+  for (let i = 0; i < segs.length; i++) {
+    if (used[i]) continue;
+    const loop = [];
+    let cs = i, fromEnd = 0, guard = 0;
+    while (cs >= 0 && !used[cs] && guard++ < segs.length + 8) {
+      used[cs] = true;
+      const a = segs[cs][fromEnd], b = segs[cs][1 - fromEnd];
+      loop.push(a);
+      const cand = map.get(ptKey(b)) || [];
+      let next = -1, nextFrom = 0;
+      for (const c of cand) { if (!used[c.i]) { next = c.i; nextFrom = c.e; break; } }
+      if (next < 0) { loop.push(b); break; }
+      cs = next; fromEnd = nextFrom;
+    }
+    if (loop.length >= 3) loops.push(loop);
+  }
+  return loops;
+}
+
+/* ─────────────────────── 9. isometric projection ────────────────────────── */
+function projectIso(gx, gy, z, P) {
+  return [
+    (gx - gy) * P.tileW * 0.5 + P.originX,
+    (gx + gy) * P.tileH * 0.5 - z * P.heightScale + P.originY,
+  ];
+}
+const projectIsometric = projectIso; // spec-named alias
+// Build top-face polygon + extruded side-wall quads for one contour slab.
+function buildTopAndSideFaces(loops, k, island, P) {
+  const zTop = k;
+  const zBot = (k === 1) ? -island.baseDepth : k - 1;
+  const walls = [];
+  for (const loop of loops) {
+    const n = loop.length;
+    for (let i = 0; i < n; i++) {
+      const p0 = loop[i], p1 = loop[(i + 1) % n];
+      const s0t = projectIso(p0[0], p0[1], zTop, P);
+      const s1t = projectIso(p1[0], p1[1], zTop, P);
+      const s1b = projectIso(p1[0], p1[1], zBot, P);
+      const s0b = projectIso(p0[0], p0[1], zBot, P);
+      // outward normal in grid space points toward lower terrain
+      let nx = (p1[1] - p0[1]), ny = -(p1[0] - p0[0]);
+      const ln = Math.hypot(nx, ny) || 1; nx /= ln; ny /= ln;
+      const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
+      const hOut = sampleHeight(island, mx + nx * 1.5, my + ny * 1.5);
+      const hIn  = sampleHeight(island, mx - nx * 1.5, my - ny * 1.5);
+      if (hOut > hIn) { nx = -nx; ny = -ny; } // ensure outward = downhill
+      // lambert-ish shade from a top-left light
+      const lit = clamp(nx * -0.55 + ny * -0.83, -1, 1);
+      const shade = 0.42 + 0.5 * (lit * 0.5 + 0.5);
+      walls.push({ quad: [s0t, s1t, s1b, s0b], depth: mx + my, shade });
+    }
+  }
+  return { walls, zTop };
+}
+
+/* ──────────────────────────── 10. masks ─────────────────────────────────── */
+function generateMasks(island) {
+  const { G, height, slope, levels, nLevels, dist, dMax } = island;
+  const plateau = new Uint8Array(G * G);
+  const cliff = new Uint8Array(G * G);
+  const reef = new Uint8Array(G * G);
+  const deep = new Uint8Array(G * G);
+  const slopeMask = new Uint8Array(G * G);
+  const flatT = 0.012, steepT = 0.05;
+  for (let i = 0; i < G * G; i++) {
+    const h = height[i], sl = slope[i], lv = levels[i];
+    const dn = dist[i] / dMax;
+    if (lv === 0) { deep[i] = 1; continue; }
+    if (lv >= nLevels - 1 && sl < flatT) plateau[i] = 1;
+    if (sl > steepT) cliff[i] = 1;
+    if (lv >= 1 && dn < 0.34 && h < 0.55) reef[i] = 1;
+    if (sl > flatT && sl <= steepT && lv >= 1 && lv < nLevels - 1) slopeMask[i] = 1;
+  }
+  island.masks = { plateau, cliff, reef, deep, slope: slopeMask };
+  return island.masks;
+}
+
+/* ──────────────────── 11. Poisson disk + prop scatter ───────────────────── */
+// Bridson Poisson-disk sampling over [0,W]x[0,H], min spacing r.
+function poissonDisk(W, H, r, rng, k = 24) {
+  const cell = r / Math.SQRT2;
+  const gw = Math.ceil(W / cell), gh = Math.ceil(H / cell);
+  const grid = new Int32Array(gw * gh).fill(-1);
+  const pts = [], active = [];
+  const add = (p) => { const gx = (p[0] / cell) | 0, gy = (p[1] / cell) | 0; grid[gy * gw + gx] = pts.length; pts.push(p); active.push(pts.length - 1); };
+  add([rng() * W, rng() * H]);
+  while (active.length) {
+    const ai = (rng() * active.length) | 0;
+    const p = pts[active[ai]];
+    let placed = false;
+    for (let i = 0; i < k; i++) {
+      const ang = rng() * TAU, rad = r * (1 + rng());
+      const nx = p[0] + Math.cos(ang) * rad, ny = p[1] + Math.sin(ang) * rad;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const gx = (nx / cell) | 0, gy = (ny / cell) | 0;
+      let ok = true;
+      for (let yy = Math.max(0, gy - 2); yy <= Math.min(gh - 1, gy + 2) && ok; yy++)
+        for (let xx = Math.max(0, gx - 2); xx <= Math.min(gw - 1, gx + 2); xx++) {
+          const idx = grid[yy * gw + xx];
+          if (idx >= 0) { const q = pts[idx]; if ((q[0] - nx) ** 2 + (q[1] - ny) ** 2 < r * r) { ok = false; break; } }
+        }
+      if (ok) { add([nx, ny]); placed = true; break; }
+    }
+    if (!placed) active.splice(ai, 1);
+  }
+  return pts;
+}
+// Scatter decorative props, filtered/typed by mask.
+function scatterProps(island, rng) {
+  const { G, masks, params, archeBias, nLevels } = island;
+  const pm = archeBias.props;
+  const r = Math.max(2.0, 6.5 - params.prop_density * 4);
+  const pts = poissonDisk(G, G, r, rng);
+  const props = [];
+  for (const [px, py] of pts) {
+    const ix = clamp(px | 0, 0, G - 1), iy = clamp(py | 0, 0, G - 1);
+    const i = iy * G + ix;
+    const onPlateau = masks.plateau[i], onCliff = masks.cliff[i];
+    const onReef = masks.reef[i], onSlope = masks.slope[i], onDeep = masks.deep[i];
+    if (onDeep) { // sparse seabed dressing only
+      if (rng() < 0.04) props.push(mkProp('rock', island, px, py, rng, 0.7));
+      continue;
+    }
+    let type = null;
+    const roll = rng();
+    if (onPlateau && (pm.ruin + pm.building + pm.vent) > 0) {
+      type = pick(rng, [['ruin', pm.ruin], ['building', pm.building], ['vent', pm.vent], ['rock', 0.1]]);
+    } else if (onReef) {
+      type = pick(rng, [['coral', pm.coral], ['anemone', pm.anemone], ['rock', pm.rock * 0.4], ['kelp', pm.kelp * 0.5]]);
+    } else if (onCliff) {
+      type = pick(rng, [['rock', pm.rock + 0.2], ['kelp', pm.kelp], ['coral', pm.coral * 0.4]]);
+    } else if (onSlope) {
+      type = pick(rng, [['kelp', pm.kelp + 0.1], ['coral', pm.coral * 0.5], ['rock', pm.rock], ['anemone', pm.anemone]]);
+    } else { // upper interior — mostly bare with occasional dressing
+      if (roll < 0.25) type = pick(rng, [['coral', pm.coral], ['rock', pm.rock], ['ruin', pm.ruin], ['building', pm.building], ['vent', pm.vent]]);
+    }
+    if (!type) continue;
+    props.push(mkProp(type, island, px, py, rng, 1));
+  }
+  // depth sort (painter's order within the island)
+  props.sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
+  island.props = props;
+  return props;
+}
+function pick(rng, weighted) {
+  let total = 0; for (const [, w] of weighted) total += Math.max(0, w);
+  if (total <= 0) return null;
+  let r = rng() * total;
+  for (const [name, w] of weighted) { if (w <= 0) continue; r -= w; if (r <= 0) return name; }
+  return weighted[0][0];
+}
+function mkProp(type, island, gx, gy, rng, scl = 1) {
+  const z = sampleHeight(island, gx, gy) * island.nLevels;
+  return {
+    type, gx, gy, z,
+    scale: scl * (0.7 + rng() * 0.6),
+    rot: rng() * TAU,
+    color: CORAL_COLORS[(rng() * CORAL_COLORS.length) | 0],
+    seed: (rng() * 1e6) | 0,
+    sway: rng() * TAU,
+  };
+}
+
+/* ─────────────────────────── 12. prop sprites ───────────────────────────── */
+// All sprites draw upward from a projected base point (sx, sy). `u` is the
+// world-unit scale (pixels per height unit) so props sit proportionally.
+function drawProp(ctx, prop, P, island, t) {
+  const [sx, sy] = projectIso(prop.gx, prop.gy, prop.z, P);
+  const u = P.heightScale;
+  const s = prop.scale;
+  ctx.save();
+  ctx.translate(sx, sy);
+  switch (prop.type) {
+    case 'coral':    drawCoral(ctx, prop, u, s); break;
+    case 'anemone':  drawAnemone(ctx, prop, u, s, t); break;
+    case 'kelp':     drawKelp(ctx, prop, u, s, t); break;
+    case 'rock':     drawRock(ctx, prop, u, s); break;
+    case 'ruin':     drawRuin(ctx, prop, u, s, P); break;
+    case 'building': drawBuilding(ctx, prop, u, s, P); break;
+    case 'vent':     drawVent(ctx, prop, u, s, t); break;
+  }
+  ctx.restore();
+}
+function drawCoral(ctx, prop, u, s) {
+  const R = makeRNG(prop.seed);
+  const branches = 3 + (R() * 3 | 0);
+  const base = prop.color, dark = scale(base, 0.6);
+  const H = u * (1.0 + R() * 1.1) * s;
+  ctx.lineCap = 'round';
+  for (let b = 0; b < branches; b++) {
+    const a = (-Math.PI / 2) + (b / (branches - 1 || 1) - 0.5) * 1.6;
+    const len = H * (0.6 + R() * 0.6);
+    const ex = Math.cos(a) * len * 0.5, ey = Math.sin(a) * len;
+    ctx.strokeStyle = css(dark); ctx.lineWidth = Math.max(1, u * 0.32 * s);
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(ex * 0.4, ey * 0.55, ex, ey); ctx.stroke();
+    ctx.fillStyle = css(base);
+    ctx.beginPath(); ctx.arc(ex, ey, Math.max(1, u * 0.34 * s), 0, TAU); ctx.fill();
+  }
+  ctx.fillStyle = css(scale(base, 1.15));
+  ctx.beginPath(); ctx.arc(0, 0, Math.max(1, u * 0.28 * s), 0, TAU); ctx.fill();
+}
+function drawAnemone(ctx, prop, u, s, t) {
+  const base = prop.color;
+  const n = 8;
+  const wob = Math.sin(t * 1.6 + prop.sway) * 0.12;
+  ctx.strokeStyle = css(base, 0.92); ctx.lineWidth = Math.max(1, u * 0.18 * s); ctx.lineCap = 'round';
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (i / (n - 1) - 0.5) * 2.4 + wob * (i % 2 ? 1 : -1);
+    const len = u * (0.5 + 0.4 * (i % 2)) * s;
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(a) * len * 0.6, Math.sin(a) * len); ctx.stroke();
+  }
+  ctx.fillStyle = css(scale(base, 0.7));
+  ctx.beginPath(); ctx.ellipse(0, 0, u * 0.34 * s, u * 0.2 * s, 0, 0, TAU); ctx.fill();
+}
+function drawKelp(ctx, prop, u, s, t) {
+  const col = rgb(46, 132, 86), dark = rgb(28, 92, 64);
+  const strands = 2 + (prop.seed % 2);
+  const H = u * (2.4 + (prop.seed % 5) * 0.4) * s;
+  for (let k = 0; k < strands; k++) {
+    const ox = (k - (strands - 1) / 2) * u * 0.4 * s;
+    const sway = Math.sin(t * 1.1 + prop.sway + k) * u * 0.5 * s;
+    ctx.strokeStyle = css(k % 2 ? dark : col, 0.92);
+    ctx.lineWidth = Math.max(1, u * 0.26 * s); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(ox, 0);
+    ctx.quadraticCurveTo(ox + sway * 0.5, -H * 0.55, ox + sway, -H);
+    ctx.stroke();
+  }
+}
+function drawRock(ctx, prop, u, s) {
+  const R = makeRNG(prop.seed);
+  const base = mix(rgb(70, 86, 92), rgb(48, 64, 74), R());
+  const w = u * (0.9 + R() * 0.8) * s, h = u * (0.6 + R() * 0.6) * s;
+  ctx.fillStyle = css(scale(base, 0.7));
+  ctx.beginPath();
+  const n = 6;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU; const rr = 0.7 + R() * 0.5;
+    const px = Math.cos(a) * w * rr, py = -h * 0.5 + Math.sin(a) * h * rr * 0.6;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = css(scale(base, 1.1));
+  ctx.beginPath(); ctx.ellipse(-w * 0.15, -h * 0.6, w * 0.5, h * 0.3, 0, 0, TAU); ctx.fill();
+}
+function drawRuin(ctx, prop, u, s, P) {
+  const R = makeRNG(prop.seed);
+  const stone = rgb(150, 158, 146), lit = rgb(186, 192, 174), shad = rgb(86, 100, 96);
+  const w = u * 0.8 * s, h = u * (2.2 + R() * 1.6) * s;
+  const broken = h * (0.7 + R() * 0.3);
+  // simple iso column: left face, right face, top
+  const topW = w, topH = w * (P.tileH / P.tileW);
+  ctx.fillStyle = css(shad);
+  ctx.beginPath(); ctx.moveTo(-topW, -broken); ctx.lineTo(0, -broken + topH); ctx.lineTo(0, 0); ctx.lineTo(-topW, -topH); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = css(stone);
+  ctx.beginPath(); ctx.moveTo(topW, -broken); ctx.lineTo(0, -broken + topH); ctx.lineTo(0, 0); ctx.lineTo(topW, -topH); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = css(lit);
+  ctx.beginPath(); ctx.moveTo(0, -broken - topH); ctx.lineTo(topW, -broken); ctx.lineTo(0, -broken + topH); ctx.lineTo(-topW, -broken); ctx.closePath(); ctx.fill();
+}
+function drawBuilding(ctx, prop, u, s, P) {
+  const R = makeRNG(prop.seed);
+  const wall = rgb(70, 96, 110), lit = rgb(120, 150, 162), shad = rgb(40, 60, 74);
+  const w = u * 1.1 * s, h = u * (2.6 + R() * 1.8) * s;
+  const topH = w * (P.tileH / P.tileW);
+  ctx.fillStyle = css(shad);
+  ctx.beginPath(); ctx.moveTo(-w, -h); ctx.lineTo(0, -h + topH); ctx.lineTo(0, 0); ctx.lineTo(-w, -topH); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = css(wall);
+  ctx.beginPath(); ctx.moveTo(w, -h); ctx.lineTo(0, -h + topH); ctx.lineTo(0, 0); ctx.lineTo(w, -topH); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = css(lit);
+  ctx.beginPath(); ctx.moveTo(0, -h - topH); ctx.lineTo(w, -h); ctx.lineTo(0, -h + topH); ctx.lineTo(-w, -h); ctx.closePath(); ctx.fill();
+  // glowing window
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = 'rgba(255,210,120,0.85)';
+  ctx.beginPath(); ctx.arc(-w * 0.5, -h * 0.55, u * 0.22 * s, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+function drawVent(ctx, prop, u, s, t) {
+  const flick = 0.7 + 0.3 * Math.sin(t * 4 + prop.sway);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, u * 2.4 * s);
+  g.addColorStop(0, `rgba(255,180,80,${0.9 * flick})`);
+  g.addColorStop(0.4, `rgba(240,90,40,${0.55 * flick})`);
+  g.addColorStop(1, 'rgba(120,20,10,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, u * 2.4 * s, 0, TAU); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = css(rgb(30, 18, 18));
+  ctx.beginPath(); ctx.ellipse(0, 0, u * 0.5 * s, u * 0.3 * s, 0, 0, TAU); ctx.fill();
+}
+
+/* ──────────────────────────── 13. render island ─────────────────────────── */
+function renderIsland(ctx, island, t) {
+  const P = island.P;
+  const haze = island.placement.haze || 0;
+  const hazeCol = island.archeBias.lava ? rgb(20, 30, 44) : rgb(18, 74, 88);
+  const hazed = (c) => haze > 0 ? mix(c, hazeCol, haze) : c;
+  // seabed contact shadow
+  const [cx, cy] = projectIso(island.G / 2, island.G / 2, 0, P);
+  const rad = island.screenR;
+  const sg = ctx.createRadialGradient(cx, cy + rad * 0.18, rad * 0.1, cx, cy + rad * 0.18, rad * 1.25);
+  sg.addColorStop(0, 'rgba(0,8,16,0.55)');
+  sg.addColorStop(1, 'rgba(0,8,16,0)');
+  ctx.fillStyle = sg;
+  ctx.save(); ctx.translate(cx, cy + rad * 0.18); ctx.scale(1, 0.5); ctx.translate(-cx, -(cy + rad * 0.18));
+  ctx.beginPath(); ctx.arc(cx, cy + rad * 0.18, rad * 1.25, 0, TAU); ctx.fill(); ctx.restore();
+
+  // slabs bottom -> top
+  for (let k = 1; k <= island.nLevels; k++) {
+    const layer = island.contours[k];
+    if (!layer || layer.length === 0) continue;
+    const { walls } = buildTopAndSideFaces(layer, k, island, P);
+    walls.sort((a, b) => a.depth - b.depth);
+    const topCol = rampAt(island.archeBias.topRamp, (k - 1) / Math.max(1, island.nLevels - 1));
+    const depthFade = clamp(k / island.nLevels, 0, 1);
+    const waterDeep = island.archeBias.lava ? rgb(14, 8, 16) : rgb(6, 26, 36);
+    // side material = shadowed version of this layer's top, pushed blue-green
+    let sideMat = mix(scale(topCol, 0.5), rgb(12, 48, 62), 0.42);
+    if (island.archeBias.lava) sideMat = mix(scale(topCol, 0.55), rgb(26, 14, 22), 0.4);
+    sideMat = scale(sideMat, 0.66 + 0.46 * depthFade); // lower layers darker
+    // side walls
+    for (const w of walls) {
+      const q = w.quad;
+      const col = hazed(scale(sideMat, w.shade)); // directional shading + distance haze
+      if (k === 1) {
+        // tall foundation wall: fade its base into the water murk so the
+        // island sinks into the seabed instead of ending in a black slab
+        const yTop = Math.min(q[0][1], q[1][1]), yBot = Math.max(q[2][1], q[3][1]);
+        const g = ctx.createLinearGradient(0, yTop, 0, yBot);
+        g.addColorStop(0, css(col));
+        g.addColorStop(0.55, css(scale(col, 0.7)));
+        g.addColorStop(1, css(waterDeep, 0.85));
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = css(col);
+      }
+      ctx.beginPath();
+      ctx.moveTo(q[0][0], q[0][1]); ctx.lineTo(q[1][0], q[1][1]);
+      ctx.lineTo(q[2][0], q[2][1]); ctx.lineTo(q[3][0], q[3][1]); ctx.closePath();
+      ctx.fill();
+    }
+    // top faces (single path, even-odd cuts holes such as the volcanic caldera)
+    ctx.fillStyle = css(hazed(topCol));
+    ctx.beginPath();
+    for (const loop of layer) {
+      const p0 = projectIso(loop[0][0], loop[0][1], k, P);
+      ctx.moveTo(p0[0], p0[1]);
+      for (let i = 1; i < loop.length; i++) {
+        const p = projectIso(loop[i][0], loop[i][1], k, P);
+        ctx.lineTo(p[0], p[1]);
+      }
+      ctx.closePath();
+    }
+    ctx.fill('evenodd');
+    // terrace edge highlight — defines each stacked contour step
+    ctx.strokeStyle = css(hazed(scale(topCol, 1.12)), 0.26);
+    ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // crater lava glow for volcanic
+  if (island.archeBias.lava) {
+    const [lx, ly] = projectIso(island.G / 2, island.G / 2, island.nLevels * 0.55, P);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, island.screenR * 0.5);
+    const fl = 0.75 + 0.25 * Math.sin(t * 2.5);
+    g.addColorStop(0, `rgba(255,170,70,${0.8 * fl})`);
+    g.addColorStop(0.5, `rgba(230,80,40,${0.4 * fl})`);
+    g.addColorStop(1, 'rgba(120,20,10,0)');
+    ctx.fillStyle = g; ctx.beginPath();
+    ctx.ellipse(lx, ly, island.screenR * 0.5, island.screenR * 0.28, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
+  // props
+  for (const prop of island.props) drawProp(ctx, prop, P, island, t);
+}
+
+/* ─────────────────────── 14. scene assembly + entities ──────────────────── */
+function buildIsland(config, index, placement) {
+  const rng = makeRNG((config.seed * 2654435761 + index * 40503) >>> 0);
+  const noiseSeed = ((config.seed + index * 1013) >>> 0) % 100000;
+  // resolve archetype
+  let archKey = config.archetype;
+  if (archKey === 'mixed') archKey = placement.arche;
+  const arche = ARCHETYPES[archKey];
+  // params with archetype bias applied
+  const params = Object.assign({}, config);
+  Object.assign(params, arche.bias);
+  params.warp_strength = config.warp_strength;
+  params.edge_noise = config.edge_noise;
+  params.roughness = config.roughness * (arche.bias.roughness ? arche.bias.roughness / 0.45 : 1);
+  params.prop_density = config.prop_density;
+  // make sure user-driven globals still influence biased archetypes a little
+  params.plateau_size = lerp(config.plateau_size, arche.bias.plateau_size ?? config.plateau_size, 0.6);
+  params.reef_width = lerp(config.reef_width, arche.bias.reef_width ?? config.reef_width, 0.6);
+  params.cliff_steepness = lerp(config.cliff_steepness, arche.bias.cliff_steepness ?? config.cliff_steepness, 0.6);
+
+  const G = 96;
+  const nLevels = clamp(Math.round(1 / config.layer_height), 4, 14);
+  const island = { config, index, G, params, archeBias: arche, archKey, noiseSeed, nLevels };
+  island.blobs = generateFootprintSDF(rng, arche.bias, params);
+  generateHeightmap(island);
+  quantizeHeightmap(island);
+  generateMasks(island);
+
+  // contours per level (continuous iso) computed once
+  island.contours = [];
+  for (let k = 1; k <= nLevels; k++) {
+    const iso = k / nLevels - 0.5 / nLevels;
+    island.contours[k] = extractContours(island.height, G, G, iso);
+  }
+
+  // iso projection params from placement
+  island.baseDepth = config.depth_offset;
+  island.P = {
+    tileW: placement.tileW,
+    tileH: placement.tileW * 0.5,
+    heightScale: config.height_scale,
+    originX: placement.cx,
+    originY: placement.cy - (G) * (placement.tileW * 0.5) * 0.5,
+  };
+  // approximate on-screen radius for shadows / sorting
+  island.screenR = G * 0.32 * placement.tileW * 0.5;
+
+  scatterProps(island, rng);
+  island.placement = placement;
+  return island;
+}
+
+// Lay out island centres across the scene with depth variety.
+function layoutIslands(config, W, H) {
+  const rng = makeRNG((config.seed * 7919 + 17) >>> 0);
+  const n = clamp(config.island_count | 0, 1, 9);
+  const minDim = Math.min(W, H);
+  // archetype rotation for "mixed" — echoes the reference variety
+  const mixOrder = ['ruins_island', 'round_reef', 'base_island', 'volcanic', 'long_reef',
+                    'round_reef', 'ruins_island', 'long_reef', 'volcanic'];
+  const placements = [];
+  const margin = 0.14;
+  let attempts = 0;
+  while (placements.length < n && attempts < 600) {
+    attempts++;
+    const cx = lerp(W * margin, W * (1 - margin), rng());
+    const cy = lerp(H * 0.18, H * 0.92, rng());
+    const sizeF = lerp(config.radius_min, config.radius_max, rng());
+    const tileW = (minDim * sizeF) / (96 * 0.32 * 0.5); // tuned so screenR ≈ minDim*sizeF
+    const screenR = 96 * 0.32 * tileW * 0.5;
+    let ok = true;
+    for (const p of placements) {
+      const dx = p.cx - cx, dy = (p.cy - cy) * 1.6;
+      if (Math.hypot(dx, dy) < (p.screenR + screenR) * 0.92) { ok = false; break; }
+    }
+    if (!ok) continue;
+    // back (higher on screen / smaller cy) islands get more atmospheric haze
+    const haze = clamp((1 - cy / H) * 0.55, 0, 0.42);
+    placements.push({ cx, cy, tileW, screenR, haze, arche: mixOrder[placements.length % mixOrder.length] });
+  }
+  // back-to-front by base y
+  placements.sort((a, b) => a.cy - b.cy);
+  return placements;
+}
+
+function drawWater(ctx, W, H) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0a4956');
+  g.addColorStop(0.35, '#073847');
+  g.addColorStop(0.7, '#04212f');
+  g.addColorStop(1, '#021019');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // brighter sunlit patch upper area
+  const rg = ctx.createRadialGradient(W * 0.42, -H * 0.1, 0, W * 0.42, -H * 0.1, H * 0.9);
+  rg.addColorStop(0, 'rgba(120,220,220,0.22)');
+  rg.addColorStop(1, 'rgba(120,220,220,0)');
+  ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+}
+// faint suspended-particle haze (marine snow) — adds depth and atmosphere
+function drawParticleHaze(ctx, W, H, seed) {
+  const rng = makeRNG((seed * 911 + 3) >>> 0);
+  ctx.save();
+  for (let i = 0; i < 220; i++) {
+    const x = rng() * W, y = rng() * H;
+    const depth = y / H;                       // brighter lower in the column
+    ctx.fillStyle = `rgba(190,225,225,${0.02 + depth * 0.06 * rng()})`;
+    ctx.beginPath(); ctx.arc(x, y, rng() < 0.85 ? 0.6 : 1.2, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+// radial source-based god rays (light shafts from a sun point above the scene)
+function drawGodRays(ctx, W, H, t, sunX) {
+  const sunY = -H * 0.18;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const rays = 9;
+  for (let i = 0; i < rays; i++) {
+    const baseA = (i / rays - 0.5) * 0.9;
+    const a = baseA + Math.sin(t * 0.15 + i) * 0.02 + Math.PI / 2;
+    const wob = 0.06 + 0.03 * Math.sin(t * 0.4 + i * 1.7);
+    const len = H * 1.25;
+    const x0 = sunX, y0 = sunY;
+    const dx = Math.cos(a), dy = Math.sin(a);
+    const px = -dy, py = dx;
+    const wTop = W * 0.012, wBot = W * (0.05 + wob);
+    const alpha = 0.05 + 0.035 * (0.5 + 0.5 * Math.sin(t * 0.5 + i * 2.1));
+    const g = ctx.createLinearGradient(x0, y0, x0 + dx * len, y0 + dy * len);
+    g.addColorStop(0, `rgba(180,240,235,${alpha})`);
+    g.addColorStop(0.5, `rgba(140,225,225,${alpha * 0.5})`);
+    g.addColorStop(1, 'rgba(120,210,220,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x0 + px * wTop, y0 + py * wTop);
+    ctx.lineTo(x0 - px * wTop, y0 - py * wTop);
+    ctx.lineTo(x0 + dx * len - px * wBot, y0 + dy * len - py * wBot);
+    ctx.lineTo(x0 + dx * len + px * wBot, y0 + dy * len + py * wBot);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawCaustics(ctx, W, H, t) {
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const cols = 5;
+  for (let i = 0; i < cols; i++) {
+    const x = (valueNoise2(i * 3.1, t * 0.07, 7) * W);
+    const y = (valueNoise2(i * 5.7 + 2, t * 0.05, 13) * H);
+    const r = W * (0.04 + 0.02 * valueNoise2(i, t * 0.1, 3));
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(150,230,230,0.05)');
+    g.addColorStop(1, 'rgba(150,230,230,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawDottedPath(ctx, a, b) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(180,230,235,0.35)';
+  ctx.setLineDash([2, 5]); ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(a[0], a[1]);
+  const mx = (a[0] + b[0]) / 2, my = Math.max(a[1], b[1]) + 22;
+  ctx.quadraticCurveTo(mx, my, b[0], b[1]);
+  ctx.stroke(); ctx.restore();
+}
+
+/* moving entities — seeded placement, time-based motion */
+function makeEntities(config, W, H, islands) {
+  const rng = makeRNG((config.seed * 33547 + 7) >>> 0);
+  const bubbles = [];
+  for (let i = 0; i < 70; i++)
+    bubbles.push({ x: rng() * W, y: rng() * H, r: 0.6 + rng() * 1.8, spd: 6 + rng() * 16, ph: rng() * TAU });
+  const fish = [];
+  for (let i = 0; i < 9; i++)
+    fish.push({ y: lerp(H * 0.2, H * 0.95, rng()), x: rng() * W, spd: (rng() < 0.5 ? -1 : 1) * (14 + rng() * 22),
+                amp: 6 + rng() * 14, ph: rng() * TAU, sz: 3 + rng() * 4, col: CORAL_COLORS[(rng() * CORAL_COLORS.length) | 0] });
+  const jellies = [];
+  for (let i = 0; i < 4; i++)
+    jellies.push({ x: lerp(W * 0.6, W * 0.96, rng()), y: lerp(H * 0.55, H * 0.95, rng()),
+                   r: 7 + rng() * 8, ph: rng() * TAU, drift: rng() * TAU,
+                   col: rng() < 0.5 ? rgb(236, 120, 190) : rgb(170, 130, 240) });
+  // a submarine drifting along a horizontal lane
+  const sub = { y: H * lerp(0.45, 0.62, rng()), x0: W * 0.1, x1: W * 0.85, ph: rng() * TAU, dir: 1 };
+  return { bubbles, fish, jellies, sub, W, H };
+}
+function drawEntities(ctx, ent, t) {
+  const { bubbles, fish, jellies, sub, W, H } = ent;
+  // bubbles
+  ctx.fillStyle = 'rgba(200,240,245,0.5)';
+  for (const b of bubbles) {
+    const y = ((b.y - t * b.spd) % H + H) % H;
+    const x = b.x + Math.sin(t * 0.8 + b.ph) * 3;
+    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(t + b.ph);
+    ctx.beginPath(); ctx.arc(x, y, b.r, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // submarine
+  drawSubmarine(ctx, sub, t, W);
+  // fish
+  for (const f of fish) {
+    let x = ((f.x + t * f.spd) % (W + 80) + (W + 80)) % (W + 80) - 40;
+    const y = f.y + Math.sin(t * 1.5 + f.ph) * f.amp;
+    drawFish(ctx, x, y, f.sz, f.spd < 0 ? -1 : 1, f.col, t + f.ph);
+  }
+  // jellyfish
+  for (const j of jellies) drawJelly(ctx, j, t);
+}
+function drawFish(ctx, x, y, sz, dir, col, t) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+  ctx.fillStyle = css(col, 0.92);
+  ctx.beginPath(); ctx.ellipse(0, 0, sz, sz * 0.55, 0, 0, TAU); ctx.fill();
+  const tw = Math.sin(t * 6) * sz * 0.3;
+  ctx.beginPath(); ctx.moveTo(-sz * 0.9, 0); ctx.lineTo(-sz * 1.7, -sz * 0.5 + tw); ctx.lineTo(-sz * 1.7, sz * 0.5 + tw); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(10,20,24,0.9)';
+  ctx.beginPath(); ctx.arc(sz * 0.45, -sz * 0.1, sz * 0.13, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+function drawJelly(ctx, j, t) {
+  const x = j.x + Math.sin(t * 0.3 + j.drift) * 10;
+  const y = j.y + Math.sin(t * 0.9 + j.ph) * 6;
+  const pulse = 1 + 0.12 * Math.sin(t * 1.6 + j.ph);
+  ctx.save(); ctx.translate(x, y);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, j.r * 2.2);
+  g.addColorStop(0, css(j.col, 0.35)); g.addColorStop(1, css(j.col, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, j.r * 2.2, 0, TAU); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = css(j.col, 0.78);
+  ctx.beginPath(); ctx.ellipse(0, 0, j.r * pulse, j.r * 0.8, 0, Math.PI, TAU); ctx.fill();
+  ctx.strokeStyle = css(j.col, 0.55); ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+  for (let i = 0; i < 5; i++) {
+    const ox = (i - 2) * j.r * 0.32;
+    ctx.beginPath(); ctx.moveTo(ox, 0);
+    ctx.quadraticCurveTo(ox + Math.sin(t * 2 + i) * 3, j.r * 1.4, ox + Math.sin(t * 1.5 + i) * 4, j.r * 2.4);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawSubmarine(ctx, sub, t, W) {
+  const period = 28;
+  const u = ((t % period) / period);
+  const x = lerp(sub.x0, sub.x1, u < 0.5 ? u * 2 : (1 - u) * 2);
+  const dir = u < 0.5 ? 1 : -1;
+  const y = sub.y + Math.sin(t * 0.6 + sub.ph) * 5;
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+  // light cone
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createLinearGradient(14, 0, 80, 0);
+  g.addColorStop(0, 'rgba(255,230,150,0.5)'); g.addColorStop(1, 'rgba(255,230,150,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(80, -22); ctx.lineTo(80, 22); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = css(rgb(228, 192, 70));
+  ctx.beginPath(); ctx.ellipse(0, 0, 16, 8, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = css(rgb(180, 150, 50));
+  ctx.beginPath(); ctx.ellipse(-4, 3, 14, 4, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = css(rgb(40, 60, 70));
+  ctx.fillRect(-3, -14, 6, 7);
+  ctx.fillStyle = 'rgba(150,230,255,0.95)';
+  ctx.beginPath(); ctx.arc(6, -1, 3, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
+/* ──────────────────────────── 15. application ───────────────────────────── */
+const App = {
+  cv: null, ctx: null, staticBuf: null, sctx: null,
+  W: 0, H: 0, LOWSCALE: 0.6,
+  config: new IslandConfig(),
+  islands: [], entities: null, paths: [], sunX: 0,
+  t0: performance.now(),
+};
+
+function resize() {
+  const cssW = window.innerWidth, cssH = window.innerHeight;
+  App.W = Math.max(2, Math.round(cssW * App.LOWSCALE));
+  App.H = Math.max(2, Math.round(cssH * App.LOWSCALE));
+  App.cv.width = App.W; App.cv.height = App.H;
+  App.staticBuf.width = App.W; App.staticBuf.height = App.H;
+  generate();
+}
+
+function generate() {
+  const W = App.W, H = App.H;
+  const cfg = App.config;
+  const placements = layoutIslands(cfg, W, H);
+  App.islands = placements.map((p, i) => buildIsland(cfg, i, p));
+  App.entities = makeEntities(cfg, W, H, App.islands);
+  App.sunX = W * 0.42;
+  // dotted paths: connect nearest plateau-ish neighbours (a few)
+  App.paths = [];
+  const centers = App.islands.map(is => projectIso(is.G / 2, is.G / 2, is.nLevels, is.P));
+  for (let i = 0; i < App.islands.length - 1; i++) {
+    if (i % 2 === 0) App.paths.push([centers[i], centers[i + 1]]);
+  }
+  // render static layer
+  const sctx = App.sctx;
+  sctx.clearRect(0, 0, W, H);
+  sctx.imageSmoothingEnabled = false;
+  drawWater(sctx, W, H);
+  drawParticleHaze(sctx, W, H, cfg.seed);
+  // god rays focused over the ruins (the highest/back-left island if present)
+  let sx = App.sunX;
+  const ruins = App.islands.find(is => is.archeBias.godrays);
+  if (ruins) sx = ruins.P.originX;
+  drawGodRays(sctx, W, H, 0, sx);
+  // seabed dapple
+  for (const path of App.paths) drawDottedPath(sctx, path[0], path[1]);
+  for (const island of App.islands) renderIsland(sctx, island, 0);
+  App.sunXResolved = sx;
+
+  updateLegend();
+}
+
+function frame() {
+  const t = (performance.now() - App.t0) / 1000;
+  const ctx = App.ctx, W = App.W, H = App.H;
+  ctx.imageSmoothingEnabled = false;
+  // static base
+  ctx.drawImage(App.staticBuf, 0, 0);
+  // animated overlays
+  drawCaustics(ctx, W, H, t);
+  drawGodRays(ctx, W, H, t, App.sunXResolved || App.sunX);
+  // re-draw animated props (kelp/anemone/vents) is baked static; entities only:
+  drawEntities(ctx, App.entities, t);
+  // vignette
+  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.85);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,6,12,0.5)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  requestAnimationFrame(frame);
+}
+
+function updateLegend() {
+  const el = document.getElementById('legend-stats');
+  const propCount = App.islands.reduce((s, i) => s + i.props.length, 0);
+  el.textContent = `seed ${App.config.seed} · ${App.islands.length} islands · ${propCount} props`;
+}
+
+/* ── UI ── */
+const CONTROLS = [
+  { group: 'World' },
+  { key: 'seed', label: 'Seed', type: 'int', min: 1, max: 99999, step: 1 },
+  { key: 'island_count', label: 'Island count', type: 'int', min: 1, max: 9, step: 1 },
+  { key: 'archetype', label: 'Archetype', type: 'select',
+    options: ['mixed', 'round_reef', 'long_reef', 'ruins_island', 'base_island', 'volcanic'] },
+  { group: 'Footprint' },
+  { key: 'radius_min', label: 'Radius min', min: 0.05, max: 0.3, step: 0.005 },
+  { key: 'radius_max', label: 'Radius max', min: 0.08, max: 0.4, step: 0.005 },
+  { key: 'blob_count', label: 'Blobs / island', type: 'int', min: 1, max: 8, step: 1 },
+  { key: 'elongation', label: 'Elongation', min: 1, max: 3, step: 0.05 },
+  { key: 'warp_strength', label: 'Warp strength', min: 0, max: 1.2, step: 0.02 },
+  { key: 'edge_noise', label: 'Edge noise', min: 0, max: 1, step: 0.02 },
+  { group: 'Profile' },
+  { key: 'plateau_size', label: 'Plateau size', min: 0.05, max: 0.7, step: 0.01 },
+  { key: 'cliff_steepness', label: 'Cliff steepness', min: 0.1, max: 0.95, step: 0.01 },
+  { key: 'reef_width', label: 'Reef width', min: 0.02, max: 0.4, step: 0.01 },
+  { key: 'roughness', label: 'Roughness', min: 0, max: 1, step: 0.02 },
+  { group: 'Iso / layers' },
+  { key: 'height_scale', label: 'Height scale', min: 3, max: 20, step: 0.5 },
+  { key: 'depth_offset', label: 'Depth offset', min: 0, max: 10, step: 0.5 },
+  { key: 'layer_height', label: 'Layer height', min: 0.06, max: 0.25, step: 0.005 },
+  { group: 'Props' },
+  { key: 'prop_density', label: 'Prop density', min: 0, max: 1.5, step: 0.02 },
+];
+
+let regenTimer = null;
+function scheduleRegen() { clearTimeout(regenTimer); regenTimer = setTimeout(generate, 90); }
+
+function buildUI() {
+  const root = document.getElementById('controls');
+  for (const c of CONTROLS) {
+    if (c.group) {
+      const g = document.createElement('div'); g.className = 'group';
+      const t = document.createElement('div'); t.className = 'group-title'; t.textContent = c.group;
+      g.appendChild(t); root.appendChild(g); continue;
+    }
+    const row = document.createElement('div'); row.className = 'row';
+    if (c.type === 'select') {
+      const lab = document.createElement('label'); lab.innerHTML = `<span>${c.label}</span>`;
+      const sel = document.createElement('select');
+      for (const o of c.options) { const op = document.createElement('option'); op.value = o; op.textContent = o.replace(/_/g, ' '); sel.appendChild(op); }
+      sel.value = App.config[c.key];
+      sel.addEventListener('change', () => { App.config[c.key] = sel.value; generate(); });
+      row.appendChild(lab); row.appendChild(sel);
+    } else {
+      const lab = document.createElement('label');
+      const valSpan = `<span class="val" id="val-${c.key}">${App.config[c.key]}</span>`;
+      lab.innerHTML = `<span>${c.label}</span>${valSpan}`;
+      const inp = document.createElement('input');
+      inp.type = 'range'; inp.min = c.min; inp.max = c.max; inp.step = c.step; inp.value = App.config[c.key];
+      inp.addEventListener('input', () => {
+        const v = c.type === 'int' ? parseInt(inp.value, 10) : parseFloat(inp.value);
+        App.config[c.key] = v;
+        document.getElementById('val-' + c.key).textContent = c.type === 'int' ? v : v.toFixed(c.step < 0.01 ? 3 : 2);
+        scheduleRegen();
+      });
+      row.appendChild(lab); row.appendChild(inp);
+    }
+    root.appendChild(row);
+  }
+}
+function wireButtons() {
+  document.getElementById('btn-seed').addEventListener('click', () => {
+    App.config.seed = 1 + Math.floor(Math.random() * 99998);
+    // refresh seed slider/value
+    const inp = [...document.querySelectorAll('#controls input[type=range]')].find(x => x.min === '1' && x.max === '99999');
+    if (inp) inp.value = App.config.seed;
+    const span = document.getElementById('val-seed'); if (span) span.textContent = App.config.seed;
+    generate();
+  });
+  document.getElementById('btn-regen').addEventListener('click', generate);
+  document.getElementById('btn-png').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = `reef-${App.config.seed}.png`;
+    a.href = App.cv.toDataURL('image/png');
+    a.click();
+  });
+  document.getElementById('ui-toggle').addEventListener('click', () => {
+    document.getElementById('ui').classList.toggle('collapsed');
+  });
+}
+
+function init() {
+  App.cv = document.getElementById('cv');
+  App.ctx = App.cv.getContext('2d');
+  App.staticBuf = document.createElement('canvas');
+  App.sctx = App.staticBuf.getContext('2d');
+  buildUI();
+  wireButtons();
+  resize();
+  window.addEventListener('resize', () => { clearTimeout(regenTimer); regenTimer = setTimeout(resize, 150); });
+  requestAnimationFrame(frame);
+}
+window.App = App;
+window.generate = generate;
+init();
+</script>
+</body>
+</html>

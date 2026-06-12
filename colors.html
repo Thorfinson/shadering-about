@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Colors — caustic study, HDR pipeline</title>
+<style>
+  :root {
+    --bg: #050308;
+    --ink: #f4eef8;
+    --muted: rgba(244, 238, 248, 0.55);
+    --rule: rgba(244, 238, 248, 0.12);
+    --accent: #ff7ad6;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Inter", "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  header.site {
+    position: relative;
+    z-index: 2;
+    padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px) clamp(40px, 6vw, 96px);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 6vw, 64px);
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  .brand em {
+    font-style: normal;
+    background: linear-gradient(90deg, #ffae5a 0%, #ff7ad6 50%, #b58cff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sub {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 60ch;
+  }
+  .meta {
+    text-align: right;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .meta strong { color: var(--ink); font-weight: 500; letter-spacing: 0.18em; }
+
+  .panel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 348 / 164;
+    max-height: 92vh;
+    overflow: hidden;
+    background: #000;
+  }
+  .panel canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .panel .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    padding: clamp(16px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.88);
+    mix-blend-mode: screen;
+  }
+  .panel .tag {
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+  .panel .title {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(22px, 3.4vw, 44px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    max-width: 22ch;
+    line-height: 1.05;
+  }
+
+  .controls {
+    padding: clamp(18px, 2.4vw, 28px) clamp(20px, 5vw, 64px) clamp(28px, 3.5vw, 44px);
+    border-bottom: 1px solid var(--rule);
+    background: rgba(244, 238, 248, 0.02);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px clamp(24px, 3vw, 40px);
+  }
+  .controls h2 {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .controls h2 b { color: var(--ink); font-weight: 500; }
+  .controls label { display: grid; gap: 6px; }
+  .controls .name {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .controls .row { display: flex; align-items: center; gap: 12px; }
+  .controls input[type="range"] { flex: 1; accent-color: var(--accent); height: 18px; }
+  .controls .val {
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 11px;
+    min-width: 5ch;
+    text-align: right;
+    opacity: 0.85;
+  }
+  .controls .reset {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    justify-self: end;
+    grid-column: -2 / -1;
+  }
+  .controls .reset:hover { color: var(--ink); border-color: var(--ink); }
+
+  .palette {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .palette .name {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+  .palette label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: border-color 120ms, color 120ms;
+  }
+  .palette label.active {
+    color: var(--ink);
+    border-color: var(--accent);
+  }
+  .palette button {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 120ms, color 120ms;
+  }
+  .palette button.active {
+    color: var(--ink);
+    border-color: var(--accent);
+  }
+  .palette button:hover { color: var(--ink); }
+  .palette input { display: none; }
+  .palette .swatch {
+    width: 36px;
+    height: 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .palette .sw-caustic {
+    background: linear-gradient(90deg, #ff3d0a 0%, #ff47b4 50%, #4d10fa 100%);
+  }
+  .palette .sw-duality {
+    background: linear-gradient(90deg, #eb2ed9 0%, #240824 50%, #ffa01f 100%);
+  }
+  .palette .sw-constellation {
+    background: linear-gradient(90deg, #060e2a 0%, #1a8de0 50%, #8df3ff 100%);
+  }
+
+  .pipeline {
+    padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 64px);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: clamp(16px, 2vw, 28px);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .pipeline h3 {
+    color: var(--ink);
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .pipeline code {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  footer.site {
+    padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 64px);
+    color: var(--muted);
+    font-size: 13px;
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid var(--rule);
+  }
+  footer.site b { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <h1 class="brand">
+    Colors<em>.</em><br />
+    caustic — HDR pipeline study
+  </h1>
+  <div class="meta">
+    <div><strong>study</strong> · grayscale → gradient → HDR</div>
+    <div>tone-mapped at the end</div>
+  </div>
+</header>
+
+<section class="panel" data-shader="colors">
+  <canvas id="cc"></canvas>
+  <div class="overlay">
+    <div class="tag">colors — orange · magenta · violet</div>
+    <div>
+      <div class="title">Luminance pattern first; color is a transformation; HDR runs hot until the final tone map.</div>
+    </div>
+  </div>
+</section>
+
+<div class="controls" data-for="cc">
+  <h2><b>controls</b> · gradient endpoints · HDR knobs</h2>
+
+  <div class="palette">
+    <span class="name">Palette</span>
+    <label class="active" data-palette="0">
+      <span class="swatch sw-caustic"></span>
+      <input type="radio" name="palette" value="0" checked />
+      Caustic
+    </label>
+    <label data-palette="1">
+      <span class="swatch sw-duality"></span>
+      <input type="radio" name="palette" value="1" />
+      Duality
+    </label>
+    <label data-palette="2">
+      <span class="swatch sw-constellation"></span>
+      <input type="radio" name="palette" value="2" />
+      Constellation
+    </label>
+  </div>
+
+  <label>
+    <span class="name">Cell density</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uScale" data-decimals="1"
+             min="15" max="50" step="0.1" value="50.0" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Hue position</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uHueShift" data-decimals="2"
+             min="-0.5" max="0.5" step="0.01" value="-0.32" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Pink bridge</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uBridge" data-decimals="2"
+             min="0.20" max="0.80" step="0.01" value="0.76" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Base illum</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uBase" data-decimals="2"
+             min="0.10" max="0.80" step="0.01" value="0.10" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Mid bloom</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uBloom" data-decimals="2"
+             min="0.00" max="2.50" step="0.01" value="0.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Hot blowout</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uHot" data-decimals="2"
+             min="0.00" max="3.00" step="0.01" value="0.35" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Saturation</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uSat" data-decimals="2"
+             min="0.80" max="1.60" step="0.01" value="1.60" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Exposure</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uExposure" data-decimals="2"
+             min="0.50" max="2.00" step="0.01" value="0.50" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <h2 style="margin-top:14px;"><b>heightmap</b> · hills · valleys · curve</h2>
+
+  <label>
+    <span class="name">Hill strength</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uHillStr" data-decimals="2"
+             min="0.00" max="2.50" step="0.01" value="0.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Valley depth</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uValleyStr" data-decimals="2"
+             min="0.00" max="1.50" step="0.01" value="0.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Curve strength</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uCurveStr" data-decimals="2"
+             min="0.00" max="2.00" step="0.01" value="0.58" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Curve thickness</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uCurveThick" data-decimals="1"
+             min="3.0" max="80.0" step="0.5" value="31.5" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <h2 style="margin-top:14px;"><b>macro brightness</b> · hill / valley shaping</h2>
+
+  <label>
+    <span class="name">Hill multiplier</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uMacroHill" data-decimals="2"
+             min="0.00" max="4.00" step="0.01" value="2.03" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Valley multiplier</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uMacroValley" data-decimals="2"
+             min="0.00" max="3.00" step="0.01" value="0.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Macro floor</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uMacroFloor" data-decimals="2"
+             min="0.00" max="1.00" step="0.01" value="0.74" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <h2 style="margin-top:14px;"><b>cell + warp</b> · droplet glow · swirl · edges · beam</h2>
+
+  <label>
+    <span class="name">Cell ripple</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uCellRadial" data-decimals="2"
+             min="0.00" max="8.00" step="0.05" value="0.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Warp swirl</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uWarp" data-decimals="2"
+             min="0.00" max="1.50" step="0.01" value="0.30" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Edge bleed</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uEdgeBleed" data-decimals="2"
+             min="0.50" max="8.00" step="0.05" value="8.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Beam lift</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uBeamLift" data-decimals="2"
+             min="0.00" max="3.00" step="0.01" value="0.69" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Curve fade</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uCurveFade" data-decimals="2"
+             min="0.00" max="1.00" step="0.01" value="0.90" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Curve range</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uCurveFadeRange" data-decimals="2"
+             min="0.50" max="30.00" step="0.05" value="18.90" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Sparkle</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uSparkle" data-decimals="2"
+             min="0.00" max="6.00" step="0.05" value="5.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Grain</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uGrain" data-decimals="2"
+             min="0.00" max="3.00" step="0.01" value="0.00" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Grain scale</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uGrainScale" data-decimals="2"
+             min="0.20" max="4.00" step="0.01" value="0.20" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <label>
+    <span class="name">Blur</span>
+    <div class="row">
+      <input type="range" data-canvas="cc" data-uniform="uBlur" data-decimals="2"
+             min="0.00" max="1.00" step="0.01" value="0.03" />
+      <span class="val"></span>
+    </div>
+  </label>
+
+  <button type="button" class="reset" data-reset-for="cc">Reset</button>
+</div>
+
+<section class="panel" data-shader="heightmap">
+  <canvas id="ch"></canvas>
+  <div class="overlay" style="pointer-events: none;">
+    <div class="tag" style="pointer-events: auto;">
+      height map — click and drag to redraw curve
+      <button type="button" id="curveClear" style="
+        margin-left: 12px;
+        background: transparent;
+        color: rgba(255,255,255,0.78);
+        border: 1px solid rgba(255,255,255,0.30);
+        border-radius: 999px;
+        padding: 4px 12px;
+        font: inherit;
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        cursor: pointer;
+      ">Clear</button>
+    </div>
+  </div>
+</section>
+
+<div class="controls" data-for="ch">
+  <div class="palette" style="grid-column: 1 / -1; margin: 0;">
+    <span class="name">Stroke strength</span>
+    <button type="button" data-draw-strength="0.05">5%</button>
+    <button type="button" data-draw-strength="0.10">10%</button>
+    <button type="button" data-draw-strength="0.25">25%</button>
+    <button type="button" data-draw-strength="0.50">50%</button>
+    <button type="button" data-draw-strength="0.75">75%</button>
+    <button type="button" data-draw-strength="1.00" class="active">100%</button>
+  </div>
+</div>
+
+<section class="pipeline">
+  <div>
+    <h3>1 · Luminance</h3>
+    Grayscale Voronoi caustics, multi-scale. Edges glow, cores blow out.
+    No color anywhere yet. Output is HDR — values may exceed <code>1.0</code>.
+  </div>
+  <div>
+    <h3>2 · Gradient</h3>
+    Three-stop position map: <code>orange → pink → violet</code>.
+    Routed through magenta deliberately to avoid the muddy mid-zone you get from
+    naive RGB lerp.
+  </div>
+  <div>
+    <h3>3 · Combine</h3>
+    Layered: soft base <code>color × 0.22·L</code>, colored mid bloom on
+    <code>L &gt; 0.45</code>, hot blowout on <code>L &gt; 1.3</code> toward white.
+    Each cell has its own brightness and hue offset around the broad gradient.
+  </div>
+  <div>
+    <h3>4 · Tone map</h3>
+    Exponential exposure compresses HDR to display range. Saturation lift after
+    tone-map keeps highlights from going pastel. Gamma <code>1/2.2</code> last.
+  </div>
+</section>
+
+<footer class="site">
+  <div><b>Colors / 2026</b> — single panel, single fragment shader. The whole point is the post-pattern color engineering.</div>
+  <div>If you clamp to <code>[0,1]</code> throughout, no shader trick will save you. Let highlights run hot, then compress.</div>
+</footer>
+
+<script>
+"use strict";
+
+const VERT_SRC = `
+attribute vec2 aPosition;
+varying vec2 vUv;
+void main() {
+  vUv = aPosition * 0.5 + 0.5;
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+`;
+
+const FRAG_HEADER = `
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;
+uniform vec2  uResolution;
+const int MAX_PTS = 96;
+uniform vec2  uPoints[MAX_PTS];
+uniform float uStrengths[MAX_PTS];
+uniform int   uNumPoints;
+
+vec2 hash22(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)),
+           dot(p, vec2(269.5, 183.3)));
+  return fract(sin(p) * 43758.5453);
+}
+float hash12(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+// Voronoi returning (edgeDistance, cellId.x, cellId.y, centerDist)
+vec4 voronoi(vec2 x, float jitter, float t) {
+  vec2 n = floor(x);
+  vec2 f = fract(x);
+  vec2 mg = vec2(0.0);
+  vec2 mr = vec2(0.0);
+  vec2 mid = vec2(0.0);
+  float md = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      o = 0.5 + jitter * (sin(t + 6.2831 * o) * 0.5);
+      vec2 r = g + o - f;
+      float d = dot(r, r);
+      if (d < md) { md = d; mr = r; mg = g; mid = n + g + o; }
+    }
+  }
+  float ed  = 8.0;
+  float ed2 = 8.0;                    // second-smallest edge distance (for vertex detection)
+  for (int j = -2; j <= 2; j++) {
+    for (int i = -2; i <= 2; i++) {
+      vec2 g = mg + vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      o = 0.5 + jitter * (sin(t + 6.2831 * o) * 0.5);
+      vec2 r = g + o - f;
+      if (dot(mr - r, mr - r) > 0.00001) {
+        float d = dot(0.5 * (mr + r), normalize(r - mr));
+        if (d < ed)       { ed2 = ed; ed = d; }
+        else if (d < ed2) { ed2 = d; }
+      }
+    }
+  }
+  return vec4(ed, mid, ed2);          // .w now holds 2nd-edge dist (vertex proximity)
+}
+
+// Smooth value noise — bilinear-interpolated hash, no visible grid cells.
+float valueNoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash12(i);
+  float b = hash12(i + vec2(1.0, 0.0));
+  float c = hash12(i + vec2(0.0, 1.0));
+  float d = hash12(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+float distSeg(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  return length(p - (a + ab * h));
+}
+`;
+
+// ------------------------------------------------------------------
+// COLORS — focused color study
+//
+// Pipeline:
+//   1) Voronoi cell + per-cell hashes: each cell gets its own random
+//      brightness, hue offset, saturation. Edges glow, interiors stay
+//      colored. The broad x-axis gradient is the macro signal; per-cell
+//      randomness gives the cell-to-cell variety.
+//   2) Three-stop palette orange → pink → violet, sampled at
+//      (broad_x + per_cell_offset) so neighbouring cells differ in hue.
+//   3) HDR combine: cellColor * (uBase + 0.22·L)  +  colored mid bloom
+//      +  hot blowout near the brightest junctions.
+//   4) Exponential tone map → saturation lift → gamma 2.2.
+// ------------------------------------------------------------------
+const FRAG_COLORS = FRAG_HEADER + `
+uniform float uScale;
+uniform float uHueShift;
+uniform float uBridge;
+uniform float uBase;
+uniform float uBloom;
+uniform float uHot;
+uniform float uSat;
+uniform float uExposure;
+// Heightmap shape
+uniform float uHillStr;       // upper-left orange hill amplitude
+uniform float uValleyStr;     // top-right valley dip depth (positive = deeper)
+uniform float uCurveStr;      // curve contribution to the heightmap
+uniform float uCurveThick;    // curve narrowness (higher = thinner)
+// Macro brightness shaping
+uniform float uMacroHill;     // multiplier on positive heightmap (hills)
+uniform float uMacroValley;   // multiplier on negative heightmap (valleys)
+uniform float uMacroFloor;    // minimum macroBright (prevents pure black)
+// Cell + warp
+uniform float uCellRadial;    // cell interior ripple intensity
+uniform float uWarp;          // recursive domain-warp magnitude (swirliness)
+uniform float uEdgeBleed;     // edge glow falloff (smaller = bleeds further)
+uniform float uBeamLift;      // multiplicative cell-lift from the curve
+uniform float uCurveFade;     // curve-distance fade — cells far from curve dim toward black
+uniform float uCurveFadeRange;// how far the curve illuminates before fading out
+uniform float uSparkle;       // sparkle / pointy-shine intensity
+uniform float uGrain;         // grain / dirt amount (sub-cell + film)
+uniform float uGrainScale;    // grain frequency multiplier (small = coarse, large = fine)
+uniform int   uPalette;       // 0 = caustic, 1 = duality, 2 = constellation
+
+// ---------- 2) Three-stop gradient through pink ----------
+// Routing through magenta avoids the desaturated mid-zone of an
+// orange↔violet RGB lerp. uBridge slides where the pink stop sits.
+vec3 gradient(float x) {
+  // Three palettes — one per reference image.
+  vec3 c0, c1, c2;
+  if (uPalette == 1) {
+    // DUALITY — purple/magenta on the left, dark transition centre,
+    // amber/gold on the right.
+    c0 = vec3(0.92, 0.18, 0.85);
+    c1 = vec3(0.14, 0.04, 0.14);
+    c2 = vec3(1.00, 0.62, 0.12);
+  } else if (uPalette == 2) {
+    // CONSTELLATION — deep navy → mid teal → bright cyan/white.
+    c0 = vec3(0.02, 0.06, 0.16);
+    c1 = vec3(0.10, 0.55, 0.88);
+    c2 = vec3(0.55, 0.95, 1.00);
+  } else {
+    // CAUSTIC — fire-orange → hot pink → violet (default reference).
+    c0 = vec3(1.00, 0.24, 0.04);
+    c1 = vec3(1.00, 0.28, 0.70);
+    c2 = vec3(0.30, 0.06, 0.98);
+  }
+
+  x = clamp(x, 0.0, 1.0);
+  float b = clamp(uBridge, 0.05, 0.95);
+
+  // Piecewise smoothstep — C1 continuous, no visible border at x=b.
+  if (x < b) {
+    float k = smoothstep(0.0, 1.0, x / b);
+    return mix(c0, c1, k);
+  } else {
+    float k = smoothstep(0.0, 1.0, (x - b) / (1.0 - b));
+    return mix(c1, c2, k);
+  }
+}
+
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 np = vec2((uv.x - 0.5) * aspect, uv.y - 0.5);
+  vec2 p  = np * uScale;
+  // Frozen — no time-based animation. The image is a still composition.
+  float t = 0.0;
+
+  // ---------- 1) Voronoi cell with per-cell randomization ----------
+  // RECURSIVE DOMAIN WARP — gentle. Each warp pass feeds into the next
+  // so distortions compound into curls and twists, but magnitudes stay
+  // small so the cell structure is preserved.
+  vec2 q = vec2(
+    sin(p.y * 0.8 + 1.3),
+    cos(p.x * 0.9 + 0.7)
+  );
+  vec2 r = vec2(
+    sin(p.x * 1.3 + 2.0 * q.x + 0.5),
+    cos(p.y * 1.6 + 2.0 * q.y + 1.2)
+  );
+  vec2 warp = (q * 0.40 + r * 1.00) * uWarp;
+  vec4 v = voronoi(p + warp, 0.55, t);
+  float edge   = v.x;            // distance to nearest cell boundary
+  vec2  cellId = v.yz;           // unique-per-cell position
+  float edge2  = v.w;            // distance to SECOND-nearest edge (vertex detector)
+  float cdist  = length(p + warp - cellId);   // distance to cell center
+
+  // Per-cell random parameters — wider variation for a less uniform feel.
+  float r1 = hash12(cellId * 7.31);
+  float r2 = hash12(cellId * 7.31 + 19.0);
+  float r3 = hash12(cellId * 7.31 + 47.0);
+  float r4 = hash12(cellId * 7.31 + 73.0);
+
+  // Cell-interior brightness — wider range so some cells read much
+  // dimmer and some near full strength.
+  float cellBright = 0.30 + 0.95 * r1;
+  float interior   = cellBright * 0.95;
+
+  // Sub-cell ripple — caustic-like wavering inside the cell.
+  vec2  cellLocal = p - cellId;
+  float ripple    = sin(cellLocal.x * 7.0 + r1 * 6.2831)
+                  * sin(cellLocal.y * 7.0 + r2 * 6.2831);
+  interior *= 1.0 + ripple * uCellRadial * 0.04;
+
+  // DIRT — FBM (multi-octave value noise). Each octave is at higher
+  // frequency, diminishing weights. uGrainScale multiplies all
+  // frequencies so the user can dial grit coarser or finer.
+  float gs = uGrainScale;
+  float n  = 0.0;
+  n       += valueNoise(uv * vec2( 22.0,  31.0) * gs +  1.7) * 0.50;
+  n       += valueNoise(uv * vec2( 47.0,  53.0) * gs +  4.3) * 0.30;
+  n       += valueNoise(uv * vec2( 95.0, 109.0) * gs +  7.9) * 0.15;
+  n       += valueNoise(uv * vec2(190.0, 217.0) * gs + 11.1) * 0.08;
+  n       -= 0.515;                                          // re-center to ~0
+  float dirt = n * 0.32 * uGrain;
+  interior  *= 1.0 + dirt;
+
+  // ---------- 2) Per-cell color sampled from the gradient ----------
+  // Broad gradient runs along x (orange → violet). The hills also pull
+  // the gradient toward their endpoint — bottom-left hill biases cells
+  // toward orange (gradient pos 0), top-right hill biases toward violet
+  // (gradient pos 1). This anchors saturated color to lit zones.
+  // Orange hill at upper-left pulls cells toward orange. Top-right is a
+  // valley but the broad x-gradient still puts violet there, so cells
+  // there read as deep dim violet — matches reference.
+  float dHill1 = length((uv - vec2(0.22, 0.78)) * vec2(1.4, 1.1));
+  float h1Inf  = exp(-dHill1 * 2.8);
+
+  float broad     = uv.x + uHueShift + (1.0 - uv.y) * 0.10
+                  - h1Inf * 0.30;                           // pull to orange
+  float cellOff   = (r2 - 0.5) * 0.30;                      // wider hue offset
+  float cellT     = broad + cellOff;
+  vec3  cellColor = gradient(cellT);
+
+  // Per-cell saturation wobble — some cells more vivid, others muted.
+  float cellSat   = 0.65 + 0.65 * r4;
+  float cellLum   = dot(cellColor, vec3(0.299, 0.587, 0.114));
+  cellColor       = mix(vec3(cellLum), cellColor, cellSat);
+
+  // ---------- 3) Layered combine — HDR ----------
+  // HEIGHT MAP — two hills (bottom-left, top-right) with a diagonal
+  // valley between them, plus an artist's curve sweeping through. Small
+  // surface noise adds intricacy without changing the overall shape.
+  float h = 0.0;
+
+  //   one large orange hill in the UPPER-LEFT, explicit valley dip top-right.
+  h += exp(-pow(length((uv - vec2(0.22, 0.78)) * vec2(1.4, 1.1)), 1.8) * 3.5) * uHillStr;
+  h -= exp(-pow(length((uv - vec2(0.85, 0.80)) * vec2(1.4, 1.0)), 1.8) * 3.5) * uValleyStr;
+
+  //   POLYLINE CURVE — drawn by the user. Per-segment strength comes
+  //   from uStrengths[]. The closest segment's strength is used for the
+  //   pixel; the heightmap contribution is scaled by it.
+  float dCurve     = 1.0;
+  float dCurveStr  = 1.0;
+  for (int i = 0; i < MAX_PTS - 1; i++) {
+    if (i >= uNumPoints - 1) break;
+    vec2 a = uPoints[i];
+    vec2 b = uPoints[i+1];
+    if (a.x >= 0.0 && b.x >= 0.0) {
+      float d = distSeg(uv, a, b);
+      if (d < dCurve) {
+        dCurve    = d;
+        dCurveStr = uStrengths[i];
+      }
+    }
+  }
+  float along = 0.80;
+  h += exp(-dCurve * uCurveThick) * along * uCurveStr * dCurveStr;
+
+
+  // DON'T clamp to 0 — preserve negative (valley) values so the valley
+  // term in macroBright actually has effect.
+  float hCap        = clamp(h, -1.0, 2.0);
+  float hPositive   = max(hCap, 0.0);
+  float hNegative   = min(hCap, 0.0);
+
+  // macroBright shaping is fully controllable via uniforms.
+  float macroBright = max(uMacroFloor, 0.55 + uMacroHill * hPositive + uMacroValley * hNegative);
+
+  // 3a) cell fill — entire brightness scales with macroBright, so cells
+  //     in valleys go genuinely dark and cells on hills glow strongly.
+  //     uBase sets the floor (a small amount even in deepest valleys).
+  vec3 col = cellColor * macroBright * (uBase + 0.55 * interior);
+
+  // 3b) GLOWY edges — wide-halo bleed into the cells. uEdgeBleed controls
+  //     how far the glow extends inward (smaller value = wider bleed).
+  //     edgeVar modulates brightness ALONG each edge (position-driven
+  //     noise) and edgeSeg adds patchy segmentation so borders look like
+  //     varying-luminance lines rather than uniformly-lit perimeters.
+  vec3  edgeTint  = cellColor * 1.20 + vec3(0.06, 0.04, 0.06);
+
+  // Smooth variation along the edge (sin/sin in position space)
+  float edgeVar   = 0.5 + 0.5 * sin(p.x * 4.7 + p.y * 2.3)
+                            * cos(p.x * 1.9 - p.y * 5.1);
+  // Segmented patches — sections of edges fade, others amplify
+  float edgeSeg   = hash12(floor(p * 1.8));
+  float edgeMod   = (0.30 + 0.85 * edgeVar) * (0.55 + 0.85 * edgeSeg);
+
+  float edgeMul   = exp(-edge * uEdgeBleed * 3.0) * 0.50
+                  + exp(-edge * uEdgeBleed * 1.0) * 0.45;
+  col *= 1.0 + edgeMul * uBloom * 0.55 * macroBright * edgeMod;
+
+  float edgeNear  = exp(-edge * uEdgeBleed * 2.7) * 0.55;
+  float edgeFar   = exp(-edge * uEdgeBleed * 0.85) * 0.55;
+  float edgeAdd   = (edgeNear + edgeFar) * macroBright * uBloom * 0.50 * edgeMod;
+  col += edgeTint * edgeAdd;
+
+  // 3c) hot blowout — per-cell variance gives contrast. cellPunch is a
+  //     skewed per-cell multiplier: most cells stay quiet, a few flare
+  //     hard. cellLight (heightmap-driven) and fieldHot (smooth across
+  //     edges) together set the BASE hotness; cellPunch then amplifies
+  //     it differently per cell so highlights vary in strength.
+  float cellHot   = pow(r1, 3.0);                         // most low, few high
+  float cellLight = clamp(cellBright * macroBright * 0.55 - 0.15, 0.0, 1.0);
+  float fieldHot  = 0.5 + 0.5 * sin(p.x * 1.10 + 0.7)
+                              * cos(p.y * 1.55 - 0.3);
+  fieldHot        = pow(fieldHot, 2.5);
+  float hotness   = max(cellLight, fieldHot);
+  float gateSpace = smoothstep(0.6, 1.4, macroBright);
+
+  // Per-cell punch: 0.30 for most cells, ramps up to 2.40 for hot cells.
+  float cellPunch = mix(0.30, 2.40, cellHot);
+
+  // Tiny narrow base — also gets a small per-cell boost so even the dim
+  // cells differ slightly in their core brightness.
+  float baseGlow  = exp(-edge * 70.0) * (0.15 + cellHot * 0.55);
+
+  // Hotness-driven bleed, multiplied by cellPunch for the contrast lift.
+  float bleedExp  = mix(50.0, 4.0, hotness);
+  float bleedAmp  = 0.15 + hotness * 1.80;
+  float bleed     = exp(-edge * bleedExp) * bleedAmp * cellPunch;
+
+  float hotspot   = (baseGlow + bleed) * gateSpace;
+  col += hotspot * vec3(1.60, 1.35, 1.45) * uHot;
+
+  // 3d) atmospheric haze — soft glow lifted by the height map. Hills
+  //     glow into the surrounding space; valleys add nothing.
+  vec3 hazeColor = mix(cellColor, vec3(1.0, 0.75, 0.85), 0.40);
+  col += hazeColor * h * 0.18;
+
+  // 3e) ILLUMINATION from the polyline path. Cells near the path get
+  //     lit; the path itself shows only as a faint hint.
+  float beamLift   = exp(-dCurve * 4.5) * along;
+  col *= 1.0 + beamLift * uBeamLift;
+
+  float beamHint   = exp(-dCurve * 35.0) * along;
+  vec3  beamCol    = vec3(1.00, 0.62, 0.80);
+  col += beamCol * beamHint * 0.20;
+
+  // 3f.5) SPARKLES — large cross-shaped flares at cell CORNERS (Voronoi
+  //       vertices, where 3+ cells meet). Sparkles fire everywhere there
+  //       are corners, but their brightness and bloom radius scale with
+  //       macroBright (heightmap hills) and hotspot (hot blowout) — so
+  //       highlights get bigger, brighter, glowier sparkles.
+  //
+  //   hilite — reads as 0 in dim zones, climbs above 1 at the brightest
+  //   parts of the heightmap, and gets a strong kick from any pixel where
+  //   hot blowout is firing. Tuned for the actual macroBright range.
+  float hilite     = max(0.0, (macroBright - 0.55) * 2.8)
+                   + hotspot * 4.50;
+  float h01        = clamp(hilite, 0.0, 1.0);
+
+  // Cross arms — significantly fatter at highlights.
+  float armNarrow  = mix(70.0, 18.0, h01);
+  float armWide    = mix( 5.0,  1.6, h01);
+  float sparkH     = exp(-edge2 * armNarrow) * exp(-edge  * armWide);
+  float sparkV     = exp(-edge  * armNarrow) * exp(-edge2 * armWide);
+
+  // Bloom halo — much broader & brighter at highlights.
+  float haloFall   = mix(20.0, 5.0, h01);
+  float haloAmp    = mix(0.30, 1.80, h01);
+  float sparkHalo  = exp(-(edge + edge2) * haloFall) * haloAmp;
+
+  float sparkShape = sparkH + sparkV + sparkHalo;
+
+  // Per-corner gate — slightly more permissive (60% of corners fire) and
+  // the corner-mask radius widens noticeably at highlights.
+  float sparkSeed  = hash12(cellId * 11.7 + 31.0);
+  float cornerEdge = mix(0.035, 0.10, h01);
+  float cornerMask = smoothstep(cornerEdge, 0.0, max(edge, edge2));
+  float sparkGate  = step(0.40, sparkSeed) * cornerMask;
+
+  // Lit zone amplifier — curve proximity + strong hilite multiplier.
+  float sparkLit   = (exp(-dCurve * 2.5) + 0.18) * (1.0 + hilite * 3.0);
+
+  vec3  sparkCol   = mix(vec3(1.55, 1.30, 1.45), cellColor + vec3(0.5), 0.25);
+  col += sparkCol * sparkShape * sparkGate * sparkLit * uSparkle;
+
+  // 3f) CURVE-DISTANCE FADE — per-CELL. Closest-segment strength scales
+  //     the lit-zone amount, so cells along a 25%-stroke don't pop as
+  //     bright as cells along a 100%-stroke.
+  vec2  cellNp     = cellId / uScale;
+  vec2  cellUv     = vec2(cellNp.x / aspect, cellNp.y) + 0.5;
+  float dCellCurve = 1.0;
+  float dCellStr   = 1.0;
+  for (int i = 0; i < MAX_PTS - 1; i++) {
+    if (i >= uNumPoints - 1) break;
+    vec2 a = uPoints[i];
+    vec2 b = uPoints[i+1];
+    if (a.x >= 0.0 && b.x >= 0.0) {
+      float d = distSeg(cellUv, a, b);
+      if (d < dCellCurve) {
+        dCellCurve = d;
+        dCellStr   = uStrengths[i];
+      }
+    }
+  }
+  float scaledC   = dCellCurve * uCurveFadeRange;
+  float curveProx = exp(-scaledC * scaledC * scaledC) * dCellStr;
+  // Per-cell randomness so cells on the lit path don't all glow equally —
+  // some cells stay dim even within the bright zone (less uniformity).
+  float cellDim   = 0.45 + 0.55 * r3;                        // 0.45..1.00
+  curveProx      *= cellDim;
+  col *= mix(1.0, curveProx, uCurveFade);
+
+  // very mild vignette — reference has bright corners
+  float vig = smoothstep(1.30, 0.40, length(np));
+  col *= 0.85 + 0.20 * vig;
+
+  // 4) Tone map HDR → LDR
+  // exponential exposure: smooth roll-off at the top, no flat clipping
+  col = vec3(1.0) - exp(-col * uExposure);
+
+  // saturation lift after tone-map (keeps highlights from going pastel)
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  col = mix(vec3(lum), col, uSat);
+
+  // FILM GRAIN — fine high-frequency noise gated by luminance so dark
+  // areas stay completely clean. uGrain scales the amount.
+  float grain     = hash12(uv * uResolution + 13.0) - 0.5;
+  float grainGate = smoothstep(0.05, 0.50, lum);
+  col += vec3(grain) * 0.045 * grainGate * uGrain;
+
+  // gamma for display
+  col = pow(max(col, 0.0), vec3(1.0 / 2.2));
+
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ------------------------------------------------------------------
+// HEIGHT MAP DEBUG SHADER — outputs the same h(uv) as grayscale so you
+// can see exactly what the macro brightness driver looks like.
+// ------------------------------------------------------------------
+const FRAG_HEIGHTMAP = FRAG_HEADER + `
+uniform float uHillStr;
+uniform float uValleyStr;
+uniform float uCurveStr;
+uniform float uCurveThick;
+void main() {
+  vec2 uv = vUv;
+
+  float h = 0.0;
+  h += exp(-pow(length((uv - vec2(0.22, 0.78)) * vec2(1.4, 1.1)), 1.8) * 3.5) * uHillStr;
+  h -= exp(-pow(length((uv - vec2(0.85, 0.80)) * vec2(1.4, 1.0)), 1.8) * 3.5) * uValleyStr;
+
+  float dCurve    = 1.0;
+  float dCurveStr = 1.0;
+  for (int i = 0; i < MAX_PTS - 1; i++) {
+    if (i >= uNumPoints - 1) break;
+    vec2 a = uPoints[i];
+    vec2 b = uPoints[i+1];
+    if (a.x >= 0.0 && b.x >= 0.0) {
+      float d = distSeg(uv, a, b);
+      if (d < dCurve) {
+        dCurve    = d;
+        dCurveStr = uStrengths[i];
+      }
+    }
+  }
+  float along = 0.80;
+  h += exp(-dCurve * uCurveThick) * along * uCurveStr * dCurveStr;
+
+  // Visualize the full range — negative valleys readable as gray below mid.
+  float vis = clamp(h * 0.5 + 0.5, 0.0, 1.0);
+  gl_FragColor = vec4(vec3(vis), 1.0);
+}
+`;
+
+// ------------------------------------------------------------------
+// BLUR POST-PROCESS — Gaussian-weighted multi-tap blur. Samples the
+// scene texture (rendered by FRAG_COLORS to an offscreen framebuffer)
+// and outputs a blurred version to the canvas. uBlur in [0..1] controls
+// the radius; at 0 the shader returns the source unchanged.
+// ------------------------------------------------------------------
+const FRAG_BLUR = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uScene;
+uniform vec2  uResolution;
+uniform float uBlur;
+
+void main() {
+  if (uBlur <= 0.001) {
+    gl_FragColor = texture2D(uScene, vUv);
+    return;
+  }
+  // Pixel-space radius scales with uBlur (max ~30px). Two-axis Gaussian
+  // approximated by 13 samples (1 centre + 12 in two crosses at offsets
+  // 1, 2, 4 in radius). Weights are Pascal-row-ish for smooth falloff.
+  vec2 px = vec2(1.0) / uResolution * uBlur * 30.0;
+
+  vec4 c   = texture2D(uScene, vUv) * 0.227027;          // centre weight
+
+  c += texture2D(uScene, vUv + vec2( px.x, 0.0))         * 0.1945946;
+  c += texture2D(uScene, vUv + vec2(-px.x, 0.0))         * 0.1945946;
+  c += texture2D(uScene, vUv + vec2( 0.0, px.y))         * 0.1945946;
+  c += texture2D(uScene, vUv + vec2( 0.0,-px.y))         * 0.1945946;
+
+  c += texture2D(uScene, vUv + vec2( 2.0*px.x, 0.0))     * 0.1216216;
+  c += texture2D(uScene, vUv + vec2(-2.0*px.x, 0.0))     * 0.1216216;
+  c += texture2D(uScene, vUv + vec2( 0.0, 2.0*px.y))     * 0.1216216;
+  c += texture2D(uScene, vUv + vec2( 0.0,-2.0*px.y))     * 0.1216216;
+
+  c += texture2D(uScene, vUv + vec2( 3.5*px.x, 0.0))     * 0.054054;
+  c += texture2D(uScene, vUv + vec2(-3.5*px.x, 0.0))     * 0.054054;
+  c += texture2D(uScene, vUv + vec2( 0.0, 3.5*px.y))     * 0.054054;
+  c += texture2D(uScene, vUv + vec2( 0.0,-3.5*px.y))     * 0.054054;
+
+  // Total weight = 0.227027 + 4*0.1945946 + 4*0.1216216 + 4*0.054054
+  //              = 0.227027 + 0.7783784 + 0.4864864 + 0.2162163
+  //              ≈ 1.708 — normalize.
+  c /= 1.708;
+
+  gl_FragColor = c;
+}
+`;
+
+// ------------------------------------------------------------------
+// Renderer
+// ------------------------------------------------------------------
+function compile(gl, type, source) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, source);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(sh);
+    gl.deleteShader(sh);
+    throw new Error("Shader compile error: " + log);
+  }
+  return sh;
+}
+function link(gl, vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, vs);
+  gl.attachShader(p, fs);
+  gl.bindAttribLocation(p, 0, "aPosition");
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    throw new Error("Link error: " + gl.getProgramInfoLog(p));
+  }
+  return p;
+}
+
+function makeRenderer(canvas, fragSrc, uniformDefaults = {}, postFragSrc = null) {
+  const gl = canvas.getContext("webgl", {
+    antialias: false,
+    premultipliedAlpha: false,
+    powerPreference: "high-performance",
+  });
+  if (!gl) {
+    canvas.replaceWith(Object.assign(document.createElement("div"), {
+      textContent: "WebGL not available",
+      style: "color:#fff;display:grid;place-items:center;height:100%",
+    }));
+    return null;
+  }
+
+  const vs = compile(gl, gl.VERTEX_SHADER, VERT_SRC);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc);
+  const program = link(gl, vs, fs);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,  1, -1, -1,  1,
+    -1,  1,  1, -1,  1,  1,
+  ]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  const uTime    = gl.getUniformLocation(program, "uTime");
+  const uRes     = gl.getUniformLocation(program, "uResolution");
+  const uPoints  = gl.getUniformLocation(program, "uPoints[0]");
+  const uStr     = gl.getUniformLocation(program, "uStrengths[0]");
+  const uNumPts  = gl.getUniformLocation(program, "uNumPoints");
+
+  const INT_UNIFORMS = ["uPalette"];
+  const customs = {};
+  for (const name of Object.keys(uniformDefaults)) {
+    customs[name] = {
+      loc: gl.getUniformLocation(program, name),
+      value: uniformDefaults[name],
+      isInt: INT_UNIFORMS.indexOf(name) !== -1,
+    };
+  }
+
+  // ---------- Optional post-process pass (for blur etc.) ----------
+  let postProgram = null, postScene = null, postRes = null, postUBlur = null;
+  let fbo = null, fboTex = null, fboW = 0, fboH = 0;
+  if (postFragSrc) {
+    const pfs = compile(gl, gl.FRAGMENT_SHADER, postFragSrc);
+    postProgram = link(gl, vs, pfs);
+    postScene   = gl.getUniformLocation(postProgram, "uScene");
+    postRes     = gl.getUniformLocation(postProgram, "uResolution");
+    postUBlur   = gl.getUniformLocation(postProgram, "uBlur");
+    fbo    = gl.createFramebuffer();
+    fboTex = gl.createTexture();
+  }
+
+  function resizeFBO(w, h) {
+    if (!fbo || (fboW === w && fboH === h)) return;
+    fboW = w; fboH = h;
+    gl.bindTexture(gl.TEXTURE_2D, fboTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.floor(canvas.clientWidth  * dpr));
+    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    if (postProgram) resizeFBO(canvas.width, canvas.height);
+  }
+
+  let visible = true;
+  const io = new IntersectionObserver(entries => {
+    visible = entries[0].isIntersecting;
+  }, { threshold: 0 });
+  io.observe(canvas);
+
+  // Post-process state (settable from outside via setPostUniform).
+  let postBlur = 0.0;
+
+  return {
+    draw(time) {
+      if (!visible) return;
+      resize();
+
+      // Pass 1: render the scene. If a post shader exists, render to FBO;
+      //         otherwise render directly to the canvas.
+      if (postProgram) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.viewport(0, 0, fboW, fboH);
+      } else {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      gl.useProgram(program);
+      gl.uniform1f(uTime, time);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      if (uPoints !== null && CURVE.flat.length > 0) {
+        gl.uniform2fv(uPoints, CURVE.flat);
+      }
+      if (uStr !== null) {
+        gl.uniform1fv(uStr, CURVE.strengths);
+      }
+      if (uNumPts !== null) {
+        gl.uniform1i(uNumPts, CURVE.points.length);
+      }
+      for (const name in customs) {
+        const u = customs[name];
+        if (u.loc === null) continue;
+        if (u.isInt) gl.uniform1i(u.loc, u.value | 0);
+        else         gl.uniform1f(u.loc, u.value);
+      }
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      // Pass 2: post-process the FBO texture to the canvas.
+      if (postProgram) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.useProgram(postProgram);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, fboTex);
+        if (postScene !== null) gl.uniform1i(postScene, 0);
+        if (postRes   !== null) gl.uniform2f(postRes, canvas.width, canvas.height);
+        if (postUBlur !== null) gl.uniform1f(postUBlur, postBlur);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+    },
+    setUniform(name, value) {
+      if (customs[name]) customs[name].value = value;
+    },
+    setPostUniform(name, value) {
+      if (name === "uBlur") postBlur = value;
+    },
+  };
+}
+
+// ------------------------------------------------------------------
+// Drawable curve — the polyline driving the heightmap.
+// User clicks/drags on the heightmap canvas to (re)draw the curve.
+// ------------------------------------------------------------------
+const MAX_PTS = 96;
+const SENTINEL = [-1, -1];   // marks a stroke break; shader skips segments touching it
+const CURVE = {
+  // points: [[x, y, strength], ...] in 0..1 uv coords; sentinels separate strokes
+  points:    [],
+  flat:      new Float32Array(MAX_PTS * 2),
+  strengths: new Float32Array(MAX_PTS),
+};
+
+function setCurve(points) {
+  CURVE.points = points.slice(0, MAX_PTS).map(p => {
+    if (p[0] < 0) return [-1, -1, 1.0];
+    return [p[0], p[1], p[2] !== undefined ? p[2] : 1.0];
+  });
+  for (let i = 0; i < CURVE.points.length; i++) {
+    CURVE.flat[i * 2 + 0]  = CURVE.points[i][0];
+    CURVE.flat[i * 2 + 1]  = CURVE.points[i][1];
+    CURVE.strengths[i]     = CURVE.points[i][2];
+  }
+  // pad with sentinels
+  for (let i = CURVE.points.length; i < MAX_PTS; i++) {
+    CURVE.flat[i * 2 + 0]  = -1;
+    CURVE.flat[i * 2 + 1]  = -1;
+    CURVE.strengths[i]     = 0;
+  }
+}
+
+const DEFAULT_CURVE = [
+  [0.97, 0.96, 1.0], [0.92, 0.80, 1.0], [0.65, 0.66, 1.0], [0.30, 0.55, 1.0],
+  [0.10, 0.40, 1.0], [0.20, 0.22, 1.0], [0.55, 0.12, 1.0], [0.97, 0.08, 1.0],
+];
+setCurve(DEFAULT_CURVE);
+
+const UNIFORMS = {
+  cc: {
+    uScale: 50.0,
+    uHueShift: -0.32,
+    uBridge: 0.76,
+    uBase: 0.10,
+    uBloom: 0.00,
+    uHot: 0.35,
+    uSat: 1.60,
+    uExposure: 0.50,
+    // Heightmap shape
+    uHillStr: 0.00,
+    uValleyStr: 0.00,
+    uCurveStr: 0.58,
+    uCurveThick: 31.5,
+    // Macro brightness
+    uMacroHill: 2.03,
+    uMacroValley: 0.00,
+    uMacroFloor: 0.74,
+    // Cell + warp
+    uCellRadial: 0.00,
+    uWarp: 0.30,
+    uEdgeBleed: 8.00,
+    uBeamLift: 0.69,
+    uCurveFade: 0.90,
+    uCurveFadeRange: 18.90,
+    uSparkle: 5.00,
+    uGrain: 0.00,
+    uGrainScale: 0.20,
+    uBlur: 0.03,
+    uPalette: 0,
+  },
+};
+
+const HEIGHTMAP_UNIFORMS = {
+  uHillStr:   UNIFORMS.cc.uHillStr,
+  uValleyStr: UNIFORMS.cc.uValleyStr,
+  uCurveStr:  UNIFORMS.cc.uCurveStr,
+  uCurveThick: UNIFORMS.cc.uCurveThick,
+};
+
+const renderers = {
+  cc: makeRenderer(document.getElementById("cc"), FRAG_COLORS, UNIFORMS.cc, FRAG_BLUR),
+  ch: makeRenderer(document.getElementById("ch"), FRAG_HEIGHTMAP, HEIGHTMAP_UNIFORMS),
+};
+
+// Mirror heightmap-shape uniform changes from the main canvas to the debug.
+const HEIGHTMAP_MIRROR_KEYS = ["uHillStr", "uValleyStr", "uCurveStr", "uCurveThick"];
+const ccSetUniformOrig = renderers.cc.setUniform;
+renderers.cc.setUniform = function(name, value) {
+  ccSetUniformOrig(name, value);
+  if (HEIGHTMAP_MIRROR_KEYS.indexOf(name) !== -1) {
+    renderers.ch.setUniform(name, value);
+  }
+};
+
+// ------------------------------------------------------------------
+// Slider wiring
+// ------------------------------------------------------------------
+const POST_UNIFORMS = ["uBlur"];   // route to post-process pipeline
+
+function bindSlider(slider) {
+  const canvasId = slider.dataset.canvas;
+  const uName    = slider.dataset.uniform;
+  const decimals = parseInt(slider.dataset.decimals || "2", 10);
+  const valSpan  = slider.parentElement.querySelector(".val");
+  const renderer = renderers[canvasId];
+
+  function apply() {
+    const v = parseFloat(slider.value);
+    if (valSpan) valSpan.textContent = v.toFixed(decimals);
+    if (!renderer) return;
+    if (POST_UNIFORMS.indexOf(uName) !== -1 && renderer.setPostUniform) {
+      renderer.setPostUniform(uName, v);
+    } else {
+      renderer.setUniform(uName, v);
+    }
+  }
+  slider.addEventListener("input", apply);
+  apply();
+}
+
+document.querySelectorAll(".controls input[type=range]").forEach(bindSlider);
+
+// ------------------------------------------------------------------
+// PRESETS — one per palette. Selecting a palette loads its tuning.
+// ------------------------------------------------------------------
+// All three palettes share the same tuning for now — only colour differs.
+const SHARED_TUNING = {
+  uScale: 50.0, uHueShift: -0.32, uBridge: 0.76, uBase: 0.10,
+  uBloom: 0.00, uHot: 0.35, uSat: 1.60, uExposure: 0.50,
+  uHillStr: 0.00, uValleyStr: 0.00, uCurveStr: 0.58, uCurveThick: 31.5,
+  uMacroHill: 2.03, uMacroValley: 0.00, uMacroFloor: 0.74,
+  uCellRadial: 0.00, uWarp: 0.30, uEdgeBleed: 8.00, uBeamLift: 0.69,
+  uCurveFade: 0.90, uCurveFadeRange: 18.90, uSparkle: 5.00,
+  uGrain: 0.00, uGrainScale: 0.20, uBlur: 0.03,
+};
+const PRESETS = {
+  0: { ...SHARED_TUNING },   // Caustic
+  1: { ...SHARED_TUNING },   // Duality
+  2: { ...SHARED_TUNING },   // Constellation
+};
+
+function applyPreset(paletteIndex) {
+  const preset = PRESETS[paletteIndex];
+  if (!preset) return;
+  // Update sliders, which will fire input events that update the uniforms.
+  for (const uName in preset) {
+    const slider = document.querySelector(`.controls input[data-uniform="${uName}"]`);
+    if (slider) {
+      slider.value = String(preset[uName]);
+      slider.dispatchEvent(new Event("input"));
+    } else if (POST_UNIFORMS.indexOf(uName) !== -1 && renderers.cc.setPostUniform) {
+      renderers.cc.setPostUniform(uName, preset[uName]);
+    } else {
+      renderers.cc.setUniform(uName, preset[uName]);
+    }
+  }
+}
+
+document.querySelectorAll(".palette input[type=radio]").forEach(input => {
+  input.addEventListener("change", () => {
+    const v = parseInt(input.value, 10);
+    renderers.cc.setUniform("uPalette", v);
+    applyPreset(v);
+    document.querySelectorAll(".palette label").forEach(lab => {
+      lab.classList.toggle("active", parseInt(lab.dataset.palette, 10) === v);
+    });
+  });
+});
+
+document.querySelectorAll(".controls .reset").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const canvasId = btn.dataset.resetFor;
+    const defaults = UNIFORMS[canvasId];
+    if (!defaults) return;
+    document.querySelectorAll(`.controls input[data-canvas="${canvasId}"]`).forEach(slider => {
+      const uName = slider.dataset.uniform;
+      if (uName in defaults) {
+        slider.value = String(defaults[uName]);
+        slider.dispatchEvent(new Event("input"));
+      }
+    });
+  });
+});
+
+// ------------------------------------------------------------------
+// Heightmap drawing — click-and-drag on the heightmap canvas to redraw
+// the curve. Uses uv coords (y=0 bottom, y=1 top); CSS y is inverted.
+// ------------------------------------------------------------------
+window.DRAW_STRENGTH = 1.0;   // current stroke strength selected by the toolbar
+
+(() => {
+  const heightCanvas = document.getElementById("ch");
+  if (!heightCanvas) return;
+
+  const MIN_DIST = 0.020;             // min uv distance between points
+  let drawing    = false;
+  let allPts     = [];                // accumulates across strokes; sentinels separate them
+  let userDrawing = false;
+
+  function uvFromEvent(e) {
+    const rect = heightCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = 1.0 - (e.clientY - rect.top) / rect.height;   // invert
+    return [Math.max(0, Math.min(1, x)), Math.max(0, Math.min(1, y)), window.DRAW_STRENGTH];
+  }
+
+  function pushPoint(p) {
+    if (allPts.length >= MAX_PTS) return;
+    let last = null;
+    for (let i = allPts.length - 1; i >= 0; i--) {
+      if (allPts[i][0] >= 0) { last = allPts[i]; break; }
+      else break;
+    }
+    if (last) {
+      const dx = p[0] - last[0], dy = p[1] - last[1];
+      if (Math.hypot(dx, dy) < MIN_DIST) return;
+    }
+    allPts.push(p);
+    setCurve(allPts);
+  }
+
+  heightCanvas.addEventListener("mousedown", e => {
+    if (!userDrawing) {
+      allPts = [];
+      userDrawing = true;
+    } else if (allPts.length > 0) {
+      allPts.push(SENTINEL.slice());
+    }
+    drawing = true;
+    allPts.push(uvFromEvent(e));
+    setCurve(allPts);
+    e.preventDefault();
+  });
+  window.addEventListener("mousemove", e => {
+    if (!drawing) return;
+    pushPoint(uvFromEvent(e));
+  });
+  window.addEventListener("mouseup", () => { drawing = false; });
+
+  const clearBtn = document.getElementById("curveClear");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      allPts = [];
+      userDrawing = false;
+      setCurve(DEFAULT_CURVE);
+    });
+  }
+})();
+
+// Drawing-strength toolbar
+document.querySelectorAll("[data-draw-strength]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    window.DRAW_STRENGTH = parseFloat(btn.dataset.drawStrength);
+    document.querySelectorAll("[data-draw-strength]").forEach(b => {
+      b.classList.toggle("active", b === btn);
+    });
+  });
+});
+
+const start = performance.now();
+function frame(now) {
+  const t = (now - start) / 1000;
+  for (const id in renderers) {
+    const r = renderers[id];
+    if (r) r.draw(t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

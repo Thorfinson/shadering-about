@@ -1,0 +1,2027 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>POC — Constellation as Heightmap, Caustic Below</title>
+<style>
+  :root {
+    --bg: #050308;
+    --ink: #f4eef8;
+    --muted: rgba(244, 238, 248, 0.55);
+    --rule: rgba(244, 238, 248, 0.12);
+    --accent: #ff7ad6;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Inter", "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  header.site {
+    position: relative;
+    z-index: 2;
+    padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px) clamp(40px, 6vw, 96px);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 6vw, 64px);
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  .brand em {
+    font-style: normal;
+    background: linear-gradient(90deg, #ffae5a 0%, #ff7ad6 50%, #b58cff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .meta {
+    text-align: right;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .meta strong { color: var(--ink); font-weight: 500; letter-spacing: 0.18em; }
+
+  .panel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 348 / 164;
+    max-height: 92vh;
+    overflow: hidden;
+    background: #000;
+  }
+  .panel canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .panel .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    padding: clamp(16px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.88);
+    mix-blend-mode: screen;
+  }
+  .panel .tag {
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+  .panel .title {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(22px, 3.4vw, 44px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    max-width: 22ch;
+    line-height: 1.05;
+  }
+
+  .controls {
+    padding: clamp(18px, 2.4vw, 28px) clamp(20px, 5vw, 64px) clamp(28px, 3.5vw, 44px);
+    border-bottom: 1px solid var(--rule);
+    background: rgba(244, 238, 248, 0.02);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px clamp(24px, 3vw, 40px);
+  }
+  .controls h2 {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .controls h2 b { color: var(--ink); font-weight: 500; }
+  .controls label { display: grid; gap: 6px; }
+  .controls .name {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .controls .row { display: flex; align-items: center; gap: 12px; }
+  .controls input[type="range"] { flex: 1; accent-color: var(--accent); height: 18px; }
+  .controls .val {
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 11px;
+    min-width: 5ch;
+    text-align: right;
+    opacity: 0.85;
+  }
+  .controls .reset {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    justify-self: end;
+    grid-column: -2 / -1;
+  }
+  .controls .reset:hover { color: var(--ink); border-color: var(--ink); }
+
+  .pills {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .pills .name {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+  .pills label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: border-color 120ms, color 120ms;
+  }
+  .pills label.active {
+    color: var(--ink);
+    border-color: var(--accent);
+  }
+  .pills input { display: none; }
+  .pills .swatch {
+    width: 36px;
+    height: 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .pills .sw-caustic       { background: linear-gradient(90deg, #ff3d0a 0%, #ff47b4 50%, #4d10fa 100%); }
+  .pills .sw-duality       { background: linear-gradient(90deg, #eb2ed9 0%, #240824 50%, #ffa01f 100%); }
+  .pills .sw-constellation { background: linear-gradient(90deg, #060e2a 0%, #1a8de0 50%, #8df3ff 100%); }
+
+  footer.site {
+    padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 64px);
+    color: var(--muted);
+    font-size: 13px;
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid var(--rule);
+  }
+  footer.site b { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <h1 class="brand">
+    POC<em>.</em><br />
+    constellation → heightmap → caustic
+  </h1>
+  <div class="meta">
+    <div><strong>poc</strong> · multi-pass</div>
+    <div>top: knn constellation · bottom: caustic</div>
+  </div>
+</header>
+
+<section class="panel">
+  <canvas id="cp"></canvas>
+  <div class="overlay">
+    <div class="tag">poc — heightmap from constellation</div>
+    <div>
+      <div class="title">The constellation drives the heightmap; presets color the caustic underneath.</div>
+    </div>
+  </div>
+  <div id="perf-readout" style="
+    position: absolute; top: 12px; left: 12px;
+    font-family: ui-monospace, 'SF Mono', 'Menlo', monospace;
+    font-size: 11px; line-height: 1.45;
+    color: rgba(255,255,255,0.92);
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,122,214,0.55);
+    padding: 8px 12px; border-radius: 4px;
+    pointer-events: none; white-space: pre;
+    display: none;"></div>
+</section>
+
+<!-- ============ CAUSTIC (lower layer) ============ -->
+<div class="controls">
+  <h2><b>caustic</b> · lower layer · palette</h2>
+
+  <div class="pills" id="palette-pills">
+    <span class="name">Palette</span>
+    <label data-palette="0">
+      <span class="swatch sw-caustic"></span>
+      <input type="radio" name="palette" value="0" />
+      Caustic
+    </label>
+    <label data-palette="1">
+      <span class="swatch sw-duality"></span>
+      <input type="radio" name="palette" value="1" />
+      Duality
+    </label>
+    <label class="active" data-palette="2">
+      <span class="swatch sw-constellation"></span>
+      <input type="radio" name="palette" value="2" checked />
+      Constellation
+    </label>
+  </div>
+
+  <label><span class="name">Cell density</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uScale" data-decimals="1"
+           min="15" max="50" step="0.1" value="42.9" /><span class="val"></span></div></label>
+
+  <label><span class="name">Hue position</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHueShift" data-decimals="2"
+           min="-0.5" max="0.5" step="0.01" value="-0.32" /><span class="val"></span></div></label>
+
+  <label><span class="name">Pink bridge</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uBridge" data-decimals="2"
+           min="0.20" max="0.80" step="0.01" value="0.56" /><span class="val"></span></div></label>
+
+  <label><span class="name">Base illum</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uBase" data-decimals="2"
+           min="0.10" max="0.80" step="0.01" value="0.10" /><span class="val"></span></div></label>
+
+  <label><span class="name">Hot blowout</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHot" data-decimals="2"
+           min="0.00" max="3.00" step="0.01" value="3.00" /><span class="val"></span></div></label>
+
+  <label><span class="name">Saturation</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uSat" data-decimals="2"
+           min="0.80" max="1.60" step="0.01" value="1.60" /><span class="val"></span></div></label>
+
+  <label><span class="name">Exposure</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uExposure" data-decimals="2"
+           min="0.50" max="2.00" step="0.01" value="0.50" /><span class="val"></span></div></label>
+
+  <label><span class="name">Constellation lift</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uCurveStr" data-decimals="2"
+           min="0.00" max="2.00" step="0.01" value="2.00" /><span class="val"></span></div></label>
+
+  <label><span class="name">Constellation sharpness</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uCurveThick" data-decimals="1"
+           min="3.0" max="80.0" step="0.5" value="80.0" /><span class="val"></span></div></label>
+
+  <label><span class="name">Hill multiplier</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uMacroHill" data-decimals="2"
+           min="0.00" max="4.00" step="0.01" value="1.03" /><span class="val"></span></div></label>
+
+  <label><span class="name">Macro floor</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uMacroFloor" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.06" /><span class="val"></span></div></label>
+
+  <label><span class="name">Warp swirl</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uWarp" data-decimals="2"
+           min="0.00" max="1.50" step="0.01" value="0.30" /><span class="val"></span></div></label>
+
+  <label><span class="name">Beam lift</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uBeamLift" data-decimals="2"
+           min="0.00" max="3.00" step="0.01" value="1.73" /><span class="val"></span></div></label>
+
+  <label><span class="name">Curve fade</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uCurveFade" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.99" /><span class="val"></span></div></label>
+
+  <label><span class="name">Curve range</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uCurveFadeRange" data-decimals="2"
+           min="0.50" max="30.00" step="0.05" value="30.00" /><span class="val"></span></div></label>
+
+  <label><span class="name">Sparkle</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uSparkle" data-decimals="2"
+           min="0.00" max="6.00" step="0.05" value="6.00" /><span class="val"></span></div></label>
+
+  <button type="button" class="reset" data-reset-target="caustic">Reset</button>
+</div>
+
+<!-- ============ HEIGHTMAP MAPPING (constellation → h) ============ -->
+<div class="controls">
+  <h2><b>heightmap mapping</b> · constellation luminance → h field</h2>
+
+  <label><span class="name">Height gain</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightGain" data-decimals="2"
+           min="0.00" max="3.00" step="0.01" value="1.02" /><span class="val"></span></div></label>
+
+  <label><span class="name">Height sharpness</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightSharp" data-decimals="2"
+           min="0.30" max="4.00" step="0.01" value="1.03" /><span class="val"></span></div></label>
+
+  <label><span class="name">Height floor</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightFloor" data-decimals="2"
+           min="0.00" max="0.50" step="0.01" value="0.00" /><span class="val"></span></div></label>
+
+  <label><span class="name">Stroke width</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightWidth" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.23" /><span class="val"></span></div></label>
+
+  <label><span class="name">Drop-off softness</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightSoftness" data-decimals="2"
+           min="0.30" max="4.00" step="0.01" value="1.00" /><span class="val"></span></div></label>
+
+  <label><span class="name">Wider stroke amount</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightStrokeAmount" data-decimals="2"
+           min="0.00" max="1.50" step="0.01" value="1.50" /><span class="val"></span></div></label>
+
+  <label><span class="name">Wider stroke width</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightStrokeWidth" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.77" /><span class="val"></span></div></label>
+
+  <label><span class="name">Stroke curvature</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightStrokeCurve" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.26" /><span class="val"></span></div></label>
+
+  <label><span class="name">Stroke width variance</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightStrokeWidthVar" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.07" /><span class="val"></span></div></label>
+
+  <label><span class="name">Heightmap bleed</span><div class="row">
+    <input type="range" data-target="caustic" data-uniform="uHeightBleed" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.03" /><span class="val"></span></div></label>
+
+  <button type="button" class="reset" data-reset-target="caustic-mapping">Reset</button>
+</div>
+
+<!-- ============ CONSTELLATION (top layer) ============ -->
+<div class="controls">
+  <h2><b>constellation</b> · top layer · stars + edges</h2>
+
+  <label><span class="name">Zoom</span><div class="row">
+    <input type="range" data-target="constellation" data-uniform="uScale" data-decimals="2"
+           min="1" max="5" step="0.05" value="3.25" /><span class="val"></span></div></label>
+
+  <label><span class="name">Connection threshold</span><div class="row">
+    <input type="range" data-target="constellation" data-uniform="uThresh" data-decimals="2"
+           min="0.30" max="2.40" step="0.01" value="1.41" /><span class="val"></span></div></label>
+
+  <label><span class="name">Line thickness</span><div class="row">
+    <input type="range" data-target="constellation" data-uniform="uLineThick" data-decimals="0"
+           min="40" max="240" step="1" value="182" /><span class="val"></span></div></label>
+
+  <label><span class="name">Star brightness</span><div class="row">
+    <input type="range" data-target="constellation" data-uniform="uStarBright" data-decimals="2"
+           min="0.30" max="3.00" step="0.01" value="1.43" /><span class="val"></span></div></label>
+
+  <label><span class="name">Star count</span><div class="row">
+    <input type="range" data-target="constellation" data-uniform="uStarCount" data-decimals="0"
+           min="6" max="800" step="1" value="20" /><span class="val"></span></div></label>
+
+  <button type="button" class="reset" data-reset-target="constellation">Reset</button>
+</div>
+
+<!-- ============ COMPOSITE (blend mode + overlay) ============ -->
+<div class="controls">
+  <h2><b>composite</b> · blend mode · overlay strength</h2>
+
+  <div class="pills" id="blend-pills">
+    <span class="name">Blend mode</span>
+    <label data-blend="0">
+      <input type="radio" name="blend" value="0" />
+      Additive
+    </label>
+    <label class="active" data-blend="1">
+      <input type="radio" name="blend" value="1" checked />
+      Screen
+    </label>
+    <label data-blend="2">
+      <input type="radio" name="blend" value="2" />
+      Mix
+    </label>
+  </div>
+
+  <label><span class="name">Overlay mix</span><div class="row">
+    <input type="range" data-target="composite" data-uniform="uOverlayMix" data-decimals="2"
+           min="0.00" max="2.00" step="0.01" value="1.00" /><span class="val"></span></div></label>
+
+  <label><span class="name">Blur</span><div class="row">
+    <input type="range" data-target="composite" data-uniform="uBlur" data-decimals="2"
+           min="0.00" max="1.00" step="0.01" value="0.00" /><span class="val"></span></div></label>
+
+  <div class="pills" id="minimap-pills">
+    <span class="name">Heightmap minimap</span>
+    <label data-mm="0">
+      <input type="radio" name="minimap" value="0" />
+      Off
+    </label>
+    <label class="active" data-mm="1">
+      <input type="radio" name="minimap" value="1" checked />
+      On
+    </label>
+  </div>
+
+  <div class="pills" id="perf-pills">
+    <span class="name">Perf overlay</span>
+    <label data-perf="0">
+      <input type="radio" name="perf" value="0" />
+      Off
+    </label>
+    <label class="active" data-perf="1">
+      <input type="radio" name="perf" value="1" checked />
+      On
+    </label>
+  </div>
+
+  <button type="button" class="reset" data-reset-target="composite">Reset</button>
+</div>
+
+<footer class="site">
+  <div><b>POC / 2026</b> — three render passes: KNN constellation → FBO_top, caustic sampling FBO_top luminance as heightmap → FBO_caustic, composite + blur to canvas.</div>
+  <div>The lower caustic shader has no polyline anymore. Its h-field comes entirely from the constellation's luminance, mapped through gain/sharp/floor.</div>
+</footer>
+
+<script>
+"use strict";
+
+// ============================================================
+// VERTEX SHADER (shared by all passes)
+// ============================================================
+const VERT_SRC = `
+attribute vec2 aPosition;
+varying vec2 vUv;
+void main() {
+  vUv = aPosition * 0.5 + 0.5;
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+`;
+
+// ============================================================
+// CONSTELLATION (geometry-based pipeline)
+//
+// Replaces the old fullscreen O(W·H·N²) shader. Each frame:
+//   1) JS computes star positions and the list of valid (i,j) pairs
+//      (those with lab < uThresh).
+//   2) JS builds two vertex buffers: a quad per star and a quad per
+//      edge. The star quad covers the visible halo; the edge quad is
+//      a thin oriented strip along the segment, sized to cover the
+//      perpendicular falloff.
+//   3) Render passes:
+//        BG   — fullscreen, writes deep*0.7 + cyan*wash       (no blend)
+//        EDGE — per-edge quads, additive cyan*edges*0.9       (ONE,ONE)
+//        STAR — per-star quads, additive halo + core + flare  (ONE,ONE)
+//        TONE — fullscreen, applies vig + tonemap + gamma     (no blend)
+//
+// Total fragments shaded ≈ canvas + sum(feature areas), which is ~5%
+// of canvas, vs. canvas × N² for the old shader. Visual output identical
+// (math is the same sum, just rasterized instead of fullscreen-scanned).
+// ============================================================
+
+// --- BG: deep base + radial wash, fullscreen quad. ---
+const FRAG_CONST_BG = `
+precision highp float;
+varying vec2 vUv;
+uniform vec2  uResolution;
+uniform float uScale;
+void main() {
+  float aspect = uResolution.x / uResolution.y;
+  vec2 p = vec2((vUv.x - 0.5) * aspect, vUv.y - 0.5) * uScale;
+  vec3 deep = vec3(0.01, 0.06, 0.13);
+  vec3 cyan = vec3(0.20, 0.78, 1.00);
+  float wash = exp(-length(p) * 0.8) * 0.18;
+  gl_FragColor = vec4(deep * 0.7 + cyan * wash, 1.0);
+}
+`;
+
+// --- STAR: per-star quad. Vertex positions a quad of radius uHaloRadius
+//     in p-space, transformed to clip-space using the same aspect/scale
+//     mapping the old fullscreen shader used. ---
+const VERT_CONST_STAR = `
+attribute vec2  aQuadCoord;   // local quad UV in [-1, 1]
+attribute vec2  aStarPos;     // star centre in p-space
+attribute float aStarSeed;
+uniform vec2  uResolution;
+uniform float uScale;
+uniform float uHaloRadius;    // p-space radius of the quad
+varying vec2  vLocalP;
+varying float vSeed;
+void main() {
+  float aspect = uResolution.x / uResolution.y;
+  vec2 quadP = aStarPos + aQuadCoord * uHaloRadius;
+  // Old shader: p = ((uv-0.5) * vec2(aspect,1)) * uScale  →
+  //             clip = (p / uScale) * vec2(2/aspect, 2)
+  vec2 clip = quadP / uScale * vec2(2.0 / aspect, 2.0);
+  gl_Position = vec4(clip, 0.0, 1.0);
+  vLocalP = quadP - aStarPos;
+  vSeed   = aStarSeed;
+}
+`;
+
+const FRAG_CONST_STAR = `
+precision highp float;
+varying vec2  vLocalP;
+varying float vSeed;
+uniform float uStarBright;
+uniform float uHeightStrokeAmount;
+uniform float uHeightStrokeWidth;
+
+float crossFlare(vec2 d, float thickness) {
+  float h = exp(-d.y * d.y * thickness) * exp(-abs(d.x) * 0.6);
+  float v = exp(-d.x * d.x * thickness) * exp(-abs(d.y) * 0.6);
+  return h + v;
+}
+
+void main() {
+  float r = length(vLocalP);
+  float seed = vSeed;
+  float k    = 0.4 + 0.6 * seed;
+  float core = exp(-r * 60.0) * k * 1.3;
+  float halo = exp(-r *  6.0) * 0.08 * k;
+  // Wider star (heightmap pass only — visible passes amount=0).
+  float wRate = mix(60.0, 6.0, clamp(uHeightStrokeWidth, 0.0, 1.0));
+  core += exp(-r * wRate) * k * 1.3 * uHeightStrokeAmount;
+  float flare = 0.0;
+  if (seed > 0.55) {
+    flare = crossFlare(vLocalP * 9.0, 18.0) * (seed - 0.4) * 0.6;
+  }
+  vec3 cyan = vec3(0.20, 0.78, 1.00);
+  vec3 ice  = vec3(0.85, 0.98, 1.00);
+  vec3 col  = cyan * halo * uStarBright + ice * (core + flare) * uStarBright;
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// --- EDGE: per-edge quad. aQuadCoord.x in [0,1] runs along the segment
+//     (with a small extension on each end), aQuadCoord.y in [-1,1] is
+//     perpendicular distance scaled by uHalfWidth. ---
+const VERT_CONST_EDGE = `
+attribute vec2  aQuadCoord;
+attribute vec2  aEdgeA;
+attribute vec2  aEdgeB;
+attribute float aEdgeSeed;
+attribute float aEdgeGate;    // pre-computed smoothstep gate
+attribute float aEdgeLab;     // segment length
+uniform vec2  uResolution;
+uniform float uScale;
+uniform float uHalfWidth;     // perpendicular extent in p-space
+uniform float uEndExtend;     // along-axis extension beyond endpoints
+varying vec2  vSegA;
+varying vec2  vSegB;
+varying vec2  vPixelP;
+varying float vSeed;
+varying float vGate;
+varying float vLab;
+void main() {
+  float aspect = uResolution.x / uResolution.y;
+  vec2 segDir  = (aEdgeB - aEdgeA) / max(aEdgeLab, 1e-6);
+  vec2 segPerp = vec2(-segDir.y, segDir.x);
+  vec2 along = mix(aEdgeA - segDir * uEndExtend,
+                   aEdgeB + segDir * uEndExtend,
+                   aQuadCoord.x);
+  vec2 quadP = along + segPerp * aQuadCoord.y * uHalfWidth;
+  vec2 clip  = quadP / uScale * vec2(2.0 / aspect, 2.0);
+  gl_Position = vec4(clip, 0.0, 1.0);
+  vSegA = aEdgeA;
+  vSegB = aEdgeB;
+  vPixelP = quadP;
+  vSeed = aEdgeSeed;
+  vGate = aEdgeGate;
+  vLab  = aEdgeLab;
+}
+`;
+
+const FRAG_CONST_EDGE = `
+precision highp float;
+varying vec2  vSegA;
+varying vec2  vSegB;
+varying vec2  vPixelP;
+varying float vSeed;
+varying float vGate;
+varying float vLab;
+uniform float uLineThick;
+uniform float uHeightStrokeAmount;
+uniform float uHeightStrokeWidth;
+uniform float uHeightStrokeCurve;
+uniform float uHeightStrokeWidthVar;
+
+float distSeg(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  return length(p - (a + ab * h));
+}
+vec2 distSegT(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  return vec2(length(p - (a + ab * h)), h);
+}
+
+void main() {
+  vec2 a = vSegA, b = vSegB, p = vPixelP;
+  float lab = vLab, gate = vGate, seed = vSeed;
+  float dseg = distSeg(p, a, b);
+  float edges = exp(-dseg * uLineThick) * gate;
+
+  if (uHeightStrokeAmount > 0.001) {
+    vec2 dt   = distSegT(p, a, b);
+    float tAl = dt.y;
+    vec2 segDir  = (b - a) / max(lab, 1e-6);
+    vec2 segPerp = vec2(-segDir.y, segDir.x);
+    float endFade = sin(tAl * 3.14159);
+    float wave    = sin(tAl * 14.0 + seed * 6.2831) * 0.6
+                  + sin(tAl * 31.0 + seed * 12.566) * 0.4;
+    float curveOff = wave * endFade * uHeightStrokeCurve * lab * 0.18;
+    vec2  pCurved  = p - segPerp * curveOff;
+    float widthMod = 1.0 + sin(tAl * 21.0 + seed * 17.91)
+                         * uHeightStrokeWidthVar * 0.85;
+    widthMod = max(widthMod, 0.15);
+    float wRate = mix(uLineThick, uLineThick * 0.10, clamp(uHeightStrokeWidth, 0.0, 1.0));
+    float dsegW = distSeg(pCurved, a, b);
+    edges += exp(-dsegW * wRate * widthMod) * gate * uHeightStrokeAmount;
+  }
+
+  vec3 cyan = vec3(0.20, 0.78, 1.00);
+  gl_FragColor = vec4(cyan * edges * 0.9, 1.0);
+}
+`;
+
+// --- Final tonemap: vig × tonemap × gamma. Same math as the tail of the
+//     old constellation shader, applied to the additive accumulation. ---
+const FRAG_CONST_TONEMAP = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc;
+void main() {
+  vec3 col = texture2D(uSrc, vUv).rgb;
+  float vig = smoothstep(1.25, 0.35, length(vUv - 0.5));
+  col *= 0.55 + 0.5 * vig;
+  col = col / (1.0 + col * 0.8);
+  col = pow(col, vec3(0.92));
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// (Old O(N²) fullscreen-scan shader removed; geometry pipeline above
+// replaces it. The dead string below is kept inert so we can collapse
+// the diff cleanly — JS evaluates and discards it.)
+const FRAG_CONSTELLATION_OLD_UNUSED = `// inert
+precision highp float;
+varying vec2 vUv;
+uniform vec2  uResolution;
+uniform float uScale;
+uniform float uThresh;
+uniform float uLineThick;
+uniform float uStarBright;
+uniform float uStarCount;
+precision highp float;
+varying vec2 vUv;
+uniform vec2  uResolution;
+uniform float uScale;
+uniform float uThresh;
+uniform float uLineThick;
+uniform float uStarBright;
+uniform float uStarCount;
+// Extra wider stroke (used only by the heightmap render pass; the
+// visible-top render passes 0 here so behaviour is unchanged).
+uniform float uHeightStrokeAmount;
+uniform float uHeightStrokeWidth;
+uniform float uHeightStrokeCurve;     // 0..1, perpendicular wave amount
+uniform float uHeightStrokeWidthVar;  // 0..1, sin-noise variation in width along edge
+
+const int N_STARS_MAX = 40;
+// Star positions precomputed on the CPU each frame and uploaded here.
+// They only depend on (i, time), not on the pixel — recomputing them
+// per fragment was burning ~210 trig calls per pixel.
+uniform vec2 uStars[N_STARS_MAX];
+
+float hash12(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float distSeg(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  return length(p - (a + ab * h));
+}
+// Same as distSeg but also returns the t-along-segment in .y (0..1).
+vec2 distSegT(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  return vec2(length(p - (a + ab * h)), h);
+}
+float crossFlare(vec2 d, float thickness) {
+  float horiz = exp(-d.y * d.y * thickness) * exp(-abs(d.x) * 0.6);
+  float vert  = exp(-d.x * d.x * thickness) * exp(-abs(d.y) * 0.6);
+  return horiz + vert;
+}
+
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.5) * uScale;
+
+  // Wider stroke is real geometry — additional, fatter exp falloff for
+  // both stars and edges. Width slider scales the falloff coefficient
+  // down (smaller exp coeff = wider feature). Amount scales contribution.
+  float wStarRate  = mix(60.0, 6.0,  clamp(uHeightStrokeWidth, 0.0, 1.0));
+  float wLineRate  = mix(uLineThick, uLineThick * 0.10, clamp(uHeightStrokeWidth, 0.0, 1.0));
+
+  float starCore = 0.0;
+  float starHalo = 0.0;
+  float flare    = 0.0;
+  for (int i = 0; i < N_STARS_MAX; i++) {
+    if (float(i) >= uStarCount) break;
+    float fi   = float(i);
+    float seed = fract(fi * 0.6180339);
+    vec2  sp   = uStars[i];
+    vec2  d    = p - sp;
+    float r    = length(d);
+    float k    = 0.4 + 0.6 * seed;
+    starCore += exp(-r * 60.0) * k * 1.3;
+    starHalo += exp(-r *  6.0) * 0.08 * k;
+    // Extra wider star — only contributes when uHeightStrokeAmount > 0.
+    starCore += exp(-r * wStarRate) * k * 1.3 * uHeightStrokeAmount;
+    if (seed > 0.55) {
+      flare += crossFlare(d * 9.0, 18.0) * (seed - 0.4) * 0.6;
+    }
+  }
+
+  // Edge loop: positions read from the uStars uniform array — no per-pixel
+  // trig at all. Uniform arrays index cleanly (constant memory), unlike
+  // local arrays which previously caused a register-spill slowdown.
+  float edges = 0.0;
+  for (int i = 0; i < N_STARS_MAX; i++) {
+    if (float(i) >= uStarCount) break;
+    vec2 a = uStars[i];
+    for (int j = 0; j < N_STARS_MAX; j++) {
+      if (float(j) >= uStarCount) break;
+      if (j > i) {
+        vec2 b = uStars[j];
+        float lab = length(a - b);
+        if (lab < uThresh) {
+          // Regular edge — straight, used by the visible top layer.
+          float dseg = distSeg(p, a, b);
+          float gate = smoothstep(uThresh, uThresh * 0.5, lab);
+          edges += exp(-dseg * uLineThick) * gate;
+
+          // Wider stroke — only contributes when amount > 0 (heightmap pass).
+          // Adds curvature (perpendicular sin-wave seeded per edge) and
+          // width variance (sin-noise modulating the falloff coefficient).
+          if (uHeightStrokeAmount > 0.001) {
+            vec2 dt0   = distSegT(p, a, b);
+            float tAl  = dt0.y;
+            float seed = hash12(vec2(float(i) * 13.7, float(j) * 23.1 + 1.3));
+
+            // Curvature: shift sample point perpendicular to segment by
+            // a sin-wave. Fades to 0 at endpoints so the wider line still
+            // joins the stars cleanly.
+            vec2  segDir   = (b - a) / max(lab, 1e-6);
+            vec2  segPerp  = vec2(-segDir.y, segDir.x);
+            float endFade  = sin(tAl * 3.14159);
+            float wave     = sin(tAl * 14.0 + seed * 6.2831) * 0.6
+                           + sin(tAl * 31.0 + seed * 12.566) * 0.4;
+            float curveOff = wave * endFade * uHeightStrokeCurve * lab * 0.18;
+            vec2  pCurved  = p - segPerp * curveOff;
+
+            // Width variance: 1 ± uHeightStrokeWidthVar around base rate.
+            // Clamped so the line never inverts (negative rate would explode).
+            float widthMod = 1.0 + sin(tAl * 21.0 + seed * 17.91)
+                                 * uHeightStrokeWidthVar * 0.85;
+            widthMod       = max(widthMod, 0.15);
+
+            float dsegW = distSeg(pCurved, a, b);
+            edges += exp(-dsegW * wLineRate * widthMod) * gate
+                   * uHeightStrokeAmount;
+          }
+        }
+      }
+    }
+  }
+
+  vec3 deep = vec3(0.01, 0.06, 0.13);
+  vec3 cyan = vec3(0.20, 0.78, 1.00);
+  vec3 ice  = vec3(0.85, 0.98, 1.00);
+
+  float wash = exp(-length(p) * 0.8) * 0.18;
+
+  vec3 col = deep * 0.7;
+  col += cyan * (edges * 0.9 + starHalo * uStarBright + wash);
+  col += ice  * (starCore * uStarBright + flare * uStarBright);
+
+  float vig = smoothstep(1.25, 0.35, length(uv - 0.5));
+  col *= 0.55 + 0.5 * vig;
+  col = col / (1.0 + col * 0.8);
+  col = pow(col, vec3(0.92));
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ============================================================
+// CAUSTIC SHADER (lower layer, heightmap-driven)
+// Adapted from colors.html FRAG_COLORS:
+//   - Polyline removed (uPoints/uStrengths/uNumPoints gone)
+//   - h field comes from sampling uHeightmap (constellation FBO)
+//   - dCurve / dCellCurve derived from heightmap luminance
+//   - Dropped uniforms (zero defaults): uHillStr, uValleyStr,
+//     uMacroValley, uCellRadial, uBloom, uEdgeBleed, uGrain, uGrainScale
+//   - New uniforms: uHeightGain, uHeightSharp, uHeightFloor
+//   - uCurveStr renamed UI: "Constellation lift"
+//   - uCurveThick renamed UI: "Constellation sharpness"
+// ============================================================
+const FRAG_CAUSTIC = `
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;
+uniform vec2  uResolution;
+
+uniform float uScale;
+uniform float uHueShift;
+uniform float uBridge;
+uniform float uBase;
+uniform float uHot;
+uniform float uSat;
+uniform float uExposure;
+uniform float uCurveStr;       // Constellation lift  (master gain on curve effects)
+uniform float uCurveThick;     // Constellation sharpness (falloff tightness)
+uniform float uMacroHill;
+uniform float uMacroFloor;
+uniform float uWarp;
+uniform float uBeamLift;
+uniform float uCurveFade;
+uniform float uCurveFadeRange;
+uniform float uSparkle;
+uniform int   uPalette;
+
+uniform sampler2D uHeightmap;
+uniform float uHeightGain;
+uniform float uHeightSharp;
+uniform float uHeightFloor;
+
+vec2 hash22(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)),
+           dot(p, vec2(269.5, 183.3)));
+  return fract(sin(p) * 43758.5453);
+}
+float hash12(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+vec4 voronoi(vec2 x, float jitter, float t) {
+  vec2 n = floor(x);
+  vec2 f = fract(x);
+  vec2 mg = vec2(0.0);
+  vec2 mr = vec2(0.0);
+  vec2 mid = vec2(0.0);
+  float md = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      o = 0.5 + jitter * (sin(t + 6.2831 * o) * 0.5);
+      vec2 r = g + o - f;
+      float d = dot(r, r);
+      if (d < md) { md = d; mr = r; mg = g; mid = n + g + o; }
+    }
+  }
+  float ed  = 8.0;
+  float ed2 = 8.0;
+  for (int j = -2; j <= 2; j++) {
+    for (int i = -2; i <= 2; i++) {
+      vec2 g = mg + vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      o = 0.5 + jitter * (sin(t + 6.2831 * o) * 0.5);
+      vec2 r = g + o - f;
+      if (dot(mr - r, mr - r) > 0.00001) {
+        float d = dot(0.5 * (mr + r), normalize(r - mr));
+        if (d < ed)       { ed2 = ed; ed = d; }
+        else if (d < ed2) { ed2 = d; }
+      }
+    }
+  }
+  return vec4(ed, mid, ed2);
+}
+
+vec3 gradient(float x) {
+  vec3 c0, c1, c2;
+  if (uPalette == 1) {
+    c0 = vec3(0.92, 0.18, 0.85);
+    c1 = vec3(0.14, 0.04, 0.14);
+    c2 = vec3(1.00, 0.62, 0.12);
+  } else if (uPalette == 2) {
+    c0 = vec3(0.02, 0.06, 0.16);
+    c1 = vec3(0.10, 0.55, 0.88);
+    c2 = vec3(0.55, 0.95, 1.00);
+  } else {
+    c0 = vec3(1.00, 0.24, 0.04);
+    c1 = vec3(1.00, 0.28, 0.70);
+    c2 = vec3(0.30, 0.06, 0.98);
+  }
+  x = clamp(x, 0.0, 1.0);
+  float b = clamp(uBridge, 0.05, 0.95);
+  if (x < b) {
+    float k = smoothstep(0.0, 1.0, x / b);
+    return mix(c0, c1, k);
+  } else {
+    float k = smoothstep(0.0, 1.0, (x - b) / (1.0 - b));
+    return mix(c1, c2, k);
+  }
+}
+
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 np = vec2((uv.x - 0.5) * aspect, uv.y - 0.5);
+  vec2 p  = np * uScale;
+  float t = 0.0;
+
+  // Recursive domain warp.
+  vec2 q = vec2(sin(p.y * 0.8 + 1.3),  cos(p.x * 0.9 + 0.7));
+  vec2 r = vec2(sin(p.x * 1.3 + 2.0 * q.x + 0.5),
+                cos(p.y * 1.6 + 2.0 * q.y + 1.2));
+  vec2 warp = (q * 0.40 + r * 1.00) * uWarp;
+  vec4 v = voronoi(p + warp, 0.55, t);
+  float edge   = v.x;
+  vec2  cellId = v.yz;
+  float edge2  = v.w;
+
+  float r1 = hash12(cellId * 7.31);
+  float r2 = hash12(cellId * 7.31 + 19.0);
+  float r3 = hash12(cellId * 7.31 + 47.0);
+  float r4 = hash12(cellId * 7.31 + 73.0);
+
+  float cellBright = 0.30 + 0.95 * r1;
+  float interior   = cellBright * 0.95;
+
+  // ===== Heightmap: sample constellation FBO at uv =====
+  vec3 hmRGB     = texture2D(uHeightmap, uv).rgb;
+  float heightLum = dot(hmRGB, vec3(0.299, 0.587, 0.114));
+  float h        = uHeightFloor + uHeightGain * pow(max(heightLum, 0.0), uHeightSharp);
+  float dCurve   = clamp(1.0 - heightLum, 0.0, 1.0);
+
+  // Per-cell heightmap sample (cell center → uv).
+  vec2 cellNp = cellId / uScale;
+  vec2 cellUv = clamp(vec2(cellNp.x / aspect, cellNp.y) + 0.5, 0.0, 1.0);
+  vec3 hmCell = texture2D(uHeightmap, cellUv).rgb;
+  float cellLum    = dot(hmCell, vec3(0.299, 0.587, 0.114));
+  float dCellCurve = clamp(1.0 - cellLum, 0.0, 1.0);
+
+  // ===== Per-cell color from gradient =====
+  float broad   = uv.x + uHueShift + (1.0 - uv.y) * 0.10;
+  float cellOff = (r2 - 0.5) * 0.30;
+  float cellT   = broad + cellOff;
+  vec3 cellColor = gradient(cellT);
+  float cellSat  = 0.65 + 0.65 * r4;
+  float ccLum    = dot(cellColor, vec3(0.299, 0.587, 0.114));
+  cellColor      = mix(vec3(ccLum), cellColor, cellSat);
+
+  // ===== macroBright (no negative term — uMacroValley dropped) =====
+  float hPositive   = max(h, 0.0);
+  float macroBright = max(uMacroFloor, 0.55 + uMacroHill * hPositive);
+
+  // ===== Master constellation modulators =====
+  float curveGain  = uCurveStr;             // 0..2
+  float curveSharp = uCurveThick / 31.5;    // 1.0 at default, scales falloff
+
+  // ===== Cell fill =====
+  vec3 col = cellColor * macroBright * (uBase + 0.55 * interior);
+
+  // ===== Hot blowout =====
+  float cellHot   = pow(r1, 3.0);
+  float cellLight = clamp(cellBright * macroBright * 0.55 - 0.15, 0.0, 1.0);
+  float fieldHot  = 0.5 + 0.5 * sin(p.x * 1.10 + 0.7) * cos(p.y * 1.55 - 0.3);
+  fieldHot        = pow(fieldHot, 2.5);
+  float hotness   = max(cellLight, fieldHot);
+  float gateSpace = smoothstep(0.6, 1.4, macroBright);
+  float cellPunch = mix(0.30, 2.40, cellHot);
+  float baseGlow  = exp(-edge * 70.0) * (0.15 + cellHot * 0.55);
+  float bleedExp  = mix(50.0, 4.0, hotness);
+  float bleedAmp  = 0.15 + hotness * 1.80;
+  float bleed     = exp(-edge * bleedExp) * bleedAmp * cellPunch;
+  float hotspot   = (baseGlow + bleed) * gateSpace;
+  col += hotspot * vec3(1.60, 1.35, 1.45) * uHot;
+
+  // ===== Atmospheric haze from h =====
+  vec3 hazeColor = mix(cellColor, vec3(1.0, 0.75, 0.85), 0.40);
+  col += hazeColor * h * 0.18;
+
+  // ===== Constellation-driven beam (uCurveStr / uCurveThick) =====
+  float beamLift = exp(-dCurve * 4.5  * curveSharp) * 0.80 * curveGain;
+  col *= 1.0 + beamLift * uBeamLift;
+
+  float beamHint = exp(-dCurve * 35.0 * curveSharp) * 0.80 * curveGain;
+  vec3 beamCol = vec3(1.00, 0.62, 0.80);
+  col += beamCol * beamHint * 0.20;
+
+  // ===== Sparkles at cell corners =====
+  float hilite     = max(0.0, (macroBright - 0.55) * 2.8) + hotspot * 4.50;
+  float h01        = clamp(hilite, 0.0, 1.0);
+  float armNarrow  = mix(70.0, 18.0, h01);
+  float armWide    = mix( 5.0,  1.6, h01);
+  float sparkH     = exp(-edge2 * armNarrow) * exp(-edge  * armWide);
+  float sparkV     = exp(-edge  * armNarrow) * exp(-edge2 * armWide);
+  float haloFall   = mix(20.0, 5.0, h01);
+  float haloAmp    = mix(0.30, 1.80, h01);
+  float sparkHalo  = exp(-(edge + edge2) * haloFall) * haloAmp;
+  float sparkShape = sparkH + sparkV + sparkHalo;
+  float sparkSeed  = hash12(cellId * 11.7 + 31.0);
+  float cornerEdge = mix(0.035, 0.10, h01);
+  float cornerMask = smoothstep(cornerEdge, 0.0, max(edge, edge2));
+  float sparkGate  = step(0.40, sparkSeed) * cornerMask;
+  float sparkLit   = (exp(-dCurve * 2.5 * curveSharp) + 0.18) * (1.0 + hilite * 3.0);
+  vec3 sparkCol    = mix(vec3(1.55, 1.30, 1.45), cellColor + vec3(0.5), 0.25);
+  col += sparkCol * sparkShape * sparkGate * sparkLit * uSparkle;
+
+  // ===== Per-cell curve fade =====
+  // Was a cubic-exp on (1 - cellLum). With the constellation as
+  // heightmap source, cellLum is near-binary, so the cubic produced
+  // a cliff (full bright on a feature, ~0 elsewhere). Now: a power
+  // curve directly on cellLum. uCurveFadeRange maps to an exponent
+  // in [0.3, 3.0] — low values lift dim cells (gentle fade), high
+  // values steepen the curve (only feature-touching cells stay bright).
+  // The dilate / bleed sliders still widen the cellLum signal upstream,
+  // so cranking them visibly broadens the lit halo.
+  float fadeStr   = clamp(uCurveFadeRange * (1.0 / 30.0), 0.0, 1.0);
+  float fadePwr   = mix(0.3, 3.0, fadeStr);
+  float curveProx = pow(clamp(cellLum, 0.001, 1.0), fadePwr);
+  float cellDim   = 0.45 + 0.55 * r3;
+  curveProx      *= cellDim;
+  col *= mix(1.0, curveProx, uCurveFade);
+
+  // Vignette
+  float vig = smoothstep(1.30, 0.40, length(np));
+  col *= 0.85 + 0.20 * vig;
+
+  // Tone map → saturation lift → gamma.
+  col = vec3(1.0) - exp(-col * uExposure);
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  col = mix(vec3(lum), col, uSat);
+  col = pow(max(col, 0.0), vec3(1.0 / 2.2));
+
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ============================================================
+// COMPOSITE SHADER (caustic + top, optional blur on caustic)
+// uBlendMode: 0 = additive, 1 = screen, 2 = mix
+// ============================================================
+const FRAG_COMPOSITE = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uCaustic;
+uniform sampler2D uTop;
+uniform vec2  uResolution;
+uniform float uOverlayMix;
+uniform float uBlur;
+uniform int   uBlendMode;
+
+vec4 sampleBlurred(sampler2D tex, vec2 uv) {
+  if (uBlur <= 0.001) return texture2D(tex, uv);
+  vec2 px = vec2(1.0) / uResolution * uBlur * 30.0;
+  vec4 c  = texture2D(tex, uv) * 0.227027;
+  c += texture2D(tex, uv + vec2( px.x, 0.0))     * 0.1945946;
+  c += texture2D(tex, uv + vec2(-px.x, 0.0))     * 0.1945946;
+  c += texture2D(tex, uv + vec2( 0.0, px.y))     * 0.1945946;
+  c += texture2D(tex, uv + vec2( 0.0,-px.y))     * 0.1945946;
+  c += texture2D(tex, uv + vec2( 2.0*px.x, 0.0)) * 0.1216216;
+  c += texture2D(tex, uv + vec2(-2.0*px.x, 0.0)) * 0.1216216;
+  c += texture2D(tex, uv + vec2( 0.0, 2.0*px.y)) * 0.1216216;
+  c += texture2D(tex, uv + vec2( 0.0,-2.0*px.y)) * 0.1216216;
+  c += texture2D(tex, uv + vec2( 3.5*px.x, 0.0)) * 0.054054;
+  c += texture2D(tex, uv + vec2(-3.5*px.x, 0.0)) * 0.054054;
+  c += texture2D(tex, uv + vec2( 0.0, 3.5*px.y)) * 0.054054;
+  c += texture2D(tex, uv + vec2( 0.0,-3.5*px.y)) * 0.054054;
+  return c / 1.708;
+}
+
+void main() {
+  vec3 a = sampleBlurred(uCaustic, vUv).rgb;   // blurred caustic
+  vec3 b = texture2D(uTop, vUv).rgb;            // sharp constellation
+  vec3 bm = b * uOverlayMix;
+  vec3 final;
+  if (uBlendMode == 0) {
+    // Additive
+    final = a + bm;
+  } else if (uBlendMode == 1) {
+    // Screen
+    final = vec3(1.0) - (vec3(1.0) - a) * (vec3(1.0) - clamp(bm, 0.0, 1.0));
+  } else {
+    // Mix (linear crossfade caustic ↔ caustic+top)
+    final = mix(a, a + b, uOverlayMix);
+  }
+  gl_FragColor = vec4(final, 1.0);
+}
+`;
+
+// ============================================================
+// DILATE SHADER (heightmap-only — widens stars/lines and reshapes
+// the falloff curve. Runs BEFORE the blur, so blur softens the
+// already-fattened result instead of just smearing the original.)
+//
+//   uHeightWidth   — search radius in pixels (×120 internal scale)
+//   uHeightSoftness— falloff exponent: 1.0 ≈ linear, >1 gentler,
+//                    <1 sharper (steeper drop-off).
+// At each output pixel, samples a polar grid (rings × sectors) and
+// takes the brightest neighbour attenuated by a distance falloff.
+// Output is grayscale — the heightmap only reads luminance.
+// ============================================================
+const FRAG_HEIGHT_DILATE = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc;
+uniform vec2  uResolution;
+uniform float uHeightWidth;
+uniform float uHeightSoftness;
+
+float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+
+void main() {
+  vec3 center = texture2D(uSrc, vUv).rgb;
+  if (uHeightWidth <= 0.001) {
+    gl_FragColor = vec4(center, 1.0);
+    return;
+  }
+  float maxL = lumOf(center);
+  vec2 pxScale = vec2(1.0) / uResolution * uHeightWidth * 120.0;
+  const int RINGS   = 4;
+  const int SECTORS = 8;
+  for (int r = 1; r <= RINGS; r++) {
+    float dist    = float(r) / float(RINGS);
+    float falloff = pow(max(1.0 - dist, 0.0),
+                        1.0 / max(uHeightSoftness, 0.1));
+    for (int s = 0; s < SECTORS; s++) {
+      float angle = 6.2831 * float(s) / float(SECTORS);
+      vec2 d = vec2(cos(angle), sin(angle)) * dist * pxScale;
+      vec3 sampled = texture2D(uSrc, vUv + d).rgb;
+      maxL = max(maxL, lumOf(sampled) * falloff);
+    }
+  }
+  gl_FragColor = vec4(vec3(maxL), 1.0);
+}
+`;
+
+// ============================================================
+// BLUR SHADER (heightmap-only — softens the constellation FBO
+// before the caustic samples it. The visible top layer in pass 3
+// keeps sampling the RAW constellation FBO, so stars stay crisp.)
+// ============================================================
+const FRAG_BLUR_TOP = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc;
+uniform vec2  uResolution;
+uniform float uBleed;
+
+void main() {
+  if (uBleed <= 0.001) {
+    gl_FragColor = texture2D(uSrc, vUv);
+    return;
+  }
+  // Wider radius than the composite blur (×60 vs ×30) so a small uBleed
+  // visibly bleeds stars and lines. 13-tap separable-ish kernel.
+  vec2 px = vec2(1.0) / uResolution * uBleed * 60.0;
+  vec4 c  = texture2D(uSrc, vUv) * 0.227027;
+  c += texture2D(uSrc, vUv + vec2( px.x, 0.0))     * 0.1945946;
+  c += texture2D(uSrc, vUv + vec2(-px.x, 0.0))     * 0.1945946;
+  c += texture2D(uSrc, vUv + vec2( 0.0, px.y))     * 0.1945946;
+  c += texture2D(uSrc, vUv + vec2( 0.0,-px.y))     * 0.1945946;
+  c += texture2D(uSrc, vUv + vec2( 2.0*px.x, 0.0)) * 0.1216216;
+  c += texture2D(uSrc, vUv + vec2(-2.0*px.x, 0.0)) * 0.1216216;
+  c += texture2D(uSrc, vUv + vec2( 0.0, 2.0*px.y)) * 0.1216216;
+  c += texture2D(uSrc, vUv + vec2( 0.0,-2.0*px.y)) * 0.1216216;
+  c += texture2D(uSrc, vUv + vec2( 3.5*px.x, 0.0)) * 0.054054;
+  c += texture2D(uSrc, vUv + vec2(-3.5*px.x, 0.0)) * 0.054054;
+  c += texture2D(uSrc, vUv + vec2( 0.0, 3.5*px.y)) * 0.054054;
+  c += texture2D(uSrc, vUv + vec2( 0.0,-3.5*px.y)) * 0.054054;
+  gl_FragColor = c / 1.708;
+}
+`;
+
+// ============================================================
+// MINIMAP SHADER (debug/visual aid — grayscale heightmap inset)
+// ============================================================
+const FRAG_MINIMAP = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTop;
+
+void main() {
+  // Thin pink frame.
+  float border = 0.012;
+  if (vUv.x < border || vUv.x > 1.0 - border ||
+      vUv.y < border || vUv.y > 1.0 - border) {
+    gl_FragColor = vec4(1.0, 0.48, 0.84, 1.0);
+    return;
+  }
+  vec3 c = texture2D(uTop, vUv).rgb;
+  float lum = dot(c, vec3(0.299, 0.587, 0.114));
+  gl_FragColor = vec4(vec3(lum), 1.0);
+}
+`;
+
+// ============================================================
+// GL boilerplate
+// ============================================================
+function compile(gl, type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(sh);
+    gl.deleteShader(sh);
+    throw new Error("Shader compile error: " + log);
+  }
+  return sh;
+}
+function link(gl, vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, vs);
+  gl.attachShader(p, fs);
+  gl.bindAttribLocation(p, 0, "aPosition");
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    throw new Error("Link error: " + gl.getProgramInfoLog(p));
+  }
+  return p;
+}
+
+// ============================================================
+// makeRenderer — three programs, two FBOs, one canvas.
+// ============================================================
+function makeRenderer(canvas) {
+  const gl = canvas.getContext("webgl", {
+    antialias: false,
+    premultipliedAlpha: false,
+    powerPreference: "high-performance",
+  });
+  if (!gl) {
+    canvas.replaceWith(Object.assign(document.createElement("div"), {
+      textContent: "WebGL not available",
+      style: "color:#fff;display:grid;place-items:center;height:100%",
+    }));
+    return null;
+  }
+
+  const vs       = compile(gl, gl.VERTEX_SHADER, VERT_SRC);
+  const vsStar   = compile(gl, gl.VERTEX_SHADER, VERT_CONST_STAR);
+  const vsEdge   = compile(gl, gl.VERTEX_SHADER, VERT_CONST_EDGE);
+
+  // link with explicit attribute locations (so vertexAttribPointer(0..N)
+  // matches the shader's attribute names regardless of compiler ordering).
+  function linkWith(vs_, fs_, attribLocs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, vs_);
+    gl.attachShader(p, fs_);
+    for (const name in attribLocs) gl.bindAttribLocation(p, attribLocs[name], name);
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      throw new Error("Link error: " + gl.getProgramInfoLog(p));
+    }
+    return p;
+  }
+
+  const progConstBg      = linkWith(vs,     compile(gl, gl.FRAGMENT_SHADER, FRAG_CONST_BG),      { aPosition: 0 });
+  const progConstStar    = linkWith(vsStar, compile(gl, gl.FRAGMENT_SHADER, FRAG_CONST_STAR),    { aQuadCoord: 0, aStarPos: 1, aStarSeed: 2 });
+  const progConstEdge    = linkWith(vsEdge, compile(gl, gl.FRAGMENT_SHADER, FRAG_CONST_EDGE),    { aQuadCoord: 0, aEdgeA: 1, aEdgeB: 2, aEdgeSeed: 3, aEdgeGate: 4, aEdgeLab: 5 });
+  const progConstTonemap = linkWith(vs,     compile(gl, gl.FRAGMENT_SHADER, FRAG_CONST_TONEMAP), { aPosition: 0 });
+
+  const progDilate   = link(gl, vs, compile(gl, gl.FRAGMENT_SHADER, FRAG_HEIGHT_DILATE));
+  const progBlurTop  = link(gl, vs, compile(gl, gl.FRAGMENT_SHADER, FRAG_BLUR_TOP));
+  const progCaust    = link(gl, vs, compile(gl, gl.FRAGMENT_SHADER, FRAG_CAUSTIC));
+  const progComp     = link(gl, vs, compile(gl, gl.FRAGMENT_SHADER, FRAG_COMPOSITE));
+  const progMinimap  = link(gl, vs, compile(gl, gl.FRAGMENT_SHADER, FRAG_MINIMAP));
+
+  // Fullscreen quad VBO (used by bg, tonemap, dilate, blur, caustic, composite, minimap).
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,  1, -1, -1,  1,
+    -1,  1,  1, -1,  1,  1,
+  ]), gl.STATIC_DRAW);
+
+  // Star and edge VBOs — rebuilt each frame on the CPU.
+  const starVbo = gl.createBuffer();
+  const edgeVbo = gl.createBuffer();
+
+  // Vertex-attribute setup helpers. Each call switches the active VBO
+  // and re-points attribs 0..5 for the upcoming draw.
+  function bindFullscreenAttribs() {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.disableVertexAttribArray(1);
+    gl.disableVertexAttribArray(2);
+    gl.disableVertexAttribArray(3);
+    gl.disableVertexAttribArray(4);
+    gl.disableVertexAttribArray(5);
+  }
+  function bindStarAttribs() {
+    gl.bindBuffer(gl.ARRAY_BUFFER, starVbo);
+    const stride = 5 * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 8);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, stride, 16);
+    gl.disableVertexAttribArray(3);
+    gl.disableVertexAttribArray(4);
+    gl.disableVertexAttribArray(5);
+  }
+  function bindEdgeAttribs() {
+    gl.bindBuffer(gl.ARRAY_BUFFER, edgeVbo);
+    const stride = 9 * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 8);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, stride, 16);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 24);
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, 28);
+    gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 1, gl.FLOAT, false, stride, 32);
+  }
+  bindFullscreenAttribs();   // initial state
+
+  // Helper: collect uniform locations for a program.
+  function locs(program, names) {
+    const out = {};
+    for (const n of names) out[n] = gl.getUniformLocation(program, n);
+    return out;
+  }
+
+  const constBgLocs   = locs(progConstBg,   ["uResolution", "uScale"]);
+  const constStarLocs = locs(progConstStar, [
+    "uResolution", "uScale", "uHaloRadius", "uStarBright",
+    "uHeightStrokeAmount", "uHeightStrokeWidth",
+  ]);
+  const constEdgeLocs = locs(progConstEdge, [
+    "uResolution", "uScale", "uHalfWidth", "uEndExtend", "uLineThick",
+    "uHeightStrokeAmount", "uHeightStrokeWidth",
+    "uHeightStrokeCurve", "uHeightStrokeWidthVar",
+  ]);
+  const constToneLocs = locs(progConstTonemap, ["uSrc"]);
+
+  // ===== Per-frame CPU work for the constellation geometry =====
+  const N_STARS_MAX_JS = 800;
+  const starsBuf       = new Float32Array(N_STARS_MAX_JS * 2);
+
+  // Star vertex layout: 6 verts per star × (aQuadCoord 2f, aStarPos 2f, aStarSeed 1f) = 30 floats per star.
+  const starVertBuf = new Float32Array(N_STARS_MAX_JS * 6 * 5);
+  // Edge VBO grows as needed; capacity tracked separately.
+  let edgeVertBuf   = new Float32Array(0);
+  let edgeCount     = 0;
+
+  // Quad corners (two triangles).
+  const STAR_CORNERS = [[-1,-1],[+1,-1],[-1,+1],[-1,+1],[+1,-1],[+1,+1]];
+  const EDGE_CORNERS = [[ 0,-1],[ 1,-1],[ 0,+1],[ 0,+1],[ 1,-1],[ 1,+1]];
+
+  function smoothstepCPU(e0, e1, x) {
+    const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+    return t * t * (3 - 2 * t);
+  }
+  function hash12CPU(x, y) {
+    const v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return v - Math.floor(v);
+  }
+
+  function computeStars(time, count) {
+    const t = time * 0.5;
+    const n = Math.min(count | 0, N_STARS_MAX_JS);
+    for (let i = 0; i < n; i++) {
+      starsBuf[i * 2 + 0] = Math.sin(i * 7.31)        * 2.50
+                          + Math.sin(i * 5.0 + t)     * 0.05;
+      starsBuf[i * 2 + 1] = Math.cos(i * 11.21 + 1.30) * 1.25
+                          + Math.cos(i * 7.0 - t)      * 0.04;
+    }
+    return n;
+  }
+
+  // Build the star VBO contents. Each star → 6 verts (two triangles).
+  function buildStarVerts(count) {
+    let off = 0;
+    for (let i = 0; i < count; i++) {
+      const px = starsBuf[i * 2 + 0];
+      const py = starsBuf[i * 2 + 1];
+      const seed = (i * 0.6180339) - Math.floor(i * 0.6180339);
+      for (let c = 0; c < 6; c++) {
+        const cc = STAR_CORNERS[c];
+        starVertBuf[off++] = cc[0];
+        starVertBuf[off++] = cc[1];
+        starVertBuf[off++] = px;
+        starVertBuf[off++] = py;
+        starVertBuf[off++] = seed;
+      }
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, starVbo);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  starVertBuf.subarray(0, count * 6 * 5),
+                  gl.STREAM_DRAW);
+  }
+
+  // Build the edge VBO contents from current star positions + threshold.
+  // Returns the number of valid pairs that ended up drawn.
+  function buildEdges(count, thresh) {
+    // Worst case: count*(count-1)/2 pairs × 6 verts × 9 floats.
+    const maxPairs   = (count * (count - 1)) >> 1;
+    const neededLen  = maxPairs * 6 * 9;
+    if (edgeVertBuf.length < neededLen) edgeVertBuf = new Float32Array(neededLen);
+
+    let off    = 0;
+    let pairs  = 0;
+    for (let i = 0; i < count; i++) {
+      const ax = starsBuf[i * 2 + 0];
+      const ay = starsBuf[i * 2 + 1];
+      for (let j = i + 1; j < count; j++) {
+        const bx  = starsBuf[j * 2 + 0];
+        const by  = starsBuf[j * 2 + 1];
+        const dx  = ax - bx, dy = ay - by;
+        const lab = Math.hypot(dx, dy);
+        if (lab >= thresh) continue;
+        const gate = smoothstepCPU(thresh, thresh * 0.5, lab);
+        const seed = hash12CPU(i * 13.7, j * 23.1 + 1.3);
+        for (let c = 0; c < 6; c++) {
+          const cc = EDGE_CORNERS[c];
+          edgeVertBuf[off++] = cc[0];   edgeVertBuf[off++] = cc[1];
+          edgeVertBuf[off++] = ax;      edgeVertBuf[off++] = ay;
+          edgeVertBuf[off++] = bx;      edgeVertBuf[off++] = by;
+          edgeVertBuf[off++] = seed;
+          edgeVertBuf[off++] = gate;
+          edgeVertBuf[off++] = lab;
+        }
+        pairs++;
+      }
+    }
+    edgeCount = pairs;
+    if (pairs > 0) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, edgeVbo);
+      gl.bufferData(gl.ARRAY_BUFFER,
+                    edgeVertBuf.subarray(0, pairs * 6 * 9),
+                    gl.STREAM_DRAW);
+    }
+    return pairs;
+  }
+
+  const caustLocs = locs(progCaust, [
+    "uTime", "uResolution",
+    "uScale", "uHueShift", "uBridge", "uBase", "uHot", "uSat", "uExposure",
+    "uCurveStr", "uCurveThick", "uMacroHill", "uMacroFloor", "uWarp",
+    "uBeamLift", "uCurveFade", "uCurveFadeRange", "uSparkle", "uPalette",
+    "uHeightmap", "uHeightGain", "uHeightSharp", "uHeightFloor",
+  ]);
+
+  const compLocs = locs(progComp, [
+    "uResolution", "uCaustic", "uTop", "uOverlayMix", "uBlur", "uBlendMode",
+  ]);
+
+  const dilateLocs = locs(progDilate, [
+    "uSrc", "uResolution",
+    "uHeightWidth", "uHeightSoftness",
+  ]);
+  const blurLocs   = locs(progBlurTop, ["uSrc", "uResolution", "uBleed"]);
+
+  const mmLocs = locs(progMinimap, ["uTop"]);
+
+  // Two FBOs: top (constellation) + caustic.
+  function createFBO() {
+    return { fbo: gl.createFramebuffer(), tex: gl.createTexture(), w: 0, h: 0 };
+  }
+  const fboTopRaw       = createFBO();  // additive accumulation (visible)
+  const fboTop          = createFBO();  // tonemapped result (visible top layer)
+  const fboTopHeightRaw = createFBO();  // additive accumulation (heightmap, half-res)
+  const fboTopHeight    = createFBO();  // tonemapped (heightmap source)
+  const fboTopDilate    = createFBO();
+  const fboTopBlur      = createFBO();
+  const fboCaust        = createFBO();
+
+  // Render the heightmap-version constellation at half resolution. It's
+  // sampled via texture2D(...) at normalized vUv, then dilated + blurred,
+  // so high-res detail is wasted. Cuts that pass to ~25% of its full-res
+  // cost with no visible quality difference downstream.
+  const HEIGHT_SCALE = 0.5;
+
+  function resizeFBO(F, w, h) {
+    if (F.w === w && F.h === h) return;
+    F.w = w; F.h = h;
+    gl.bindTexture(gl.TEXTURE_2D, F.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, F.fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, F.tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  // Cap DPR at 1 — constellation has an O(N²) loop per pixel.
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1);
+    const w = Math.max(1, Math.floor(canvas.clientWidth  * dpr));
+    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const halfW = Math.max(1, Math.floor(canvas.width  * HEIGHT_SCALE));
+    const halfH = Math.max(1, Math.floor(canvas.height * HEIGHT_SCALE));
+    resizeFBO(fboTopRaw,       canvas.width, canvas.height);
+    resizeFBO(fboTop,          canvas.width, canvas.height);
+    resizeFBO(fboTopHeightRaw, halfW, halfH);
+    resizeFBO(fboTopHeight,    halfW, halfH);
+    resizeFBO(fboTopDilate,    canvas.width, canvas.height);
+    resizeFBO(fboTopBlur,      canvas.width, canvas.height);
+    resizeFBO(fboCaust,        canvas.width, canvas.height);
+  }
+
+  // ---------- Uniform values keyed by render target ----------
+  const values = {
+    caustic:       {},
+    constellation: {},
+    composite:     {},
+    minimap:       { show: 1 },
+    perf:          { show: 1 },
+  };
+
+  // ============================================================
+  // Profiler — measures GPU time per render pass.
+  // Prefers EXT_disjoint_timer_query (zero CPU stall, ns-accurate).
+  // Falls back to gl.finish() + performance.now() when unavailable
+  // (adds CPU stalls — only enabled while the overlay is on).
+  // ============================================================
+  const timerExt = gl.getExtension("EXT_disjoint_timer_query");
+  const PASS_LABELS = [
+    "constellation visible",
+    "constellation height",
+    "dilate",
+    "blur",
+    "caustic",
+    "composite",
+  ];
+  // Sliding-window averaging buffers (last 60 samples per pass).
+  const WINDOW = 60;
+  const samples = PASS_LABELS.map(() => ({ buf: new Float32Array(WINDOW), idx: 0, count: 0 }));
+  function pushSample(passIdx, ms) {
+    const s = samples[passIdx];
+    s.buf[s.idx] = ms;
+    s.idx = (s.idx + 1) % WINDOW;
+    if (s.count < WINDOW) s.count++;
+  }
+  function avgSample(passIdx) {
+    const s = samples[passIdx];
+    if (s.count === 0) return 0;
+    let sum = 0;
+    for (let i = 0; i < s.count; i++) sum += s.buf[i];
+    return sum / s.count;
+  }
+
+  // For EXT mode: queue queries, drain when results ready.
+  // Each frame uses up to 6 queries (one per pass). Read back next frame.
+  const queryQueue = [];   // { passIdx, query }
+  let currentQuery = null; // the in-flight query for the current pass
+  let currentPassIdx = -1;
+
+  function passBegin(idx) {
+    if (!values.perf.show) return;
+    currentPassIdx = idx;
+    if (timerExt) {
+      const q = gl.createQuery ? gl.createQuery() : timerExt.createQueryEXT();
+      timerExt.beginQueryEXT(timerExt.TIME_ELAPSED_EXT, q);
+      currentQuery = q;
+    } else {
+      // Fallback: stall before pass to flush prior work, record start.
+      gl.finish();
+      currentQuery = performance.now();
+    }
+  }
+  function passEnd() {
+    if (!values.perf.show) return;
+    if (currentPassIdx < 0) return;
+    if (timerExt) {
+      timerExt.endQueryEXT(timerExt.TIME_ELAPSED_EXT);
+      queryQueue.push({ passIdx: currentPassIdx, query: currentQuery });
+    } else {
+      gl.finish();
+      const ms = performance.now() - currentQuery;
+      pushSample(currentPassIdx, ms);
+    }
+    currentPassIdx = -1;
+    currentQuery   = null;
+  }
+  function drainQueries() {
+    if (!timerExt) return;
+    // GPU may have reset (page hidden, lost context) — discard queries.
+    const disjoint = gl.getParameter(timerExt.GPU_DISJOINT_EXT);
+    if (disjoint) {
+      // Throw away pending — results would be invalid.
+      for (const q of queryQueue) {
+        if (timerExt.deleteQueryEXT) timerExt.deleteQueryEXT(q.query);
+      }
+      queryQueue.length = 0;
+      return;
+    }
+    while (queryQueue.length > 0) {
+      const head = queryQueue[0];
+      const ready = timerExt.getQueryObjectEXT(head.query, timerExt.QUERY_RESULT_AVAILABLE_EXT);
+      if (!ready) break;
+      const ns = timerExt.getQueryObjectEXT(head.query, timerExt.QUERY_RESULT_EXT);
+      pushSample(head.passIdx, ns / 1e6);   // ns → ms
+      if (timerExt.deleteQueryEXT) timerExt.deleteQueryEXT(head.query);
+      queryQueue.shift();
+    }
+  }
+  // Update overlay text every ~10 frames so it doesn't flicker.
+  const perfEl = document.getElementById("perf-readout");
+  let perfFrame = 0;
+  function refreshPerfOverlay() {
+    if (!perfEl) return;
+    if (!values.perf.show) {
+      perfEl.style.display = "none";
+      return;
+    }
+    perfEl.style.display = "block";
+    if ((perfFrame++ & 0x07) !== 0) return;
+    const lines = [];
+    const mode = timerExt ? "GPU timer" : "gl.finish() fallback";
+    lines.push(`mode: ${mode}`);
+    let total = 0;
+    for (let i = 0; i < PASS_LABELS.length; i++) {
+      const ms = avgSample(i);
+      total += ms;
+      lines.push(`${PASS_LABELS[i].padEnd(22)} ${ms.toFixed(2).padStart(6)} ms`);
+    }
+    lines.push("─".repeat(33));
+    lines.push(`${"total".padEnd(22)} ${total.toFixed(2).padStart(6)} ms`);
+    perfEl.textContent = lines.join("\n");
+  }
+
+  let visible = true;
+  const io = new IntersectionObserver(entries => {
+    visible = entries[0].isIntersecting;
+  }, { threshold: 0 });
+  io.observe(canvas);
+
+  return {
+    setUniform(target, name, value) {
+      if (!values[target]) return;
+      values[target][name] = value;
+    },
+    draw(time) {
+      if (!visible) return;
+      resize();
+      const W = canvas.width, H = canvas.height;
+
+      // Drain any timer queries from previous frames before starting new ones.
+      drainQueries();
+
+      // ===== Per-frame CPU work for constellation geometry =====
+      const C = values.constellation;
+      const K = values.caustic;
+      const starCount = computeStars(time, C.uStarCount ?? 32);
+      buildStarVerts(starCount);
+      const pairs = buildEdges(starCount, C.uThresh ?? 1.05);
+
+      // Each "constellation pass" is now 4 mini-draws: bg → edges → stars → tonemap.
+      // Wrapped as a helper so visible and heightmap variants share code.
+      function renderConstellation(rawFBO, finalFBO, isHeightmap) {
+        const tw = rawFBO.w, th = rawFBO.h;
+
+        // BG (no blend, fullscreen quad).
+        gl.bindFramebuffer(gl.FRAMEBUFFER, rawFBO.fbo);
+        gl.viewport(0, 0, tw, th);
+        gl.disable(gl.BLEND);
+        gl.useProgram(progConstBg);
+        bindFullscreenAttribs();
+        gl.uniform2f(constBgLocs.uResolution, tw, th);
+        gl.uniform1f(constBgLocs.uScale, C.uScale ?? 2.6);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        // EDGES (additive). Heightmap pass uses larger half-width to fit
+        // the wider stroke + curvature offset; visible uses tight quads.
+        if (pairs > 0) {
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.ONE, gl.ONE);
+          gl.useProgram(progConstEdge);
+          bindEdgeAttribs();
+          gl.uniform2f(constEdgeLocs.uResolution, tw, th);
+          gl.uniform1f(constEdgeLocs.uScale,      C.uScale ?? 2.6);
+          gl.uniform1f(constEdgeLocs.uHalfWidth,  isHeightmap ? 0.45 : 0.10);
+          gl.uniform1f(constEdgeLocs.uEndExtend,  isHeightmap ? 0.30 : 0.10);
+          gl.uniform1f(constEdgeLocs.uLineThick,  C.uLineThick ?? 110);
+          gl.uniform1f(constEdgeLocs.uHeightStrokeAmount,
+                       isHeightmap ? (K.uHeightStrokeAmount ?? 0.0) : 0.0);
+          gl.uniform1f(constEdgeLocs.uHeightStrokeWidth,
+                       K.uHeightStrokeWidth ?? 0.5);
+          gl.uniform1f(constEdgeLocs.uHeightStrokeCurve,
+                       isHeightmap ? (K.uHeightStrokeCurve ?? 0.0) : 0.0);
+          gl.uniform1f(constEdgeLocs.uHeightStrokeWidthVar,
+                       isHeightmap ? (K.uHeightStrokeWidthVar ?? 0.0) : 0.0);
+          gl.drawArrays(gl.TRIANGLES, 0, pairs * 6);
+        }
+
+        // STARS (additive).
+        if (starCount > 0) {
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.ONE, gl.ONE);
+          gl.useProgram(progConstStar);
+          bindStarAttribs();
+          gl.uniform2f(constStarLocs.uResolution, tw, th);
+          gl.uniform1f(constStarLocs.uScale,      C.uScale ?? 2.6);
+          gl.uniform1f(constStarLocs.uHaloRadius, isHeightmap ? 1.6 : 1.05);
+          gl.uniform1f(constStarLocs.uStarBright, C.uStarBright ?? 1.0);
+          gl.uniform1f(constStarLocs.uHeightStrokeAmount,
+                       isHeightmap ? (K.uHeightStrokeAmount ?? 0.0) : 0.0);
+          gl.uniform1f(constStarLocs.uHeightStrokeWidth,
+                       K.uHeightStrokeWidth ?? 0.5);
+          gl.drawArrays(gl.TRIANGLES, 0, starCount * 6);
+          gl.disable(gl.BLEND);
+        }
+
+        // TONEMAP fullscreen → finalFBO.
+        gl.bindFramebuffer(gl.FRAMEBUFFER, finalFBO.fbo);
+        gl.viewport(0, 0, finalFBO.w, finalFBO.h);
+        gl.disable(gl.BLEND);
+        gl.useProgram(progConstTonemap);
+        bindFullscreenAttribs();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, rawFBO.tex);
+        gl.uniform1i(constToneLocs.uSrc, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      // ---------- Pass 1: constellation visible → fboTop ----------
+      passBegin(0);
+      renderConstellation(fboTopRaw, fboTop, false);
+      passEnd();
+
+      // ---------- Pass 1a': constellation heightmap (half-res) → fboTopHeight ----------
+      passBegin(1);
+      renderConstellation(fboTopHeightRaw, fboTopHeight, true);
+      passEnd();
+
+      // ---------- Pass 1b: dilate fboTopHeight → fboTopDilate ----------
+      passBegin(2);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fboTopDilate.fbo);
+      gl.viewport(0, 0, W, H);
+      gl.useProgram(progDilate);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fboTopHeight.tex);
+      if (dilateLocs.uSrc            !== null) gl.uniform1i(dilateLocs.uSrc, 0);
+      if (dilateLocs.uResolution     !== null) gl.uniform2f(dilateLocs.uResolution, W, H);
+      if (dilateLocs.uHeightWidth    !== null) gl.uniform1f(dilateLocs.uHeightWidth,    values.caustic.uHeightWidth    ?? 0.0);
+      if (dilateLocs.uHeightSoftness !== null) gl.uniform1f(dilateLocs.uHeightSoftness, values.caustic.uHeightSoftness ?? 1.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      passEnd();
+
+      // ---------- Pass 1c: blur fboTopDilate → fboTopBlur ----------
+      passBegin(3);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fboTopBlur.fbo);
+      gl.viewport(0, 0, W, H);
+      gl.useProgram(progBlurTop);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fboTopDilate.tex);
+      if (blurLocs.uSrc        !== null) gl.uniform1i(blurLocs.uSrc, 0);
+      if (blurLocs.uResolution !== null) gl.uniform2f(blurLocs.uResolution, W, H);
+      if (blurLocs.uBleed      !== null) gl.uniform1f(blurLocs.uBleed, values.caustic.uHeightBleed ?? 0.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      passEnd();
+
+      // ---------- Pass 2: caustic → fboCaust, sampling fboTopBlur ----------
+      passBegin(4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fboCaust.fbo);
+      gl.viewport(0, 0, W, H);
+      gl.useProgram(progCaust);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fboTopBlur.tex);
+      if (caustLocs.uHeightmap !== null) gl.uniform1i(caustLocs.uHeightmap, 0);
+
+      gl.uniform1f(caustLocs.uTime, time);
+      gl.uniform2f(caustLocs.uResolution, W, H);
+      if (caustLocs.uScale          !== null) gl.uniform1f(caustLocs.uScale,          K.uScale          ?? 50.0);
+      if (caustLocs.uHueShift       !== null) gl.uniform1f(caustLocs.uHueShift,       K.uHueShift       ?? -0.32);
+      if (caustLocs.uBridge         !== null) gl.uniform1f(caustLocs.uBridge,         K.uBridge         ?? 0.76);
+      if (caustLocs.uBase           !== null) gl.uniform1f(caustLocs.uBase,           K.uBase           ?? 0.10);
+      if (caustLocs.uHot            !== null) gl.uniform1f(caustLocs.uHot,            K.uHot            ?? 0.35);
+      if (caustLocs.uSat            !== null) gl.uniform1f(caustLocs.uSat,            K.uSat            ?? 1.60);
+      if (caustLocs.uExposure       !== null) gl.uniform1f(caustLocs.uExposure,       K.uExposure       ?? 0.50);
+      if (caustLocs.uCurveStr       !== null) gl.uniform1f(caustLocs.uCurveStr,       K.uCurveStr       ?? 0.58);
+      if (caustLocs.uCurveThick     !== null) gl.uniform1f(caustLocs.uCurveThick,     K.uCurveThick     ?? 31.5);
+      if (caustLocs.uMacroHill      !== null) gl.uniform1f(caustLocs.uMacroHill,      K.uMacroHill      ?? 2.03);
+      if (caustLocs.uMacroFloor     !== null) gl.uniform1f(caustLocs.uMacroFloor,     K.uMacroFloor     ?? 0.74);
+      if (caustLocs.uWarp           !== null) gl.uniform1f(caustLocs.uWarp,           K.uWarp           ?? 0.30);
+      if (caustLocs.uBeamLift       !== null) gl.uniform1f(caustLocs.uBeamLift,       K.uBeamLift       ?? 0.69);
+      if (caustLocs.uCurveFade      !== null) gl.uniform1f(caustLocs.uCurveFade,      K.uCurveFade      ?? 0.90);
+      if (caustLocs.uCurveFadeRange !== null) gl.uniform1f(caustLocs.uCurveFadeRange, K.uCurveFadeRange ?? 18.90);
+      if (caustLocs.uSparkle        !== null) gl.uniform1f(caustLocs.uSparkle,        K.uSparkle        ?? 5.00);
+      if (caustLocs.uPalette        !== null) gl.uniform1i(caustLocs.uPalette,        (K.uPalette       ?? 0) | 0);
+      if (caustLocs.uHeightGain     !== null) gl.uniform1f(caustLocs.uHeightGain,     K.uHeightGain     ?? 1.0);
+      if (caustLocs.uHeightSharp    !== null) gl.uniform1f(caustLocs.uHeightSharp,    K.uHeightSharp    ?? 1.0);
+      if (caustLocs.uHeightFloor    !== null) gl.uniform1f(caustLocs.uHeightFloor,    K.uHeightFloor    ?? 0.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      passEnd();
+
+      // ---------- Pass 3: composite → canvas ----------
+      passBegin(5);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, W, H);
+      gl.useProgram(progComp);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fboCaust.tex);
+      if (compLocs.uCaustic !== null) gl.uniform1i(compLocs.uCaustic, 0);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, fboTop.tex);
+      if (compLocs.uTop !== null) gl.uniform1i(compLocs.uTop, 1);
+
+      gl.uniform2f(compLocs.uResolution, W, H);
+      const M = values.composite;
+      if (compLocs.uOverlayMix !== null) gl.uniform1f(compLocs.uOverlayMix, M.uOverlayMix ?? 1.0);
+      if (compLocs.uBlur       !== null) gl.uniform1f(compLocs.uBlur,       M.uBlur       ?? 0.03);
+      if (compLocs.uBlendMode  !== null) gl.uniform1i(compLocs.uBlendMode, (M.uBlendMode ?? 1) | 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      passEnd();
+
+      // Update perf overlay text (after all measured passes; minimap excluded).
+      refreshPerfOverlay();
+
+      // ---------- Pass 4 (optional): heightmap minimap, top-right corner ----------
+      // Sample fboTopBlur so the minimap reflects what the caustic actually
+      // reads as h, including the bleed.
+      if (values.minimap.show) {
+        const margin = Math.max(8, Math.round(W * 0.012));
+        const mmW    = Math.round(W * 0.22);
+        const mmH    = Math.round(H * 0.22);
+        gl.viewport(W - margin - mmW, H - margin - mmH, mmW, mmH);
+        gl.useProgram(progMinimap);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, fboTopBlur.tex);
+        if (mmLocs.uTop !== null) gl.uniform1i(mmLocs.uTop, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+    },
+  };
+}
+
+// ============================================================
+// Defaults (mirror the slider/value attribute defaults)
+// ============================================================
+const UNIFORMS = {
+  caustic: {
+    uScale: 42.9, uHueShift: -0.32, uBridge: 0.56, uBase: 0.10,
+    uHot: 3.00, uSat: 1.60, uExposure: 0.50,
+    uCurveStr: 2.00, uCurveThick: 80.0,
+    uMacroHill: 1.03, uMacroFloor: 0.06,
+    uWarp: 0.30, uBeamLift: 1.73,
+    uCurveFade: 0.99, uCurveFadeRange: 30.00,
+    uSparkle: 6.00, uPalette: 2,
+    uHeightGain: 1.02, uHeightSharp: 1.03, uHeightFloor: 0.00,
+    uHeightWidth: 0.23, uHeightSoftness: 1.00,
+    uHeightStrokeAmount: 1.50, uHeightStrokeWidth: 0.77,
+    uHeightStrokeCurve: 0.26, uHeightStrokeWidthVar: 0.07,
+    uHeightBleed: 0.03,
+  },
+  constellation: {
+    uScale: 3.25, uThresh: 1.41, uLineThick: 182, uStarBright: 1.43, uStarCount: 20,
+  },
+  composite: {
+    uOverlayMix: 1.00, uBlur: 0.00, uBlendMode: 1,
+  },
+};
+
+// Sub-section reset groupings (separate Reset buttons in the UI).
+const RESET_GROUPS = {
+  "caustic": [
+    "uScale", "uHueShift", "uBridge", "uBase", "uHot", "uSat", "uExposure",
+    "uCurveStr", "uCurveThick", "uMacroHill", "uMacroFloor", "uWarp",
+    "uBeamLift", "uCurveFade", "uCurveFadeRange", "uSparkle",
+  ],
+  "caustic-mapping": ["uHeightGain", "uHeightSharp", "uHeightFloor",
+                      "uHeightWidth", "uHeightSoftness",
+                      "uHeightStrokeAmount", "uHeightStrokeWidth",
+                      "uHeightStrokeCurve", "uHeightStrokeWidthVar",
+                      "uHeightBleed"],
+  "constellation": ["uScale", "uThresh", "uLineThick", "uStarBright", "uStarCount"],
+  "composite": ["uOverlayMix", "uBlur"],
+};
+
+const renderer = makeRenderer(document.getElementById("cp"));
+
+// ============================================================
+// Slider wiring
+// ============================================================
+function bindSlider(slider) {
+  const target   = slider.dataset.target;
+  const uName    = slider.dataset.uniform;
+  const decimals = parseInt(slider.dataset.decimals || "2", 10);
+  const valSpan  = slider.parentElement.querySelector(".val");
+
+  function apply() {
+    const v = parseFloat(slider.value);
+    if (valSpan) valSpan.textContent = v.toFixed(decimals);
+    if (renderer) renderer.setUniform(target, uName, v);
+  }
+  slider.addEventListener("input", apply);
+  apply();
+}
+document.querySelectorAll(".controls input[type=range]").forEach(bindSlider);
+
+// ============================================================
+// Palette pills (caustic gradient choice)
+// ============================================================
+document.querySelectorAll("#palette-pills input[type=radio]").forEach(input => {
+  input.addEventListener("change", () => {
+    const v = parseInt(input.value, 10);
+    renderer.setUniform("caustic", "uPalette", v);
+    document.querySelectorAll("#palette-pills label").forEach(lab => {
+      lab.classList.toggle("active", parseInt(lab.dataset.palette, 10) === v);
+    });
+  });
+});
+// Initialize from default.
+renderer.setUniform("caustic", "uPalette", UNIFORMS.caustic.uPalette);
+
+// ============================================================
+// Blend-mode pills
+// ============================================================
+document.querySelectorAll("#blend-pills input[type=radio]").forEach(input => {
+  input.addEventListener("change", () => {
+    const v = parseInt(input.value, 10);
+    renderer.setUniform("composite", "uBlendMode", v);
+    document.querySelectorAll("#blend-pills label").forEach(lab => {
+      lab.classList.toggle("active", parseInt(lab.dataset.blend, 10) === v);
+    });
+  });
+});
+renderer.setUniform("composite", "uBlendMode", UNIFORMS.composite.uBlendMode);
+
+// ============================================================
+// Minimap toggle
+// ============================================================
+document.querySelectorAll("#minimap-pills input[type=radio]").forEach(input => {
+  input.addEventListener("change", () => {
+    const v = parseInt(input.value, 10);
+    renderer.setUniform("minimap", "show", v);
+    document.querySelectorAll("#minimap-pills label").forEach(lab => {
+      lab.classList.toggle("active", parseInt(lab.dataset.mm, 10) === v);
+    });
+  });
+});
+
+// ============================================================
+// Perf overlay toggle
+// ============================================================
+document.querySelectorAll("#perf-pills input[type=radio]").forEach(input => {
+  input.addEventListener("change", () => {
+    const v = parseInt(input.value, 10);
+    renderer.setUniform("perf", "show", v);
+    document.querySelectorAll("#perf-pills label").forEach(lab => {
+      lab.classList.toggle("active", parseInt(lab.dataset.perf, 10) === v);
+    });
+  });
+});
+
+// ============================================================
+// Resets
+// ============================================================
+document.querySelectorAll(".controls .reset").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const groupKey = btn.dataset.resetTarget;
+    const uniformList = RESET_GROUPS[groupKey];
+    if (!uniformList) return;
+
+    // Pick the underlying values dictionary.
+    const valuesKey = (groupKey === "caustic-mapping") ? "caustic" : groupKey;
+    const defaults  = UNIFORMS[valuesKey];
+
+    // Reset matching sliders.
+    document.querySelectorAll(`.controls input[data-target="${valuesKey}"]`).forEach(slider => {
+      const u = slider.dataset.uniform;
+      if (uniformList.indexOf(u) === -1) return;
+      if (u in defaults) {
+        slider.value = String(defaults[u]);
+        slider.dispatchEvent(new Event("input"));
+      }
+    });
+  });
+});
+
+// ============================================================
+// Animation loop
+// ============================================================
+const start = performance.now();
+function frame(now) {
+  const t = (now - start) / 1000;
+  if (renderer) renderer.draw(t);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
