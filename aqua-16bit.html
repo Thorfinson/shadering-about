@@ -37,7 +37,7 @@
   }
   #legend b { color: var(--ink); font-weight: 600; letter-spacing: 0.22em; }
 
-  /* Right-side panel (cosmic.html layout) */
+  /* Right-side panel (cosmic-filament.html layout) */
   #ui {
     position: fixed; top: 0; right: 0; bottom: 0;
     width: 320px;
@@ -611,7 +611,7 @@ const canvas = document.getElementById("cv");
 const fx = makeRenderer(canvas, FRAG_SRC, DEFAULTS, 1);
 window.__aqua = fx;   // debug/screenshot hook
 
-// --- Colour helpers: hex <-> rgb01 (matches cosmic.html) ---
+// --- Colour helpers: hex <-> rgb01 (matches cosmic-filament.html) ---
 function rgbToHex([r, g, b]) {
   const h = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0");
   return `#${h(r)}${h(g)}${h(b)}`;

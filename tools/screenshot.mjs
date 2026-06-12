@@ -1,10 +1,10 @@
 // Captures screenshots of every study into screenshots/.
 //
-//   npm run shots             capture everything
-//   npm run shots -- islands  capture only studies whose name contains "islands"
+//   npm run shots          capture everything
+//   npm run shots -- reef  capture only studies whose name contains "reef"
 //
-// Pages are served over a local HTTP server because cosmic.html loads an ES
-// module, which file:// URLs block. WebGL runs on SwiftShader so captures
+// Pages are served over a local HTTP server because cosmic-filament.html loads
+// an ES module, which file:// URLs block. WebGL runs on SwiftShader so captures
 // work headless without a GPU.
 import { createServer } from 'node:http';
 import { mkdir, readFile } from 'node:fs/promises';
@@ -26,29 +26,29 @@ const MIME = {
 
 const STUDIES = [
   { name: 'index', page: 'index.html', settle: 2500 },
-  { name: 'aqua', page: 'aqua.html', settle: 2500 },
-  { name: 'colors', page: 'colors.html', settle: 2500 },
-  { name: 'cosmic', page: 'cosmic.html', settle: 3000 },
-  { name: 'poc', page: 'poc.html', settle: 2500 },
+  { name: 'aqua-16bit', page: 'aqua-16bit.html', settle: 2500 },
+  { name: 'caustic-hdr', page: 'caustic-hdr.html', settle: 2500 },
+  { name: 'cosmic-filament', page: 'cosmic-filament.html', settle: 3000 },
+  { name: 'constellation-caustic', page: 'constellation-caustic.html', settle: 2500 },
   {
-    name: 'nine',
-    page: 'nine.html?capture=1',
+    name: 'nine-cosmic-webs',
+    page: 'nine-cosmic-webs.html?capture=1',
     settle: 800,
     viewport: { width: 1400, height: 2000 },
     fullPage: true,
     readySelector: 'canvas[data-ready="1"]',
     readyCount: 9,
   },
-  { name: 'islands', page: 'islands.html', settle: 2000 },
+  { name: 'reef-islands', page: 'reef-islands.html', settle: 2000 },
   {
-    name: 'islands-volcanic',
-    page: 'islands.html',
+    name: 'reef-islands-volcanic',
+    page: 'reef-islands.html',
     settle: 1600,
     config: { archetype: 'volcanic', island_count: 4, seed: 77 },
   },
   {
-    name: 'islands-roundreef',
-    page: 'islands.html',
+    name: 'reef-islands-roundreef',
+    page: 'reef-islands.html',
     settle: 1600,
     config: { archetype: 'round_reef', island_count: 6, seed: 2024, prop_density: 1.1 },
   },
