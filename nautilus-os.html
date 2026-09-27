@@ -1369,7 +1369,7 @@ function buildStatic() {
   // warm light pooling round each station, and a soft vignette
   const out = g.getImageData(0, 0, W, H);
   const s32 = new Uint32Array(out.data.buffer);
-  const warm = hexRGB(P.brass2);
+  const warm = hexRGB(P.bronze3);
   for (const st of Object.values(STATIONS)) {
     const tint = st.key === "hub" ? warm : hexRGB(P[st.color]);
     const rx = st.prx + 34, ry = st.pry + 26;
@@ -1378,7 +1378,7 @@ function buildStatic() {
         const d = Math.hypot((x - st.x) / rx, (y - st.y) / ry);
         if (d >= 1) continue;
         const k = (1 - d) * (1 - d);
-        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.34), tint, k * 0.12);
+        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.2), tint, k * 0.1);
       }
     }
   }
@@ -1512,10 +1512,10 @@ function renderGlow(t) {
     const busy = S?.busy?.[k] > 0;
     const pulse = busy ? 0.8 + Math.sin(t * 4) * 0.12 : 0.55;
     const hubK = k === "hub" ? 1.5 : 1;
-    glowAt(s.x, s.y - 20 * hubK, P.brass2, 58 * hubK, pulse * 0.42);
-    glowAt(s.x, s.y - 16 * hubK, P.lamp, 16 * hubK, pulse * 0.3);
-    if (k !== "hub") glowAt(s.x, s.y + 8, s.col, 48, busy ? 0.42 : 0.2);
-    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.window, 8, 0.5 + 0.2 * Math.sin(t * 3 + lx));
+    glowAt(s.x, s.y - 6 * hubK, P.bronze3, 40 * hubK, pulse * 0.3); // lamplight inside the glass
+    glowAt(s.x - 8 * hubK, s.y - 18 * hubK, P.pane3, 30 * hubK, 0.12); // the sheen on the dome
+    if (k !== "hub") glowAt(s.x, s.y + 8, s.col, 48, busy ? 0.42 : 0.16);
+    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.window, 7, 0.4 + 0.15 * Math.sin(t * 3 + lx));
     if (k === "tests" && kraken.state === "rising") glowAt(s.x, s.y - 10, P.red, 70, 0.5 + Math.sin(t * 6) * 0.2);
   }
   // routes: every bead glows a little, the travelling ones brightly

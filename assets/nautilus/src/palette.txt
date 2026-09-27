@@ -166,3 +166,21 @@ F  #9ab07a  skin
 -  #2a5b72  silt2
 -  #3d7487  silt3
 -  #ffc462  window
+
+# Station fortresses in nautilus-os.html: aged metal with a green-teal patina,
+# dark bronze, and old glass (the page shows the sea through it).
+-  #0c161c  patina0
+-  #16252d  patina1
+-  #22363d  patina2
+-  #324b50  patina3
+-  #4d6a69  patina4
+-  #2a1f14  bronze0
+-  #47341f  bronze1
+-  #6c4f2c  bronze2
+-  #9c7640  bronze3
+-  #d2a45a  bronze4
+-  #123542  pane0
+-  #1d4f5c  pane1
+-  #2d6e76  pane2
+-  #56979a  pane3
+-  #a9d6cf  pane4

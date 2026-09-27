@@ -44,10 +44,13 @@ than dithered: open water with three layers of rock spires in the mist, a terrac
 floor coming out of the haze, drowned ruins and coral with lit windows everywhere,
 and a floating island under every station, its rock hanging in stalactites. Colours
 mix in RGB, so gradients stay soft, and texture comes from clustered noise instead of
-a Bayer matrix. The orchestrator's hub fortress sits in the middle; seven glass-domed
-station fortresses float around it — Knowledge Base, Documents, Model Registry,
-Repositories, Testing Lab, Memory and Deployments — joined to the hub by routes of
-glowing beads. A half-resolution glow layer, screened over the pixels, lights the
+a Bayer matrix. The orchestrator's hub fortress sits in the middle; seven station fortresses
+float around it — Knowledge Base, Documents, Model Registry, Repositories, Testing
+Lab, Memory and Deployments — each built differently: glass domes in thin frames of
+dark bronze (the sea shows through the glass) over a library, a lamplit town, a
+laboratory or a garden, and weathered, patinated towers with onion, cone, lantern
+or dome caps, radio masts and a launch gantry. Routes of glowing beads join them to
+the hub. A half-resolution glow layer, screened over the pixels, lights the
 domes, lamps, routes, submarines and bioluminescence; god rays fan down from the
 surface, a ghostly whale and octopus drift at the top of the map, and the bridge in
 the corner flickers by lamplight. Seven
