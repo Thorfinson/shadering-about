@@ -401,6 +401,8 @@ const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const fmtTok = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${Math.round(n)}`);
 const basename = (f) => f.slice(f.lastIndexOf("/") + 1);
+// animation frame index that stays in 0..n-1 even for negative input
+const cycle = (v, n = 2) => ((Math.floor(v) % n) + n) % n;
 
 function makeCanvas(w, h) {
   const c = document.createElement("canvas");
@@ -1479,7 +1481,7 @@ function drawShip(g, t) {
   const y = ship.y + ship.bob;
   // screw propeller, turning
   const [prx, pry] = META.nautilus.prop;
-  const ph = Math.floor(t * 12) % 4;
+  const ph = cycle(t * 12, 4);
   const up = [6, 4, 1, 4][ph];
   const dn = [1, 4, 6, 4][ph];
   g.fillStyle = P.ink;
@@ -1547,17 +1549,17 @@ function drawAmbient(g, t) {
       const fx = Math.round(s.x - s.dir * f.dx);
       if (fx < -12 || fx > W + 2) continue;
       const fy = Math.round(s.y + f.dy + Math.sin(t * 1.4 + f.ph) * 2);
-      g.drawImage(spr(`fish.${s.kind}.swim${Math.floor(t * 5 + f.ph) % 2}`, s.dir < 0), fx, fy);
+      g.drawImage(spr(`fish.${s.kind}.swim${cycle(t * 5 + f.ph)}`, s.dir < 0), fx, fy);
     }
   }
   for (const j of ambient.jellies) {
-    g.drawImage(spr(`jelly.pulse${Math.floor(t * 1.5 + j.ph) % 2}`), Math.round(j.x + Math.sin(t * 0.5 + j.ph) * 3), Math.round(j.y));
+    g.drawImage(spr(`jelly.pulse${cycle(t * 1.5 + j.ph)}`), Math.round(j.x + Math.sin(t * 0.5 + j.ph) * 3), Math.round(j.y));
   }
   const tu = ambient.turtle;
-  if (tu.active) g.drawImage(spr(`turtle.swim${Math.floor(t * 2) % 2}`), Math.round(tu.x), Math.round(tu.y + Math.sin(t) * 2));
+  if (tu.active) g.drawImage(spr(`turtle.swim${cycle(t * 2)}`), Math.round(tu.x), Math.round(tu.y + Math.sin(t) * 2));
   for (const c of ambient.crabs) {
     const gy = world.ground[clamp(Math.round(c.x), 0, W - 1)];
-    g.drawImage(spr(`crab.walk${Math.floor(t * 4) % 2}`), Math.round(c.x) - 5, gy - 5);
+    g.drawImage(spr(`crab.walk${cycle(t * 4)}`), Math.round(c.x) - 5, gy - 5);
   }
 }
 
@@ -1576,7 +1578,7 @@ function drawSites(g, t) {
   }
   // clam and pearl
   const s = sites.clam;
-  const f = Math.round(clam.open * 3);
+  const f = clamp(Math.round(clam.open * 3), 0, 3);
   const p = clam.pearl();
   if (clam.open > 0.25) {
     disc(g, p.x, p.y, p.r + 1, P.ink);
@@ -1706,7 +1708,7 @@ function drawBeams(g, t) {
 }
 
 function drawDiver(g, a, t) {
-  const walk = a.moving && Math.floor(t * 6 + a.phase) % 2;
+  const walk = a.moving && cycle(t * 6 + a.phase);
   const flip = a.face < 0;
   const x = a.sx;
   const y = a.sy;
@@ -2821,16 +2823,23 @@ function buildAtlasTab() {
 // ============================================================
 let lastT = performance.now();
 let uiT = 0;
+let frameErrorLogged = false;
 function frame(now) {
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
-  if (!clock.paused) stepSim(dt * clock.speed);
-  render();
-  if (now - uiT > 150) {
-    uiT = now;
-    updateCrew();
-  }
   requestAnimationFrame(frame);
+  // rAF's timestamp can be slightly older than the last performance.now(); never step backwards
+  const dt = clamp((now - lastT) / 1000, 0, 0.05);
+  lastT = Math.max(lastT, now);
+  try {
+    if (!clock.paused) stepSim(dt * clock.speed);
+    render();
+    if (now - uiT > 150) {
+      uiT = now;
+      updateCrew();
+    }
+  } catch (e) {
+    if (!frameErrorLogged) console.error(e);
+    frameErrorLogged = true;
+  }
 }
 function stepSim(dt) {
   clock.t += dt;
