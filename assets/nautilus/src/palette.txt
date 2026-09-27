@@ -102,3 +102,10 @@ F  #9ab07a  skin
 -  #356587  abyss6
 -  #4d819e  abyss7
 -  #7fb8c8  rim
+
+# Octopus and anemones in nautilus-os.html.
+-  #4a1535  pink0
+-  #86285c  pink1
+-  #c4478a  pink2
+-  #ef7fb8  pink3
+-  #ffc6e0  pink4

@@ -6,20 +6,21 @@
 <title>Nautilus OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Pixelify+Sans:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap" />
 <style>
   :root {
     color-scheme: dark;
-    --bg: #040914;
-    --panel: rgba(8, 19, 38, 0.92);
-    --panel-2: #0d1d36;
-    --line: rgba(217, 169, 79, 0.26);
-    --line-2: rgba(217, 169, 79, 0.55);
+    --bg: #030812;
+    --panel: rgba(7, 17, 34, 0.93);
+    --panel-hi: rgba(14, 32, 58, 0.93);
+    --line: rgba(120, 172, 208, 0.26);
+    --line-2: rgba(140, 196, 230, 0.5);
+    --rivet: rgba(222, 176, 88, 0.75);
     --brass: #d9a94f;
     --brass-hi: #f3cf7a;
-    --ink: #e4e7ee;
-    --muted: rgba(228, 231, 238, 0.64);
-    --faint: rgba(228, 231, 238, 0.38);
+    --ink: #e2e9f2;
+    --muted: rgba(226, 233, 242, 0.66);
+    --faint: rgba(226, 233, 242, 0.4);
     --cyan: #6fe3ff;
     --good: #5ee08a;
     --warn: #f2b13b;
@@ -32,119 +33,120 @@
     --deploy: #a78bfa;
     --remember: #e8e0ff;
     --display: "Cinzel", "Trajan Pro", Georgia, serif;
-    --mono: "Share Tech Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --ui: "Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --caps: "Silkscreen", "Pixelify Sans", ui-monospace, monospace;
     --book: "IM Fell English", "Iowan Old Style", Georgia, serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); }
-  body { font: 13px/1.4 var(--mono); -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
+  body {
+    font: 14px/1.35 var(--ui); -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden;
+    background: radial-gradient(120% 70% at 50% 0%, #0b1a33 0%, var(--bg) 60%) fixed;
+  }
   button, select { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
   .panel {
-    position: relative; min-width: 0; border: 1px solid var(--line); border-radius: 3px;
+    position: relative; min-width: 0; border: 1px solid var(--line); border-radius: 4px;
     background:
-      radial-gradient(circle at 5px 5px, var(--line-2) 1.1px, transparent 1.7px),
-      radial-gradient(circle at calc(100% - 5px) 5px, var(--line-2) 1.1px, transparent 1.7px),
-      radial-gradient(circle at 5px calc(100% - 5px), var(--line-2) 1.1px, transparent 1.7px),
-      radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), var(--line-2) 1.1px, transparent 1.7px),
-      var(--panel);
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+      radial-gradient(circle at 5px 5px, var(--rivet) 1.2px, transparent 1.8px),
+      radial-gradient(circle at calc(100% - 5px) 5px, var(--rivet) 1.2px, transparent 1.8px),
+      radial-gradient(circle at 5px calc(100% - 5px), var(--rivet) 1.2px, transparent 1.8px),
+      radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), var(--rivet) 1.2px, transparent 1.8px),
+      linear-gradient(180deg, var(--panel-hi), var(--panel) 42%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
-  .ptitle { margin: 0; font: 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+  .ptitle { margin: 0; font: 400 12px/1 var(--caps); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
 
   /* ----------------------------------------------------------------- top -- */
-  .app { display: grid; grid-template-columns: 188px minmax(0, 1fr); gap: 10px; padding: 10px 16px 16px; }
-  .top { grid-column: 1 / -1; display: grid; grid-template-columns: 188px minmax(200px, 270px) minmax(0, 1fr) minmax(170px, 230px) minmax(170px, 210px); gap: 10px; align-items: stretch; }
-  .brand { display: flex; gap: 10px; align-items: center; padding: 8px 10px; }
-  .brand canvas { width: 24px; height: 22px; image-rendering: pixelated; flex: none; }
-  .brand h1 { margin: 0; font: 700 16px/1 var(--display); letter-spacing: 0.05em; color: var(--brass-hi); white-space: nowrap; }
-  .brand small { display: block; margin-top: 3px; font: 11px/1.2 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); }
-  .brand i { display: block; margin-top: 2px; font: italic 11px/1.2 var(--book); color: var(--faint); letter-spacing: 0.02em; }
-  .project { display: grid; align-content: center; gap: 3px; padding: 8px 12px; }
-  .project label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
-  .project select {
-    width: 100%; background: transparent; border: 0; padding: 0; font: 14px/1.3 var(--mono); color: var(--ink); cursor: pointer; text-overflow: ellipsis;
-  }
-  .project select option { background: var(--panel-2); }
-  .pipe { padding: 8px 14px; display: grid; align-content: center; gap: 6px; min-width: 0; }
-  .pipe small { font-size: 11px; color: var(--muted); }
+  .app { display: grid; grid-template-columns: 196px minmax(0, 1fr); grid-template-rows: auto auto auto; gap: 10px; padding: 10px 16px 16px; }
+  .top { grid-column: 1 / -1; display: grid; grid-template-columns: 196px minmax(220px, 280px) minmax(0, 1fr) minmax(190px, 240px) minmax(214px, 236px); gap: 10px; align-items: stretch; }
+  .brand { display: flex; gap: 11px; align-items: center; padding: 8px 12px; }
+  .brand canvas { width: 22px; height: 24px; image-rendering: pixelated; flex: none; filter: drop-shadow(0 0 6px rgba(243, 207, 122, 0.45)); }
+  .brand h1 { margin: 0; font: 700 18px/1 var(--display); letter-spacing: 0.06em; color: var(--brass-hi); white-space: nowrap; text-shadow: 0 0 10px rgba(243, 207, 122, 0.3); }
+  .brand small { display: block; margin-top: 4px; font: 400 10.5px/1.2 var(--caps); letter-spacing: 0.04em; text-transform: uppercase; color: var(--brass); }
+  .brand i { display: block; margin-top: 3px; font: 400 10px/1.2 var(--caps); color: var(--faint); font-style: normal; letter-spacing: 0.04em; }
+  .project { display: grid; align-content: center; gap: 4px; padding: 8px 12px; }
+  .project label { font-size: 12px; color: var(--muted); }
+  .project select { width: 100%; background: transparent; border: 0; padding: 0; font: 500 15px/1.3 var(--ui); color: var(--ink); cursor: pointer; text-overflow: ellipsis; }
+  .project select option { background: #0d1d36; }
+  .pipe { padding: 8px 14px; display: grid; align-content: center; gap: 7px; min-width: 0; }
+  .pipe small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pipe ol { list-style: none; display: flex; align-items: center; margin: 0; padding: 0; min-width: 0; }
-  .pipe li { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; color: var(--faint); font-size: 12px; white-space: nowrap; }
+  .pipe li { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; color: var(--faint); font-size: 13px; white-space: nowrap; }
   .pipe li:last-child { flex: 0 0 auto; }
-  .pipe li:not(:last-child)::after { content: ""; flex: 1 1 8px; min-width: 6px; margin: 0 6px; border-top: 1px dashed rgba(228, 231, 238, 0.22); }
-  .pipe .n {
-    flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
-    font-size: 11px; color: #0a1020; background: var(--c); opacity: 0.45;
-  }
+  .pipe li:not(:last-child)::after { content: ""; flex: 1 1 8px; min-width: 6px; margin: 0 6px; border-top: 2px dotted rgba(226, 233, 242, 0.22); }
+  .pipe .n { flex: none; display: grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; font: 600 12px/1 var(--ui); color: #081020; background: var(--c); opacity: 0.45; }
   .pipe li.done { color: var(--muted); }
-  .pipe li.done .n { opacity: 0.8; }
+  .pipe li.done .n { opacity: 0.85; }
   .pipe li.on { color: var(--ink); }
-  .pipe li.on .n { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 30%, transparent); }
+  .pipe li.on .n { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 30%, transparent), 0 0 12px var(--c); }
   .quote { margin: 0; padding: 8px 14px; display: grid; align-content: center; gap: 4px; }
-  .quote blockquote { margin: 0; font: italic 14.5px/1.3 var(--book); color: var(--ink); text-wrap: balance; }
-  .quote figcaption { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass); text-align: right; }
+  .quote blockquote { margin: 0; font: italic 15px/1.3 var(--book); color: var(--ink); text-wrap: balance; }
+  .quote figcaption { font: 400 10px var(--caps); text-transform: uppercase; color: var(--brass); text-align: right; }
   .clock { padding: 8px 12px; display: grid; gap: 5px; align-content: center; }
-  .clock .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .clock time { font-size: 15px; font-variant-numeric: tabular-nums; }
-  .clock .depth { color: var(--cyan); font-variant-numeric: tabular-nums; }
-  .clock small { color: var(--muted); font-size: 11px; }
+  .clock .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; white-space: nowrap; }
+  .clock time { font: 500 16px var(--ui); font-variant-numeric: tabular-nums; }
+  .clock .depth { display: flex; align-items: center; gap: 6px; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .clock .depth canvas { width: 16px; height: auto; image-rendering: pixelated; }
+  .clock small { color: var(--muted); font-size: 12px; }
   .ctl { display: flex; gap: 4px; }
-  .ctl button {
-    flex: 1; background: rgba(13, 29, 54, 0.9); border: 1px solid var(--line); border-radius: 3px;
-    padding: 3px 0; font-size: 11.5px; cursor: pointer; color: var(--muted);
-  }
+  .ctl button { flex: 1; background: rgba(13, 29, 54, 0.9); border: 1px solid var(--line); border-radius: 3px; padding: 3px 0; font-size: 12px; cursor: pointer; color: var(--muted); }
   .ctl button:hover { border-color: var(--line-2); color: var(--ink); }
   .ctl button.on { background: var(--brass); color: #150f04; border-color: var(--brass); }
 
   /* ---------------------------------------------------------------- rail -- */
-  .rail { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-  .nav { padding: 8px; display: grid; gap: 2px; }
+  .rail { grid-row: 2 / 4; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .nav { padding: 8px; display: grid; gap: 3px; }
   .nav button {
-    display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px;
+    display: flex; align-items: center; gap: 11px; width: 100%; padding: 7px 9px;
     background: none; border: 1px solid transparent; border-radius: 3px; cursor: pointer;
-    font-size: 13px; color: var(--muted); text-align: left;
+    font: 400 15px var(--ui); color: var(--muted); text-align: left;
   }
-  .nav button canvas { width: 18px; height: auto; image-rendering: pixelated; flex: none; }
+  .nav button canvas { width: 24px; height: auto; image-rendering: pixelated; flex: none; }
   .nav button:hover { color: var(--ink); background: rgba(111, 227, 255, 0.05); }
-  .nav button.on { color: var(--ink); border-color: rgba(111, 227, 255, 0.45); background: rgba(111, 227, 255, 0.08); }
-  .bridge { padding: 6px; display: grid; gap: 6px; }
-  .bridge canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 2px; }
-  .bridge p { margin: 0 4px 2px; font: italic 13px/1.3 var(--book); color: var(--muted); }
-  .bridge p span { display: block; font: 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass); font-style: normal; margin-top: 2px; }
+  .nav button.on { color: var(--ink); border-color: rgba(111, 227, 255, 0.55); background: linear-gradient(90deg, rgba(111, 227, 255, 0.14), rgba(111, 227, 255, 0.03)); box-shadow: 0 0 12px rgba(111, 227, 255, 0.12); }
+  .nav .motto { margin: 10px 6px 4px; font: italic 13px/1.35 var(--book); color: var(--faint); }
+  .nav .motto span { display: block; margin-top: 3px; font: 400 9.5px var(--caps); color: var(--brass); font-style: normal; }
+  .bridge { flex: 1; min-height: 260px; padding: 0; overflow: hidden; background: #05070c; }
+  .bridge canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 40% 100%; image-rendering: pixelated; }
+  .plaque {
+    position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); white-space: nowrap;
+    padding: 5px 12px; border-radius: 3px; border: 1px solid #8a6420;
+    background: linear-gradient(180deg, #3a2a10, #1e1507); box-shadow: inset 0 0 0 1px rgba(243, 207, 122, 0.25), 0 4px 10px rgba(0, 0, 0, 0.6);
+    font: 400 10px/1.3 var(--caps); letter-spacing: 0.06em; color: var(--brass-hi); text-align: center;
+  }
 
   /* ----------------------------------------------------------------- map -- */
-  .map {
-    position: relative; height: clamp(440px, 66vh, 820px); overflow: hidden;
-    border: 1px solid var(--line-2); border-radius: 3px; background: #081326;
-  }
+  .map { position: relative; height: clamp(460px, 67vh, 860px); overflow: hidden; border: 1px solid var(--line-2); border-radius: 4px; background: #081326; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.45); }
   .map-inner { position: relative; width: 100%; height: 100%; }
-  .map canvas.sea {
-    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
-    object-fit: contain; image-rendering: crisp-edges; image-rendering: pixelated;
-  }
+  .map canvas.sea, .map canvas.glow { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; }
+  .map canvas.sea { image-rendering: crisp-edges; image-rendering: pixelated; }
+  .map canvas.glow { mix-blend-mode: screen; pointer-events: none; }
   .overlay { position: absolute; inset: 0; pointer-events: none; }
   .scard {
-    position: absolute; pointer-events: auto; cursor: pointer; width: 190px;
+    position: absolute; pointer-events: auto; cursor: pointer; width: 214px;
     transform: scale(var(--card-k, 1)); transform-origin: 0 0;
-    background: rgba(5, 12, 26, 0.9); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
-    border-radius: 3px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); transition: border-color 0.3s, box-shadow 0.3s;
+    background: rgba(4, 11, 24, 0.9); border: 1px solid color-mix(in srgb, var(--c) 45%, rgba(140, 196, 230, 0.35));
+    border-radius: 3px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); transition: border-color 0.3s, box-shadow 0.3s;
   }
   .scard:hover { border-color: var(--c); }
-  .scard.busy { box-shadow: 0 0 0 1px var(--c), 0 0 16px color-mix(in srgb, var(--c) 40%, transparent); }
-  .scard.alarm { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad), 0 0 18px rgba(255, 107, 107, 0.45); }
+  .scard.busy { box-shadow: 0 0 0 1px var(--c), 0 0 18px color-mix(in srgb, var(--c) 45%, transparent); }
+  .scard.alarm { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad), 0 0 20px rgba(255, 107, 107, 0.5); }
   .scard .h {
-    display: flex; align-items: center; justify-content: center; gap: 7px; padding: 5px 8px 4px;
-    border-bottom: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
-    font: 700 11.5px/1.1 var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink);
+    display: flex; align-items: center; justify-content: center; gap: 7px; padding: 6px 8px 5px;
+    background: linear-gradient(180deg, rgba(20, 42, 72, 0.9), rgba(8, 18, 36, 0.9));
+    border-bottom: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+    font: 400 12px/1.1 var(--caps); letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink);
   }
   .scard .h canvas { width: 12px; height: auto; image-rendering: pixelated; }
-  .scard .sub { padding: 3px 8px 5px; text-align: center; font-size: 11px; color: var(--muted); }
-  .scard ul { list-style: none; margin: 0; padding: 4px 0 5px; }
-  .scard li { display: flex; justify-content: space-between; gap: 8px; padding: 1px 9px; font-size: 11.5px; color: var(--muted); transition: background 0.3s, color 0.3s; }
-  .scard li span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .scard .sub { padding: 4px 8px 6px; text-align: center; font-size: 12px; color: var(--muted); }
+  .scard ul { list-style: none; margin: 0; padding: 5px 0 6px; }
+  .scard li { display: flex; align-items: center; gap: 7px; padding: 1px 10px; font-size: 13px; color: var(--muted); transition: background 0.3s, color 0.3s; }
+  .scard li .ri { flex: none; width: 9px; height: 9px; background-size: 9px 9px; image-rendering: pixelated; opacity: 0.85; }
+  .scard li span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .scard li em { font-style: normal; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .scard li.hot { background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--ink); }
+  .scard li.hot { background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--ink); }
   .scard li .ok { color: var(--good); }
   .scard li .run { color: var(--warn); }
   .scard li .bad { color: var(--bad); }
@@ -155,90 +157,93 @@
 
   .tag {
     position: absolute; left: 0; top: 0; pointer-events: auto; cursor: pointer; will-change: transform;
-    min-width: 118px; max-width: 176px; padding: 4px 8px 5px;
-    background: rgba(5, 12, 26, 0.92); border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); border-radius: 3px;
-    font-size: 11px; line-height: 1.3;
+    min-width: 126px; max-width: 180px; padding: 4px 8px 5px;
+    background: rgba(4, 11, 24, 0.93); border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); border-radius: 3px;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--c) 22%, transparent); font-size: 12.5px; line-height: 1.25;
   }
-  .tag b { display: block; color: var(--c); font-weight: 400; letter-spacing: 0.02em; }
+  .tag b { display: block; color: var(--c); font-weight: 500; }
   .tag span { display: block; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tag .pips { display: flex; gap: 2px; margin-top: 3px; }
-  .tag .pips i { width: 8px; height: 4px; background: rgba(228, 231, 238, 0.14); }
-  .tag .pips i.on { background: var(--c); }
+  .tag .pips { display: flex; gap: 2px; margin-top: 4px; }
+  .tag .pips i { width: 9px; height: 5px; background: rgba(226, 233, 242, 0.14); }
+  .tag .pips i.on { background: var(--c); box-shadow: 0 0 4px var(--c); }
   .map-inner.compact .tag { min-width: 0; padding: 2px 5px; }
   .map-inner.compact .tag span, .map-inner.compact .tag .pips { display: none; }
 
   .pop {
-    position: absolute; z-index: 6; pointer-events: auto; width: min(330px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto;
-    background: rgba(5, 12, 26, 0.97); border: 1px solid var(--c); border-radius: 3px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    position: absolute; z-index: 6; pointer-events: auto; width: min(340px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto;
+    background: rgba(4, 11, 24, 0.97); border: 1px solid var(--c); border-radius: 3px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   }
-  .pop header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid color-mix(in srgb, var(--c) 35%, transparent); position: sticky; top: 0; background: rgba(5, 12, 26, 0.98); }
-  .pop header h2 { flex: 1; margin: 0; font: 700 13px/1.1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c); }
+  .pop header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid color-mix(in srgb, var(--c) 35%, transparent); position: sticky; top: 0; background: rgba(4, 11, 24, 0.98); }
+  .pop header h2 { flex: 1; margin: 0; font: 400 13px/1.1 var(--caps); text-transform: uppercase; color: var(--c); }
   .pop header button { background: none; border: 1px solid var(--line); border-radius: 3px; width: 24px; height: 24px; cursor: pointer; color: var(--muted); }
   .pop header button:hover { color: var(--ink); border-color: var(--line-2); }
-  .pop .body { padding: 8px 10px 10px; display: grid; gap: 10px; font-size: 12px; }
+  .pop .body { padding: 8px 10px 10px; display: grid; gap: 10px; font-size: 13px; }
   .pop p { margin: 0; color: var(--muted); }
-  .pop h3 { margin: 0 0 4px; font: 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); }
+  .pop h3 { margin: 0 0 4px; font: 400 11px var(--caps); text-transform: uppercase; color: var(--brass); }
   .pop table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   .pop td { padding: 2px 0; color: var(--muted); vertical-align: top; }
   .pop td:last-child { text-align: right; color: var(--ink); white-space: nowrap; padding-left: 8px; }
   .pop ol, .pop ul { margin: 0; padding-left: 16px; color: var(--muted); }
   .pop li { padding: 1px 0; }
-  .pop code { color: var(--cyan); }
+  .pop code { color: var(--cyan); font-family: var(--ui); }
   .pop .ok { color: var(--good); } .pop .run { color: var(--warn); } .pop .bad { color: var(--bad); }
-  .pop pre { margin: 0; padding: 6px 0; overflow-x: auto; font: 11.5px/1.45 var(--mono); border: 1px solid var(--line); border-radius: 3px; }
 
   .boot { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; background: #081326; transition: opacity 0.6s; }
   .boot.done { opacity: 0; pointer-events: none; }
   .boot > div { width: min(420px, 86%); color: var(--muted); }
-  .boot h2 { margin: 0 0 6px; font: 700 13px var(--display); letter-spacing: 0.14em; color: var(--brass-hi); text-transform: uppercase; }
+  .boot h2 { margin: 0 0 6px; font: 400 13px var(--caps); color: var(--brass-hi); text-transform: uppercase; }
   .boot .bar { height: 10px; border: 1px solid var(--line-2); padding: 1px; margin: 10px 0 8px; }
   .boot .bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, var(--brass) 0 6px, #8a6420 6px 8px); }
-  .boot pre { margin: 0; height: 7.6em; overflow: hidden; font: 11.5px/1.5 var(--mono); color: var(--faint); }
+  .boot pre { margin: 0; height: 7.6em; overflow: hidden; font: 12px/1.5 var(--ui); color: var(--faint); }
   .boot .err { color: var(--bad); white-space: pre-wrap; }
 
   /* ---------------------------------------------------------------- dock -- */
-  .dock { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 0.9fr); gap: 10px; }
-  .dock .panel { display: flex; flex-direction: column; min-height: 236px; max-height: 300px; }
-  .dock header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px 7px; }
-  .dock header .aside { font-size: 11px; color: var(--faint); }
+  .dock { grid-column: 2; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr) minmax(0, 0.95fr) minmax(0, 0.95fr); gap: 10px; }
+  .dock .panel { display: flex; flex-direction: column; min-height: 236px; max-height: 300px; container-type: inline-size; }
+  @container (max-width: 390px) {
+    .agents li { grid-template-columns: 22px 7.4em 10px minmax(0, 1fr); }
+    .agents .what { display: none; }
+  }
+  .dock header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 7px; }
+  .dock header .aside { font-size: 12px; color: var(--faint); }
   .scroll { flex: 1; overflow: auto; padding: 0 12px 10px; }
 
   .agents { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
-  .agents li { display: grid; grid-template-columns: 22px 8.2em 10px 7.2em minmax(0, 1fr); gap: 6px; align-items: center; padding: 3px 4px; border-radius: 2px; cursor: pointer; }
+  .agents li { display: grid; grid-template-columns: 22px 7.4em 10px 7.4em minmax(0, 1fr); gap: 6px; align-items: center; padding: 3px 4px; border-radius: 2px; cursor: pointer; font-size: 13px; }
   .agents li:hover { background: rgba(111, 227, 255, 0.05); }
   .agents canvas { width: 20px; height: auto; image-rendering: pixelated; }
   .agents .nm { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .agents .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
-  .agents li.idle .dot { background: rgba(228, 231, 238, 0.2); }
+  .agents .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 6px var(--c); }
+  .agents li.idle .dot { background: rgba(226, 233, 242, 0.2); box-shadow: none; }
   .agents .state { color: var(--c); white-space: nowrap; }
   .agents li.idle .state { color: var(--faint); }
   .agents .what { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .tabs { display: flex; gap: 2px; }
-  .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 2px 6px 4px; cursor: pointer; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+  .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 2px 6px 4px; cursor: pointer; font: 400 11px var(--caps); text-transform: uppercase; color: var(--faint); }
   .tabs button:hover { color: var(--muted); }
   .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brass); }
   .tabs .n { color: var(--brass); }
   .tabbody[hidden] { display: none; }
   .feed { list-style: none; margin: 0; padding: 0; }
-  .feed li { display: grid; grid-template-columns: 3.2em 7.4em minmax(0, 1fr); gap: 8px; padding: 2px 0; font-size: 12px; }
+  .feed li { display: grid; grid-template-columns: 3.1em 6.8em minmax(0, 1fr); gap: 8px; padding: 2px 0; font-size: 13px; }
   .feed li.fresh { animation: fresh 1.4s ease-out; }
   @keyframes fresh { from { background: rgba(217, 169, 79, 0.18); } to { background: transparent; } }
   .feed time { color: var(--faint); font-variant-numeric: tabular-nums; }
   .feed .who { color: var(--c, var(--brass)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .feed .msg { color: var(--muted); overflow-wrap: anywhere; }
-  .feed .msg b { color: var(--ink); font-weight: 400; }
-  .feed .msg code { color: var(--cyan); }
-  .feed .msg q { color: var(--ink); font: italic 13px var(--book); }
+  .feed .msg b { color: var(--ink); font-weight: 500; }
+  .feed .msg code { color: var(--cyan); font-family: var(--ui); }
+  .feed .msg q { color: var(--ink); font: italic 14px var(--book); }
   .feed .meta { color: var(--faint); }
-  .feed li.phase { display: block; padding: 6px 0 2px; color: var(--brass); letter-spacing: 0.16em; text-transform: uppercase; font-size: 11px; }
-  .empty { color: var(--faint); font: italic 13px/1.4 var(--book); padding: 4px 0; }
+  .feed li.phase { display: block; padding: 6px 0 2px; color: var(--brass); font: 400 11px var(--caps); text-transform: uppercase; }
+  .empty { color: var(--faint); font: italic 14px/1.4 var(--book); padding: 4px 0; }
   .file { margin-bottom: 8px; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
-  .fh { display: flex; justify-content: space-between; gap: 8px; padding: 4px 8px; background: rgba(217, 169, 79, 0.08); font-size: 11.5px; }
+  .fh { display: flex; justify-content: space-between; gap: 8px; padding: 4px 8px; background: rgba(217, 169, 79, 0.08); font-size: 12.5px; }
   .fh .path { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .fh .badge { color: var(--brass); margin-right: 5px; }
   .a { color: var(--good); } .d { color: var(--bad); }
-  .file pre { margin: 0; padding: 3px 0; overflow-x: auto; font: 11.5px/1.5 var(--mono); }
+  .file pre { margin: 0; padding: 3px 0; overflow-x: auto; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
   .l { display: block; padding: 0 8px; white-space: pre; min-height: 1.5em; }
   .l.add { background: rgba(94, 224, 138, 0.1); color: #c7f5d6; }
   .l.del { background: rgba(255, 107, 107, 0.11); color: #ffc0c0; }
@@ -247,36 +252,36 @@
   .l.live::after { content: "▌"; color: var(--brass); animation: blink 0.9s steps(2) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   .commit { margin-bottom: 8px; padding: 6px 8px; border: 1px dashed var(--line-2); border-radius: 3px; color: var(--muted); }
-  .commit b { color: var(--brass-hi); font-weight: 400; }
-  .run { margin-bottom: 10px; font-size: 12px; }
+  .commit b { color: var(--brass-hi); font-weight: 500; }
+  .run { margin-bottom: 10px; font-size: 13px; }
   .run .cmd { color: var(--faint); }
   .run .ok { color: var(--good); } .run .bad { color: var(--bad); }
   .run .why { color: #ffc0c0; padding-left: 2em; }
 
-  .progress { display: grid; gap: 9px; padding: 2px 12px 12px; }
+  .progress { display: grid; gap: 9px; padding: 2px 12px 12px; overflow: auto; }
   .meter { display: flex; align-items: center; gap: 10px; }
-  .meter .track { flex: 1; height: 8px; background: rgba(228, 231, 238, 0.08); border-radius: 4px; overflow: hidden; }
-  .meter .track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--research), var(--analyze), var(--build), var(--test), var(--deploy)); background-size: var(--full, 100%) 100%; transition: width 0.5s; }
-  .meter b { font-weight: 400; font-size: 15px; font-variant-numeric: tabular-nums; min-width: 3.2ch; text-align: right; }
+  .meter .track { flex: 1; height: 9px; background: rgba(226, 233, 242, 0.08); border-radius: 5px; overflow: hidden; }
+  .meter .track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--research), var(--analyze), var(--build), var(--test), var(--deploy)); background-size: var(--full, 100%) 100%; box-shadow: 0 0 8px rgba(94, 224, 138, 0.5); transition: width 0.5s; }
+  .meter b { font-weight: 500; font-size: 17px; font-variant-numeric: tabular-nums; min-width: 3.2ch; text-align: right; }
   .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
-  .checks li { display: flex; align-items: center; gap: 9px; color: var(--faint); font-size: 12.5px; }
-  .checks li::before { content: ""; flex: none; width: 12px; height: 12px; border: 1px solid rgba(228, 231, 238, 0.3); border-radius: 2px; }
+  .checks li { display: flex; align-items: center; gap: 9px; color: var(--faint); font-size: 13.5px; }
+  .checks li::before { content: ""; flex: none; width: 12px; height: 12px; border: 1px solid rgba(226, 233, 242, 0.3); border-radius: 2px; }
   .checks li.on { color: var(--ink); }
-  .checks li.on::before { border-color: var(--c); box-shadow: inset 0 0 0 3px var(--panel), inset 0 0 0 6px var(--c); }
+  .checks li.on::before { border-color: var(--c); box-shadow: inset 0 0 0 3px #0a1628, inset 0 0 0 6px var(--c); }
   .checks li.done { color: var(--muted); }
-  .checks li.done::before { border-color: var(--good); background: var(--good); box-shadow: inset 0 0 0 2px var(--panel); }
-  .ledger { font-size: 11.5px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 7px; }
-  .ledger b { color: var(--ink); font-weight: 400; }
+  .checks li.done::before { border-color: var(--good); background: var(--good); box-shadow: inset 0 0 0 2px #0a1628; }
+  .ledger { font-size: 12.5px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 7px; }
+  .ledger b { color: var(--ink); font-weight: 500; }
 
   .regions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 0 12px 12px; align-items: start; }
   .regions canvas { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 3px; background: #081326; }
-  .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 12.5px; color: var(--muted); }
   .legend li { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
   .legend i { width: 9px; height: 9px; border-radius: 50%; }
-  .regions p { grid-column: 1 / -1; margin: 0; font: italic 13px var(--book); color: var(--faint); text-align: right; }
+  .regions p { grid-column: 1 / -1; margin: 0; font: italic 14px var(--book); color: var(--faint); text-align: right; }
 
-  @media (max-width: 1480px) {
-    .top { grid-template-columns: 188px minmax(200px, 250px) minmax(0, 1fr) minmax(170px, 210px); }
+  @media (max-width: 1500px) {
+    .top { grid-template-columns: 196px minmax(220px, 270px) minmax(0, 1fr) minmax(214px, 236px); }
     .quote { display: none; }
   }
   @media (max-width: 1320px) {
@@ -286,15 +291,15 @@
     .app { grid-template-columns: minmax(0, 1fr); padding: 10px 16px 16px; }
     .top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .brand, .pipe { grid-column: 1 / -1; }
-    .pipe li { font-size: 10.5px; }
-    .rail { flex-direction: row; overflow-x: auto; }
+    .pipe li { font-size: 11.5px; }
+    .rail { grid-row: auto; flex-direction: row; overflow-x: auto; }
     .nav { display: flex; padding: 4px; }
     .nav button { width: auto; white-space: nowrap; padding: 5px 7px; }
-    .bridge { display: none; }
+    .nav .motto, .bridge { display: none; }
+    .dock { grid-column: 1; grid-template-columns: minmax(0, 1fr); }
     /* phones: keep the pixel art at a readable scale and pan it inside its frame */
     .map { height: auto; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
-    .map-inner { width: 760px; height: 430px; }
-    .dock { grid-template-columns: minmax(0, 1fr); }
+    .map-inner { width: 820px; height: 440px; }
   }
   @media (max-width: 520px) {
     .top { grid-template-columns: minmax(0, 1fr); }
@@ -314,7 +319,7 @@
 <div class="app">
   <header class="top">
     <div class="panel brand">
-      <canvas id="brand-mark" width="12" height="12" aria-hidden="true"></canvas>
+      <canvas id="brand-mark" width="11" height="12" aria-hidden="true"></canvas>
       <div>
         <h1>NAUTILUS OS</h1>
         <small>Agent orchestration</small>
@@ -334,7 +339,7 @@
       <figcaption id="quote-src">Twenty Thousand Leagues Under the Seas</figcaption>
     </figure>
     <div class="panel clock">
-      <div class="row"><time id="clock">06:00</time><span class="depth" id="depth">— m</span></div>
+      <div class="row"><time id="clock">Day 1 · 06:00</time><span class="depth"><canvas id="depth-icon" width="12" height="10" aria-hidden="true"></canvas><span id="depth">— m</span></span></div>
       <div class="row"><small>Ship's time</small><small>Depth</small></div>
       <div class="ctl" role="group" aria-label="Simulation speed">
         <button type="button" id="play" aria-pressed="false" title="Pause">❚❚</button>
@@ -346,25 +351,28 @@
   </header>
 
   <nav class="rail" aria-label="Stations">
-    <div class="panel nav" id="nav"></div>
+    <div class="panel nav" id="nav">
+      <p class="motto">“The sea is everything.”<span>Captain Nemo</span></p>
+    </div>
     <div class="panel bridge">
-      <canvas id="bridge-art" width="128" height="100" aria-hidden="true"></canvas>
-      <p>“The sea is everything.”<span>Captain Nemo</span></p>
+      <canvas id="bridge-art" width="180" height="236" aria-hidden="true"></canvas>
+      <div class="plaque">MOBILIS IN MOBILI</div>
     </div>
   </nav>
 
   <main class="map" id="map-frame">
     <div class="map-inner" id="map">
-    <canvas class="sea" id="sea" role="img" aria-label="Top-down map of the sea floor: an orchestrator dome in the middle, routes to seven glass-domed stations, and submarine agents travelling between them."></canvas>
-    <div class="overlay" id="overlay"></div>
-    <div class="boot" id="boot">
-      <div>
-        <h2>Loading sprite assets</h2>
-        <div id="boot-what">assets/nautilus/atlas.js</div>
-        <div class="bar"><i id="boot-bar"></i></div>
-        <pre id="boot-log"></pre>
+      <canvas class="sea" id="sea" role="img" aria-label="Top-down map of the sea floor: an orchestrator dome in the middle, routes to seven glass-domed stations, and submarine agents travelling between them."></canvas>
+      <canvas class="glow" id="glow" aria-hidden="true"></canvas>
+      <div class="overlay" id="overlay"></div>
+      <div class="boot" id="boot">
+        <div>
+          <h2>Loading sprite assets</h2>
+          <div id="boot-what">assets/nautilus/atlas.js</div>
+          <div class="bar"><i id="boot-bar"></i></div>
+          <pre id="boot-log"></pre>
+        </div>
       </div>
-    </div>
     </div>
   </main>
 
@@ -380,7 +388,6 @@
           <button type="button" role="tab" data-tab="diff" aria-selected="false">Changes <span class="n" id="diff-n"></span></button>
           <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
         </div>
-        <span class="aside" id="feed-clock"></span>
       </header>
       <div class="scroll tabbody" id="tab-feed" role="tabpanel"><ol class="feed" id="feed"></ol></div>
       <div class="scroll tabbody" id="tab-diff" role="tabpanel" hidden></div>
@@ -403,7 +410,7 @@
           <li><i style="background:var(--warn)"></i>In progress</li>
           <li><i style="border:1px solid var(--muted)"></i>Planned</li>
         </ul>
-        <p id="regions-note">“Mobilis in mobili.”</p>
+        <p>“Mobilis in mobili.”</p>
       </div>
     </div>
   </section>
@@ -526,6 +533,11 @@ function iconCanvas(name, scale = 1) {
   g.drawImage(src, 0, 0, c.width, c.height);
   return c;
 }
+const ICON_URL = new Map();
+function iconUrl(name) {
+  if (!ICON_URL.has(name)) ICON_URL.set(name, spr(name).toDataURL());
+  return ICON_URL.get(name);
+}
 
 // ============================================================
 // Sim clock — every wait in a project goes through sleep()
@@ -551,6 +563,7 @@ const fmtClock = (t) => {
   const m = 6 * 60 + Math.floor(t);
   return `${String(Math.floor((m % 1440) / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 };
+const fmtDay = (t) => `Day ${1 + Math.floor((6 * 60 + Math.floor(t)) / 1440)} · ${fmtClock(t)}`;
 
 // ============================================================
 // Stations, agents, projects
@@ -570,24 +583,28 @@ const QUOTES = [
   ["“Mobilis in mobili.”", "Motto of the Nautilus"],
 ];
 
-// fx/fy: where the dome's base sits on screen, as a fraction of the map.
+// fx/fy: where the platform's centre sits on screen, as a fraction of the map.
 const STATIONS = {
-  hub:       { name: "Agent Orchestrator", sub: "Plan · Coordinate · Execute", frame: "hub.orchestrator", icon: "icon.observe", color: "brass3", fx: 0.47, fy: 0.6, pr: 50, ph: 1.25, prx: 40, pry: 11, prefer: ["below", "above"] },
-  knowledge: { name: "Knowledge Base", frame: "dome.knowledge", icon: "icon.knowledge", color: "research", fx: 0.16, fy: 0.31, pr: 30, ph: 1.0, prefer: ["below", "right", "left"] },
-  documents: { name: "Documents", frame: "dome.documents", icon: "icon.documents", color: "analyze", fx: 0.57, fy: 0.23, pr: 30, ph: 1.0, prefer: ["right", "left", "below"] },
-  models:    { name: "Model Registry", frame: "dome.models", icon: "icon.models", color: "model", fx: 0.87, fy: 0.28, pr: 30, ph: 1.0, prefer: ["below", "left"] },
-  repos:     { name: "Repositories", frame: "dome.repos", icon: "icon.repos", color: "build", fx: 0.15, fy: 0.68, pr: 30, ph: 1.0, prefer: ["below", "right", "above"] },
-  tests:     { name: "Testing Lab", frame: "dome.tests", icon: "icon.tests", color: "test", fx: 0.76, fy: 0.61, pr: 30, ph: 1.0, prefer: ["below", "left", "right"] },
-  memory:    { name: "Memory", frame: "dome.memory", icon: "icon.memory", color: "remember", fx: 0.37, fy: 0.9, pr: 30, ph: 1.0, prefer: ["right", "left", "above"] },
-  deploy:    { name: "Deployments", frame: "dome.deploy", icon: "icon.deploy", color: "deploy", fx: 0.9, fy: 0.87, pr: 30, ph: 1.0, prefer: ["left", "above"] },
+  hub:       { name: "Agent Orchestrator", sub: "Plan · Coordinate · Execute", frame: "hub.orchestrator", icon: "icon.observe", color: "brass3", fx: 0.48, fy: 0.6, pr: 64, ph: 1.3, prefer: ["below", "above"] },
+  knowledge: { name: "Knowledge Base", frame: "station.knowledge", icon: "icon.knowledge", color: "research", fx: 0.17, fy: 0.34, pr: 40, ph: 1.0, prefer: ["below", "right", "left"] },
+  documents: { name: "Documents", frame: "station.documents", icon: "icon.documents", color: "analyze", fx: 0.6, fy: 0.25, pr: 40, ph: 1.0, prefer: ["right", "left", "below"] },
+  models:    { name: "Model Registry", frame: "station.models", icon: "icon.models", color: "model", fx: 0.87, fy: 0.3, pr: 40, ph: 1.0, prefer: ["below", "left"] },
+  repos:     { name: "Repositories", frame: "station.repos", icon: "icon.repos", color: "build", fx: 0.15, fy: 0.7, pr: 40, ph: 1.0, prefer: ["below", "right", "above"] },
+  tests:     { name: "Testing Lab", frame: "station.tests", icon: "icon.tests", color: "test", fx: 0.75, fy: 0.62, pr: 40, ph: 1.0, prefer: ["below", "left", "right"] },
+  memory:    { name: "Memory", frame: "station.memory", icon: "icon.memory", color: "remember", fx: 0.37, fy: 0.88, pr: 40, ph: 0.9, prefer: ["right", "left", "above"] },
+  deploy:    { name: "Deployments", frame: "station.deploy", icon: "icon.deploy", color: "deploy", fx: 0.89, fy: 0.87, pr: 40, ph: 0.9, prefer: ["left", "above"] },
 };
 const STATION_KEYS = Object.keys(STATIONS);
 const SPOKES = STATION_KEYS.filter((k) => k !== "hub");
-for (const [k, s] of Object.entries(STATIONS)) {
-  s.key = k;
-  s.prx ??= 24;
-  s.pry ??= 7;
-}
+for (const [k, s] of Object.entries(STATIONS)) s.key = k;
+
+// card rows get a small icon each
+const ROW_ICON = {
+  knowledge: { papers: "ri.paper", reports: "ri.report", datasets: "ri.data", web: "ri.web" },
+  documents: { project: "ri.paper", specs: "ri.spec", notes: "ri.note", designs: "ri.design", diagrams: "ri.diagram" },
+  tests: { unit: "ri.check", integration: "ri.check", eval: "ri.model", sim: "ri.sim", data: "ri.data" },
+  memory: { short: "ri.clock", long: "ri.pearl", episodic: "ri.note", vector: "ri.grid" },
+};
 
 const AGENTS = [
   { id: "aronnax", name: "Aronnax", role: "Researcher", home: "knowledge", color: "research", verb: "Researching", blurb: "reads papers, field reports and datasets" },
@@ -871,49 +888,52 @@ function freshState() {
 // ============================================================
 // Map geometry
 // ============================================================
-const MAP_H = 288;
-const K = 14; // screen pixels per unit of terrain height
-const map = { W: 560, H: MAP_H, scale: 1, ox: 0, oy: 0 };
+const MAP_H = 352;
+const K = 16; // screen pixels per unit of terrain height
+const map = { W: 680, H: MAP_H, scale: 1, ox: 0, oy: 0 };
 const paths = {};
 
 function layoutStations() {
   const { W, H } = map;
   for (const s of Object.values(STATIONS)) {
+    const m = ATLAS.meta[s.key === "hub" ? "hub" : "station"];
+    s.prx = m.prx;
+    s.pry = m.pry;
     s.x = Math.round(W * s.fx);
     s.y = Math.round(H * s.fy);
     s.gy = s.y + s.ph * K; // the map row whose plateau lifts it to s.y
     const c = spr(s.frame);
-    const [bx, by] = ATLAS.meta[s.key === "hub" ? "hub" : "dome"].base;
-    s.sx = s.x - bx;
-    s.sy = s.y - by;
+    s.sx = s.x - m.base[0];
+    s.sy = s.y - m.base[1];
     s.w = c.width;
     s.h = c.height;
+    s.lamps = (s.key === "hub" ? m.lamps : m.lamps[s.key]).map(([x, y]) => [s.sx + x, s.sy + y]);
   }
   const hub = STATIONS.hub;
   SPOKES.forEach((k, i) => {
     const s = STATIONS[k];
-    const onRim = (c, tx, ty) => {
+    const onRim = (c, tx, ty, pad) => {
       const a = Math.atan2((ty - c.y) / c.pry, (tx - c.x) / c.prx);
-      return { x: c.x + Math.cos(a) * (c.prx + 3), y: c.y + Math.sin(a) * (c.pry + 3) };
+      return { x: c.x + Math.cos(a) * (c.prx + pad), y: c.y + Math.sin(a) * (c.pry + pad) + 6 };
     };
-    const a = onRim(hub, s.x, s.y);
-    const b = onRim(s, hub.x, hub.y);
+    const a = onRim(hub, s.x, s.y, 10);
+    const b = onRim(s, hub.x, hub.y, 8);
     const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
     const side = i % 2 ? 1 : -1;
     const c = { x: (a.x + b.x) / 2 - (dy / len) * len * 0.2 * side, y: (a.y + b.y) / 2 + (dx / len) * len * 0.2 * side };
     const pts = [];
     const cum = [0];
-    for (let j = 0; j <= 160; j++) {
-      const t = j / 160;
+    for (let j = 0; j <= 180; j++) {
+      const t = j / 180;
       const x = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * c.x + t * t * b.x;
       const y = (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * c.y + t * t * b.y;
       if (j) cum.push(cum[j - 1] + Math.hypot(x - pts[j - 1].x, y - pts[j - 1].y));
       pts.push({ x, y });
     }
-    paths[k] = { pts, cum, L: cum[cum.length - 1], flow: 0, busyUntil: 0, dir: 1 };
+    paths[k] = { pts, cum, L: cum[cum.length - 1], busyUntil: 0, dir: 1 };
     s.col = P[s.color];
     const [r1, g1, b1] = hexRGB(s.col), [r2, g2, b2] = hexRGB(P.abyss2);
-    s.dim = `rgb(${Math.round(lerp(r1, r2, 0.5))},${Math.round(lerp(g1, g2, 0.5))},${Math.round(lerp(b1, b2, 0.5))})`;
+    s.dim = `rgb(${Math.round(lerp(r1, r2, 0.45))},${Math.round(lerp(g1, g2, 0.45))},${Math.round(lerp(b1, b2, 0.45))})`;
   });
 }
 function pathAt(k, f) {
@@ -930,10 +950,12 @@ function pathAt(k, f) {
 
 // ============================================================
 // Terrain — an oblique heightfield: mesas carry the stations,
-// spires rise at the back, all dithered into the abyss ramp.
+// spires crowd the haze at the back; then set dressing.
 // ============================================================
 const cv = $("#sea");
 const ctx = cv.getContext("2d");
+const gcv = $("#glow");
+const gctx = gcv.getContext("2d");
 let staticCanvas = null;
 let static32 = null;
 let light32 = null;
@@ -941,16 +963,17 @@ let frameImg = null;
 let frame32 = null;
 let rayBuf = null;
 let decorAnim = [];
+let emitters = []; // static glow points: lamps in ruins, anemone tips, bioluminescence
 
 function heightAt(x, y) {
   const H = map.H;
-  let v = fbm(x * 0.016, y * 0.028, 7, 3) * 0.32;
-  v += Math.max(0, fbm(x * 0.03 + 9, y * 0.055 + 4, 21, 2) - 0.55) * 3.4; // broad rock formations
+  let v = fbm(x * 0.014, y * 0.025, 7, 3) * 0.3;
+  v += Math.max(0, fbm(x * 0.026 + 9, y * 0.048 + 4, 21, 2) - 0.55) * 3.4; // broad rock formations
   const back = clamp(1 - y / (H * 0.4), 0, 1);
-  const sp = Math.max(0, vnoise(x * 0.1, y * 0.22, 33) - 0.55) / 0.45;
-  v += back * back * sp * sp * 6; // spires in the distance
+  const sp = Math.max(0, vnoise(x * 0.085, y * 0.2, 33) - 0.55) / 0.45;
+  v += back * back * sp * sp * 6.5; // crags in the distance
   for (const s of Object.values(STATIONS)) {
-    const d = Math.hypot((x - s.x) / s.pr, (y - s.gy) / (s.pr * 0.62));
+    const d = Math.hypot((x - s.x) / s.pr, (y - s.gy) / (s.pr * 0.6));
     if (d < 1.15) v = lerp(v, s.ph, smooth(1.15, 1.0, d)); // flat-topped mesa
   }
   return v;
@@ -962,17 +985,16 @@ function buildTerrain() {
   const u = new Uint32Array(N);
   const TOP = ["abyss1", "abyss2", "abyss3", "abyss4", "abyss5", "abyss6", "abyss7"].map((n) => P[n]);
   const CLIFF = ["abyss0", "abyss1", "abyss2", "abyss3"].map((n) => P[n]);
-  const HAZE = [P.abyss2, P.abyss3, P.abyss4];
-  // haze behind everything
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) u[y * W + x] = col32(rampPick(HAZE, 0.8 - (y / H) * 1.4, x, y));
-  const R0 = 0, R1 = H + 44;
-  const rows = R1 - R0 + 2;
-  const hg = new Float32Array(rows * (W + 2));
-  const HI = (x, y) => hg[(y - R0 + 1) * (W + 2) + (x + 1)];
-  for (let y = R0 - 1; y <= R1; y++) for (let x = -1; x <= W; x++) hg[(y - R0 + 1) * (W + 2) + (x + 1)] = heightAt(x, y);
+  const HAZE = [P.abyss3, P.abyss4, P.abyss5, P.abyss6];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) u[y * W + x] = col32(rampPick(HAZE, 0.95 - (y / H) * 1.7, x, y));
+  const R0 = 0, R1 = H + 52;
+  const HI_W = W + 2;
+  const hg = new Float32Array((R1 - R0 + 2) * HI_W);
+  for (let y = R0 - 1; y <= R1; y++) for (let x = -1; x <= W; x++) hg[(y - R0 + 1) * HI_W + (x + 1)] = heightAt(x, y);
+  const HI = (x, y) => hg[(y - R0 + 1) * HI_W + (x + 1)];
   const topMask = new Uint8Array(N);
   for (let y = R0; y < R1; y++) {
-    const fog = clamp(1 - y / (H * 0.45), 0, 1);
+    const fog = clamp(1 - y / (H * 0.5), 0, 1);
     for (let x = 0; x < W; x++) {
       const h = HI(x, y);
       const top = Math.round(y - h * K);
@@ -980,8 +1002,8 @@ function buildTerrain() {
       if (top >= H) continue;
       const gx = HI(x + 1, y) - HI(x - 1, y);
       const gy = HI(x, y + 1) - HI(x, y - 1);
-      let lit = 0.24 + gy * K * 0.06 + gx * K * 0.035 + h * 0.2 + (fbm(x * 0.2, y * 0.3, 5, 2) - 0.5) * 0.08;
-      lit = lerp(lit, 0.5, fog * 0.55);
+      let lit = 0.22 + gy * K * 0.055 + gx * K * 0.035 + h * 0.2 + (fbm(x * 0.18, y * 0.28, 5, 2) - 0.5) * 0.08;
+      lit = lerp(lit, 0.62, fog * 0.6);
       const cliff = next - top - 1;
       for (let sy = Math.max(0, top); sy < Math.min(H, Math.max(top + 1, next)); sy++) {
         const i = sy * W + x;
@@ -991,14 +1013,21 @@ function buildTerrain() {
           u[i] = col32(col);
           topMask[i] = 1;
         } else {
-          const k = (sy - top) / Math.max(1, cliff);
-          u[i] = col32(rampPick(CLIFF, 0.8 - k * 0.7 + gx * K * 0.025 + fog * 0.2, x, sy));
+          const kk = (sy - top) / Math.max(1, cliff);
+          u[i] = col32(rampPick(fog > 0.3 ? HAZE : CLIFF, fog > 0.3 ? 0.6 - kk * 0.5 : 0.8 - kk * 0.7 + gx * K * 0.025, x, sy));
           topMask[i] = 0;
         }
       }
     }
   }
-  return { u, topMask, HI };
+  return { u, topMask };
+}
+
+function groundY(topMask, x) {
+  const { W, H } = map;
+  x = clamp(Math.round(x), 0, W - 1);
+  for (let y = 0; y < H; y++) if (topMask[y * W + x]) return y;
+  return H;
 }
 
 function buildStatic() {
@@ -1010,64 +1039,95 @@ function buildStatic() {
   const img = g.createImageData(W, H);
   new Uint32Array(img.data.buffer).set(u);
   g.putImageData(img, 0, 0);
-
-  // life on the mesa tops: kelp, coral, glowing anemones
-  const near = (x, y, r) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.pr + r), (y - s.y) / ((s.pr + r) * 0.6)) < 1);
+  emitters = [];
   decorAnim = [];
+  const near = (x, y, r) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.pr + r), (y - s.y) / ((s.pr + r) * 0.6)) < 1);
+
+  // the far crags: pinnacles in the haze, some with a lit ruin
+  const far = [[0.03, "far1", 0.2], [0.11, "far0", 0.24], [0.23, "far2", 0.18], [0.31, "far1", 0.22], [0.42, "far2", 0.2], [0.5, "far0", 0.17], [0.66, "far1", 0.19], [0.73, "far2", 0.22], [0.8, "far0", 0.2], [0.95, "far1", 0.24]];
+  for (const [fx, f, fy] of far) {
+    const s = spr(`pinnacle.${f}`);
+    const x = Math.round(W * fx - s.width / 2), y = Math.round(H * fy - s.height);
+    g.drawImage(s, x, y);
+    if (f === "far0") emitters.push({ x: x + s.width / 2, y: y + s.height * 0.2, col: P.lamp, r: 5, a: 0.7, ph: fx * 9 });
+  }
+  // ruins and reef across the floor
+  const place = (name, fx, fy) => {
+    const s = spr(name);
+    const x = Math.round(W * fx - s.width / 2), y = Math.round(H * fy - s.height);
+    g.drawImage(s, x, y);
+    return { x, y, w: s.width, h: s.height };
+  };
+  place("ruin.arch", 0.3, 0.5);
+  place("ruin.arch", 0.67, 0.44);
+  place("ruin.column", 0.58, 0.8);
+  place("ruin.column", 0.06, 0.93);
+  place("ruin.column", 0.97, 0.4);
+  const reefSpots = [
+    ["reef.anemonePink", 0.08, 0.78], ["reef.tubesViolet", 0.04, 0.84], ["reef.anemoneOrange", 0.27, 0.93], ["reef.anemoneTeal", 0.25, 0.66],
+    ["reef.anemoneViolet", 0.53, 0.94], ["reef.tubesOrange", 0.61, 0.72], ["reef.anemonePink", 0.69, 0.82], ["reef.anemoneTeal", 0.82, 0.72],
+    ["reef.anemoneOrange", 0.97, 0.94], ["reef.tubesViolet", 0.99, 0.72], ["reef.anemoneViolet", 0.36, 0.44], ["reef.anemonePink", 0.93, 0.5],
+    ["reef.tubesOrange", 0.22, 0.46], ["reef.anemoneTeal", 0.46, 0.84], ["coral.fan", 0.13, 0.9], ["coral.branch0", 0.79, 0.95], ["coral.branch1", 0.02, 0.6],
+  ];
+  const tipCol = { anemonePink: P.pink3, anemoneViolet: P.vio3, anemoneOrange: P.coral3, anemoneTeal: P.glow };
+  for (const [name, fx, fy] of reefSpots) {
+    if (near(W * fx, H * fy, -6)) continue;
+    const r = place(name, fx, fy);
+    const kind = name.split(".")[1];
+    if (tipCol[kind]) emitters.push({ x: r.x + r.w / 2, y: r.y + 3, col: tipCol[kind], r: 7, a: 0.35, ph: fx * 13 });
+  }
+  g.drawImage(spr("galleon.wreck"), Math.round(W * 0.55), H - 44);
+  for (const [f, fx, fy] of [["rock.r2", 0.28, 0.58], ["rock.r0", 0.64, 0.52], ["anchor.idle", 0.7, 0.76], ["rock.r1", 0.9, 0.64], ["rock.r0", 0.45, 0.7], ["coral.brain", 0.2, 0.97]]) place(f, fx, fy);
+  // the near crags framing the view
+  g.drawImage(spr("pinnacle.near0"), -10, Math.round(H * 0.66) - 150);
+  g.drawImage(spr("pinnacle.near1"), W - 16, Math.round(H * 0.55) - 118);
+  emitters.push({ x: W - 5, y: Math.round(H * 0.55) - 118 + 26, col: P.lamp, r: 6, a: 0.6, ph: 3 });
+
+  // kelp and glowing plants on the mesa tops
   let seed = 1;
-  for (let n = 0; n < W * 0.55; n++) {
+  for (let n = 0; n < W * 0.5; n++) {
     const x = Math.floor(hash2(n, 1, 77) * W);
-    const y = Math.floor(H * 0.3 + hash2(n, 2, 77) * H * 0.7);
-    if (!topMask[y * W + x] || near(x, y, 6)) continue;
+    const y = Math.floor(H * 0.34 + hash2(n, 2, 77) * H * 0.66);
+    if (!topMask[y * W + x] || near(x, y, 4)) continue;
     const kind = hash2(n, 3, 77);
-    if (kind < 0.35) {
-      const hgt = 3 + Math.floor(hash2(n, 4, 77) * 6);
-      decorAnim.push({ kind: "kelp", x, y, h: hgt, ph: n * 0.7 });
-    } else if (kind < 0.75) {
-      const col = [P.coral1, P.vio2, P.coral0, P.kelp2, P.vio3][Math.floor(hash2(n, 5, 77) * 5)];
+    if (kind < 0.42) decorAnim.push({ kind: "kelp", x, y, h: 4 + Math.floor(hash2(n, 4, 77) * 9), ph: n * 0.7 });
+    else if (kind < 0.62) {
+      const col = [P.coral1, P.vio2, P.pink2, P.kelp2][Math.floor(hash2(n, 5, 77) * 4)];
       g.fillStyle = P.ink;
       g.fillRect(x - 1, y - 1, 4, 3);
       g.fillStyle = col;
       g.fillRect(x, y - 1, 2, 2);
-      g.fillRect(x + 1, y - 2, 1, 1);
     } else {
       decorAnim.push({ kind: "glow", x, y, ph: (seed = (seed * 7) % 13) });
+      emitters.push({ x, y, col: P.glow, r: 3, a: 0.5, ph: seed });
     }
   }
-  // lighthouses on the back spires; a wreck and scattered rocks up front
-  for (const fx of [0.05, 0.33, 0.7, 0.97]) {
-    const x = Math.round(W * fx);
-    let top = H;
-    for (let y = 0; y < H; y++) if (topMask[y * W + x] && y < top) top = y;
-    if (top < H * 0.3) g.drawImage(spr("tower.far"), x - 7, Math.max(-20, top - 44));
-  }
-  g.drawImage(spr("galleon.wreck"), Math.round(W * 0.56), H - 38);
-  for (const [f, fx, fy] of [["rock.r2", 0.28, 0.5], ["rock.r0", 0.64, 0.46], ["coral.branch0", 0.3, 0.72], ["coral.fan", 0.07, 0.86], ["coral.branch1", 0.52, 0.97], ["anchor.idle", 0.68, 0.74], ["rock.r1", 0.97, 0.6], ["coral.brain", 0.24, 0.95]]) {
-    const s = spr(f);
-    g.drawImage(s, Math.round(W * fx - s.width / 2), Math.round(H * fy - s.height));
+  // tall foreground kelp in the corners
+  for (const [fx, hgt] of [[0.01, 70], [0.025, 54], [0.045, 40], [0.955, 46], [0.975, 64], [0.99, 52]]) {
+    decorAnim.push({ kind: "tallkelp", x: Math.round(W * fx), y: H + 2, h: hgt, ph: fx * 40 });
   }
 
-  // vignette, dithered; warm light pooling round each dome
+  // warm light pooling round each station, and a vignette
   const out = g.getImageData(0, 0, W, H);
   const s32 = new Uint32Array(out.data.buffer);
   const warm = hexRGB(P.brass2);
   for (const st of Object.values(STATIONS)) {
     const tint = st.key === "hub" ? warm : hexRGB(P[st.color]);
-    const rx = st.prx + 22, ry = st.pry + 16;
+    const rx = st.prx + 30, ry = st.pry + 22;
     for (let y = Math.max(0, st.y - ry); y < Math.min(H, st.y + ry); y++) {
       for (let x = Math.max(0, st.x - rx); x < Math.min(W, st.x + rx); x++) {
         const d = Math.hypot((x - st.x) / rx, (y - st.y) / ry);
         if (d >= 1) continue;
         const k = (1 - d) * (1 - d);
-        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.34), tint, k * 0.14);
+        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.38), tint, k * 0.16);
       }
     }
   }
   const deep = hexRGB(P.abyss0);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const d = Math.hypot((x / W - 0.5) * 1.15, (y / H - 0.52) * 1.25);
-      const k = smooth(0.42, 0.78, d);
+      const d = Math.hypot((x / W - 0.5) * 1.12, (y / H - 0.55) * 1.3);
+      const k = smooth(0.44, 0.8, d);
       if (k > 0) s32[y * W + x] = mix32(s32[y * W + x], deep, k * (0.55 + bayer(x, y) * 0.3));
     }
   }
@@ -1077,24 +1137,26 @@ function buildStatic() {
   static32 = new Uint32Array(g.getImageData(0, 0, W, H).data.buffer);
   const sun = [150, 214, 226];
   light32 = new Uint32Array(N);
-  for (let i = 0; i < N; i++) light32[i] = mix32(static32[i], sun, 0.22);
+  for (let i = 0; i < N; i++) light32[i] = mix32(static32[i], sun, 0.2);
   frameImg = ctx.createImageData(W, H);
   frame32 = new Uint32Array(frameImg.data.buffer);
   rayBuf = new Float32Array(Math.ceil(W + H * 0.6) + 2);
+  gcv.width = Math.round(W / 2);
+  gcv.height = Math.round(H / 2);
   drawMinimapBase();
 }
 
 function renderSea(t) {
   const { W, H } = map;
   for (let k = 0; k < rayBuf.length; k++) {
-    const a = Math.max(0, Math.sin(k * 0.04 + t * 0.19));
-    const b = Math.max(0, Math.sin(k * 0.067 - t * 0.14 + 2));
-    const c = Math.max(0, Math.sin(k * 0.026 + t * 0.08 + 4.4));
+    const a = Math.max(0, Math.sin(k * 0.034 + t * 0.19));
+    const b = Math.max(0, Math.sin(k * 0.057 - t * 0.14 + 2));
+    const c = Math.max(0, Math.sin(k * 0.022 + t * 0.08 + 4.4));
     rayBuf[k] = 0.55 * a ** 10 + 0.4 * b ** 14 + 0.5 * c ** 8;
   }
   const u = frame32, st = static32, lt = light32;
   for (let y = 0; y < H; y++) {
-    const fall = 0.95 * Math.pow(1 - y / H, 1.3) + 0.08;
+    const fall = 0.95 * Math.pow(1 - y / H, 1.3) + 0.06;
     const row = y * W, by = (y & 3) * 4;
     for (let x = 0; x < W; x++) {
       const i = row + x;
@@ -1105,12 +1167,118 @@ function renderSea(t) {
 }
 
 // ============================================================
+// Glow — a half-resolution light layer screened over the pixels
+// ============================================================
+const GLOW = new Map();
+function glowSprite(col, r) {
+  const key = `${col}|${r}`;
+  let c = GLOW.get(key);
+  if (!c) {
+    c = makeCanvas(r * 2, r * 2);
+    const g = c.getContext("2d");
+    const [R, G, B] = hexRGB(col);
+    const grd = g.createRadialGradient(r, r, 0, r, r, r);
+    grd.addColorStop(0, `rgba(${R},${G},${B},1)`);
+    grd.addColorStop(0.25, `rgba(${R},${G},${B},0.55)`);
+    grd.addColorStop(1, `rgba(${R},${G},${B},0)`);
+    g.fillStyle = grd;
+    g.fillRect(0, 0, r * 2, r * 2);
+    GLOW.set(key, c);
+  }
+  return c;
+}
+function glowAt(x, y, col, r, a) {
+  if (a <= 0.01) return;
+  const rr = Math.max(2, Math.round(r / 2));
+  gctx.globalAlpha = clamp(a, 0, 1);
+  gctx.drawImage(glowSprite(col, rr), x / 2 - rr, y / 2 - rr);
+}
+function renderGlow(t) {
+  const { W, H } = map;
+  gctx.globalCompositeOperation = "source-over";
+  gctx.globalAlpha = 1;
+  gctx.fillStyle = "#000";
+  gctx.fillRect(0, 0, gcv.width, gcv.height);
+  gctx.globalCompositeOperation = "lighter";
+  // light from the surface: a band at the top and slow shafts
+  const top = gctx.createLinearGradient(0, 0, 0, gcv.height * 0.45);
+  top.addColorStop(0, "rgba(90, 170, 190, 0.32)");
+  top.addColorStop(1, "rgba(90, 170, 190, 0)");
+  gctx.globalAlpha = 1;
+  gctx.fillStyle = top;
+  gctx.fillRect(0, 0, gcv.width, gcv.height * 0.45);
+  for (let i = 0; i < 4; i++) {
+    const cx = (W * (0.2 + i * 0.22) + Math.sin(t * 0.07 + i * 2) * 30) / 2;
+    const w0 = 6 + i * 3, w1 = 40 + i * 12, len = gcv.height * (0.75 + (i % 2) * 0.2);
+    const grd = gctx.createLinearGradient(0, 0, 0, len);
+    grd.addColorStop(0, `rgba(150, 215, 225, ${0.13 + 0.04 * Math.sin(t * 0.3 + i)})`);
+    grd.addColorStop(1, "rgba(150, 215, 225, 0)");
+    gctx.fillStyle = grd;
+    gctx.beginPath();
+    gctx.moveTo(cx - w0, 0);
+    gctx.lineTo(cx + w0, 0);
+    gctx.lineTo(cx + w1 + len * 0.28, len);
+    gctx.lineTo(cx - w1 + len * 0.28, len);
+    gctx.closePath();
+    gctx.fill();
+  }
+  // stations: warm interiors, their colour at the base, every lamp
+  for (const k of STATION_KEYS) {
+    const s = STATIONS[k];
+    const busy = S?.busy?.[k] > 0;
+    const pulse = busy ? 0.75 + Math.sin(t * 4) * 0.15 : 0.5;
+    const hubK = k === "hub" ? 1.5 : 1;
+    glowAt(s.x, s.y - 18 * hubK, P.brass3, 46 * hubK, pulse);
+    glowAt(s.x, s.y - 14 * hubK, P.lamp, 20 * hubK, pulse * 0.8);
+    if (k !== "hub") glowAt(s.x, s.y + 6, s.col, 44, busy ? 0.55 : 0.28);
+    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.lamp, 9, 0.55 + 0.25 * Math.sin(t * 3 + lx));
+    if (k === "tests" && kraken.state === "rising") glowAt(s.x, s.y - 10, P.red, 70, 0.5 + Math.sin(t * 6) * 0.2);
+  }
+  // routes: the bright heads, and packets in flight
+  for (const k of SPOKES) {
+    const p = paths[k];
+    const s = STATIONS[k];
+    const busy = t < p.busyUntil;
+    const flow = t * (busy ? 30 : 10) * p.dir;
+    for (let d = 2; d < p.L - 2; d += 3) {
+      if (cycle((d - flow) / 3, busy ? 4 : 7) !== 0) continue;
+      const q = pathAt(k, d / p.L);
+      glowAt(q.x, q.y, s.col, busy ? 10 : 7, busy ? 0.85 : 0.5);
+    }
+  }
+  for (const pk of packets) {
+    const s = clamp((t - pk.t0) / pk.dur, 0, 1);
+    const q = pathAt(pk.key, pk.fromHub ? s : 1 - s);
+    glowAt(q.x, q.y, pk.col, 20, 0.9);
+    glowAt(q.x, q.y, P.white, 8, 0.8);
+  }
+  // submarines: headlights, and whatever their lamp is lighting
+  for (const sb of Object.values(subs)) {
+    if (!sb.visible) continue;
+    glowAt(sb.x + sb.face * 9, sb.y + 1, P.lamp, 16, 0.75);
+    glowAt(sb.x, sb.y, P[sb.a.color], 18, 0.3);
+    if (sb.beam) glowAt(sb.beam.x, sb.beam.y, sb.beam.col, 24, 0.55);
+  }
+  // bioluminescence, lit ruins, anemone tips, jellies, eyes in the dark
+  for (const e of emitters) glowAt(e.x, e.y, e.col, e.r, e.a * (0.6 + 0.4 * Math.sin(t * 1.3 + e.ph)));
+  for (const j of ambient.jellies) glowAt(j.x + 4, j.y + 4, P.pink3, 14, 0.45);
+  if (kraken.state !== "hidden") {
+    const h = kraken.head();
+    for (const [ex, ey] of ATLAS.meta.kraken.eyes) glowAt(h.x + ex, h.y + ey, P.red, 8, 0.9);
+  }
+  const o = ambient.octo;
+  if (o) glowAt(o.x + 20, o.y + 21, P.lamp, 14, 0.4);
+  gctx.globalAlpha = 1;
+  gctx.globalCompositeOperation = "source-over";
+}
+
+// ============================================================
 // Agents on the map
 // ============================================================
 const subs = {};
 function initSubs() {
   AGENTS.forEach((a, i) => {
-    subs[a.id] = { a, x: 0, y: 0, visible: false, at: "hub", face: 1, travel: null, beam: null, doing: "", progress: 0, ph: i * 1.3, slot: i, emit: 0, bubT: 0, state: "idle", readTok: 0, sentTok: 0, trail: [] };
+    subs[a.id] = { a, x: 0, y: 0, visible: false, at: "hub", face: 1, travel: null, beam: null, doing: "", progress: 0, ph: i * 1.3, slot: i, emit: 0, bubT: 0, state: "idle", readTok: 0, sentTok: 0, taskTok: 0, trail: [] };
   });
 }
 function subPos(sb) {
@@ -1118,16 +1286,13 @@ function subPos(sb) {
     const tr = sb.travel;
     const k = easeInOut(clamp((clock.t - tr.t0) / tr.dur, 0, 1));
     const p = pathAt(tr.path, lerp(tr.f0, tr.f1, k));
-    return { x: p.x, y: p.y - 9, face: (tr.f1 > tr.f0 ? 1 : -1) * Math.sign(p.dx || 1) };
+    return { x: p.x, y: p.y - 10, face: (tr.f1 > tr.f0 ? 1 : -1) * Math.sign(p.dx || 1) };
   }
-  if (sb.at === "hub") {
-    const h = STATIONS.hub;
-    return { x: h.x, y: h.y - 9, face: sb.face };
-  }
+  if (sb.at === "hub") return { x: STATIONS.hub.x, y: STATIONS.hub.y - 10, face: sb.face };
   const end = pathAt(sb.at, 1);
   const s = STATIONS[sb.at];
   const off = (sb.slot % 3) - 1;
-  return { x: end.x + off * 5, y: end.y - 9 + off * 3, face: s.x >= end.x ? 1 : -1 };
+  return { x: end.x + off * 6, y: end.y - 10 + off * 3, face: s.x >= end.x ? 1 : -1 };
 }
 function updateSubs(dt) {
   for (const sb of Object.values(subs)) {
@@ -1138,20 +1303,20 @@ function updateSubs(dt) {
     sb.face = p.face;
     sb.bubT -= dt;
     if (sb.bubT <= 0) {
-      particles.push({ kind: "bubble", x: sb.x - sb.face * 9, y: sb.y, vy: -(6 + Math.random() * 5), ph: Math.random() * 6, t0: clock.t, life: 5 });
-      sb.bubT = 0.4 + Math.random() * 0.7;
+      particles.push({ kind: "bubble", x: sb.x - sb.face * 10, y: sb.y, vy: -(6 + Math.random() * 5), ph: Math.random() * 6, t0: clock.t, life: 5 });
+      sb.bubT = 0.25 + Math.random() * 0.45;
     }
     if (sb.beam?.emit) {
       sb.emit += dt * 18;
       while (sb.emit >= 1) {
         sb.emit -= 1;
-        particles.push({ kind: "speck", sb, tx: sb.beam.x + (Math.random() - 0.5) * 8, ty: sb.beam.y + (Math.random() - 0.5) * 6, out: sb.beam.out, col: sb.beam.col, t0: clock.t, life: 0.6 + Math.random() * 0.3, wig: (Math.random() - 0.5) * 5 });
+        particles.push({ kind: "speck", sb, tx: sb.beam.x + (Math.random() - 0.5) * 10, ty: sb.beam.y + (Math.random() - 0.5) * 8, out: sb.beam.out, col: sb.beam.col, t0: clock.t, life: 0.6 + Math.random() * 0.3, wig: (Math.random() - 0.5) * 5 });
       }
     }
   }
 }
 async function travel(sb, key, f0, f1) {
-  const dur = clamp((paths[key].L * Math.abs(f1 - f0)) / 62, 0.8, 4);
+  const dur = clamp((paths[key].L * Math.abs(f1 - f0)) / 68, 0.8, 4);
   sb.travel = { path: key, f0, f1, t0: clock.t, dur };
   paths[key].busyUntil = clock.t + dur + 0.5;
   paths[key].dir = f1 > f0 ? 1 : -1;
@@ -1163,7 +1328,7 @@ let particles = [];
 let packets = [];
 async function packet(key, fromHub, col) {
   const p = paths[key];
-  const pk = { key, fromHub, col, t0: clock.t, dur: clamp(p.L / 110, 0.6, 2.2) };
+  const pk = { key, fromHub, col, t0: clock.t, dur: clamp(p.L / 120, 0.6, 2.2) };
   packets.push(pk);
   p.busyUntil = clock.t + pk.dur + 0.6;
   p.dir = fromHub ? 1 : -1;
@@ -1178,9 +1343,10 @@ async function packet(key, fromHub, col) {
 // ============================================================
 const kraken = {
   state: "hidden", k: 0, grab: 0, note: "",
+  // surfaces from the trench below the Testing Lab
   head() {
     const t = STATIONS.tests;
-    return { x: Math.round(lerp(map.W + 4, map.W - 34, this.k)), y: t.y - 44 };
+    return { x: t.x - 34, y: Math.round(lerp(map.H + 6, map.H - 50, this.k)) };
   },
   update(dt) {
     if (this.state === "rising") {
@@ -1199,24 +1365,25 @@ const kraken = {
 // ============================================================
 // Ambient life
 // ============================================================
-const ambient = { schools: [], jellies: [], whale: null, snow: [] };
+const ambient = { schools: [], jellies: [], whale: null, snow: [], octo: null };
 function seedAmbient() {
   const { W, H } = map;
   const kinds = ["coral", "blue", "silver"];
   ambient.schools = [0, 1, 2].map((i) => ({
     x: Math.random() * W, y: H * (0.3 + i * 0.2), dir: i % 2 ? -1 : 1, speed: 7 + i * 3, kind: kinds[i],
-    fish: Array.from({ length: 5 + i }, (_, j) => ({ dx: j * 8 + Math.random() * 6, dy: (Math.random() - 0.5) * 14, ph: Math.random() * 6 })),
+    fish: Array.from({ length: 6 + i }, (_, j) => ({ dx: j * 8 + Math.random() * 6, dy: (Math.random() - 0.5) * 16, ph: Math.random() * 6 })),
   }));
-  ambient.jellies = [0.25, 0.66].map((fx, i) => ({ x: W * fx, y: H * (0.5 + i * 0.2), ph: i * 2 }));
-  ambient.whale = { x: W * 0.28, y: 16, dir: 1 };
-  ambient.snow = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 2 + Math.random() * 4, ph: Math.random() * 6 }));
+  ambient.jellies = [0.24, 0.52, 0.68].map((fx, i) => ({ x: W * fx, y: H * (0.45 + i * 0.16), ph: i * 2 }));
+  ambient.whale = { x: W * 0.36, y: 26, dir: 1 };
+  ambient.octo = { x: W - 78, y: 6, ph: 0 };
+  ambient.snow = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 2 + Math.random() * 4, ph: Math.random() * 6 }));
 }
 function updateAmbient(dt) {
   const { W, H } = map;
   for (const s of ambient.schools) {
     s.x += s.dir * s.speed * dt;
-    if (s.dir > 0 && s.x > W + 30) s.x = -70;
-    if (s.dir < 0 && s.x < -70) s.x = W + 30;
+    if (s.dir > 0 && s.x > W + 30) s.x = -80;
+    if (s.dir < 0 && s.x < -80) s.x = W + 30;
   }
   for (const j of ambient.jellies) {
     j.y -= 2 * dt;
@@ -1224,8 +1391,8 @@ function updateAmbient(dt) {
   }
   const w = ambient.whale;
   w.x += w.dir * 5 * dt;
-  if (w.x > W + 90) { w.dir = -1; w.y = 10 + Math.random() * 18; }
-  if (w.x < -90) { w.dir = 1; w.y = 10 + Math.random() * 18; }
+  if (w.x > W + 120) { w.dir = -1; w.y = 18 + Math.random() * 18; }
+  if (w.x < -120) { w.dir = 1; w.y = 18 + Math.random() * 18; }
   for (const f of ambient.snow) {
     f.y += f.s * dt;
     if (f.y > H) { f.y = -2; f.x = Math.random() * W; }
@@ -1234,7 +1401,7 @@ function updateAmbient(dt) {
     if (p.kind === "bubble") {
       p.y += p.vy * dt;
       p.x += Math.sin(clock.t * 3 + p.ph) * 3 * dt;
-    } else if (p.kind === "spark" || p.kind === "ink") {
+    } else if (p.kind === "ink") {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.vx *= 1 - dt * 1.5;
@@ -1243,7 +1410,7 @@ function updateAmbient(dt) {
     if (clock.t - p.t0 > p.life) p.dead = true;
   }
   particles = particles.filter((p) => !p.dead);
-  if (particles.length > 900) particles.splice(0, particles.length - 900);
+  if (particles.length > 1000) particles.splice(0, particles.length - 1000);
 }
 
 // ============================================================
@@ -1288,20 +1455,28 @@ function ellipseDots(g, cx, cy, rx, ry, col, step, phase) {
   }
 }
 
-function drawDecor(g, t) {
+function drawDecor(g, t, foreground) {
   for (const d of decorAnim) {
-    if (d.kind === "kelp") {
+    if ((d.kind === "tallkelp") !== foreground) continue;
+    if (d.kind === "kelp" || d.kind === "tallkelp") {
+      const tall = d.kind === "tallkelp";
       for (let s = 0; s < d.h; s++) {
-        const x = Math.round(d.x + Math.sin(t * 1.3 + d.ph + s * 0.4) * (s / d.h) * 1.4);
-        px(g, x, d.y - s, s % 2 ? P.kelp1 : P.kelp2);
+        const f = s / d.h;
+        const x = Math.round(d.x + Math.sin(t * (tall ? 0.9 : 1.3) + d.ph + s * (tall ? 0.08 : 0.4)) * f * (tall ? 6 : 1.4));
+        if (tall) {
+          g.fillStyle = P.ink;
+          g.fillRect(x - 1, d.y - s, 4, 1);
+          g.fillStyle = s % 3 ? P.kelp1 : P.kelp2;
+          g.fillRect(x, d.y - s, 2, 1);
+          if (s % 7 === 3) {
+            g.fillStyle = P.kelp3;
+            g.fillRect(x + ((s / 7) & 1 ? 2 : -2), d.y - s, 2, 1);
+          }
+        } else px(g, x, d.y - s, s % 2 ? P.kelp1 : P.kelp2);
       }
-      px(g, d.x, d.y - d.h, P.kelp3);
-    } else if (cycle(t * 1.5 + d.ph, 5) !== 0) {
+      if (!tall) px(g, d.x, d.y - d.h, P.kelp3);
+    } else if (d.kind === "glow" && cycle(t * 1.5 + d.ph, 5) !== 0) {
       px(g, d.x, d.y, P.glow);
-      if (cycle(t * 0.7 + d.ph, 3) === 0) {
-        px(g, d.x - 1, d.y, P.glass);
-        px(g, d.x + 1, d.y, P.glass);
-      }
     }
   }
 }
@@ -1328,7 +1503,7 @@ function drawPaths(g, t) {
         }
       } else {
         g.fillStyle = busy ? s.col : s.dim;
-        g.fillRect(x, y, 1, 1);
+        g.fillRect(x, y, 2, 1);
       }
     }
   }
@@ -1349,51 +1524,51 @@ function drawStations(g, t) {
   for (const k of order) {
     const s = STATIONS[k];
     const busy = S && S.busy?.[k] > 0;
-    const col = k === "hub" ? P.brass3 : P[s.color];
+    const col = k === "hub" ? P.brass3 : s.col;
     if (busy || selected?.key === k) {
-      const pulse = 1 + Math.sin(t * 4) * 0.08;
-      ellipseDots(g, s.x, s.y + s.pry * 0.3, (s.prx + 7) * pulse, (s.pry + 4) * pulse, col, 2.2, t * 0.6);
-      if (selected?.key === k) ellipseDots(g, s.x, s.y + s.pry * 0.3, s.prx + 11, s.pry + 6, P.white, 3, -t * 0.4);
+      const pulse = 1 + Math.sin(t * 4) * 0.06;
+      ellipseDots(g, s.x, s.y + s.pry + 6, (s.prx + 12) * pulse, (s.pry + 6) * pulse, col, 2.2, t * 0.6);
+      if (selected?.key === k) ellipseDots(g, s.x, s.y + s.pry + 6, s.prx + 16, s.pry + 9, P.white, 3, -t * 0.4);
     }
-    if (k === "tests" && kraken.state === "rising" && kraken.grab > 0.5) ellipseDots(g, s.x, s.y + 2, s.prx + 5, s.pry + 3, P.red, 2, t * 2);
+    if (k === "tests" && kraken.state === "rising" && kraken.grab > 0.5) ellipseDots(g, s.x, s.y + s.pry + 6, s.prx + 9, s.pry + 5, P.red, 2, t * 2);
     g.drawImage(spr(s.frame), s.sx, s.sy);
-    // lantern on the finial
-    if (cycle(t * 2 + s.x, 4)) px(g, s.x, s.sy + (k === "hub" ? 5 : 3), P.lamp);
+    for (const [lx, ly] of s.lamps) if (cycle(t * 2 + lx * 0.3, 7) === 0) px(g, lx, ly, P.white);
   }
 }
 
-function drawTentacle(g, pts, r0, r1) {
+function drawTentacle(g, pts, r0, r1, body, sucker) {
   const n = pts.length;
   for (let i = 0; i < n; i++) disc(g, pts[i].x, pts[i].y, lerp(r0, r1, i / (n - 1)) + 1, P.ink);
   for (let i = 0; i < n; i++) {
     const r = lerp(r0, r1, i / (n - 1));
-    disc(g, pts[i].x, pts[i].y, r, P.vio2);
-    if (i % 3 === 1 && r > 1) px(g, pts[i].x, pts[i].y + r - 0.5, P.vio3);
+    disc(g, pts[i].x, pts[i].y, r, body);
+    if (i % 3 === 1 && r > 1) px(g, pts[i].x, pts[i].y + r - 0.5, sucker);
   }
+}
+function arms(g, t, x0, y0, roots, len, body, sucker, spread, seed) {
+  roots.forEach(([rx, ry], j) => {
+    const pts = [];
+    let x = x0 + rx, y = y0 + ry, ang = Math.PI / 2 + (j - (roots.length - 1) / 2) * spread;
+    for (let s = 0; s < len; s++) {
+      ang += Math.sin(t * 1.8 + j * 1.3 + s * 0.35 + seed) * 0.2;
+      x += Math.cos(ang) * 2.2;
+      y += Math.sin(ang) * 2.2;
+      pts.push({ x, y });
+    }
+    drawTentacle(g, pts, 2.1, 0.6, body, sucker);
+  });
 }
 function drawKraken(g, t) {
   if (kraken.state === "hidden") return;
   const h = kraken.head();
   const roots = ATLAS.meta.kraken.roots;
-  roots.forEach(([rx, ry], j) => {
-    if (j === 0 && kraken.grab > 0) return;
-    const pts = [];
-    let x = h.x + rx, y = h.y + ry, ang = Math.PI / 2 + (j - 3.2) * 0.33;
-    for (let s = 0; s < 12; s++) {
-      ang += Math.sin(t * 2 + j * 1.3 + s * 0.35) * 0.2;
-      x += Math.cos(ang) * 2.1;
-      y += Math.sin(ang) * 2.1;
-      pts.push({ x, y });
-    }
-    drawTentacle(g, pts, 1.9, 0.6);
-  });
+  arms(g, t, h.x, h.y, kraken.grab > 0 ? roots.slice(1) : roots, 13, P.vio2, P.vio3, 0.33, 0);
   g.drawImage(spr("kraken.head"), h.x, h.y);
   if (kraken.grab > 0) {
     const s = STATIONS.tests;
-    const [rx, ry] = roots[0];
-    const a = { x: h.x + rx, y: h.y + ry };
-    const b = { x: s.x + s.prx * 0.2, y: s.y - 10 };
-    const c = { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - 18 };
+    const a = { x: h.x + 14, y: h.y + 6 };
+    const b = { x: s.x + s.prx * 0.25, y: s.y - 14 };
+    const c = { x: (a.x + b.x) / 2 - 24, y: Math.min(a.y, b.y) - 16 };
     const N = Math.round(Math.hypot(b.x - a.x, b.y - a.y) / 2.2);
     const upto = Math.round(N * kraken.grab);
     const pts = [];
@@ -1403,13 +1578,19 @@ function drawKraken(g, t) {
       pts.push({ x: (1 - q) * (1 - q) * a.x + 2 * (1 - q) * q * c.x + q * q * b.x + w, y: (1 - q) * (1 - q) * a.y + 2 * (1 - q) * q * c.y + q * q * b.y + w * 0.5 });
     }
     if (kraken.grab >= 1) {
-      for (let k = 0; k <= 14; k++) {
-        const an = -Math.PI * 0.5 + (k / 14) * Math.PI * 1.7;
-        pts.push({ x: s.x + Math.cos(an) * (s.prx - 2), y: s.y - 6 + Math.sin(an) * 12 });
+      for (let k = 0; k <= 16; k++) {
+        const an = -Math.PI * 0.5 + (k / 16) * Math.PI * 1.7;
+        pts.push({ x: s.x + Math.cos(an) * (s.prx - 4), y: s.y - 8 + Math.sin(an) * 14 });
       }
     }
-    if (pts.length > 1) drawTentacle(g, pts, 2.1, 0.8);
+    if (pts.length > 1) drawTentacle(g, pts, 2.3, 0.8, P.vio2, P.vio3);
   }
+}
+function drawOctopus(g, t) {
+  const o = ambient.octo;
+  const x = Math.round(o.x + Math.sin(t * 0.3) * 4), y = Math.round(o.y + Math.sin(t * 0.45) * 3);
+  arms(g, t, x, y, ATLAS.meta.octopus.roots, 16, P.pink2, P.pink4, 0.3, 2);
+  g.drawImage(spr("octopus.head"), x, y);
 }
 
 function drawSubs(g, t) {
@@ -1421,7 +1602,7 @@ function drawSubs(g, t) {
       const lx = sb.face > 0 ? x + 18 : x + 1;
       const dx = sb.beam.x - lx, dy = sb.beam.y - (y + 6);
       const len = Math.hypot(dx, dy) || 1;
-      const nx = (-dy / len) * 3, ny = (dx / len) * 3;
+      const nx = (-dy / len) * 3.5, ny = (dx / len) * 3.5;
       const shift = Math.floor(t * 8);
       ditherTri(g, lx, y + 6, sb.beam.x + nx, sb.beam.y + ny, sb.beam.x - nx, sb.beam.y - ny, sb.beam.col, (px_, py_) => ((px_ + py_ + shift) & 1) === 0);
     }
@@ -1431,7 +1612,8 @@ function drawSubs(g, t) {
 
 function drawAmbient(g, t) {
   const w = ambient.whale;
-  g.drawImage(spr(`whale.swim${cycle(t * 0.8)}`, w.dir < 0), Math.round(w.x - 39), Math.round(w.y + Math.sin(t * 0.5) * 2));
+  const ws = spr(`whale.swim${cycle(t * 0.7)}`, w.dir < 0);
+  g.drawImage(ws, Math.round(w.x - ws.width / 2), Math.round(w.y + Math.sin(t * 0.5) * 2));
   for (const s of ambient.schools) {
     for (const f of s.fish) {
       const fx = Math.round(s.x - s.dir * f.dx);
@@ -1456,8 +1638,7 @@ function drawParticles(g, t) {
     } else if (p.kind === "ring") {
       const r = 1 + (age / p.life) * 7;
       ellipseDots(g, p.x, p.y, r, r * 0.6, p.col, 1.6, 0);
-    } else if (p.kind === "spark") px(g, p.x, p.y, age < 0.2 ? P.white : P.lamp);
-    else if (p.kind === "ink") {
+    } else if (p.kind === "ink") {
       const k = age / p.life;
       if (hash2(Math.round(p.x), Math.round(p.y), Math.floor(t * 10)) > k * 0.9) disc(g, p.x, p.y, 1 + k * 2.5, k < 0.5 ? P.vio0 : P.ink2);
     }
@@ -1469,13 +1650,16 @@ function drawParticles(g, t) {
 function render() {
   const t = clock.t;
   renderSea(t);
-  drawDecor(ctx, t);
+  drawDecor(ctx, t, false);
   drawPaths(ctx, t);
   drawAmbient(ctx, t);
+  drawOctopus(ctx, t);
   drawStations(ctx, t);
   drawKraken(ctx, t);
   drawSubs(ctx, t);
   drawParticles(ctx, t);
+  drawDecor(ctx, t, true);
+  renderGlow(t);
 }
 
 // ============================================================
@@ -1508,7 +1692,7 @@ function buildOverlay() {
     el.className = "tag";
     el.hidden = true;
     el.style.setProperty("--c", `var(--${a.color})`);
-    el.innerHTML = `<b>${esc(a.name)}</b><span></span><div class="pips"><i></i><i></i><i></i><i></i></div>`;
+    el.innerHTML = `<b>Agent ${esc(a.name)}</b><span></span><div class="pips"><i></i><i></i><i></i><i></i></div>`;
     el.addEventListener("click", () => openPop({ kind: "agent", id: a.id }));
     overlay.appendChild(el);
     tags[a.id] = { el, span: el.querySelector("span"), pips: [...el.querySelectorAll(".pips i")], last: "" };
@@ -1524,56 +1708,53 @@ function stationRows(k) {
   if (!S) return [];
   const hot = S.hot[k];
   const on = (key) => hot && hot.key === key && clock.t < hot.until;
+  const icon = (key, fallback) => (ROW_ICON[k] && ROW_ICON[k][key]) || fallback;
   switch (k) {
     case "knowledge":
     case "documents":
-      return Object.entries(S[k].rows).map(([key, [label, n]]) => [label, fmtNum(n), on(key)]);
     case "memory":
-      return Object.entries(S.memory.rows).map(([key, [label, n]]) => [label, fmtNum(n), on(key)]);
+      return Object.entries(S[k].rows).map(([key, [label, n]]) => [icon(key, "ri.paper"), label, fmtNum(n), on(key)]);
     case "models":
-      return S.models.list.map((m) => [m.name, m.status === "training" ? `<span class="run">v${m.v} ${m.pct}%</span>` : m.status === "evaluating" ? `<span class="run">v${m.v} eval</span>` : m.status === "draft" ? `<span class="dim">v${m.v} draft</span>` : `v${m.v}`, on(m.name)]);
+      return S.models.list.map((m) => ["ri.model", m.name, m.status === "training" ? `<span class="run">v${m.v} ${m.pct}%</span>` : m.status === "evaluating" ? `<span class="run">v${m.v} eval</span>` : m.status === "draft" ? `<span class="dim">v${m.v} draft</span>` : `v${m.v}`, on(m.name)]);
     case "repos":
-      return S.repos.list.map((r) => [r.name, r.branch === "main" || r.branch === "dev" ? `<span class="dim">${r.branch}</span>` : `<span class="ok">${esc(r.branch.replace("feature/", "⎇ "))}</span>`, on(r.name)]);
+      return S.repos.list.map((r) => ["ri.repo", r.name, r.branch === "main" || r.branch === "dev" ? `<span class="dim">${r.branch}</span>` : `<span class="ok">${esc(r.branch.replace("feature/", "⎇ "))}</span>`, on(r.name)]);
     case "tests":
       return Object.entries(S.tests.suites).map(([key, s]) => {
         const v = s.state === "queued" ? `<span class="dim">queued</span>` : s.state === "run" ? `<span class="run">▸ ${s.done}/${s.total}</span>` : s.state === "fail" ? `<span class="bad">✗ ${s.done}/${s.total}</span>` : s.state === "pass" ? `<span class="ok">✓ ${s.done}/${s.total}</span>` : `<span class="dim">${s.done}/${s.total}</span>`;
-        return [s.name, v, on(key)];
+        return [icon(key, "ri.check"), s.name, v, on(key)];
       });
     case "deploy":
-      return Object.entries(S.deploy.envs).map(([key, e]) => [e.name, e.status === "healthy" ? `<span class="ok">● Healthy</span>` : e.status === "syncing" ? `<span class="run">● Syncing</span>` : e.status === "deploying" ? `<span class="run">▸ Deploying</span>` : `<span class="bad">● ${esc(e.status)}</span>`, on(key)]);
+      return Object.entries(S.deploy.envs).map(([key, e]) => ["ri.env", e.name, e.status === "healthy" ? `<span class="ok">● Healthy</span>` : e.status === "syncing" ? `<span class="run">● Syncing</span>` : e.status === "deploying" ? `<span class="run">▸ Deploying</span>` : `<span class="bad">● ${esc(e.status)}</span>`, on(key)]);
   }
   return [];
 }
 function updateCards() {
   for (const k of STATION_KEYS) {
     const c = cards[k];
-    if (!c.ul) continue;
-    const rows = stationRows(k);
-    const html = rows.map(([l, v, hot]) => `<li${hot ? ' class="hot"' : ""}><span>${esc(l)}</span><em>${v}</em></li>`).join("");
-    if (html !== c.last) {
-      c.ul.innerHTML = html;
-      c.last = html;
+    if (c.ul) {
+      const html = stationRows(k).map(([ic, l, v, hot]) => `<li${hot ? ' class="hot"' : ""}><i class="ri" style="background-image:url(${iconUrl(ic)})"></i><span>${esc(l)}</span><em>${v}</em></li>`).join("");
+      if (html !== c.last) {
+        c.ul.innerHTML = html;
+        c.last = html;
+      }
     }
-  }
-  for (const k of STATION_KEYS) {
-    cards[k].el.classList.toggle("busy", !!(S?.busy?.[k] > 0));
-    cards[k].el.classList.toggle("alarm", k === "tests" && kraken.state === "rising");
+    c.el.classList.toggle("busy", !!(S?.busy?.[k] > 0));
+    c.el.classList.toggle("alarm", k === "tests" && kraken.state === "rising");
   }
 }
 
-// Try each preferred side; keep the first spot that stays on the map and
-// doesn't cover a dome or another card.
+// Try each preferred side; keep the spot that stays on the map and covers
+// the least of the domes and of the cards already placed.
 let cardRects = [];
 function placeCards() {
   cardRects = [];
   const W = mapEl.clientWidth, H = mapEl.clientHeight;
   mapEl.classList.toggle("compact", W < 860);
-  // cards shrink with the map so all eight fit on smaller screens
-  const cardK = clamp(map.scale / 2.1, 0.74, 1);
+  const cardK = clamp(map.scale / 1.9, 0.7, 1);
   mapEl.style.setProperty("--card-k", cardK.toFixed(3));
   const domes = STATION_KEYS.map((key) => {
     const s = STATIONS[key];
-    const a = artToCss(s.sx + 4, s.sy + 4), b = artToCss(s.sx + s.w - 4, s.sy + s.h - 4);
+    const a = artToCss(s.sx + 8, s.sy + 10), b = artToCss(s.sx + s.w - 8, s.sy + s.h - 8);
     return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y };
   });
   const area = (r, list) => list.reduce((sum, o) => sum + Math.max(0, Math.min(r.x + r.w, o.x + o.w) - Math.max(r.x, o.x)) * Math.max(0, Math.min(r.y + r.h, o.y + o.h) - Math.max(r.y, o.y)), 0);
@@ -1583,11 +1764,11 @@ function placeCards() {
     const s = STATIONS[k];
     const el = cards[k].el;
     const w = el.offsetWidth * cardK, h = el.offsetHeight * cardK;
-    const top = artToCss(s.x, s.sy), base = artToCss(s.x, s.y + s.pry + 6), left = artToCss(s.sx, s.y), right = artToCss(s.sx + s.w, s.y);
+    const top = artToCss(s.x, s.sy + 4), base = artToCss(s.x, s.y + s.pry + 14), left = artToCss(s.sx + 6, s.y - 10), right = artToCss(s.sx + s.w - 6, s.y - 10);
     const cand = {
       below: { x: base.x - w / 2, y: base.y - 4 },
       above: { x: top.x - w / 2, y: top.y - h - 2 },
-      right: { x: right.x - 4, y: left.y - h / 2 },
+      right: { x: right.x - 4, y: right.y - h / 2 },
       left: { x: left.x - w + 4, y: left.y - h / 2 },
       belowLeft: { x: base.x - w + 16, y: base.y - 4 },
       belowRight: { x: base.x - 16, y: base.y - 4 },
@@ -1622,7 +1803,7 @@ function updateTags() {
     const key = `${sb.doing}|${Math.round(sb.progress * 4)}|${mapEl.classList.contains("compact")}`;
     if (key !== tg.last) {
       tg.last = key;
-      tg.span.textContent = sb.doing;
+      tg.span.textContent = `${sb.doing}…`;
       tg.pips.forEach((pp, i) => pp.classList.toggle("on", i < Math.max(1, Math.round(sb.progress * 4))));
       tg.w = tg.el.offsetWidth;
       tg.h = tg.el.offsetHeight;
@@ -1661,7 +1842,7 @@ function renderPop(place) {
   let title, color, body;
   if (selected.kind === "agent") {
     const a = A[selected.id], sb = subs[a.id];
-    title = a.name;
+    title = `Agent ${a.name}`;
     color = `var(--${a.color})`;
     body = `<p>${esc(a.role)} — ${esc(a.blurb)}.</p>
       <table><tr><td>Home station</td><td>${esc(STATIONS[a.home].name)}</td></tr>
@@ -1867,7 +2048,7 @@ function updateAgentsPanel() {
     a.row.state.textContent = on ? sb.state : "Docked";
     a.row.what.textContent = on ? sb.doing : "";
   }
-  $("#agents-n").textContent = `${active}/${AGENTS.length}`;
+  $("#agents-n").textContent = `(${active}/${AGENTS.length})`;
 }
 
 function buildPipeline() {
@@ -1886,7 +2067,7 @@ function setPhaseUI(p) {
   const [q, src] = QUOTES[clamp(p, 0, 4)];
   $("#quote").textContent = q;
   $("#quote-src").textContent = src;
-  $("#phase-n").textContent = p < 0 ? "orders" : p > 4 ? "complete" : `${p + 1} of 5 · ${PHASES[p].name}`;
+  $("#phase-n").textContent = p < 0 ? "orders" : p > 4 ? "done" : `${p + 1}/5`;
   $("#pipe-note").textContent = voyage.project ? voyage.project.ticket : "From the order to the fleet";
 }
 function updateProgress() {
@@ -1901,7 +2082,7 @@ function updateProgress() {
   $("#ledger").innerHTML = read
     ? `Divers read <b>${fmtTok(read)}</b> tok; the orchestrator holds <b>${fmtTok(S.hub.ctx)}</b> — about ${Math.max(1, Math.round(read / Math.max(1, S.hub.ctx)))}× less.`
     : "Divers read in their own contexts; only short reports reach the orchestrator.";
-  $("#clock").textContent = fmtClock(clock.t);
+  $("#clock").textContent = fmtDay(clock.t);
   $("#depth").textContent = `${fmtNum(voyage.depth)} m`;
 }
 
@@ -1925,7 +2106,7 @@ function drawMinimap(t) {
   mctx.drawImage(miniBase, 0, 0);
   for (const k of SPOKES) {
     const p = paths[k];
-    mctx.fillStyle = S.visited.has(k) ? "rgba(94,224,138,.55)" : "rgba(228,231,238,.18)";
+    mctx.fillStyle = S.visited.has(k) ? "rgba(94,224,138,.6)" : "rgba(226,233,242,.2)";
     for (let d = 0; d < p.L; d += 9) {
       const q = pathAt(k, d / p.L);
       mctx.fillRect(Math.round(q.x / 3), Math.round(q.y / 3), 1, 1);
@@ -1934,19 +2115,18 @@ function drawMinimap(t) {
   const planned = new Set((S.hub.plan || []).filter((x) => x.state !== "done").map((x) => A[x.agent].home));
   for (const k of STATION_KEYS) {
     const s = STATIONS[k];
-    const x = Math.round(s.x / 3), y = Math.round((s.y - 6) / 3);
-    const busy = S.busy?.[k] > 0;
-    if (busy) {
+    const x = Math.round(s.x / 3), y = Math.round((s.y - 8) / 3);
+    if (S.busy?.[k] > 0) {
       mctx.fillStyle = cycle(t * 3) ? "#f2b13b" : "#fff0a8";
       mctx.fillRect(x - 2, y - 2, 5, 5);
     } else if (S.visited.has(k) || k === "hub") {
       mctx.fillStyle = k === "hub" ? "#e6b64f" : "#5ee08a";
       mctx.fillRect(x - 1, y - 1, 3, 3);
     } else if (planned.has(k)) {
-      mctx.strokeStyle = "rgba(228,231,238,.7)";
+      mctx.strokeStyle = "rgba(226,233,242,.7)";
       mctx.strokeRect(x - 1.5, y - 1.5, 4, 4);
     } else {
-      mctx.fillStyle = "rgba(228,231,238,.35)";
+      mctx.fillStyle = "rgba(226,233,242,.35)";
       mctx.fillRect(x, y, 1, 1);
     }
   }
@@ -2024,7 +2204,7 @@ async function work(sb, doing, dur, tok, beam) {
 }
 function domeTarget(key) {
   const s = STATIONS[key];
-  return { x: s.x, y: s.y - (key === "hub" ? 30 : 16) };
+  return { x: s.x, y: s.y - (key === "hub" ? 36 : 20) };
 }
 
 const STEPS = {
@@ -2109,7 +2289,7 @@ const STEPS = {
     logAct(sb.a.id, `merged ${code(hash)} into <b>${esc(repo)}/main</b> · ${esc(msg)}`);
   },
   async train(sb, name, v, note) {
-    let m = S.models.list.find((x) => x.name === name);
+    const m = S.models.list.find((x) => x.name === name);
     m.v = v;
     m.status = "training";
     m.pct = 0;
@@ -2363,16 +2543,17 @@ function buildControls() {
     }
   });
   const items = [
-    ["ocean", "icon.ocean", "Ocean view"], ["agents", "icon.agents", "Agents"], ["hub", "icon.observe", "Orchestrator"],
-    ["knowledge", "icon.knowledge", "Knowledge"], ["documents", "icon.documents", "Documents"], ["repos", "icon.repos", "Repositories"],
-    ["models", "icon.models", "Models"], ["tests", "icon.tests", "Tests"], ["memory", "icon.memory", "Memory"], ["deploy", "icon.deploy", "Deployments"],
+    ["ocean", "icon.ocean", "Ocean View"], ["agents", "icon.agents", "Agents"], ["hub", "icon.observe", "Orchestrator"],
+    ["knowledge", "icon.knowledge", "Knowledge"], ["repos", "icon.repos", "Repositories"], ["documents", "icon.documents", "Documents"],
+    ["memory", "icon.memory", "Memory"], ["tests", "icon.tests", "Tests"], ["models", "icon.models", "Models"], ["deploy", "icon.deploy", "Deployments"],
   ];
   const nav = $("#nav");
+  const motto = nav.querySelector(".motto");
   for (const [target, icon, label] of items) {
     const b = document.createElement("button");
     b.type = "button";
     b.dataset.target = target;
-    b.append(iconCanvas(icon), Object.assign(document.createElement("span"), { textContent: label }));
+    b.append(iconCanvas(icon, 2), Object.assign(document.createElement("span"), { textContent: label }));
     b.classList.toggle("on", target === "ocean");
     b.addEventListener("click", () => {
       if (target === "ocean") closePop();
@@ -2383,7 +2564,7 @@ function buildControls() {
         panel.animate([{ boxShadow: "0 0 0 2px #6fe3ff" }, { boxShadow: "0 0 0 0 transparent" }], { duration: 1200 });
       } else openPop({ kind: "station", key: target });
     });
-    nav.appendChild(b);
+    nav.insertBefore(b, motto);
   }
 }
 
@@ -2393,16 +2574,14 @@ function resize() {
   if (!assetsReady) return;
   const r = mapEl.getBoundingClientRect();
   if (!r.width || !r.height) return;
-  const W = clamp(Math.round((MAP_H * r.width) / r.height), 420, 680);
+  const W = clamp(Math.round((MAP_H * r.width) / r.height), 560, 820);
   if (W !== map.W || !staticReady) {
-    const sx = W / map.W;
     map.W = W;
     cv.width = W;
     cv.height = MAP_H;
     layoutStations();
     buildStatic();
     if (staticReady) seedAmbient();
-    for (const sb of Object.values(subs)) { sb.x *= sx; }
     staticReady = true;
   }
   map.scale = Math.min(r.width / map.W, r.height / map.H);
@@ -2463,7 +2642,7 @@ async function boot() {
       bar.style.width = `${(i / n) * 100}%`;
       lines.push(`${name.padEnd(26, " ")} ${f.w}×${f.h}`);
       blog.textContent = lines.slice(-6).join("\n");
-      if (!fast && i % 4 === 0) await nextFrame();
+      if (!fast && i % 5 === 0) await nextFrame();
     });
   } catch (e) {
     $("#boot-what").innerHTML = `<span class="err">${esc(e.message)}</span>`;
@@ -2471,11 +2650,9 @@ async function boot() {
   }
   assetsReady = true;
   $("#boot-what").textContent = `${Object.keys(ATLAS.frames).length} frames · ${ATLAS.size[0]}×${ATLAS.size[1]} sheet · build ${ATLAS.hash}`;
-  {
-    const bm = $("#brand-mark");
-    bm.getContext("2d").drawImage(spr("icon.observe"), 0, 0);
-    $("#bridge-art").getContext("2d").drawImage(spr("bridge.helm"), 0, 0);
-  }
+  $("#brand-mark").getContext("2d").drawImage(spr("ri.trident"), 0, 0);
+  $("#bridge-art").getContext("2d").drawImage(spr("bridge.salon"), 0, 0);
+  $("#depth-icon").getContext("2d").drawImage(spr("icon.ocean"), 0, 0);
   buildPipeline();
   buildControls();
   buildAgentsPanel();

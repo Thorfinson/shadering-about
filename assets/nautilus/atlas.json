@@ -1,8 +1,8 @@
 {
   "generator": "tools/build-sprites.mjs",
-  "hash": "7c21e9b0ba3b486d",
+  "hash": "5c3d13989911a0aa",
   "version": 1,
-  "size": [328, 344],
+  "size": [480, 521],
   "palette": {
     "ink": "#070b14",
     "ink2": "#0c1626",
@@ -82,7 +82,12 @@
     "abyss5": "#264d71",
     "abyss6": "#356587",
     "abyss7": "#4d819e",
-    "rim": "#7fb8c8"
+    "rim": "#7fb8c8",
+    "pink0": "#4a1535",
+    "pink1": "#86285c",
+    "pink2": "#c4478a",
+    "pink3": "#ef7fb8",
+    "pink4": "#ffc6e0"
   },
   "sprites": {
     "anchor": {
@@ -166,6 +171,28 @@
         "jelly.pulse1"
       ]
     },
+    "ri": {
+      "source": "assets/nautilus/src/sprites/rowicons.sprite",
+      "frames": [
+        "ri.paper",
+        "ri.report",
+        "ri.data",
+        "ri.web",
+        "ri.note",
+        "ri.spec",
+        "ri.design",
+        "ri.diagram",
+        "ri.model",
+        "ri.repo",
+        "ri.check",
+        "ri.clock",
+        "ri.grid",
+        "ri.pearl",
+        "ri.env",
+        "ri.sim",
+        "ri.trident"
+      ]
+    },
     "shell": {
       "source": "assets/nautilus/src/sprites/shell.sprite",
       "frames": [
@@ -210,22 +237,56 @@
         "turtle.swim1"
       ]
     },
-    "dome": {
+    "station": {
       "source": "assets/nautilus/src/os.mjs",
       "frames": [
-        "dome.knowledge",
-        "dome.documents",
-        "dome.models",
-        "dome.repos",
-        "dome.tests",
-        "dome.memory",
-        "dome.deploy"
+        "station.knowledge",
+        "station.documents",
+        "station.models",
+        "station.repos",
+        "station.tests",
+        "station.memory",
+        "station.deploy"
       ]
     },
     "hub": {
       "source": "assets/nautilus/src/os.mjs",
       "frames": [
         "hub.orchestrator"
+      ]
+    },
+    "pinnacle": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "pinnacle.far0",
+        "pinnacle.far1",
+        "pinnacle.far2",
+        "pinnacle.near0",
+        "pinnacle.near1"
+      ]
+    },
+    "ruin": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "ruin.arch",
+        "ruin.column"
+      ]
+    },
+    "reef": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "reef.anemonePink",
+        "reef.anemoneViolet",
+        "reef.anemoneOrange",
+        "reef.anemoneTeal",
+        "reef.tubesViolet",
+        "reef.tubesOrange"
+      ]
+    },
+    "octopus": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "octopus.head"
       ]
     },
     "whale": {
@@ -235,16 +296,10 @@
         "whale.swim1"
       ]
     },
-    "tower": {
-      "source": "assets/nautilus/src/os.mjs",
-      "frames": [
-        "tower.far"
-      ]
-    },
     "bridge": {
       "source": "assets/nautilus/src/os.mjs",
       "frames": [
-        "bridge.helm"
+        "bridge.salon"
       ]
     },
     "nautilus": {
@@ -313,512 +368,692 @@
   },
   "frames": {
     "anchor.idle": {
-      "x": 291,
-      "y": 322,
+      "x": 463,
+      "y": 496,
       "w": 9,
       "h": 11
     },
     "capsule.idle": {
-      "x": 274,
-      "y": 334,
+      "x": 461,
+      "y": 511,
       "w": 8,
       "h": 5
     },
     "chest.idle": {
-      "x": 301,
-      "y": 322,
+      "x": 0,
+      "y": 511,
       "w": 13,
       "h": 10
     },
     "crab.walk0": {
-      "x": 144,
-      "y": 334,
+      "x": 331,
+      "y": 511,
       "w": 11,
       "h": 7
     },
     "crab.walk1": {
-      "x": 156,
-      "y": 334,
+      "x": 343,
+      "y": 511,
       "w": 11,
       "h": 7
     },
     "diver.nemo.stand": {
-      "x": 131,
-      "y": 301,
+      "x": 335,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.nemo.walk": {
-      "x": 145,
-      "y": 301,
+      "x": 349,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.aronnax.stand": {
-      "x": 19,
-      "y": 301,
+      "x": 223,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.aronnax.walk": {
-      "x": 33,
-      "y": 301,
+      "x": 237,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.conseil.stand": {
-      "x": 47,
-      "y": 301,
+      "x": 251,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.conseil.walk": {
-      "x": 61,
-      "y": 301,
+      "x": 265,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.ned.stand": {
-      "x": 103,
-      "y": 301,
+      "x": 307,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.ned.walk": {
-      "x": 117,
-      "y": 301,
+      "x": 321,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.mate.stand": {
-      "x": 75,
-      "y": 301,
+      "x": 279,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "diver.mate.walk": {
-      "x": 89,
-      "y": 301,
+      "x": 293,
+      "y": 463,
       "w": 13,
       "h": 18
     },
     "fish.coral.swim0": {
-      "x": 190,
-      "y": 334,
+      "x": 377,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.coral.swim1": {
-      "x": 201,
-      "y": 334,
+      "x": 388,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.tang.swim0": {
-      "x": 234,
-      "y": 334,
+      "x": 421,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.tang.swim1": {
-      "x": 245,
-      "y": 334,
+      "x": 432,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.blue.swim0": {
-      "x": 168,
-      "y": 334,
+      "x": 355,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.blue.swim1": {
-      "x": 179,
-      "y": 334,
+      "x": 366,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.silver.swim0": {
-      "x": 212,
-      "y": 334,
+      "x": 399,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "fish.silver.swim1": {
-      "x": 223,
-      "y": 334,
+      "x": 410,
+      "y": 511,
       "w": 10,
       "h": 7
     },
     "gauge.idle": {
-      "x": 72,
-      "y": 334,
+      "x": 99,
+      "y": 511,
       "w": 9,
       "h": 9
     },
     "icon.ocean": {
-      "x": 13,
-      "y": 334,
+      "x": 40,
+      "y": 511,
       "w": 12,
       "h": 10
     },
     "icon.agents": {
-      "x": 59,
-      "y": 334,
+      "x": 86,
+      "y": 511,
       "w": 12,
       "h": 9
     },
     "icon.knowledge": {
-      "x": 252,
-      "y": 322,
+      "x": 424,
+      "y": 496,
       "w": 12,
       "h": 11
     },
     "icon.repos": {
-      "x": 244,
-      "y": 301,
+      "x": 85,
+      "y": 496,
       "w": 12,
       "h": 12
     },
     "icon.documents": {
-      "x": 231,
-      "y": 301,
+      "x": 72,
+      "y": 496,
       "w": 12,
       "h": 12
     },
     "icon.memory": {
-      "x": 315,
-      "y": 322,
+      "x": 14,
+      "y": 511,
       "w": 12,
       "h": 10
     },
     "icon.tests": {
-      "x": 278,
-      "y": 322,
+      "x": 450,
+      "y": 496,
       "w": 12,
       "h": 11
     },
     "icon.models": {
-      "x": 265,
-      "y": 322,
+      "x": 437,
+      "y": 496,
       "w": 12,
       "h": 11
     },
     "icon.deploy": {
-      "x": 218,
-      "y": 301,
+      "x": 59,
+      "y": 496,
       "w": 12,
       "h": 12
     },
     "icon.observe": {
-      "x": 0,
-      "y": 334,
+      "x": 27,
+      "y": 511,
       "w": 12,
       "h": 10
     },
     "jelly.pulse0": {
-      "x": 257,
-      "y": 301,
+      "x": 110,
+      "y": 496,
       "w": 9,
       "h": 12
     },
     "jelly.pulse1": {
-      "x": 267,
-      "y": 301,
+      "x": 120,
+      "y": 496,
       "w": 9,
       "h": 12
     },
+    "ri.paper": {
+      "x": 199,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.report": {
+      "x": 229,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.data": {
+      "x": 129,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.web": {
+      "x": 259,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.note": {
+      "x": 189,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.spec": {
+      "x": 249,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.design": {
+      "x": 139,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.diagram": {
+      "x": 149,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.model": {
+      "x": 179,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.repo": {
+      "x": 219,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.check": {
+      "x": 109,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.clock": {
+      "x": 119,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.grid": {
+      "x": 169,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.pearl": {
+      "x": 209,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.env": {
+      "x": 159,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.sim": {
+      "x": 239,
+      "y": 511,
+      "w": 9,
+      "h": 9
+    },
+    "ri.trident": {
+      "x": 98,
+      "y": 496,
+      "w": 11,
+      "h": 12
+    },
     "shell.idle": {
-      "x": 134,
-      "y": 334,
+      "x": 321,
+      "y": 511,
       "w": 9,
       "h": 8
     },
     "starfish.idle": {
-      "x": 256,
-      "y": 334,
+      "x": 443,
+      "y": 511,
       "w": 7,
       "h": 7
     },
     "sub.aronnax.run0": {
-      "x": 277,
-      "y": 301,
+      "x": 130,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.aronnax.run1": {
-      "x": 298,
-      "y": 301,
+      "x": 151,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.conseil.run0": {
-      "x": 84,
-      "y": 322,
+      "x": 256,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.conseil.run1": {
-      "x": 105,
-      "y": 322,
+      "x": 277,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.ned.run0": {
-      "x": 210,
-      "y": 322,
+      "x": 382,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.ned.run1": {
-      "x": 231,
-      "y": 322,
+      "x": 403,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.cyrus.run0": {
-      "x": 126,
-      "y": 322,
+      "x": 298,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.cyrus.run1": {
-      "x": 147,
-      "y": 322,
+      "x": 319,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.lidenbrock.run0": {
-      "x": 168,
-      "y": 322,
+      "x": 340,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.lidenbrock.run1": {
-      "x": 189,
-      "y": 322,
+      "x": 361,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.barbicane.run0": {
-      "x": 42,
-      "y": 322,
+      "x": 214,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.barbicane.run1": {
-      "x": 63,
-      "y": 322,
+      "x": 235,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.axel.run0": {
-      "x": 0,
-      "y": 322,
+      "x": 172,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "sub.axel.run1": {
-      "x": 21,
-      "y": 322,
+      "x": 193,
+      "y": 496,
       "w": 20,
       "h": 11
     },
     "tablet.idle": {
-      "x": 175,
-      "y": 301,
+      "x": 16,
+      "y": 496,
       "w": 11,
       "h": 14
     },
     "turtle.swim0": {
-      "x": 82,
-      "y": 334,
+      "x": 269,
+      "y": 511,
       "w": 18,
       "h": 8
     },
     "turtle.swim1": {
-      "x": 101,
-      "y": 334,
+      "x": 288,
+      "y": 511,
       "w": 18,
       "h": 8
     },
-    "dome.knowledge": {
-      "x": 114,
-      "y": 172,
-      "w": 56,
-      "h": 48
+    "station.knowledge": {
+      "x": 178,
+      "y": 237,
+      "w": 88,
+      "h": 86
     },
-    "dome.documents": {
-      "x": 57,
-      "y": 172,
-      "w": 56,
-      "h": 48
+    "station.documents": {
+      "x": 89,
+      "y": 237,
+      "w": 88,
+      "h": 86
     },
-    "dome.models": {
-      "x": 228,
-      "y": 172,
-      "w": 56,
-      "h": 48
+    "station.models": {
+      "x": 356,
+      "y": 237,
+      "w": 88,
+      "h": 86
     },
-    "dome.repos": {
+    "station.repos": {
       "x": 0,
-      "y": 221,
-      "w": 56,
-      "h": 48
+      "y": 324,
+      "w": 88,
+      "h": 86
     },
-    "dome.tests": {
-      "x": 57,
-      "y": 221,
-      "w": 56,
-      "h": 48
+    "station.tests": {
+      "x": 89,
+      "y": 324,
+      "w": 88,
+      "h": 86
     },
-    "dome.memory": {
-      "x": 171,
-      "y": 172,
-      "w": 56,
-      "h": 48
+    "station.memory": {
+      "x": 267,
+      "y": 237,
+      "w": 88,
+      "h": 86
     },
-    "dome.deploy": {
+    "station.deploy": {
       "x": 0,
-      "y": 172,
-      "w": 56,
-      "h": 48
+      "y": 237,
+      "w": 88,
+      "h": 86
     },
     "hub.orchestrator": {
-      "x": 129,
+      "x": 239,
       "y": 0,
-      "w": 88,
-      "h": 76
+      "w": 132,
+      "h": 122
+    },
+    "pinnacle.far0": {
+      "x": 395,
+      "y": 0,
+      "w": 18,
+      "h": 92
+    },
+    "pinnacle.far1": {
+      "x": 212,
+      "y": 0,
+      "w": 26,
+      "h": 128
+    },
+    "pinnacle.far2": {
+      "x": 303,
+      "y": 324,
+      "w": 14,
+      "h": 70
+    },
+    "pinnacle.near0": {
+      "x": 181,
+      "y": 0,
+      "w": 30,
+      "h": 150
+    },
+    "pinnacle.near1": {
+      "x": 372,
+      "y": 0,
+      "w": 22,
+      "h": 118
+    },
+    "ruin.arch": {
+      "x": 0,
+      "y": 463,
+      "w": 38,
+      "h": 32
+    },
+    "ruin.column": {
+      "x": 39,
+      "y": 463,
+      "w": 10,
+      "h": 28
+    },
+    "reef.anemonePink": {
+      "x": 413,
+      "y": 463,
+      "w": 17,
+      "h": 15
+    },
+    "reef.anemoneViolet": {
+      "x": 449,
+      "y": 463,
+      "w": 17,
+      "h": 15
+    },
+    "reef.anemoneOrange": {
+      "x": 395,
+      "y": 463,
+      "w": 17,
+      "h": 15
+    },
+    "reef.anemoneTeal": {
+      "x": 431,
+      "y": 463,
+      "w": 17,
+      "h": 15
+    },
+    "reef.tubesViolet": {
+      "x": 379,
+      "y": 463,
+      "w": 15,
+      "h": 16
+    },
+    "reef.tubesOrange": {
+      "x": 363,
+      "y": 463,
+      "w": 15,
+      "h": 16
+    },
+    "octopus.head": {
+      "x": 438,
+      "y": 411,
+      "w": 40,
+      "h": 36
     },
     "whale.swim0": {
       "x": 0,
-      "y": 270,
-      "w": 78,
-      "h": 30
+      "y": 411,
+      "w": 132,
+      "h": 51
     },
     "whale.swim1": {
-      "x": 79,
-      "y": 270,
-      "w": 78,
-      "h": 30
+      "x": 133,
+      "y": 411,
+      "w": 132,
+      "h": 51
     },
-    "tower.far": {
-      "x": 114,
-      "y": 221,
-      "w": 14,
-      "h": 48
-    },
-    "bridge.helm": {
+    "bridge.salon": {
       "x": 0,
       "y": 0,
-      "w": 128,
-      "h": 100
+      "w": 180,
+      "h": 236
     },
     "nautilus.hull": {
-      "x": 129,
-      "y": 221,
+      "x": 266,
+      "y": 411,
       "w": 140,
       "h": 44
     },
     "library.ruin": {
-      "x": 216,
-      "y": 101,
+      "x": 409,
+      "y": 324,
       "w": 68,
       "h": 60
     },
     "atlantis.temple": {
-      "x": 0,
-      "y": 101,
+      "x": 178,
+      "y": 324,
       "w": 124,
       "h": 70
     },
     "galleon.wreck": {
-      "x": 125,
-      "y": 101,
+      "x": 318,
+      "y": 324,
       "w": 90,
       "h": 66
     },
     "clam.open0": {
-      "x": 158,
-      "y": 270,
+      "x": 50,
+      "y": 463,
       "w": 28,
       "h": 26
     },
     "clam.open1": {
-      "x": 187,
-      "y": 270,
+      "x": 79,
+      "y": 463,
       "w": 28,
       "h": 26
     },
     "clam.open2": {
-      "x": 216,
-      "y": 270,
+      "x": 108,
+      "y": 463,
       "w": 28,
       "h": 26
     },
     "clam.open3": {
-      "x": 245,
-      "y": 270,
+      "x": 137,
+      "y": 463,
       "w": 28,
       "h": 26
     },
     "kraken.head": {
-      "x": 270,
-      "y": 221,
+      "x": 407,
+      "y": 411,
       "w": 30,
       "h": 38
     },
     "shark.far": {
-      "x": 187,
-      "y": 301,
+      "x": 28,
+      "y": 496,
       "w": 30,
       "h": 12
     },
     "coral.branch0": {
-      "x": 274,
-      "y": 270,
+      "x": 166,
+      "y": 463,
       "w": 18,
       "h": 20
     },
     "coral.branch1": {
-      "x": 293,
-      "y": 270,
+      "x": 185,
+      "y": 463,
       "w": 18,
       "h": 20
     },
     "coral.branch2": {
-      "x": 0,
-      "y": 301,
+      "x": 204,
+      "y": 463,
       "w": 18,
       "h": 20
     },
     "coral.brain": {
-      "x": 44,
-      "y": 334,
+      "x": 71,
+      "y": 511,
       "w": 14,
       "h": 9
     },
     "coral.fan": {
-      "x": 159,
-      "y": 301,
+      "x": 0,
+      "y": 496,
       "w": 15,
       "h": 14
     },
     "rock.r0": {
-      "x": 120,
-      "y": 334,
+      "x": 307,
+      "y": 511,
       "w": 13,
       "h": 8
     },
     "rock.r1": {
-      "x": 264,
-      "y": 334,
+      "x": 451,
+      "y": 511,
       "w": 9,
       "h": 6
     },
     "rock.r2": {
-      "x": 26,
-      "y": 334,
+      "x": 53,
+      "y": 511,
       "w": 17,
       "h": 9
     }
@@ -837,12 +1072,115 @@
     "tablet": {
       "text": [3, 4]
     },
-    "dome": {
-      "base": [28, 32],
-      "hub": [44, 50]
+    "station": {
+      "base": [44, 56],
+      "prx": 30,
+      "pry": 9,
+      "lamps": {
+        "knowledge": [
+          [21, 16],
+          [66, 28],
+          [44, 8],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ],
+        "documents": [
+          [21, 19],
+          [66, 22],
+          [45, 4],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ],
+        "models": [
+          [21, 24],
+          [66, 24],
+          [44, 3],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ],
+        "repos": [
+          [21, 20],
+          [66, 29],
+          [39, 7],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ],
+        "tests": [
+          [21, 25],
+          [66, 22],
+          [46, 3],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ],
+        "memory": [
+          [21, 13],
+          [66, 25],
+          [44, 8],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ],
+        "deploy": [
+          [21, 23],
+          [66, 28],
+          [43, 7],
+          [44, 22],
+          [15, 45],
+          [73, 45],
+          [30, 60],
+          [58, 60]
+        ]
+      }
     },
     "hub": {
-      "base": [44, 50]
+      "base": [66, 82],
+      "prx": 46,
+      "pry": 13,
+      "lamps": [
+        [20, 27],
+        [112, 31],
+        [31, 45],
+        [101, 41],
+        [46, 22],
+        [86, 18],
+        [66, 34],
+        [25, 68],
+        [111, 68],
+        [42, 89],
+        [90, 89]
+      ]
+    },
+    "octopus": {
+      "roots": [
+        [10, 30],
+        [13, 32],
+        [16, 33],
+        [20, 33],
+        [24, 33],
+        [27, 32],
+        [30, 30],
+        [20, 31]
+      ]
+    },
+    "bridge": {
+      "lamp": [170, 158]
     },
     "nautilus": {
       "cy": 25,
