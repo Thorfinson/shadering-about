@@ -232,6 +232,7 @@ function layoutStations() {
     s.h = c.height;
     s.lamps = (s.key === "hub" ? m.lamps : m.lamps[s.key]).map(([x, y]) => [s.sx + x, s.sy + y]);
     s.parts = s.key === "hub" ? {} : m.fx?.[s.key] ?? {}; // where its moving parts go
+    s.col = P[s.color];
     W.layoutStation?.(s, m);
   }
   const hub = STATIONS.hub;
@@ -256,7 +257,6 @@ function layoutStations() {
       pts.push({ x, y });
     }
     paths[k] = { pts, cum, L: cum[cum.length - 1], busyUntil: 0, dir: 1, beads: [] };
-    s.col = P[s.color];
     s.dim = mixHex(s.col, W.beadDim ?? P.ink, 0.5);
     // beads along the route, paling toward the hub
     const p = paths[k];

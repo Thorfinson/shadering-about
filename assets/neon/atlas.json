@@ -1,0 +1,838 @@
+{
+  "generator": "tools/build-sprites.mjs",
+  "hash": "23da1666dab4452c",
+  "version": 1,
+  "size": [456, 530],
+  "palette": {
+    "ink": "#07060f",
+    "ink2": "#0e0c1c",
+    "cyan2": "#18a8c8",
+    "cyan3": "#3ef0ff",
+    "lamp": "#ffd27a",
+    "glow": "#b8f8ff",
+    "glass": "#4ab0e0",
+    "pearl": "#f4f0ff",
+    "pearlD": "#c8c0e0",
+    "steel3": "#8a90b0",
+    "steel4": "#c8cce0",
+    "red": "#ff3344",
+    "green": "#39ff8a",
+    "white": "#ffffff",
+    "research": "#ffb000",
+    "analyze": "#ff5c8a",
+    "build": "#39ff8a",
+    "model": "#22e6ff",
+    "test": "#4d9bff",
+    "deploy": "#b36bff",
+    "remember": "#f0e6ff",
+    "night0": "#05040c",
+    "night1": "#0c0a1e",
+    "night2": "#16123a",
+    "night3": "#261a52",
+    "night4": "#3e2468",
+    "smog": "#6a2e78",
+    "smogHi": "#a8487e",
+    "conc0": "#0a0a14",
+    "conc1": "#141626",
+    "conc2": "#1f2238",
+    "conc3": "#2e3350",
+    "conc4": "#454c6e",
+    "steel0": "#262a3c",
+    "steel1": "#3c4258",
+    "steel2": "#5c6480",
+    "asph0": "#06060c",
+    "asph1": "#0d0d18",
+    "asph2": "#171a2a",
+    "winWarm": "#ffb454",
+    "winCool": "#7ad8ff",
+    "winPink": "#ff7ac8",
+    "winDim": "#2c2850",
+    "neonPink": "#ff2e88",
+    "neonPink2": "#ff9ac8",
+    "neonCyan": "#22e6ff",
+    "neonAmber": "#ffb000",
+    "neonViolet": "#a64dff",
+    "neonGreen": "#39ff8a",
+    "holo0": "#102a4a",
+    "holo1": "#1e5a8a",
+    "holo2": "#3aa0d8",
+    "holo3": "#8ae4ff",
+    "rust0": "#3a1a14",
+    "rust1": "#6a2e1c",
+    "rust2": "#a04a24",
+    "teal0": "#1a3a4a",
+    "teal1": "#2a6a7a",
+    "mustard0": "#6a5a1a",
+    "mustard1": "#b09a2a",
+    "car0": "#10121e",
+    "car1": "#222638",
+    "car2": "#3a4058",
+    "car3": "#6a7494",
+    "ice0": "#120408",
+    "ice1": "#2a0a12",
+    "ice2": "#5a1020",
+    "iceRed": "#ff2233",
+    "coat0": "#14121e",
+    "coat1": "#221e32",
+    "coat2": "#3a3450",
+    "skin0": "#6b4a36",
+    "skin1": "#b8866a",
+    "hair": "#1a1a2a"
+  },
+  "sprites": {
+    "icon": {
+      "source": "assets/neon/src/sprites/icons.sprite",
+      "frames": [
+        "icon.city",
+        "icon.agents",
+        "icon.knowledge",
+        "icon.repos",
+        "icon.documents",
+        "icon.memory",
+        "icon.tests",
+        "icon.models",
+        "icon.deploy",
+        "icon.observe"
+      ]
+    },
+    "ri": {
+      "source": "assets/neon/src/sprites/rowicons.sprite",
+      "frames": [
+        "ri.paper",
+        "ri.report",
+        "ri.data",
+        "ri.web",
+        "ri.note",
+        "ri.spec",
+        "ri.design",
+        "ri.diagram",
+        "ri.model",
+        "ri.repo",
+        "ri.check",
+        "ri.clock",
+        "ri.grid",
+        "ri.pearl",
+        "ri.env",
+        "ri.sim",
+        "ri.eye"
+      ]
+    },
+    "car": {
+      "source": "assets/neon/src/creatures.mjs",
+      "frames": [
+        "car.kade.fly0",
+        "car.kade.fly1",
+        "car.nyx.fly0",
+        "car.nyx.fly1",
+        "car.juno.fly0",
+        "car.juno.fly1",
+        "car.rook.fly0",
+        "car.rook.fly1",
+        "car.vex.fly0",
+        "car.vex.fly1",
+        "car.sable.fly0",
+        "car.sable.fly1",
+        "car.echo.fly0",
+        "car.echo.fly1"
+      ]
+    },
+    "ice": {
+      "source": "assets/neon/src/creatures.mjs",
+      "frames": [
+        "ice.head"
+      ]
+    },
+    "blimp": {
+      "source": "assets/neon/src/creatures.mjs",
+      "frames": [
+        "blimp.ad"
+      ]
+    },
+    "koi": {
+      "source": "assets/neon/src/creatures.mjs",
+      "frames": [
+        "koi.swim0",
+        "koi.swim1"
+      ]
+    },
+    "den": {
+      "source": "assets/neon/src/creatures.mjs",
+      "frames": [
+        "den.window"
+      ]
+    },
+    "station": {
+      "source": "assets/neon/src/places.mjs",
+      "frames": [
+        "station.knowledge",
+        "station.documents",
+        "station.models",
+        "station.repos",
+        "station.tests",
+        "station.memory",
+        "station.deploy"
+      ]
+    },
+    "hub": {
+      "source": "assets/neon/src/places.mjs",
+      "frames": [
+        "hub.orchestrator"
+      ]
+    },
+    "fx": {
+      "source": "assets/neon/src/places.mjs",
+      "frames": [
+        "fx.globe0",
+        "fx.globe1",
+        "fx.globe2",
+        "fx.globe3",
+        "fx.globe4",
+        "fx.globe5",
+        "fx.globe6",
+        "fx.globe7",
+        "fx.globe8",
+        "fx.globe9",
+        "fx.globe10",
+        "fx.globe11",
+        "fx.globe12",
+        "fx.globe13",
+        "fx.globe14",
+        "fx.globe15",
+        "fx.head0",
+        "fx.head1",
+        "fx.head2",
+        "fx.head3",
+        "fx.head4",
+        "fx.head5",
+        "fx.head6",
+        "fx.head7",
+        "fx.head8",
+        "fx.head9",
+        "fx.head10",
+        "fx.head11",
+        "fx.doc0",
+        "fx.doc1"
+      ]
+    }
+  },
+  "frames": {
+    "icon.city": {
+      "x": 172,
+      "y": 516,
+      "w": 12,
+      "h": 10
+    },
+    "icon.agents": {
+      "x": 211,
+      "y": 516,
+      "w": 12,
+      "h": 9
+    },
+    "icon.knowledge": {
+      "x": 133,
+      "y": 516,
+      "w": 12,
+      "h": 11
+    },
+    "icon.repos": {
+      "x": 108,
+      "y": 516,
+      "w": 12,
+      "h": 12
+    },
+    "icon.documents": {
+      "x": 95,
+      "y": 516,
+      "w": 12,
+      "h": 12
+    },
+    "icon.memory": {
+      "x": 185,
+      "y": 516,
+      "w": 12,
+      "h": 10
+    },
+    "icon.tests": {
+      "x": 159,
+      "y": 516,
+      "w": 12,
+      "h": 11
+    },
+    "icon.models": {
+      "x": 146,
+      "y": 516,
+      "w": 12,
+      "h": 11
+    },
+    "icon.deploy": {
+      "x": 82,
+      "y": 516,
+      "w": 12,
+      "h": 12
+    },
+    "icon.observe": {
+      "x": 198,
+      "y": 516,
+      "w": 12,
+      "h": 10
+    },
+    "ri.paper": {
+      "x": 314,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.report": {
+      "x": 344,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.data": {
+      "x": 244,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.web": {
+      "x": 374,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.note": {
+      "x": 304,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.spec": {
+      "x": 364,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.design": {
+      "x": 254,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.diagram": {
+      "x": 264,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.model": {
+      "x": 294,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.repo": {
+      "x": 334,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.check": {
+      "x": 224,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.clock": {
+      "x": 234,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.grid": {
+      "x": 284,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.pearl": {
+      "x": 324,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.env": {
+      "x": 274,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.sim": {
+      "x": 354,
+      "y": 516,
+      "w": 9,
+      "h": 9
+    },
+    "ri.eye": {
+      "x": 121,
+      "y": 516,
+      "w": 11,
+      "h": 12
+    },
+    "car.kade.fly0": {
+      "x": 222,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.kade.fly1": {
+      "x": 251,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.nyx.fly0": {
+      "x": 280,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.nyx.fly1": {
+      "x": 309,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.juno.fly0": {
+      "x": 164,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.juno.fly1": {
+      "x": 193,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.rook.fly0": {
+      "x": 338,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.rook.fly1": {
+      "x": 367,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.vex.fly0": {
+      "x": 0,
+      "y": 516,
+      "w": 28,
+      "h": 14
+    },
+    "car.vex.fly1": {
+      "x": 29,
+      "y": 516,
+      "w": 28,
+      "h": 14
+    },
+    "car.sable.fly0": {
+      "x": 396,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.sable.fly1": {
+      "x": 425,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.echo.fly0": {
+      "x": 106,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "car.echo.fly1": {
+      "x": 135,
+      "y": 493,
+      "w": 28,
+      "h": 14
+    },
+    "ice.head": {
+      "x": 333,
+      "y": 456,
+      "w": 32,
+      "h": 32
+    },
+    "blimp.ad": {
+      "x": 49,
+      "y": 493,
+      "w": 56,
+      "h": 20
+    },
+    "koi.swim0": {
+      "x": 366,
+      "y": 456,
+      "w": 48,
+      "h": 22
+    },
+    "koi.swim1": {
+      "x": 0,
+      "y": 493,
+      "w": 48,
+      "h": 22
+    },
+    "den.window": {
+      "x": 0,
+      "y": 0,
+      "w": 180,
+      "h": 236
+    },
+    "station.knowledge": {
+      "x": 89,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.documents": {
+      "x": 0,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.models": {
+      "x": 267,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.repos": {
+      "x": 356,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.tests": {
+      "x": 0,
+      "y": 326,
+      "w": 88,
+      "h": 88
+    },
+    "station.memory": {
+      "x": 178,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.deploy": {
+      "x": 314,
+      "y": 0,
+      "w": 88,
+      "h": 88
+    },
+    "hub.orchestrator": {
+      "x": 181,
+      "y": 0,
+      "w": 132,
+      "h": 126
+    },
+    "fx.globe0": {
+      "x": 89,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe1": {
+      "x": 130,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe2": {
+      "x": 0,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe3": {
+      "x": 41,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe4": {
+      "x": 82,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe5": {
+      "x": 123,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe6": {
+      "x": 164,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe7": {
+      "x": 205,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe8": {
+      "x": 246,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe9": {
+      "x": 287,
+      "y": 415,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe10": {
+      "x": 171,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe11": {
+      "x": 212,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe12": {
+      "x": 253,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe13": {
+      "x": 294,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe14": {
+      "x": 335,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.globe15": {
+      "x": 376,
+      "y": 326,
+      "w": 40,
+      "h": 40
+    },
+    "fx.head0": {
+      "x": 328,
+      "y": 415,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head1": {
+      "x": 365,
+      "y": 415,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head2": {
+      "x": 37,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head3": {
+      "x": 74,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head4": {
+      "x": 111,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head5": {
+      "x": 148,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head6": {
+      "x": 185,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head7": {
+      "x": 222,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head8": {
+      "x": 259,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head9": {
+      "x": 296,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head10": {
+      "x": 402,
+      "y": 415,
+      "w": 36,
+      "h": 36
+    },
+    "fx.head11": {
+      "x": 0,
+      "y": 456,
+      "w": 36,
+      "h": 36
+    },
+    "fx.doc0": {
+      "x": 58,
+      "y": 516,
+      "w": 11,
+      "h": 14
+    },
+    "fx.doc1": {
+      "x": 70,
+      "y": 516,
+      "w": 11,
+      "h": 14
+    }
+  },
+  "meta": {
+    "car": {
+      "lamp": [26, 6],
+      "port": [26, 7]
+    },
+    "ice": {
+      "roots": [
+        [9, 25],
+        [12, 28],
+        [16, 30],
+        [20, 28],
+        [23, 25]
+      ],
+      "eyes": [
+        [10, 14],
+        [21, 14]
+      ]
+    },
+    "den": {
+      "lamp": [96, 148]
+    },
+    "station": {
+      "base": [44, 58],
+      "prx": 30,
+      "pry": 9,
+      "lamps": {
+        "knowledge": [
+          [52, 9],
+          [15, 38]
+        ],
+        "documents": [
+          [40, 38],
+          [61, 46],
+          [68, 46]
+        ],
+        "models": [
+          [60, 18],
+          [19, 45]
+        ],
+        "repos": [
+          [73, 11],
+          [25, 34]
+        ],
+        "tests": [
+          [44, 46],
+          [26, 32],
+          [62, 32]
+        ],
+        "memory": [
+          [15, 51],
+          [73, 51],
+          [21, 37],
+          [67, 37],
+          [27, 25],
+          [61, 25],
+          [44, 4]
+        ],
+        "deploy": [
+          [67, 9],
+          [61, 61],
+          [31, 64],
+          [19, 55],
+          [49, 52],
+          [26, 54],
+          [54, 54]
+        ]
+      },
+      "fx": {
+        "knowledge": {
+          "leds": [24, 30, 56, 56]
+        },
+        "documents": {
+          "docs": [
+            [30, 20],
+            [44, 13],
+            [58, 21]
+          ],
+          "beam": [40, 26]
+        },
+        "models": {
+          "head": [44, 8]
+        },
+        "repos": {
+          "smoke": [
+            [31, 36],
+            [55, 40]
+          ]
+        },
+        "tests": {
+          "field": [44, 40]
+        },
+        "memory": {
+          "koi": [44, 40, 30, 12]
+        },
+        "deploy": {}
+      }
+    },
+    "hub": {
+      "base": [66, 86],
+      "prx": 46,
+      "pry": 13,
+      "lamps": [
+        [108, 20],
+        [66, 76],
+        [36, 92],
+        [96, 92]
+      ],
+      "globe": [66, 6]
+    },
+    "fx": {
+      "globeFrames": 16,
+      "headFrames": 12
+    }
+  }
+}

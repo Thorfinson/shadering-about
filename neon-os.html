@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>NEON//OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600&family=Share+Tech+Mono&display=swap" />
+<link rel="stylesheet" href="assets/os/os.css" />
+<style>
+  /* NEON//OS: a rainy megacity at night — ink panels, magenta and cyan */
+  :root {
+    --bg: #06050c;
+    --bg-glow: #1c0e30;
+    --panel: rgba(10, 8, 22, 0.92);
+    --panel-hi: rgba(22, 16, 44, 0.92);
+    --line: rgba(130, 140, 255, 0.24);
+    --line-2: rgba(62, 240, 255, 0.45);
+    --accent: #ff3d8b;
+    --accent-hi: #ff8ac0;
+    --accent-lo: #7a1440;
+    --on-accent: #12020a;
+    --hub: #3ef0ff;
+    --cyan: #3ef0ff;
+    --ink: #eae8ff;
+    --muted: rgba(234, 232, 255, 0.66);
+    --faint: rgba(234, 232, 255, 0.42);
+    --good: #39ff8a;
+    --warn: #ffb000;
+    --bad: #ff3344;
+    --research: #ffb000;
+    --analyze: #ff5c8a;
+    --build: #39ff8a;
+    --model: #22e6ff;
+    --test: #4d9bff;
+    --deploy: #b36bff;
+    --remember: #f0e6ff;
+    --map-bg: #07060f;
+    --card-bg: rgba(8, 6, 20, 0.88);
+    --card-head: linear-gradient(180deg, rgba(48, 20, 76, 0.92), rgba(12, 8, 30, 0.92));
+    --pop-bg: rgba(8, 6, 20, 0.97);
+    --btn-bg: rgba(20, 14, 40, 0.9);
+    --option-bg: #140e28;
+    --corner-bg: #05040a;
+    --radius: 2px;
+    --display: "Orbitron", "Eurostile", sans-serif;
+    --ui: "Share Tech Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --caps: "Orbitron", "Share Tech Mono", ui-monospace, monospace;
+    --book: "Rajdhani", "Share Tech Mono", sans-serif;
+  }
+  /* a neon rule along the top of every panel */
+  .panel::before {
+    content: ""; position: absolute; left: 10px; right: 10px; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .brand h1 { font-weight: 900; letter-spacing: 0.1em; color: var(--accent-hi); text-shadow: 0 0 8px var(--accent), 0 0 18px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .ptitle, .scard .h, .tabs button, .pop header h2, .pop h3, .feed li.phase, .brand small, .quote figcaption { font-size: 10.5px; letter-spacing: 0.08em; }
+  .quote blockquote, .nav .motto, .regions p, .empty { font-style: normal; font-weight: 600; }
+  .map::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
+  }
+  .clock time { font-size: 14px; }
+  .clock .meter-v { font-size: 13px; gap: 4px; }
+  .plaque { font-size: 9px; color: var(--cyan); border-color: var(--cyan); background: rgba(6, 16, 24, 0.9); box-shadow: 0 0 10px color-mix(in srgb, var(--cyan) 45%, transparent), inset 0 0 8px color-mix(in srgb, var(--cyan) 25%, transparent); text-shadow: 0 0 6px var(--cyan); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="panel brand">
+      <canvas id="brand-mark" width="11" height="12" aria-hidden="true"></canvas>
+      <div>
+        <h1>NEON//OS</h1>
+        <small>Agent orchestration</small>
+        <i>Ship to the grid</i>
+      </div>
+    </div>
+    <div class="panel project">
+      <label for="project">Project</label>
+      <select id="project"></select>
+    </div>
+    <div class="panel pipe">
+      <small id="pipe-note">From the order to the grid</small>
+      <ol id="pipeline"></ol>
+    </div>
+    <figure class="panel quote">
+      <blockquote id="quote">“Read everything. Trust the logs.”</blockquote>
+      <figcaption id="quote-src">Halcyon · boot banner</figcaption>
+    </figure>
+    <div class="panel clock">
+      <div class="row"><time id="clock">Day 1 · 23:40</time><span class="meter-v"><canvas id="meter-icon" width="12" height="10" aria-hidden="true"></canvas><span id="meter">— km/h</span></span></div>
+      <div class="row"><small>City time</small><small>Maglev</small></div>
+      <div class="ctl" role="group" aria-label="Simulation speed">
+        <button type="button" id="play" aria-pressed="false" title="Pause">❚❚</button>
+        <button type="button" data-speed="1" class="on">1×</button>
+        <button type="button" data-speed="2">2×</button>
+        <button type="button" data-speed="4">4×</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Blocks">
+    <div class="panel nav" id="nav">
+      <p class="motto">“Every lit window is somebody still shipping.”<span>Graffiti · Sector 7</span></p>
+    </div>
+    <div class="panel corner">
+      <canvas id="corner-art" width="180" height="236" aria-hidden="true"></canvas>
+      <div class="plaque">SHIP TO THE GRID</div>
+    </div>
+  </nav>
+
+  <main class="map" id="map-frame">
+    <div class="map-inner" id="map">
+      <canvas class="world" id="world" role="img" aria-label="A rainy megacity at night seen from above: the orchestrator’s arcology in the middle, neon routes to seven blocks — a data archive, a holo kiosk, an AI lab, container stacks, a firewall, a memory pagoda and a skyport — and hover-car agents flying between them."></canvas>
+      <canvas class="glow" id="glow" aria-hidden="true"></canvas>
+      <div class="overlay" id="overlay"></div>
+      <div class="boot" id="boot">
+        <div>
+          <h2>Loading sprite assets</h2>
+          <div id="boot-what">assets/neon/atlas.js</div>
+          <div class="bar"><i id="boot-bar"></i></div>
+          <pre id="boot-log"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="dock">
+    <div class="panel" id="agents-panel">
+      <header><h2 class="ptitle">Active agents <span id="agents-n" style="color:var(--accent)"></span></h2><span class="aside">the runners</span></header>
+      <div class="scroll"><ul class="agents" id="agents"></ul></div>
+    </div>
+    <div class="panel">
+      <header>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="feed" aria-selected="true">Recent activity</button>
+          <button type="button" role="tab" data-tab="diff" aria-selected="false">Changes <span class="n" id="diff-n"></span></button>
+          <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
+        </div>
+      </header>
+      <div class="scroll tabbody" id="tab-feed" role="tabpanel"><ol class="feed" id="feed"></ol></div>
+      <div class="scroll tabbody" id="tab-diff" role="tabpanel" hidden></div>
+      <div class="scroll tabbody" id="tab-tests" role="tabpanel" hidden></div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Run progress</h2><span class="aside" id="phase-n"></span></header>
+      <div class="progress">
+        <div class="meter"><span class="track"><i id="prog-bar"></i></span><b id="prog-pct">0%</b></div>
+        <ul class="checks" id="checks"></ul>
+        <div class="ledger" id="ledger">Runners read in their own contexts; only short reports reach the orchestrator.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">City grid</h2><span class="aside">blocks</span></header>
+      <div class="regions">
+        <canvas id="minimap" aria-label="Minimap of the blocks"></canvas>
+        <ul class="legend">
+          <li><i style="background:var(--good)"></i>Visited</li>
+          <li><i style="background:var(--warn)"></i>In progress</li>
+          <li><i style="border:1px solid var(--muted)"></i>Planned</li>
+        </ul>
+        <p>“Ship to the grid. Sleep at dawn.”</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="assets/neon/atlas.js"></script>
+<script src="assets/os/engine.js"></script>
+<script>
+"use strict";
+// The world's own names stay in this block; the engine sees them through startOS().
+{
+// ============================================================
+// Stations, runners, projects
+// ============================================================
+const QUOTES = [
+  ["“Read everything. Trust the logs.”", "Halcyon · boot banner"],
+  ["“Every lit window is somebody still shipping.”", "Graffiti · Sector 7"],
+  ["“Build it before the rain stops.”", "Night-market saying"],
+  ["“The firewall remembers every face.”", "Sign on the Firewall Lab"],
+  ["“Ship to the grid. Sleep at dawn.”", "Skyport flight board"],
+];
+
+// fx/fy: where each block sits on screen, as a fraction of the map.
+const STATIONS = {
+  hub:       { name: "Agent Orchestrator", sub: "Plan · Coordinate · Execute", frame: "hub.orchestrator", icon: "icon.observe", color: "cyan3", fx: 0.48, fy: 0.6, prefer: ["below", "above"] },
+  knowledge: { name: "Knowledge Base", frame: "station.knowledge", icon: "icon.knowledge", color: "research", fx: 0.17, fy: 0.36, prefer: ["below", "right", "left"] },
+  documents: { name: "Documents", frame: "station.documents", icon: "icon.documents", color: "analyze", fx: 0.6, fy: 0.3, prefer: ["right", "left", "below"] },
+  models:    { name: "Model Registry", frame: "station.models", icon: "icon.models", color: "model", fx: 0.87, fy: 0.34, prefer: ["below", "left"] },
+  repos:     { name: "Repositories", frame: "station.repos", icon: "icon.repos", color: "build", fx: 0.15, fy: 0.7, prefer: ["below", "right", "above"] },
+  tests:     { name: "Testing Lab", frame: "station.tests", icon: "icon.tests", color: "test", fx: 0.75, fy: 0.64, prefer: ["below", "left", "right"] },
+  memory:    { name: "Memory", frame: "station.memory", icon: "icon.memory", color: "remember", fx: 0.37, fy: 0.88, prefer: ["right", "left", "above"] },
+  deploy:    { name: "Deployments", frame: "station.deploy", icon: "icon.deploy", color: "deploy", fx: 0.89, fy: 0.87, prefer: ["left", "above"] },
+};
+
+const ROW_ICON = {
+  knowledge: { papers: "ri.paper", reports: "ri.report", datasets: "ri.data", web: "ri.web" },
+  documents: { project: "ri.paper", specs: "ri.spec", notes: "ri.note", designs: "ri.design", diagrams: "ri.diagram" },
+  tests: { unit: "ri.check", integration: "ri.check", eval: "ri.model", sim: "ri.sim", data: "ri.data" },
+  memory: { short: "ri.clock", long: "ri.pearl", episodic: "ri.note", vector: "ri.grid" },
+};
+
+const AGENTS = [
+  { id: "kade", name: "Kade", role: "Researcher", home: "knowledge", color: "research", verb: "Researching", blurb: "pulls papers, field logs and datasets off the net" },
+  { id: "nyx", name: "Nyx", role: "Analyst", home: "documents", color: "analyze", verb: "Analyzing", blurb: "cuts the findings into specs and plans" },
+  { id: "juno", name: "Juno", role: "Engineer", home: "repos", color: "build", verb: "Coding", blurb: "writes the code; burns down failing tests" },
+  { id: "rook", name: "Rook", role: "Model engineer", home: "models", color: "model", verb: "Training", blurb: "trains, evaluates and ships models" },
+  { id: "vex", name: "Vex", role: "Tester", home: "tests", color: "test", verb: "Testing", blurb: "runs the suites, sims and evals against the firewall" },
+  { id: "sable", name: "Sable", role: "Launcher", home: "deploy", color: "deploy", verb: "Deploying", blurb: "flies every release out to the grid" },
+  { id: "echo", name: "Echo", role: "Chronicler", home: "memory", color: "remember", verb: "Remembering", blurb: "keeps the city's memory — long-term" },
+];
+
+const EDITS = {
+  translate: {
+    file: "api/translate.js", hunk: "@@ -0,0 +1,8 @@", create: true,
+    lines: [
+      '+import { translate } from "../models/lingo-net.js";',
+      "+",
+      "+export async function getTranslation(req) {",
+      "+  const clip = await req.audio();",
+      '+  const { text, confidence } = await translate(clip, { v: "1.0" });',
+      '+  if (confidence < 0.6) return { text: null, confidence };',
+      "+  return { text, confidence };",
+      "+}",
+    ],
+  },
+  routes: {
+    file: "api/routes.js", hunk: "@@ -12,4 +12,5 @@",
+    lines: [
+      ' router.get("/districts", listDistricts);',
+      ' router.get("/districts/:id", getDistrict);',
+      '+router.get("/translate/:id", getTranslation);',
+      ' router.get("/health", health);',
+    ],
+  },
+  speed: {
+    file: "rail/speed.js", hunk: "@@ -10,4 +10,4 @@ line 9",
+    lines: [
+      " // top speed on the airport line",
+      "-export const MAX_KMH = 400;",
+      "+export const MAX_KMH = 600;      // the city's ask",
+      " export const ACCEL = 1.2;         // m/s²",
+    ],
+  },
+  brakes: {
+    file: "rail/brakes.js", hunk: "@@ -38,5 +38,8 @@ function brake",
+    lines: [
+      " function brake(train, force) {",
+      "   const v = speed(train);",
+      "+  if (v > 500) {                  // km/h",
+      "+    return staged(train, force, v);",
+      "+  }",
+      "   return drive(train, force, v);",
+      " }",
+    ],
+  },
+  pylons: {
+    file: "rail/pylons.js", hunk: "@@ -4,3 +4,4 @@",
+    lines: [
+      "-export const BRACE_MM = 40;      // rated 400 km/h",
+      "+export const BRACE_MM = 65;      // rated 650 km/h",
+      "+export const CROSS_BRACED = true;",
+      " export const SPAN_M = 30;",
+    ],
+  },
+  icealert: {
+    file: "alerts/ice.js", hunk: "@@ -0,0 +1,8 @@", create: true,
+    lines: [
+      '+import { model } from "../models/sentinel.js";',
+      "+",
+      "+export function onPacket(burst) {",
+      "+  const p = model.score(burst);                // 0..1",
+      "+  if (p > 0.8 && burst.hops < 3) {",
+      '+    alarm("ice", { port: burst.port, warnS: burst.hops / burst.hopsPerS });',
+      "+  }",
+      "+}",
+    ],
+  },
+};
+
+// A project runs research (parallel) → analyze → build (parallel) → test → deploy.
+const PROJECTS = [
+  {
+    id: "lingo", name: "Night Market Translator", meter: 400,
+    order: "The market speaks forty dialects and the sign-bots understand six. Fix it, Kade. Start with the street slang.",
+    ticket: "Ship Lingo-Net v1.0 behind the Street API",
+    research: [
+      { agent: "kade", station: "knowledge", task: "Survey the dialect corpora", doing: "Reading papers",
+        steps: [["read", "papers", "Harbour Creole · a grammar", 6200], ["read", "reports", "Street recordings · 90 nights", 2900], ["read", "datasets", "Sign photos · 52k", 1800]],
+        report: "Slang is in 31% of the recordings, and the training set has no label for it.", rtok: 180 },
+      { agent: "nyx", station: "documents", task: "Read the Street API spec", doing: "Reading specs",
+        steps: [["docread", "specs", "Street API v2", 2100], ["docread", "notes", "Meeting notes · 12 March", 900]],
+        report: "The API serves /translate/{id}; the model must return a confidence.", rtok: 120 },
+      { agent: "echo", station: "memory", task: "Recall the last rollout", doing: "Recalling",
+        steps: [["recall", "Last rollout: slang was tagged as noise", 420]],
+        report: "Memory: slang was tagged as noise last time.", rtok: 60 },
+    ],
+    analyze: { agent: "nyx", station: "documents", task: "Write the research brief and the plan", doing: "Writing the brief",
+      steps: [["docwrite", "project", "Research brief · Lingo-Net v1.0"], ["plan"]], report: "Brief filed; five-step plan.", rtok: 140 },
+    plan: [
+      ["Add a slang label to the training set", "rook", 2],
+      ["Train Lingo-Net v1.0", "rook", 2],
+      ["Serve /translate on the Street API", "juno", 2],
+      ["Validate on held-out market nights", "vex", 3],
+      ["Deploy to staging, production and the sign-bots", "sable", 4],
+    ],
+    build: [
+      { agent: "juno", station: "repos", task: "Serve /translate on the Street API", doing: "Coding",
+        steps: [["grep", "street-api", "router.get", ["api/routes.js"]], ["edit", "street-api", "feature/translate", "translate"], ["edit", "street-api", "feature/translate", "routes"]],
+        report: "GET /translate/{id} returns text and a confidence.", rtok: 110 },
+      { agent: "rook", station: "models", task: "Train Lingo-Net v1.0", doing: "Training",
+        steps: [["train", "Lingo-Net", "1.0", "52k signs, 90 nights, slang label added"]], report: "v1.0 trained: 0.93 accuracy overall.", rtok: 120 },
+    ],
+    test: {
+      agent: "vex", task: "Run the suites and the model eval", doing: "Testing",
+      first: [["suite", "unit", 346, null], ["suite", "integration", 128, null], ["suite", "eval", 12, "street slang: precision 0.69 < 0.85"]],
+      fix: { agent: "rook", station: "models", task: "Retrain with more slang", doing: "Retraining",
+             steps: [["train", "Lingo-Net", "1.0", "+2,400 slang labels"]], report: "Slang precision 0.69 → 0.91.", rtok: 100 },
+      rerun: [["suite", "eval", 12, null], ["suite", "data", 89, null]],
+      report: "All green: unit 346, integration 128, eval 12/12, data 89/89.", rtok: 70,
+    },
+    deploy: [
+      { agent: "sable", station: "deploy", task: "Release Lingo 1.0", doing: "Deploying",
+        steps: [["deploy", "staging", "lingo 1.0"], ["deploy", "production", "lingo 1.0"], ["deploy", "edge", "model 1.0"], ["deploy", "api", "lingo 1.0"]],
+        report: "Lingo 1.0 is live on staging, production, the sign-bots and the Street API.", rtok: 90 },
+      { agent: "juno", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "street-api", "1a9b0c", "translate: serve lingo-net v1.0"]], report: "Merged into main.", rtok: 40 },
+      { agent: "echo", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Slang needs its own label — never “noise”"]], report: "Lesson stored.", rtok: 30 },
+    ],
+  },
+  {
+    id: "maglev", name: "Maglev 600", meter: 400, finalMeter: 600,
+    order: "The city wants the airport line at six hundred. Make the maglev do it without shaking the towers down.",
+    ticket: "Raise the maglev limit to 600 km/h",
+    research: [
+      { agent: "kade", station: "knowledge", task: "Survey the maglev literature", doing: "Reading the manual",
+        steps: [["read", "papers", "Line 9 Manual §4 · Pylons", 3400], ["read", "papers", "On high-speed levitation", 5200]],
+        report: "The pylons are rated for 400 km/h; expect 1.6× the load at 600.", rtok: 160 },
+      { agent: "juno", station: "repos", task: "Find every speed limit in the code", doing: "Searching code",
+        steps: [["grep", "maglev", "MAX_KMH", ["rail/speed.js", "rail/brakes.js"]]],
+        report: "MAX_KMH is set in rail/speed.js and read by rail/brakes.js.", rtok: 120 },
+      { agent: "echo", station: "memory", task: "Recall past upgrades", doing: "Recalling",
+        steps: [["recall", "Pylon tests are slow — run them last", 380]], report: "Memory: the pylon suite is slow; run it last.", rtok: 50 },
+    ],
+    analyze: { agent: "nyx", station: "documents", task: "Write the speed envelope and the plan", doing: "Writing the spec",
+      steps: [["docwrite", "specs", "Spec · Speed envelope to 600 km/h"], ["plan"]], report: "Spec filed; five-step plan.", rtok: 130 },
+    plan: [
+      ["Raise MAX_KMH to 600", "juno", 2],
+      ["Stage the brakes above 500 km/h", "juno", 2],
+      ["Simulate the airport run", "vex", 3],
+      ["Run the pylon suite last", "vex", 3],
+      ["Ship rail 2.4 to Line 9", "sable", 4],
+    ],
+    build: [
+      { agent: "juno", station: "repos", task: "Raise the limit and stage the brakes", doing: "Coding",
+        steps: [["edit", "maglev", "feature/line-600", "speed"], ["edit", "maglev", "feature/line-600", "brakes"]],
+        report: "MAX_KMH 600; brakes staged above 500 km/h.", rtok: 110 },
+    ],
+    test: {
+      agent: "vex", task: "Simulate the run, then the pylon suite", doing: "Testing",
+      first: [["suite", "sim", 3, null], ["suite", "unit", 342, "pylon.test.js › pylons hold at 600 km/h — rated 400"]],
+      fix: { agent: "juno", station: "repos", task: "Burn down the failing pylon test", doing: "Fixing rail/pylons.js",
+             steps: [["edit", "maglev", "feature/line-600", "pylons"]], report: "Pylons cross-braced: rated 650 km/h.", rtok: 100 },
+      rerun: [["suite", "unit", 342, null]],
+      report: "Simulations 3/3; pylon suite 342/342.", rtok: 60,
+    },
+    deploy: [
+      { agent: "sable", station: "deploy", task: "Ship rail 2.4", doing: "Deploying",
+        steps: [["deploy", "staging", "rail 2.4 · test track"], ["deploy", "production", "rail 2.4 · Line 9"]],
+        report: "rail 2.4 is running on Line 9.", rtok: 70 },
+      { agent: "juno", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "maglev", "600a1f", "rail: line 9 to 600 km/h"]], report: "Merged into main.", rtok: 40 },
+      { agent: "echo", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Speed changes need a pylon review"]], report: "Lesson stored.", rtok: 30 },
+    ],
+  },
+  {
+    id: "ice", name: "ICE early warning", meter: 600,
+    order: "Something black is probing the firewall at night. I want warning before it gets in.",
+    ticket: "Detect ICE on the wire before contact",
+    research: [
+      { agent: "kade", station: "knowledge", task: "Study black ICE", doing: "Reading papers",
+        steps: [["read", "papers", "Intrusion countermeasures · a field guide", 4400], ["read", "datasets", "Packet captures · 214 probes", 3100]],
+        report: "ICE shows as slow, broad bursts on port 7; 9 of 214 probes match.", rtok: 170 },
+      { agent: "nyx", station: "documents", task: "Read the lockdown drill", doing: "Reading the runbook",
+        steps: [["docread", "notes", "Runbook · lockdown drill", 1200]], report: "The firewall needs 90 s of warning to seal.", rtok: 90 },
+      { agent: "echo", station: "memory", task: "Recall past false alarms", doing: "Recalling",
+        steps: [["recall", "Ad-bot traffic set off the last alarm", 400]], report: "Memory: ad-bots triggered the last false alarm.", rtok: 50 },
+    ],
+    analyze: { agent: "nyx", station: "documents", task: "Design the alert pipeline", doing: "Drawing the design",
+      steps: [["docwrite", "designs", "Design · Wire alert pipeline"], ["docwrite", "diagrams", "Diagram · Packet to alarm"], ["plan"]], report: "Design and diagram filed; five-step plan.", rtok: 150 },
+    plan: [
+      ["Train Sentinel v0.3 with ad-bots as negatives", "rook", 2],
+      ["Wire the alarm into wire-alerts", "juno", 2],
+      ["Evaluate false alarms", "vex", 3],
+      ["Simulate five intrusions", "vex", 3],
+      ["Ship to the drones and the arcology", "sable", 4],
+    ],
+    build: [
+      { agent: "rook", station: "models", task: "Train Sentinel v0.3", doing: "Training",
+        steps: [["train", "Sentinel", "0.3", "214 probes, ad-bots as negatives"]], report: "v0.3: recall 0.97, false alarms 2%.", rtok: 110 },
+      { agent: "juno", station: "repos", task: "Wire the alarm", doing: "Coding",
+        steps: [["edit", "wire-alerts", "feature/ice-alarm", "icealert"]], report: "onPacket() raises an ICE alarm inside 3 hops.", rtok: 90 },
+    ],
+    test: {
+      agent: "vex", task: "Evaluate, simulate, integrate", doing: "Testing",
+      first: [["suite", "eval", 12, null], ["suite", "sim", 5, null], ["suite", "integration", 128, null]],
+      report: "Eval 12/12, five simulated intrusions caught, integration 128/128.", rtok: 60,
+    },
+    deploy: [
+      { agent: "sable", station: "deploy", task: "Ship sentinel 0.3", doing: "Deploying",
+        steps: [["deploy", "edge", "sentinel 0.3"], ["deploy", "production", "sentinel 0.3"]], report: "sentinel 0.3 is live on the drones and in the arcology.", rtok: 70 },
+      { agent: "juno", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "wire-alerts", "1ce0a1", "alerts: ICE early warning"]], report: "Merged into main.", rtok: 40 },
+      { agent: "echo", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Train sentinels with ad-bot traffic as negatives"]], report: "Lesson stored.", rtok: 30 },
+    ],
+    finale: [
+      ["sys", "Sentinel · ICE 2.4 hops out on port 7 — 96 s of warning", "alarm"],
+      ["persona", "ports sealed · the ICE slides past the firewall"],
+    ],
+  },
+];
+
+// What the cards and popovers show
+function freshState() {
+  return {
+    knowledge: { rows: { papers: ["Papers", 12430], reports: ["Field logs", 2981], datasets: ["Datasets", 1204], web: ["Net sources", 890] }, read: [] },
+    documents: { rows: { project: ["Project docs", 342], specs: ["Specifications", 28], notes: ["Meeting notes", 76], designs: ["Designs", 19], diagrams: ["Diagrams", 41] }, written: [], read: [] },
+    models: {
+      list: [
+        { name: "City-LLM", v: "2.1", status: "live" },
+        { name: "StreetVision", v: "1.4", status: "live" },
+        { name: "Lingo-Net", v: "0.9", status: "live" },
+        { name: "Sentinel", v: "0.2", status: "draft" },
+        { name: "Embedding-XL", v: "3.0", status: "live" },
+      ],
+      log: [],
+    },
+    repos: {
+      list: [
+        { name: "street-api", branch: "main", add: 0, del: 0 },
+        { name: "maglev", branch: "main", add: 0, del: 0 },
+        { name: "wire-alerts", branch: "main", add: 0, del: 0 },
+        { name: "data-pipeline", branch: "dev", add: 0, del: 0 },
+        { name: "infrastructure", branch: "main", add: 0, del: 0 },
+      ],
+      commits: [["a3f9c1", "maglev", "brakes: pad wear 12 → 10 mm"], ["7be2d0", "street-api", "districts: add the night market"], ["e41a77", "wire-alerts", "wire: drop ad-bot noise"]],
+    },
+    tests: {
+      suites: {
+        unit: { name: "Unit tests", done: 342, total: 342, state: "pass" },
+        integration: { name: "Integration", done: 128, total: 128, state: "pass" },
+        eval: { name: "Model eval", done: 6, total: 12, state: "idle" },
+        sim: { name: "Simulations", done: 0, total: 0, state: "queued" },
+        data: { name: "Data validation", done: 89, total: 89, state: "pass" },
+      },
+    },
+    memory: {
+      rows: { short: ["Short-term", 42, "notes"], long: ["Long-term", 1208, "lessons"], episodic: ["Episodic", 316, "runs"], vector: ["Vector store", 88410, "vectors"] },
+      lessons: ["Pylon tests are slow — run them last", "Stage risky rail changes behind a flag", "Ad-bot traffic set off the last alarm", "Last rollout: slang was tagged as noise"],
+    },
+    deploy: {
+      envs: {
+        staging: { name: "Staging", v: "lingo 0.9", status: "healthy" },
+        production: { name: "Production", v: "lingo 0.9", status: "healthy" },
+        edge: { name: "Edge (drones)", v: "7 drones", status: "syncing" },
+        api: { name: "Street API", v: "lingo 0.9", status: "healthy" },
+      },
+      log: [],
+    },
+    hub: { plan: [], ctx: 0, reports: 0 },
+    visited: new Set(),
+    hot: {},
+  };
+}
+
+// ============================================================
+// The city, painted: a night sky lit from beneath by smog, three
+// ranks of towers fading into it with their windows and signs, and
+// below, block after block of rooftops over wet streets that hold the
+// neon. Colours mix in RGB; texture is clustered noise.
+// ============================================================
+const HORIZON = 0.36;
+let TONE = null;
+let lanes = [];
+let signs = [];
+function tones() {
+  const R = (...names) => names.map((n) => hexRGB(P[n]));
+  TONE = {
+    sky: R("night0", "night1", "night2", "night3", "night4", "smog", "smogHi"),
+    conc: R("conc0", "conc1", "conc2", "conc3", "conc4"),
+    asph: R("asph0", "asph1", "asph2", "conc2"),
+    windows: R("winWarm", "winCool", "winPink", "winWarm", "winCool"),
+    neon: R("neonPink", "neonCyan", "neonAmber", "neonViolet", "neonGreen"),
+    dim: hexRGB(P.winDim), smog: hexRGB(P.smog), ink: hexRGB(P.ink),
+  };
+}
+const NEON_HEX = () => [P.neonPink, P.neonCyan, P.neonAmber, P.neonViolet, P.neonGreen];
+
+function buildStatic() {
+  const { W, H } = map;
+  tones();
+  const u = new Uint32Array(W * H);
+  const hz = Math.round(H * HORIZON);
+  const put = (x, y, c) => {
+    x = Math.round(x);
+    y = Math.round(y);
+    if (x >= 0 && y >= 0 && x < W && y < H) u[y * W + x] = rgb32(c);
+  };
+  const skyAt = (y) => rampRGB(TONE.sky, clamp(Math.pow(Math.max(0, y) / (hz + 30), 1.4), 0, 1));
+  const lamp = (x, y, col, fog, r = 4, a = 0.4) => {
+    put(x, y, mixRGB(hexRGB(col), skyAt(y), fog * 0.5));
+    emitters.push({ x, y, col, r, a: a * (1 - fog * 0.6) });
+  };
+
+  // 1. the sky, glowing magenta where the city's light hits the smog
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      let c = skyAt(y);
+      const cloud = smooth(0.52, 0.7, fbm(x * 0.008, y * 0.03, 17, 4)) * smooth(0.04, 0.2, y / H) * (1 - smooth(0.3, 0.4, y / H));
+      if (cloud > 0) c = mixRGB(c, mixRGB(TONE.sky[4], TONE.sky[6], y / hz), cloud * 0.6);
+      u[y * W + x] = rgb32(c);
+    }
+  }
+
+  // 2. three ranks of towers, the farthest drowned in smog
+  signs = [];
+  const tower = (x, w, top, base, fog, seed, lit, signChance) => {
+    const r = rng(seed);
+    const kind = r();
+    const crown = kind < 0.25 ? "spire" : kind < 0.45 ? "setback" : kind < 0.6 ? "pyramid" : "flat";
+    const shape = (y) => {
+      if (crown === "setback" && y < top + (base - top) * 0.25) return 0.3;
+      if (crown === "pyramid" && y < top + w * 0.6) return (y - top) / (w * 0.6) * 0.5;
+      return 0.5;
+    };
+    for (let y = Math.max(0, Math.floor(top)); y < Math.min(H, base); y++) {
+      const half = w * shape(y);
+      for (let i = Math.round(-half); i <= Math.round(half); i++) {
+        const X = Math.round(x + i);
+        if (X < 0 || X >= W) continue;
+        let c = rampRGB(TONE.conc, 0.3 - (i / (half + 1)) * 0.2 + (hash2(X >> 2, y >> 3, seed) - 0.5) * 0.1);
+        // windows: rows and columns, a few lit, whole floors dark
+        const wr = (y - Math.floor(top)) % 3, wc = (i + 400) % 3;
+        if (wr === 1 && wc === 1 && Math.abs(i) < half - 0.5) {
+          const floorLit = hash2(seed, (y / 3) | 0, 3) < 0.8;
+          c = floorLit && hash2(X, y, seed + 1) < lit ? TONE.windows[Math.floor(hash2(X >> 3, y >> 2, seed + 2) * 5)] : TONE.dim;
+        }
+        if (i === Math.round(-half)) c = mixRGB(c, TONE.sky[5], 0.3); // the edge the smog lights
+        put(X, y, mixRGB(c, skyAt(y), fog + (1 - fog) * smooth(0.6, 1, (y - top) / (base - top)) * 0.5));
+      }
+    }
+    if (crown === "spire") {
+      for (let j = 0; j < 10 + r() * 14; j++) put(x, top - j, mixRGB(TONE.conc[2], skyAt(top), fog));
+      lamp(x, top - 12, P.red, fog, 3, 0.6);
+    }
+    if (r() < signChance) {
+      // a vertical neon sign down one side
+      const sx = Math.round(x + (r() < 0.5 ? -w / 2 - 2 : w / 2 + 1)), sy = Math.round(top + 6 + r() * (base - top) * 0.3), sh = 10 + Math.round(r() * 16);
+      const col = NEON_HEX()[Math.floor(r() * 5)];
+      for (let j = 0; j < sh; j++) for (let i = 0; i < 2; i++) put(sx + i, sy + j, j % 4 === 3 ? TONE.ink : mixRGB(hexRGB(col), skyAt(sy), fog * 0.4));
+      emitters.push({ x: sx + 1, y: sy + sh / 2, col, r: 10, a: 0.35 * (1 - fog) });
+      signs.push({ x: sx, y: sy, h: sh, col, ph: r() * 6 });
+    }
+  };
+  const ranks = [
+    { fog: 0.62, base: hz + 30, top: [0.02, 0.2], per: 16, w: [6, 14], lit: 0.25, sign: 0.1, seed: 11 },
+    { fog: 0.38, base: hz + 40, top: [0.06, 0.26], per: 26, w: [10, 22], lit: 0.35, sign: 0.35, seed: 23 },
+    { fog: 0.16, base: hz + 50, top: [0.12, 0.32], per: 46, w: [14, 28], lit: 0.45, sign: 0.6, seed: 37 },
+  ];
+  for (const L of ranks) {
+    const r = rng(L.seed);
+    const n = Math.round(W / L.per);
+    for (let i = 0; i < n; i++) tower(((i + 0.5 + (r() - 0.5) * 0.8) / n) * W, lerp(L.w[0], L.w[1], r()), H * lerp(L.top[0], L.top[1], r()), L.base, L.fog, L.seed * 100 + i, L.lit, L.sign);
+  }
+  // two megatowers framing the view
+  for (const [fx, seed] of [[0.02, 91], [0.98, 93]]) tower(W * fx, 40, H * 0.02, H + 4, 0.05, seed, 0.5, 1);
+
+  // 3. the ground: streets wet with neon, then blocks of rooftops back to front
+  const ground = hz + 18;
+  // down in the streets the smog is darker than the glow above the skyline
+  const haze = mixRGB(TONE.sky[3], TONE.sky[5], 0.45);
+  const fogAt = (y) => 0.5 * clamp(1 - (y - ground) / (H * 0.4), 0, 1);
+  for (let y = ground; y < H; y++) {
+    const fog = fogAt(y);
+    for (let x = 0; x < W; x++) {
+      let c = rampRGB(TONE.asph, 0.22 + (vnoise(x * 0.2, y * 0.6, 5) - 0.5) * 0.2);
+      // neon smeared into the wet street, here and there
+      const streak = vnoise(x * 0.35, y * 0.05, 7);
+      if (streak > 0.8) c = mixRGB(c, TONE.neon[Math.floor(vnoise(x * 0.05, y * 0.02, 9) * 5)], (streak - 0.8) * 2.2);
+      u[y * W + x] = rgb32(mixRGB(c, haze, fog));
+    }
+  }
+  const nearPlace = (x, y, pad) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.prx + 12 + pad), (y - s.y) / (s.pry + 10 + pad)) < 1);
+  const nearPath = (x, y, pad) => SPOKES.some((k) => paths[k].pts.some((q) => Math.abs(q.x - x) < pad && Math.abs(q.y - y) < pad * 0.6));
+  const br = rng(51);
+  for (let y = ground + 6; y < H + 30; y += 10 + ((y - ground) / H) * 12) {
+    const fog = fogAt(y);
+    const scale = 0.6 + ((y - ground) / H) * 1.1;
+    // a row of blocks along one street, with alleys between them
+    for (let x = -10 + br() * 20; x < W + 10; ) {
+      const w = Math.round((10 + br() * 12) * scale), d = Math.round((3 + br() * 3) * scale), hgt = Math.round((5 + br() * 16) * scale);
+      const at = x;
+      x += w + (3 + br() * 9) * scale;
+      if (nearPlace(at + w / 2, y, 6) || (nearPath(at + w / 2, y - hgt / 2, 8) && br() < 0.8)) continue;
+      const seed = Math.round(at * 7 + y * 13);
+      const lit = br() < 0.3 ? 0.35 : 0.08; // most blocks asleep, a few still working
+      // the roof, then the facade with its windows, then maybe a sign
+      for (let j = 0; j < d; j++) for (let i = 0; i < w; i++) put(at + i, y - hgt - d + j, mixRGB(rampRGB(TONE.conc, (j === 0 ? 0.5 : 0.3) - i / (w * 3) + (hash2(i, j, seed) < 0.05 ? 0.25 : 0)), haze, fog));
+      for (let j = 0; j < hgt; j++) {
+        for (let i = 0; i < w; i++) {
+          let c = rampRGB(TONE.conc, 0.18 - i / (w * 2.5));
+          if (j % 3 === 1 && i % 2 === 1 && i < w - 1 && hash2(at + i, y + j, seed) < lit) c = TONE.windows[Math.floor(hash2(i >> 2, j, seed + 1) * 5)];
+          if (i === 0) c = rampRGB(TONE.conc, 0.42);
+          put(at + i, y - hgt + j, mixRGB(c, haze, fog));
+        }
+      }
+      if (br() < 0.16) {
+        const col = NEON_HEX()[Math.floor(br() * 5)];
+        for (let i = 1; i < w - 1; i++) put(at + i, y - hgt + 1, mixRGB(hexRGB(col), haze, fog * 0.5));
+        emitters.push({ x: at + w / 2, y: y - hgt + 1, col, r: 8, a: 0.3 * (1 - fog) });
+      }
+    }
+    // the street in front of the row: a string of sodium lamps, and the
+    // light trails of the traffic, red going one way and white the other
+    const sy = Math.round(y + 2 * scale);
+    const gap = Math.round(8 * scale);
+    for (let x = Math.round(br() * gap); x < W; x += gap) if (!nearPlace(x, sy, 2)) put(x, sy, mixRGB(TONE.windows[0], haze, fog * 0.6));
+    for (let n = 0; n < W / 60; n++) {
+      const x0 = br() * W, len = (6 + br() * 14) * scale, red = br() < 0.5;
+      for (let i = 0; i < len; i++) {
+        const X = x0 + i;
+        if (nearPlace(X, sy, 2)) continue;
+        put(X, sy + (red ? 1 : 2), mixRGB(red ? hexRGB(P.red) : TONE.windows[1], haze, fog * 0.6 + (i / len) * 0.3));
+      }
+    }
+  }
+
+  const c = makeCanvas(W, H);
+  const g = c.getContext("2d", { willReadFrequently: true });
+  const img = g.createImageData(W, H);
+  new Uint32Array(img.data.buffer).set(u);
+  g.putImageData(img, 0, 0);
+
+  // light pooling round each block in its colour, and a vignette
+  const out = g.getImageData(0, 0, W, H);
+  const s32 = new Uint32Array(out.data.buffer);
+  for (const st of Object.values(STATIONS)) {
+    const tint = hexRGB(P[st.color]);
+    const rx = st.prx + 34, ry = st.pry + 26;
+    for (let y = Math.max(0, st.y - ry); y < Math.min(H, st.y + ry); y++) {
+      for (let x = Math.max(0, st.x - rx); x < Math.min(W, st.x + rx); x++) {
+        const d = Math.hypot((x - st.x) / rx, (y - st.y) / ry);
+        if (d < 1) s32[y * W + x] = mix32(s32[y * W + x], tint, (1 - d) * (1 - d) * 0.14);
+      }
+    }
+  }
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x / W - 0.5) * 1.1, (y / H - 0.5) * 1.25);
+      const k = smooth(0.46, 0.88, d);
+      if (k > 0) s32[y * W + x] = mix32(s32[y * W + x], TONE.ink, k * 0.55);
+    }
+  }
+  g.putImageData(out, 0, 0);
+  staticCanvas = c;
+
+  // the sky lanes the traffic flies along
+  lanes = [0.12, 0.2, 0.28].map((fy, i) => ({ y: H * fy, amp: 6 + i * 4, dir: i % 2 ? -1 : 1, speed: 26 + i * 8, n: 10 + i * 4, ph: i * 2 }));
+}
+
+// ============================================================
+// Ambient life: rain, the blimp, the hologram koi, searchlights
+// ============================================================
+const ambient = { rain: [], blimp: null, koi: null, smokeT: 0 };
+function seedAmbient() {
+  const { W, H } = map;
+  ambient.rain = Array.from({ length: 240 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 110 + Math.random() * 60 }));
+  ambient.blimp = { x: W * 0.3, y: H * 0.1, dir: 1 };
+  ambient.koi = { x: W * 0.7, y: H * 0.16, dir: -1 };
+}
+function updateAmbient(dt) {
+  const { W, H } = map;
+  for (const d of ambient.rain) {
+    d.y += d.s * dt;
+    d.x -= d.s * 0.18 * dt;
+    if (d.y > H) { d.y = -4; d.x = Math.random() * (W + 40); }
+  }
+  const b = ambient.blimp;
+  b.x += b.dir * 4 * dt;
+  if (b.x > W + 60) b.dir = -1;
+  if (b.x < -60) b.dir = 1;
+  const k = ambient.koi;
+  k.x += k.dir * 6 * dt;
+  if (k.x > W + 50) { k.dir = -1; k.y = H * (0.1 + Math.random() * 0.12); }
+  if (k.x < -50) { k.dir = 1; k.y = H * (0.1 + Math.random() * 0.12); }
+  ambient.smokeT -= dt;
+  if (ambient.smokeT <= 0) {
+    ambient.smokeT = 0.35;
+    for (const s of Object.values(STATIONS)) {
+      for (const [sx, sy] of s.parts?.smoke ?? []) particles.push({ kind: "steam", x: s.sx + sx, y: s.sy + sy, vx: 1 + Math.random() * 2, vy: -(5 + Math.random() * 2), t0: clock.t, life: 4 + Math.random() * 2, ph: Math.random() * 6 });
+    }
+  }
+}
+function updateParticle(p, dt) {
+  if (p.kind === "steam") {
+    p.x += (p.vx + Math.sin(clock.t * 0.8 + p.ph) * 1.5) * dt;
+    p.y += p.vy * dt;
+    p.vy *= 1 - dt * 0.2;
+  } else if (p.kind === "spark" || p.kind === "glitch") {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 1 - dt * 2;
+    p.vy *= 1 - dt * 2;
+  }
+}
+function drawParticle(g, p, t, age) {
+  const k = age / p.life;
+  if (p.kind === "steam") {
+    g.globalAlpha = 0.28 * (1 - k) * Math.min(1, age * 2);
+    disc(g, p.x, p.y, 1 + k * 4.5, k < 0.3 ? P.steel3 : P.smog);
+    g.globalAlpha = 1;
+  } else if (p.kind === "spark") px(g, p.x, p.y, k < 0.5 ? P[p.col] : P.holo2);
+  else if (p.kind === "glitch" && hash2(Math.round(p.x), Math.round(p.y), Math.floor(t * 12)) > k) {
+    g.fillStyle = k < 0.4 ? P.iceRed : P.pearl;
+    g.fillRect(Math.round(p.x), Math.round(p.y), 2 + Math.round(hash2(p.t0 * 100, 0, 1) * 4), 1);
+  }
+}
+
+// ============================================================
+// Drawing the living city
+// ============================================================
+// The moving parts of each place: servers blink, documents float over the
+// kiosk, the model's head turns, koi circle the pagoda, the globe turns.
+function drawStationFx(g, t, s) {
+  const fx = s.parts;
+  if (s.key === "hub") {
+    const f = spr(`fx.globe${cycle(t * 2, ATLAS.meta.fx.globeFrames)}`);
+    g.drawImage(f, s.sx + s.globe[0] - 20, s.sy + s.globe[1] - 10);
+    return;
+  }
+  if (fx.leds) {
+    const [x0, y0, x1, y1] = fx.leds;
+    const tick = Math.floor(t * 6);
+    for (let k = 0; k < 14; k++) px(g, s.sx + x0 + Math.floor(hash2(tick, k, 1) * (x1 - x0)), s.sy + y0 + Math.floor(hash2(tick, k, 2) * (y1 - y0)), [P.neonGreen, P.neonAmber, P.neonCyan, P.white][k % 4]);
+  }
+  if (fx.docs) {
+    fx.docs.forEach(([dx, dy], i) => {
+      const d = spr(`fx.doc${cycle(t * 0.8 + i)}`);
+      g.globalAlpha = hash2(Math.floor(t * 10), i, 3) < 0.05 ? 0.4 : 0.9;
+      g.drawImage(d, Math.round(s.sx + dx - d.width / 2), Math.round(s.sy + dy - d.height / 2 + Math.sin(t * 1.3 + i * 2) * 1.5));
+      g.globalAlpha = 1;
+    });
+  }
+  if (fx.head) {
+    const f = spr(`fx.head${cycle(t * 3, ATLAS.meta.fx.headFrames)}`);
+    g.globalAlpha = hash2(Math.floor(t * 12), 0, 5) < 0.06 ? 0.35 : 0.85;
+    g.drawImage(f, s.sx + fx.head[0] - f.width / 2, s.sy + fx.head[1]);
+    g.globalAlpha = 1;
+  }
+  if (fx.koi) {
+    const [cx, cy, rx, ry] = fx.koi;
+    for (let k = 0; k < 3; k++) {
+      const a = t * (0.6 + k * 0.1) + k * 2.1;
+      const x = s.sx + cx + Math.cos(a) * rx, y = s.sy + cy + Math.sin(a) * ry;
+      const dx = -Math.sin(a) > 0 ? 1 : -1;
+      px(g, x, y, k === 1 ? P.neonCyan : P.neonPink);
+      px(g, x - dx, y, k === 1 ? P.holo3 : P.neonPink2);
+      px(g, x - dx * 2, y, P.holo2);
+    }
+  }
+}
+
+// ICE — a failing test — climbs out of the undercity below the Testing Lab
+// and reaches for it with its cables.
+function villainHead() {
+  const t = STATIONS.tests;
+  return { x: t.x - 34, y: Math.round(lerp(map.H + 6, map.H - 52, villain.k)) };
+}
+function drawIce(g, t) {
+  if (villain.state === "hidden") return;
+  const h = villain.head();
+  const roots = ATLAS.meta.ice.roots;
+  arms(g, t, h.x, h.y, villain.grab > 0 ? roots.slice(1) : roots, 13, P.car1, P.iceRed, 0.33, 1, P.ink, 1.8);
+  // glitch: the mask jumps sideways now and then
+  const jx = hash2(Math.floor(t * 8), 0, 9) < 0.12 ? 2 : 0;
+  g.drawImage(spr("ice.head"), h.x + jx, h.y);
+  drawGrab(g, t, { x: h.x + 15, y: h.y + 8 }, P.car1, P.iceRed, P.ink, 2);
+}
+// it's burned off the wire in a burst of glitches
+function onVillainSink() {
+  const h = villain.head();
+  for (let i = 0; i < 40; i++) {
+    const a = Math.random() * Math.PI * 2, s = 8 + Math.random() * 16;
+    particles.push({ kind: "glitch", x: h.x + 15, y: h.y + 14, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t0: clock.t, life: 1.2 + Math.random() * 0.8 });
+  }
+}
+
+// The agents: hover cars glowing underneath, headlights on what they work on.
+function drawCars(g, t) {
+  const [lx, ly] = ATLAS.meta.car.port;
+  for (const c of Object.values(fleet)) {
+    if (!c.visible) continue;
+    const bob = Math.round(Math.sin(t * 3 + c.ph));
+    const x = Math.round(c.x) - 14, y = Math.round(c.y) - 7 + bob;
+    if (c.beam) drawBeam(g, t, c, { x: c.face > 0 ? x + lx : x + 27 - lx, y: y + ly });
+    g.drawImage(spr(`car.${c.a.id}.fly${cycle(t * 10 + c.ph)}`, c.face < 0), x, y);
+  }
+}
+function onAgentStep(c, dt) {
+  c.trailT -= dt;
+  if (c.trailT <= 0) {
+    particles.push({ kind: "spark", x: c.x - c.face * 12, y: c.y + 4, vx: -c.face * 6, vy: 4, col: c.a.color, t0: clock.t, life: 0.8 });
+    c.trailT = 0.08 + Math.random() * 0.1;
+  }
+}
+
+function drawSky(g, t) {
+  // traffic streaming along the sky lanes: headlights one way, tail lights back
+  for (const L of lanes) {
+    for (let k = 0; k < L.n; k++) {
+      const x = ((k / L.n) * (map.W + 80) + t * L.speed * L.dir + 4000) % (map.W + 80) - 40;
+      const y = L.y + Math.sin(x * 0.012 + L.ph) * L.amp;
+      g.fillStyle = L.dir > 0 ? P.white : P.red;
+      g.fillRect(Math.round(x), Math.round(y), 2, 1);
+    }
+  }
+  const b = ambient.blimp;
+  g.drawImage(spr("blimp.ad", b.dir < 0), Math.round(b.x - 28), Math.round(b.y + Math.sin(t * 0.4) * 2));
+  const k = ambient.koi;
+  g.globalAlpha = hash2(Math.floor(t * 10), 7, 1) < 0.05 ? 0.25 : 0.6;
+  g.drawImage(spr(`koi.swim${cycle(t * 1.2)}`, k.dir > 0), Math.round(k.x - 24), Math.round(k.y + Math.sin(t * 0.6) * 3));
+  g.globalAlpha = 1;
+  // a few signs stutter
+  for (const s of signs) if (hash2(Math.floor(t * 9 + s.ph * 10), s.x, 3) < 0.08) { g.fillStyle = P.ink; g.fillRect(s.x, s.y, 2, s.h); }
+}
+function drawRain(g) {
+  g.fillStyle = "rgba(170, 200, 255, 0.35)";
+  for (const d of ambient.rain) {
+    g.fillRect(Math.round(d.x), Math.round(d.y), 1, 2);
+    g.fillRect(Math.round(d.x) - 1, Math.round(d.y) + 2, 1, 2);
+  }
+}
+
+function render(t) {
+  ctx.drawImage(staticCanvas, 0, 0);
+  drawSky(ctx, t);
+  drawPaths(ctx, t);
+  drawStations(ctx, t);
+  drawIce(ctx, t);
+  drawCars(ctx, t);
+  drawParticles(ctx, t);
+  drawRain(ctx);
+  renderGlow(t);
+}
+
+// The glow layer: smog lit from beneath, searchlights, every window and sign,
+// the routes, the cars' lights, the holograms, ICE's eyes.
+function renderGlow(t) {
+  const { W, H } = map;
+  beginGlow();
+  const hz = (H * HORIZON) / 2;
+  const band = gctx.createLinearGradient(0, hz - H * 0.2, 0, hz + H * 0.08);
+  band.addColorStop(0, "rgba(160, 60, 140, 0)");
+  band.addColorStop(0.7, "rgba(190, 70, 150, 0.22)");
+  band.addColorStop(1, "rgba(120, 40, 120, 0)");
+  gctx.globalAlpha = 1;
+  gctx.fillStyle = band;
+  gctx.fillRect(0, 0, gcv.width, gcv.height);
+  // searchlights sweeping up from the arcology
+  const hub = STATIONS.hub;
+  const sx = hub.x / 2, sy = (hub.sy + 20) / 2;
+  for (let i = 0; i < 2; i++) {
+    const a = -Math.PI / 2 + Math.sin(t * 0.25 + i * 2.4) * 0.7;
+    const len = gcv.height * 1.1, spread = 0.05;
+    const grd = gctx.createLinearGradient(sx, sy, sx + Math.cos(a) * len, sy + Math.sin(a) * len);
+    grd.addColorStop(0, "rgba(180, 230, 255, 0.22)");
+    grd.addColorStop(1, "rgba(180, 230, 255, 0)");
+    gctx.fillStyle = grd;
+    gctx.beginPath();
+    gctx.moveTo(sx, sy);
+    gctx.lineTo(sx + Math.cos(a - spread) * len, sy + Math.sin(a - spread) * len);
+    gctx.lineTo(sx + Math.cos(a + spread) * len, sy + Math.sin(a + spread) * len);
+    gctx.closePath();
+    gctx.fill();
+  }
+  glowEmitters(t, 0.5);
+  for (const k of STATION_KEYS) {
+    const s = STATIONS[k];
+    const busy = S?.busy?.[k] > 0;
+    glowAt(s.x, s.y + 8, s.col, k === "hub" ? 70 : 48, busy ? 0.45 : 0.2);
+    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.lamp, 7, 0.4 + 0.2 * Math.sin(t * 3 + lx));
+    const fx = s.parts;
+    if (k === "hub") glowAt(s.sx + s.globe[0], s.sy + s.globe[1] + 10, P.neonCyan, 44, 0.35);
+    if (fx.docs) fx.docs.forEach(([dx, dy]) => glowAt(s.sx + dx, s.sy + dy, P.neonCyan, 16, 0.4));
+    if (fx.head) glowAt(s.sx + fx.head[0], s.sy + fx.head[1] + 16, P.neonCyan, 40, 0.35);
+    if (fx.koi) glowAt(s.sx + fx.koi[0], s.sy + fx.koi[1], P.neonPink, 50, 0.18);
+    if (k === "tests") glowAt(s.x, s.y - 10, villain.state === "rising" ? P.red : P.test, 60, villain.state === "rising" ? 0.5 + Math.sin(t * 6) * 0.2 : 0.2);
+  }
+  glowRoutes(t);
+  const [lx, ly] = ATLAS.meta.car.lamp;
+  for (const c of Object.values(fleet)) {
+    if (!c.visible) continue;
+    glowAt(c.face > 0 ? c.x - 14 + lx : c.x - 14 + 27 - lx, c.y - 7 + ly, P.white, 12, 0.6);
+    glowAt(c.x, c.y + 4, P[c.a.color], 22, 0.5);
+    if (c.beam) glowAt(c.beam.x, c.beam.y, c.beam.col, 24, 0.5);
+  }
+  const k = ambient.koi;
+  glowAt(k.x, k.y + 10, P.neonPink, 60, 0.18);
+  glowAt(ambient.blimp.x, ambient.blimp.y + 9, P.neonCyan, 40, 0.2);
+  if (villain.state !== "hidden") {
+    const h = villain.head();
+    for (const [ex, ey] of ATLAS.meta.ice.eyes) glowAt(h.x + ex, h.y + ey, P.iceRed, 10, 0.95);
+  }
+  endGlow();
+}
+
+// The den by screenlight: the monitors' cold glow on the hacker's shoulders,
+// a pink sign flickering through the rain on the window.
+function drawDen(t) {
+  const c = $("#corner-art");
+  const g = c.getContext("2d");
+  const [lx, ly] = ATLAS.meta.den.lamp;
+  const flick = 0.9 + 0.08 * Math.sin(t * 13.1) + (hash2(Math.floor(t * 8), 1, 1) < 0.08 ? -0.3 : 0);
+  g.globalCompositeOperation = "source-over";
+  g.globalAlpha = 1;
+  g.drawImage(spr("den.window"), 0, 0);
+  const shade = g.createRadialGradient(lx, ly, 20, lx, ly - 20, 200);
+  shade.addColorStop(0, "rgba(255, 255, 255, 1)");
+  shade.addColorStop(0.55, "rgba(150, 140, 200, 1)");
+  shade.addColorStop(1, "rgba(50, 40, 80, 1)");
+  g.globalCompositeOperation = "multiply";
+  g.fillStyle = shade;
+  g.fillRect(0, 0, c.width, c.height);
+  const screen = g.createRadialGradient(lx, ly, 0, lx, ly, 110);
+  screen.addColorStop(0, `rgba(120, 255, 200, ${0.4 * flick})`);
+  screen.addColorStop(0.35, `rgba(60, 200, 255, ${0.16 * flick})`);
+  screen.addColorStop(1, "rgba(60, 200, 255, 0)");
+  g.globalCompositeOperation = "screen";
+  g.fillStyle = screen;
+  g.fillRect(0, 0, c.width, c.height);
+  const sign = g.createRadialGradient(64, 80, 0, 64, 80, 70);
+  sign.addColorStop(0, `rgba(255, 60, 160, ${0.25 * flick})`);
+  sign.addColorStop(1, "rgba(255, 60, 160, 0)");
+  g.fillStyle = sign;
+  g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = "source-over";
+}
+
+// ============================================================
+// The world, handed to the engine
+// ============================================================
+startOS({
+  atlas: window.NEON_ATLAS,
+  atlasFile: "assets/neon/atlas.js",
+  stations: STATIONS,
+  agents: AGENTS,
+  who: { halcyon: ["Halcyon", "var(--cyan)"], sys: ["System", "var(--faint)"], ice: ["ICE", "var(--bad)"] },
+  persona: "halcyon",
+  villain: { id: "ice" },
+  rowIcons: ROW_ICON,
+  quotes: QUOTES,
+  projects: PROJECTS,
+  edits: EDITS,
+  freshState,
+  nav: [
+    ["city", "icon.city", "City View"], ["agents", "icon.agents", "Runners"], ["hub", "icon.observe", "Orchestrator"],
+    ["knowledge", "icon.knowledge", "Knowledge"], ["repos", "icon.repos", "Repositories"], ["documents", "icon.documents", "Documents"],
+    ["memory", "icon.memory", "Memory"], ["tests", "icon.tests", "Tests"], ["models", "icon.models", "Models"], ["deploy", "icon.deploy", "Deployments"],
+  ],
+  clockStart: 23 * 60 + 40,
+  text: {
+    run: "run", runs: "runs", crew: "runners", Crew: "Runners",
+    idle: "Parked", docked: "parked at the arcology", orders: "orders", pipeNote: "From the order to the grid",
+    meter: (v) => `${fmtNum(v)} km/h`,
+    villainRises: (fail) => `breaches the Testing Lab · ✗ ${esc(fail)}`,
+    villainSinks: "is burned off the wire and dissolves",
+    settled: (v) => `Line 9 runs at <b>${fmtNum(v)} km/h</b>; the towers don't shake`,
+    done: "run complete · <q>Ship to the grid. Sleep at dawn.</q>",
+    about: {
+      hub: "Halcyon, the arcology's AI, holds the order, sends the runners out to the blocks, and keeps only the short reports that come back.",
+      knowledge: "Papers, field logs, datasets and net sources, racked in the data archive. Runners read here; nothing is changed.",
+      documents: "Specs, notes, designs and the plans the city writes, floating over the holo kiosk.",
+      models: "Every model the city runs, with the version in service, in the AI lab.",
+      repos: "The codebase, stacked in the containers. Branches open while a runner works and close when the change merges.",
+      tests: "Suites, simulations and model evals behind the firewall. A failing test lets the ICE in.",
+      memory: "What the city keeps between runs, in the pagoda. Recalled before work; a lesson is stored after it.",
+      deploy: "Where releases lift off from the skyport.",
+    },
+  },
+  meterStep: 10,
+  beadDim: "#1a1430",
+  agentLift: 10,
+  agentIcon: (a) => `car.${a.id}.fly0`,
+  agentPort: (c) => ({ x: c.x + c.face * 12, y: c.y }),
+  layoutStation(s, m) {
+    if (s.key === "hub") s.globe = m.globe;
+  },
+  buildStatic,
+  render,
+  seedAmbient,
+  updateAmbient,
+  updateParticle,
+  drawParticle,
+  onAgentStep,
+  villainHead,
+  onVillainSink,
+  drawStationFx,
+  drawCorner: drawDen,
+  decorateChrome() {
+    $("#brand-mark").getContext("2d").drawImage(spr("ri.eye"), 0, 0);
+    $("#meter-icon").getContext("2d").drawImage(spr("icon.city"), 0, 0);
+  },
+});
+}
+</script>
+</body>
+</html>
