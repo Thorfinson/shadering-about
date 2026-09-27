@@ -54,6 +54,22 @@ const STUDIES = [
     viewport: { width: 1700, height: 1000 },
     readySelector: 'body[data-ready="1"]',
   },
+  {
+    name: 'hortus-os',
+    // the build phase of the Pollinator Census: Dickon coding, Martha training
+    page: 'hortus-os.html?at=40',
+    settle: 900,
+    viewport: { width: 1700, height: 1000 },
+    readySelector: 'body[data-ready="1"]',
+  },
+  {
+    name: 'neon-os',
+    // the build phase of the Night Market Translator: Juno coding, Rook training
+    page: 'neon-os.html?at=40',
+    settle: 900,
+    viewport: { width: 1700, height: 1000 },
+    readySelector: 'body[data-ready="1"]',
+  },
   { name: 'reef-islands', page: 'reef-islands.html', settle: 2000 },
   {
     name: 'reef-islands-volcanic',

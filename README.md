@@ -69,6 +69,56 @@ a later project and `?at=60` fast-forwards. On phones the map pans sideways.
 
 ![Nautilus OS](screenshots/nautilus-os.png)
 
+### Hortus OS — the console as a garden at dusk ([hortus-os.html](hortus-os.html))
+
+The same orchestration run in a walled garden at the end of a summer day. The sky
+fades from gold to lavender over hills with a village and a backlit wood; the
+meadow rolls in evening shade, gravel paths follow the routes, and a garden wall
+with a door closes the view. Each station stands on a round plot inside a
+dry-stone wall: the Knowledge Base a thatched seed library with a smoking chimney,
+Documents a glasshouse herbarium, the Model Registry a topiary garden, Repositories
+an apiary of painted hives in lavender, the Testing Lab a nursery of seedlings
+under cloches, Memory a lily pond with koi and a stone lantern, and Deployments a
+windmill whose sails turn. The Great Oak in the middle, a treehouse in its crown,
+is the orchestrator. Seven bumblebees with lanterns (Mary, Colin, Dickon, Martha,
+Susan, Robin and Soot) fly the routes; butterflies, birds, fireflies and drifting
+seeds fill the air, and the villain is a bramble that climbs out of the nursery
+when a suite fails. The header reads the temperature; the three projects are a
+Pollinator Census, Frost Guard (the night falls from 6 °C to −4 °C) and a bramble
+early warning. In the corner, Weatherstaff and Mary talk in the potting shed.
+
+![Hortus OS](screenshots/hortus-os.png)
+
+### NEON//OS — the console as a cyberpunk city ([neon-os.html](neon-os.html))
+
+The same run once more, over a megacity at midnight in the rain. Three ranks of
+towers sink into magenta smog, with vertical signs and a spire's red light here
+and there; below them lies a dark grid of blocks, with sodium lamps along the
+streets and the light trails of the traffic. Searchlights sweep the sky, a blimp
+crosses with an advert, a hologram koi the size of a building drifts through, and
+three lanes of hover traffic fly above the roofs. The stations stand on city
+blocks: the Knowledge Base a data archive with blinking racks, Documents a holo
+kiosk with floating papers, the Model Registry an AI lab with a hologram head on
+its roof, Repositories container homes under a crane, the Testing Lab a bunker
+under a hexagonal force field, Memory a neon pagoda with holo koi, and Deployments
+a skyport with a VTOL. The orchestrator is an arcology with a wireframe globe on
+its crown. Seven hover cars (Kade, Nyx, Juno, Rook, Vex, Sable and Echo) are the
+agents, and ICE, a black mask with red eyes, rises over the firewall when a test
+fails. The header shows the Maglev's speed; the projects are a Night Market
+Translator, Maglev 600 (400 → 600 km/h) and an ICE early warning. In the corner a
+hacker works at three screens while the rain runs down the window.
+
+![NEON//OS](screenshots/neon-os.png)
+
+All three consoles share one engine, [assets/os/engine.js](assets/os/engine.js), and
+one stylesheet, [assets/os/os.css](assets/os/os.css). The engine owns the layout,
+the cards, the agents' routes, the director that runs the projects, the villain's
+state and the dock; each page brings its own world. It supplies data (stations,
+agents, projects, texts) plus hooks that paint the static map, draw the agents and
+the villain, add ambient life and decorate the chrome, then calls `startOS(world)`.
+The stylesheet is themed through CSS variables, so every page restyles it with a
+short `<style>` block.
+
 ### Aqua — 16-bit underwater study ([aqua-16bit.html](aqua-16bit.html))
 
 A WebGL fragment-shader scene in a retro 16-bit palette: radial sun shafts from a
@@ -120,7 +170,10 @@ filled Voronoi with a beam, and a hand-placed constellation.
 Open any `.html` file directly in a browser — everything is self-contained.
 
 `nautilus-agents.html` and `nautilus-os.html` load their sprite atlas from
-`assets/nautilus/atlas.js` — a plain script tag, so they still work from `file://`. The one exception is
+`assets/nautilus/atlas.js`, `hortus-os.html` from `assets/garden/atlas.js` and
+`neon-os.html` from `assets/neon/atlas.js`. The three consoles also load
+`assets/os/engine.js` and `assets/os/os.css`. All of these are plain script and link
+tags, so the pages still work from `file://`. The one exception is
 `cosmic-filament.html`, which imports an ES module and therefore needs to be served
 over HTTP:
 
@@ -133,26 +186,28 @@ then open <http://localhost:8765/cosmic-filament.html>.
 
 ## Sprite pipeline
 
-The sprites for both Nautilus studies are built from source by a dependency-free Node
-script:
+The sprites are built from source by a dependency-free Node script. Every folder
+under `assets/` with a `src/` inside is one asset set with its own atlas:
+`nautilus` (both Nautilus studies), `garden` (Hortus OS) and `neon` (NEON//OS).
 
 ```sh
-npm run sprites          # build the atlas
-npm run sprites:watch    # rebuild on every change to assets/nautilus/src
-npm run sprites:check    # exit 1 if the committed atlas is stale (also run in CI)
+npm run sprites              # build every atlas
+npm run sprites -- neon      # build only the neon set
+npm run sprites:watch        # rebuild a set on every change to its src/
+npm run sprites:check        # exit 1 if a committed atlas is stale (also run in CI)
 ```
 
-| Source (`assets/nautilus/src/`) | What it holds |
+| Source (`assets/<set>/src/`) | What it holds |
 |---|---|
 | `palette.txt` | Every colour, one per line — a key character for sprites and a name for code |
 | `sprites/*.sprite` | Hand-drawn pixel art as text: rows of palette keys, plus directives for outline, recolour variants and anchor points |
-| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals), `places.mjs` (the station fortresses and the hub, plus the animated globe, books and hologram the page lays over them) and `os.mjs` (the agents' bathyscaphes, ruins, anemones, octopus, whale, the bridge scene) |
+| `*.mjs` | Generators for the big set pieces. Each set has a `places.mjs` for its stations and hub, plus the animated parts the page lays over them (a globe, books, a hologram, windmill sails, a holo head). The rest differs by set: `procedural.mjs` and `os.mjs` in `nautilus` (the Nautilus, Atlantis, the kraken, the agents' bathyscaphes, ruins, the bridge scene), and `creatures.mjs` in `garden` and `neon` (bees, butterflies and the bramble; hover cars, ICE, the blimp and the koi; the corner vignettes) |
 
 [tools/build-sprites.mjs](tools/build-sprites.mjs) parses and validates the sources,
 renders every frame with [tools/pixelkit.mjs](tools/pixelkit.mjs), shelf-packs them
 into one sheet and writes:
 
-| Output (`assets/nautilus/`) | Used by |
+| Output (`assets/<set>/`) | Used by |
 |---|---|
 | `atlas.png` | The packed sprite sheet |
 | `atlas.json` | Frame rectangles, palette, anchor points, content hash |
