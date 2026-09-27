@@ -6,6 +6,7 @@
 <title>Nautilus — agents under the sea</title>
 <style>
   :root {
+    color-scheme: dark;
     --bg: #04070d;
     --panel: #0a1320;
     --panel-2: #0e1a2b;
@@ -110,7 +111,7 @@
   .log .actor { font-weight: 700; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 1px; }
   .log .msg { color: var(--muted); overflow-wrap: anywhere; }
   .log .msg b { color: var(--ink); font-weight: 600; }
-  .log .meta { color: var(--faint); font-style: normal; white-space: nowrap; }
+  .log .meta { color: var(--faint); font-style: normal; }
   .log li.phase { display: block; color: var(--brass); letter-spacing: 0.2em; text-transform: uppercase; font-size: 10.5px; padding: 8px 14px 3px; }
   .log code, .ctx code, .tip code { color: var(--cyan); }
   .log q { color: var(--ink); font-style: italic; font-family: var(--serif); font-size: 13px; }
@@ -267,7 +268,7 @@
     .side { grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); align-items: start; }
   }
   @media (max-width: 760px) {
-    .bar, .layout { padding-left: 12px; padding-right: 12px; }
+    .bar, .layout { padding-left: 16px; padding-right: 16px; }
     .lower { grid-template-columns: minmax(0, 1fr); }
     .stage { height: auto; aspect-ratio: 5 / 3; }
     .log li { grid-template-columns: 3.3em minmax(0, 1fr); }
