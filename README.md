@@ -146,7 +146,7 @@ npm run sprites:check    # exit 1 if the committed atlas is stale (also run in C
 |---|---|
 | `palette.txt` | Every colour, one per line — a key character for sprites and a name for code |
 | `sprites/*.sprite` | Hand-drawn pixel art as text: rows of palette keys, plus directives for outline, recolour variants and anchor points |
-| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) `places.mjs` (the station fortresses and the hub, plus the animated globe, books and hologram the page lays over them) and `os.mjs` (the agents' bathyscaphes, ruins, anemones, octopus, whale, the bridge scene) |
+| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals), `places.mjs` (the station fortresses and the hub, plus the animated globe, books and hologram the page lays over them) and `os.mjs` (the agents' bathyscaphes, ruins, anemones, octopus, whale, the bridge scene) |
 
 [tools/build-sprites.mjs](tools/build-sprites.mjs) parses and validates the sources,
 renders every frame with [tools/pixelkit.mjs](tools/pixelkit.mjs), shelf-packs them
