@@ -40,17 +40,22 @@ Its sprites come from the [sprite pipeline](#sprite-pipeline) below.
 ### Nautilus OS — agent orchestration console ([nautilus-os.html](nautilus-os.html))
 
 The same idea as an operations console, seen from above. The map is painted rather
-than dithered: open water with three layers of rock spires in the mist, a terraced sea
-floor coming out of the haze, drowned ruins and coral with lit windows everywhere,
-and a floating island under every station, its rock hanging in stalactites. Colours
+than dithered: open water with layers of karst massifs in the mist (clusters of
+pinnacles and mesas, lit along their crests, a rare ruin on top), a rolling sea floor
+of silt and rock outcrops coming out of the haze, drowned ruins, coral and a kelp
+forest at both edges, and a floating island under every station, its rock hanging
+in stalactites. Colours
 mix in RGB, so gradients stay soft, and texture comes from clustered noise instead of
-a Bayer matrix. The orchestrator's hub fortress sits in the middle; seven station fortresses
-float around it — Knowledge Base, Documents, Model Registry, Repositories, Testing
-Lab, Memory and Deployments — each built differently: glass domes in thin frames of
-dark bronze (the sea shows through the glass) over a library, a lamplit town, a
-laboratory or a garden, and weathered, patinated towers with onion, cone, lantern
-or dome caps, radio masts and a launch gantry. Routes of glowing beads join them to
-the hub. A half-resolution glow layer, screened over the pixels, lights the
+a Bayer matrix. The orchestrator's keep sits in the middle with a great globe turning in its
+bronze cradle; seven stations float around it, each its own kind of place: the
+Knowledge Base a library hall open on lamplit shelves, Documents a plaza of runes
+where open books float in a column of light, the Model Registry a glass tank with a
+hologram whale and floating screens, Repositories a container depot under a crane
+with smoking stacks, the Testing Lab a glass sphere with a glowing core in orbit
+rings, Memory a dome with a violet brain whose synapses spark, and Deployments a dry
+dock with a submarine under a portal crane. All in aged, patinated metal, dark
+bronze and old glass the sea shows through. Routes of glowing beads join them to the
+hub. A half-resolution glow layer, screened over the pixels, lights the
 domes, lamps, routes, submarines and bioluminescence; god rays fan down from the
 surface, a ghostly whale and octopus drift at the top of the map, and the bridge in
 the corner flickers by lamplight. Seven
@@ -141,7 +146,7 @@ npm run sprites:check    # exit 1 if the committed atlas is stale (also run in C
 |---|---|
 | `palette.txt` | Every colour, one per line — a key character for sprites and a name for code |
 | `sprites/*.sprite` | Hand-drawn pixel art as text: rows of palette keys, plus directives for outline, recolour variants and anchor points |
-| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) and `os.mjs` (station fortresses, the hub, the agents' bathyscaphes, ruins, anemones, octopus, whale, the bridge scene) |
+| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) `places.mjs` (the station fortresses and the hub, plus the animated globe, books and hologram the page lays over them) and `os.mjs` (the agents' bathyscaphes, ruins, anemones, octopus, whale, the bridge scene) |
 
 [tools/build-sprites.mjs](tools/build-sprites.mjs) parses and validates the sources,
 renders every frame with [tools/pixelkit.mjs](tools/pixelkit.mjs), shelf-packs them
