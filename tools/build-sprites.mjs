@@ -6,7 +6,7 @@
 //
 // Sources   assets/nautilus/src/palette.txt        every colour, keyed for sprites
 //           assets/nautilus/src/sprites/*.sprite   hand-drawn pixel art, as text
-//           assets/nautilus/src/procedural.mjs     generated set pieces
+//           assets/nautilus/src/*.mjs              generators for the larger set pieces
 // Outputs   assets/nautilus/atlas.png              the packed sprite sheet
 //           assets/nautilus/atlas.json             frame rects, palette, anchor meta
 //           assets/nautilus/atlas.js               the same with the PNG inlined — the
@@ -168,10 +168,14 @@ async function collect() {
     const file = path.join(dir, name);
     sprites.push(parseSprite(await readFile(file, 'utf8'), file, pal));
   }
-  // Query string busts Node's module cache so --watch picks up edits.
-  const procFile = path.join(SRC, 'procedural.mjs');
-  const mod = await import(`${pathToFileURL(procFile).href}?v=${Date.now()}`);
-  for (const s of mod.default({ ...pixelkit, P: pal.byName })) sprites.push({ ...s, source: rel(procFile) });
+  // Every *.mjs in src is a generator module; the query string busts Node's
+  // module cache so --watch picks up edits.
+  const kit = { ...pixelkit, P: pal.byName };
+  for (const name of (await readdir(SRC)).filter((f) => f.endsWith('.mjs')).sort()) {
+    const file = path.join(SRC, name);
+    const mod = await import(`${pathToFileURL(file).href}?v=${Date.now()}`);
+    for (const s of mod.default(kit)) sprites.push({ ...s, source: rel(file) });
+  }
   return { pal, sprites };
 }
 

@@ -1,8 +1,8 @@
 {
   "generator": "tools/build-sprites.mjs",
-  "hash": "4622edcb0436e15f",
+  "hash": "7c21e9b0ba3b486d",
   "version": 1,
-  "size": [216, 210],
+  "size": [328, 344],
   "palette": {
     "ink": "#070b14",
     "ink2": "#0c1626",
@@ -66,7 +66,23 @@
     "sand2": "#415249",
     "sand3": "#5c6c5c",
     "sand4": "#7f8e76",
-    "sand5": "#a8b394"
+    "sand5": "#a8b394",
+    "research": "#f2b13b",
+    "analyze": "#ff8a7a",
+    "build": "#5ee08a",
+    "model": "#3fd0c9",
+    "test": "#4cc9f0",
+    "deploy": "#a78bfa",
+    "remember": "#e8e0ff",
+    "abyss0": "#040914",
+    "abyss1": "#081326",
+    "abyss2": "#0d1d36",
+    "abyss3": "#132a48",
+    "abyss4": "#1b3a5c",
+    "abyss5": "#264d71",
+    "abyss6": "#356587",
+    "abyss7": "#4d819e",
+    "rim": "#7fb8c8"
   },
   "sprites": {
     "anchor": {
@@ -128,6 +144,21 @@
         "gauge.idle"
       ]
     },
+    "icon": {
+      "source": "assets/nautilus/src/sprites/icons.sprite",
+      "frames": [
+        "icon.ocean",
+        "icon.agents",
+        "icon.knowledge",
+        "icon.repos",
+        "icon.documents",
+        "icon.memory",
+        "icon.tests",
+        "icon.models",
+        "icon.deploy",
+        "icon.observe"
+      ]
+    },
     "jelly": {
       "source": "assets/nautilus/src/sprites/jelly.sprite",
       "frames": [
@@ -147,6 +178,25 @@
         "starfish.idle"
       ]
     },
+    "sub": {
+      "source": "assets/nautilus/src/sprites/sub.sprite",
+      "frames": [
+        "sub.aronnax.run0",
+        "sub.aronnax.run1",
+        "sub.conseil.run0",
+        "sub.conseil.run1",
+        "sub.ned.run0",
+        "sub.ned.run1",
+        "sub.cyrus.run0",
+        "sub.cyrus.run1",
+        "sub.lidenbrock.run0",
+        "sub.lidenbrock.run1",
+        "sub.barbicane.run0",
+        "sub.barbicane.run1",
+        "sub.axel.run0",
+        "sub.axel.run1"
+      ]
+    },
     "tablet": {
       "source": "assets/nautilus/src/sprites/tablet.sprite",
       "frames": [
@@ -158,6 +208,43 @@
       "frames": [
         "turtle.swim0",
         "turtle.swim1"
+      ]
+    },
+    "dome": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "dome.knowledge",
+        "dome.documents",
+        "dome.models",
+        "dome.repos",
+        "dome.tests",
+        "dome.memory",
+        "dome.deploy"
+      ]
+    },
+    "hub": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "hub.orchestrator"
+      ]
+    },
+    "whale": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "whale.swim0",
+        "whale.swim1"
+      ]
+    },
+    "tower": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "tower.far"
+      ]
+    },
+    "bridge": {
+      "source": "assets/nautilus/src/os.mjs",
+      "frames": [
+        "bridge.helm"
       ]
     },
     "nautilus": {
@@ -226,296 +313,512 @@
   },
   "frames": {
     "anchor.idle": {
-      "x": 10,
-      "y": 190,
+      "x": 291,
+      "y": 322,
       "w": 9,
       "h": 11
     },
     "capsule.idle": {
-      "x": 62,
-      "y": 203,
+      "x": 274,
+      "y": 334,
       "w": 8,
       "h": 5
     },
     "chest.idle": {
-      "x": 20,
-      "y": 190,
+      "x": 301,
+      "y": 322,
       "w": 13,
       "h": 10
     },
     "crab.walk0": {
-      "x": 139,
-      "y": 190,
+      "x": 144,
+      "y": 334,
       "w": 11,
       "h": 7
     },
     "crab.walk1": {
-      "x": 151,
-      "y": 190,
+      "x": 156,
+      "y": 334,
       "w": 11,
       "h": 7
     },
     "diver.nemo.stand": {
-      "x": 112,
-      "y": 171,
+      "x": 131,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.nemo.walk": {
-      "x": 126,
-      "y": 171,
+      "x": 145,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.aronnax.stand": {
-      "x": 0,
-      "y": 171,
+      "x": 19,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.aronnax.walk": {
-      "x": 14,
-      "y": 171,
+      "x": 33,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.conseil.stand": {
-      "x": 28,
-      "y": 171,
+      "x": 47,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.conseil.walk": {
-      "x": 42,
-      "y": 171,
+      "x": 61,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.ned.stand": {
-      "x": 84,
-      "y": 171,
+      "x": 103,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.ned.walk": {
-      "x": 98,
-      "y": 171,
+      "x": 117,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.mate.stand": {
-      "x": 56,
-      "y": 171,
+      "x": 75,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "diver.mate.walk": {
-      "x": 70,
-      "y": 171,
+      "x": 89,
+      "y": 301,
       "w": 13,
       "h": 18
     },
     "fish.coral.swim0": {
-      "x": 185,
-      "y": 190,
+      "x": 190,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.coral.swim1": {
-      "x": 196,
-      "y": 190,
+      "x": 201,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.tang.swim0": {
-      "x": 22,
-      "y": 203,
+      "x": 234,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.tang.swim1": {
-      "x": 33,
-      "y": 203,
+      "x": 245,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.blue.swim0": {
-      "x": 163,
-      "y": 190,
+      "x": 168,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.blue.swim1": {
-      "x": 174,
-      "y": 190,
+      "x": 179,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.silver.swim0": {
-      "x": 0,
-      "y": 203,
+      "x": 212,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "fish.silver.swim1": {
-      "x": 11,
-      "y": 203,
+      "x": 223,
+      "y": 334,
       "w": 10,
       "h": 7
     },
     "gauge.idle": {
-      "x": 67,
-      "y": 190,
+      "x": 72,
+      "y": 334,
       "w": 9,
       "h": 9
     },
+    "icon.ocean": {
+      "x": 13,
+      "y": 334,
+      "w": 12,
+      "h": 10
+    },
+    "icon.agents": {
+      "x": 59,
+      "y": 334,
+      "w": 12,
+      "h": 9
+    },
+    "icon.knowledge": {
+      "x": 252,
+      "y": 322,
+      "w": 12,
+      "h": 11
+    },
+    "icon.repos": {
+      "x": 244,
+      "y": 301,
+      "w": 12,
+      "h": 12
+    },
+    "icon.documents": {
+      "x": 231,
+      "y": 301,
+      "w": 12,
+      "h": 12
+    },
+    "icon.memory": {
+      "x": 315,
+      "y": 322,
+      "w": 12,
+      "h": 10
+    },
+    "icon.tests": {
+      "x": 278,
+      "y": 322,
+      "w": 12,
+      "h": 11
+    },
+    "icon.models": {
+      "x": 265,
+      "y": 322,
+      "w": 12,
+      "h": 11
+    },
+    "icon.deploy": {
+      "x": 218,
+      "y": 301,
+      "w": 12,
+      "h": 12
+    },
+    "icon.observe": {
+      "x": 0,
+      "y": 334,
+      "w": 12,
+      "h": 10
+    },
     "jelly.pulse0": {
-      "x": 199,
-      "y": 171,
+      "x": 257,
+      "y": 301,
       "w": 9,
       "h": 12
     },
     "jelly.pulse1": {
-      "x": 0,
-      "y": 190,
+      "x": 267,
+      "y": 301,
       "w": 9,
       "h": 12
     },
     "shell.idle": {
-      "x": 129,
-      "y": 190,
+      "x": 134,
+      "y": 334,
       "w": 9,
       "h": 8
     },
     "starfish.idle": {
-      "x": 44,
-      "y": 203,
+      "x": 256,
+      "y": 334,
       "w": 7,
       "h": 7
     },
+    "sub.aronnax.run0": {
+      "x": 277,
+      "y": 301,
+      "w": 20,
+      "h": 11
+    },
+    "sub.aronnax.run1": {
+      "x": 298,
+      "y": 301,
+      "w": 20,
+      "h": 11
+    },
+    "sub.conseil.run0": {
+      "x": 84,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.conseil.run1": {
+      "x": 105,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.ned.run0": {
+      "x": 210,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.ned.run1": {
+      "x": 231,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.cyrus.run0": {
+      "x": 126,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.cyrus.run1": {
+      "x": 147,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.lidenbrock.run0": {
+      "x": 168,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.lidenbrock.run1": {
+      "x": 189,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.barbicane.run0": {
+      "x": 42,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.barbicane.run1": {
+      "x": 63,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.axel.run0": {
+      "x": 0,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
+    "sub.axel.run1": {
+      "x": 21,
+      "y": 322,
+      "w": 20,
+      "h": 11
+    },
     "tablet.idle": {
-      "x": 156,
-      "y": 171,
+      "x": 175,
+      "y": 301,
       "w": 11,
       "h": 14
     },
     "turtle.swim0": {
-      "x": 77,
-      "y": 190,
+      "x": 82,
+      "y": 334,
       "w": 18,
       "h": 8
     },
     "turtle.swim1": {
-      "x": 96,
-      "y": 190,
+      "x": 101,
+      "y": 334,
       "w": 18,
       "h": 8
     },
+    "dome.knowledge": {
+      "x": 114,
+      "y": 172,
+      "w": 56,
+      "h": 48
+    },
+    "dome.documents": {
+      "x": 57,
+      "y": 172,
+      "w": 56,
+      "h": 48
+    },
+    "dome.models": {
+      "x": 228,
+      "y": 172,
+      "w": 56,
+      "h": 48
+    },
+    "dome.repos": {
+      "x": 0,
+      "y": 221,
+      "w": 56,
+      "h": 48
+    },
+    "dome.tests": {
+      "x": 57,
+      "y": 221,
+      "w": 56,
+      "h": 48
+    },
+    "dome.memory": {
+      "x": 171,
+      "y": 172,
+      "w": 56,
+      "h": 48
+    },
+    "dome.deploy": {
+      "x": 0,
+      "y": 172,
+      "w": 56,
+      "h": 48
+    },
+    "hub.orchestrator": {
+      "x": 129,
+      "y": 0,
+      "w": 88,
+      "h": 76
+    },
+    "whale.swim0": {
+      "x": 0,
+      "y": 270,
+      "w": 78,
+      "h": 30
+    },
+    "whale.swim1": {
+      "x": 79,
+      "y": 270,
+      "w": 78,
+      "h": 30
+    },
+    "tower.far": {
+      "x": 114,
+      "y": 221,
+      "w": 14,
+      "h": 48
+    },
+    "bridge.helm": {
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 100
+    },
     "nautilus.hull": {
-      "x": 69,
-      "y": 71,
+      "x": 129,
+      "y": 221,
       "w": 140,
       "h": 44
     },
     "library.ruin": {
-      "x": 0,
-      "y": 71,
+      "x": 216,
+      "y": 101,
       "w": 68,
       "h": 60
     },
     "atlantis.temple": {
       "x": 0,
-      "y": 0,
+      "y": 101,
       "w": 124,
       "h": 70
     },
     "galleon.wreck": {
       "x": 125,
-      "y": 0,
+      "y": 101,
       "w": 90,
       "h": 66
     },
     "clam.open0": {
-      "x": 31,
-      "y": 132,
+      "x": 158,
+      "y": 270,
       "w": 28,
       "h": 26
     },
     "clam.open1": {
-      "x": 60,
-      "y": 132,
+      "x": 187,
+      "y": 270,
       "w": 28,
       "h": 26
     },
     "clam.open2": {
-      "x": 89,
-      "y": 132,
+      "x": 216,
+      "y": 270,
       "w": 28,
       "h": 26
     },
     "clam.open3": {
-      "x": 118,
-      "y": 132,
+      "x": 245,
+      "y": 270,
       "w": 28,
       "h": 26
     },
     "kraken.head": {
-      "x": 0,
-      "y": 132,
+      "x": 270,
+      "y": 221,
       "w": 30,
       "h": 38
     },
     "shark.far": {
-      "x": 168,
-      "y": 171,
+      "x": 187,
+      "y": 301,
       "w": 30,
       "h": 12
     },
     "coral.branch0": {
-      "x": 147,
-      "y": 132,
+      "x": 274,
+      "y": 270,
       "w": 18,
       "h": 20
     },
     "coral.branch1": {
-      "x": 166,
-      "y": 132,
+      "x": 293,
+      "y": 270,
       "w": 18,
       "h": 20
     },
     "coral.branch2": {
-      "x": 185,
-      "y": 132,
+      "x": 0,
+      "y": 301,
       "w": 18,
       "h": 20
     },
     "coral.brain": {
-      "x": 52,
-      "y": 190,
+      "x": 44,
+      "y": 334,
       "w": 14,
       "h": 9
     },
     "coral.fan": {
-      "x": 140,
-      "y": 171,
+      "x": 159,
+      "y": 301,
       "w": 15,
       "h": 14
     },
     "rock.r0": {
-      "x": 115,
-      "y": 190,
+      "x": 120,
+      "y": 334,
       "w": 13,
       "h": 8
     },
     "rock.r1": {
-      "x": 52,
-      "y": 203,
+      "x": 264,
+      "y": 334,
       "w": 9,
       "h": 6
     },
     "rock.r2": {
-      "x": 34,
-      "y": 190,
+      "x": 26,
+      "y": 334,
       "w": 17,
       "h": 9
     }
@@ -528,8 +831,18 @@
     "gauge": {
       "pivot": [4, 4]
     },
+    "sub": {
+      "lamp": [18, 6]
+    },
     "tablet": {
       "text": [3, 4]
+    },
+    "dome": {
+      "base": [28, 32],
+      "hub": [44, 50]
+    },
+    "hub": {
+      "base": [44, 50]
     },
     "nautilus": {
       "cy": 25,

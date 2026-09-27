@@ -37,6 +37,22 @@ Its sprites come from the [sprite pipeline](#sprite-pipeline) below.
 
 ![Nautilus](screenshots/nautilus-agents.png)
 
+### Nautilus OS — agent orchestration console ([nautilus-os.html](nautilus-os.html))
+
+The same idea as an operations console, seen from above. The orchestrator's hub dome
+sits in the middle of an oblique pixel-art sea floor; seven glass-domed stations stand
+on rock mesas around it — Knowledge Base, Documents, Model Registry, Repositories,
+Testing Lab, Memory and Deployments — joined to the hub by glowing routes. Seven
+submarine agents (Aronnax, Conseil, Ned Land, Cyrus Smith, Lidenbrock, Barbicane and
+Axel) travel the routes, and each station's card updates as they read, write, train,
+test and deploy. Three projects run research → analyze → build → test → deploy, with a
+kraken rising at the Testing Lab when a suite fails. The dock shows active agents,
+recent activity with live diffs and test output, voyage progress with a context
+ledger, and a minimap. Click a station or an agent for detail; `?project=2` starts at
+a later project and `?at=60` fast-forwards. On phones the map pans sideways.
+
+![Nautilus OS](screenshots/nautilus-os.png)
+
 ### Aqua — 16-bit underwater study ([aqua-16bit.html](aqua-16bit.html))
 
 A WebGL fragment-shader scene in a retro 16-bit palette: radial sun shafts from a
@@ -87,8 +103,8 @@ filled Voronoi with a beam, and a hand-placed constellation.
 
 Open any `.html` file directly in a browser — everything is self-contained.
 
-`nautilus-agents.html` loads its sprite atlas from `assets/nautilus/atlas.js` — a
-plain script tag, so it still works from `file://`. The one exception is
+`nautilus-agents.html` and `nautilus-os.html` load their sprite atlas from
+`assets/nautilus/atlas.js` — a plain script tag, so they still work from `file://`. The one exception is
 `cosmic-filament.html`, which imports an ES module and therefore needs to be served
 over HTTP:
 
@@ -101,7 +117,8 @@ then open <http://localhost:8765/cosmic-filament.html>.
 
 ## Sprite pipeline
 
-The Nautilus sprites are built from source by a dependency-free Node script:
+The sprites for both Nautilus studies are built from source by a dependency-free Node
+script:
 
 ```sh
 npm run sprites          # build the atlas
@@ -113,7 +130,7 @@ npm run sprites:check    # exit 1 if the committed atlas is stale (also run in C
 |---|---|
 | `palette.txt` | Every colour, one per line — a key character for sprites and a name for code |
 | `sprites/*.sprite` | Hand-drawn pixel art as text: rows of palette keys, plus directives for outline, recolour variants and anchor points |
-| `procedural.mjs` | Generators for the big set pieces (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) |
+| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) and `os.mjs` (glass-domed stations, the hub, whale, lighthouse, bridge vignette) |
 
 [tools/build-sprites.mjs](tools/build-sprites.mjs) parses and validates the sources,
 renders every frame with [tools/pixelkit.mjs](tools/pixelkit.mjs), shelf-packs them

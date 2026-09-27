@@ -46,6 +46,14 @@ const STUDIES = [
     settle: 600,
     readySelector: 'body[data-ready="1"]',
   },
+  {
+    name: 'nautilus-os',
+    // fast-forward to the build phase: Ned writing code, Cyrus training
+    page: 'nautilus-os.html?at=40',
+    settle: 900,
+    viewport: { width: 1700, height: 1000 },
+    readySelector: 'body[data-ready="1"]',
+  },
   { name: 'reef-islands', page: 'reef-islands.html', settle: 2000 },
   {
     name: 'reef-islands-volcanic',

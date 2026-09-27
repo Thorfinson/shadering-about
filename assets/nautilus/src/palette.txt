@@ -82,3 +82,23 @@ F  #9ab07a  skin
 -  #5c6c5c  sand3
 -  #7f8e76  sand4
 -  #a8b394  sand5
+
+# Pipeline stages in nautilus-os.html — also each station's route colour.
+-  #f2b13b  research
+-  #ff8a7a  analyze
+-  #5ee08a  build
+-  #3fd0c9  model
+-  #4cc9f0  test
+-  #a78bfa  deploy
+-  #e8e0ff  remember
+
+# Abyssal terrain for the top-down map, deep -> lit.
+-  #040914  abyss0
+-  #081326  abyss1
+-  #0d1d36  abyss2
+-  #132a48  abyss3
+-  #1b3a5c  abyss4
+-  #264d71  abyss5
+-  #356587  abyss6
+-  #4d819e  abyss7
+-  #7fb8c8  rim

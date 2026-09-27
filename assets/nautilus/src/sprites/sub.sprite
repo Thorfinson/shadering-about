@@ -1,0 +1,34 @@
+# Brass survey submarine for nautilus-os.html, facing right. S is the stripe —
+# one @variant per agent, in that agent's pipeline colour.
+@sprite sub
+@outline ink
+@point lamp 17,5
+@variant aronnax    S=research
+@variant conseil    S=analyze
+@variant ned        S=build
+@variant cyrus      S=model
+@variant lidenbrock S=test
+@variant barbicane  S=deploy
+@variant axel       S=remember
+
+@frame run0
+..........7.......
+........88988.....
+.......8999998....
+...8899999999998..
+4.89gf99gf99gf9998
+5789SSSSSSSSSSS99a
+4.89999999999999..
+...788888888888...
+.....7777777......
+
+@frame run1
+..........7.......
+........88988.....
+.......8999998....
+4..8899999999998..
+..89gf99gf99gf9998
+5789SSSSSSSSSSS99a
+..89999999999999..
+4..788888888888...
+.....7777777......
