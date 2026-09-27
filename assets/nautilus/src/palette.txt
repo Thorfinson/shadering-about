@@ -109,3 +109,60 @@ F  #9ab07a  skin
 -  #c4478a  pink2
 -  #ef7fb8  pink3
 -  #ffc6e0  pink4
+
+# Hue-shifted ramps for the sea floor, mesa tops and cliffs in nautilus-os.html.
+-  #0a1628  floor0
+-  #10243a  floor1
+-  #173450  floor2
+-  #214663  floor3
+-  #2e5a74  floor4
+-  #3f6f82  floor5
+-  #0c2230  moss0
+-  #123433  moss1
+-  #1a4a41  moss2
+-  #255f4c  moss3
+-  #357656  moss4
+-  #4f8f62  moss5
+-  #6fa872  moss6
+-  #060b18  cliff0
+-  #0b1428  cliff1
+-  #121f3a  cliff2
+-  #1a2c4d  cliff3
+-  #253b60  cliff4
+-  #2c5a78  fog
+
+# Ghostly background creatures, and the gardens under the domes.
+-  #3b2a4a  ghost0
+-  #6a4a74  ghost1
+-  #9a6f9c  ghost2
+-  #c79bc3  ghost3
+-  #0d2a22  leaf0
+-  #16432f  leaf1
+-  #22603e  leaf2
+-  #3b8a55  leaf3
+-  #7cc47a  leaf4
+
+# Lit figures on the bridge.
+-  #141a2c  coat0
+-  #222c46  coat1
+-  #34466a  coat2
+-  #6b4a36  skin0
+-  #a0765a  skin1
+
+# The painted map in nautilus-os.html: open water from the surface to the deep,
+# rock from shadow to lit, silt on the terraces, and the lit windows.
+-  #3b82a0  mist4
+-  #23648c  mist3
+-  #1a4f75  mist2
+-  #123a5c  mist1
+-  #0b2642  mist0
+-  #05111f  rock0
+-  #0a1f35  rock1
+-  #112f4c  rock2
+-  #1b4465  rock3
+-  #2b5e7e  rock4
+-  #14344c  silt0
+-  #1d4760  silt1
+-  #2a5b72  silt2
+-  #3d7487  silt3
+-  #ffc462  window

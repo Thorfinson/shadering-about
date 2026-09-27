@@ -1,35 +1,40 @@
-// Set pieces for nautilus-os.html, the top-down console: station fortresses
-// (a glass dome on a stepped platform, flanked by towers with pointed roofs and
-// lit windows), the orchestrator's hub, rock pinnacles and ruins for the deep
-// background, anemones and tube coral, a humpback, an octopus, and the bridge
-// scene for the navigation rail.
+// Set pieces for nautilus-os.html, the top-down console, in a painterly
+// pixel style: shading breaks up in organic clumps (rampSoft) instead of a
+// Bayer checkerboard, and outlines are selective (a dark shade of whatever they
+// border) instead of flat ink.
 //
-// Architecture uses the blue "abyss" stone so it sits in the water; brass
-// trims it and lamp-coloured windows light it. Meta lists every lamp so the
-// page can bloom them.
+//   station.*   a glass dome on a stepped platform, flanked by towers; the dome
+//               holds a garden or a warm-lit hall, a lantern cupola on top
+//   hub.*       the orchestrator's larger fortress with its trident seal
+//   sub.*       a brass bathyscaphe per agent, banded in the agent's colour
+//   ruin.*, reef.*   an arch and a column, anemones, tube coral
+//   octopus, whale              ghostly creatures of the deep
+//   bridge.*    the salon: Nemo at the window, Aronnax at his desk by lamplight
+//
+// Meta lists every lamp so the page can bloom them.
 
 export default function generate(kit) {
   const { P } = kit;
   const STATIONS = {
-    knowledge: [P.research, 3],
-    documents: [P.analyze, 11],
-    models: [P.model, 19],
-    repos: [P.build, 27],
-    tests: [P.test, 35],
-    memory: [P.remember, 43],
-    deploy: [P.deploy, 51],
+    knowledge: [P.research, 3, 'hall'],
+    documents: [P.analyze, 11, 'hall'],
+    models: [P.model, 19, 'garden'],
+    repos: [P.build, 27, 'hall'],
+    tests: [P.test, 35, 'hall'],
+    memory: [P.remember, 43, 'garden'],
+    deploy: [P.deploy, 51, 'garden'],
   };
   const lamps = {};
-  const frames = Object.entries(STATIONS).map(([name, [accent, seed]]) => {
-    const { buf, lamps: l } = station(kit, accent, seed);
+  const frames = Object.entries(STATIONS).map(([name, [accent, seed, interior]]) => {
+    const { buf, lamps: l } = station(kit, accent, seed, interior);
     lamps[name] = l;
     return { name, buf };
   });
   const hubOut = hub(kit);
   return [
-    { sprite: 'station', frames, meta: { base: [44, 56], prx: 30, pry: 9, lamps } },
-    { sprite: 'hub', frames: [{ name: 'orchestrator', buf: hubOut.buf }], meta: { base: [66, 82], prx: 46, pry: 13, lamps: hubOut.lamps } },
-    pinnacles(kit),
+    { sprite: 'station', frames, meta: { base: [44, 58], prx: 30, pry: 9, lamps } },
+    { sprite: 'hub', frames: [{ name: 'orchestrator', buf: hubOut.buf }], meta: { base: [66, 86], prx: 46, pry: 13, lamps: hubOut.lamps } },
+    subs(kit),
     ruins(kit),
     reef(kit),
     octopus(kit),
@@ -38,7 +43,6 @@ export default function generate(kit) {
   ];
 }
 
-// Paint fn(x, y) -> colour | null over a rectangle of an existing buffer.
 function layer(buf, x0, y0, x1, y1, fn) {
   for (let y = Math.max(0, y0); y < Math.min(buf.h, y1); y++) {
     for (let x = Math.max(0, x0); x < Math.min(buf.w, x1); x++) {
@@ -48,14 +52,16 @@ function layer(buf, x0, y0, x1, y1, fn) {
   }
 }
 
-// A stone tower with a lit window every few courses and a pointed brass roof.
+// A stone tower with gold string courses, lit windows and a pointed brass roof.
 function tower(buf, kit, { x, w, top, bottom, roof, lit, seed }, lamps) {
-  const { P, hash2 } = kit;
+  const { P, hash2, rampSoft } = kit;
   const mid = Math.floor(w / 2);
+  const STONE = [P.cliff1, P.cliff2, P.cliff3, P.cliff4, P.abyss5];
   for (let y = top; y < bottom; y++) {
     for (let i = 0; i < w; i++) {
-      let c = i === 0 ? P.abyss6 : i === w - 1 ? P.abyss1 : i < mid ? P.abyss4 : P.abyss3;
-      if ((y - top) % 8 === 7) c = i === 0 ? P.abyss5 : P.abyss2; // string course
+      let c = rampSoft(STONE, 0.72 - (i / (w - 1)) * 0.6 - ((y - top) / (bottom - top)) * 0.15, x + i, y, seed);
+      if (i === 0) c = P.abyss6;
+      if ((y - top) % 9 === 8) c = i === 0 ? P.brass2 : P.brass1; // gilt string course
       if (i === mid && (y - top) % 5 === 2 && y < bottom - 4 && hash2(x, y, seed) < lit) c = P.lamp;
       buf.set(x + i, y, c);
     }
@@ -65,16 +71,16 @@ function tower(buf, kit, { x, w, top, bottom, roof, lit, seed }, lamps) {
     const half = (w / 2 + 0.6) * (1 - r / (roof + 1));
     for (let i = Math.ceil(cx - half); i <= Math.floor(cx + half); i++) buf.set(i, top - r, i <= cx ? P.brass2 : P.brass0);
   }
-  buf.set(Math.round(cx), top - roof - 1, P.brass2);
+  buf.set(Math.round(cx), top - roof - 1, P.brass3);
   buf.set(Math.round(cx), top - roof - 2, P.lamp);
   lamps.push([Math.round(cx), top - roof - 2]);
 }
 
-// An oblique cylinder: a lit rim in the accent colour, a band of windows, and
-// an inlaid brass ring on the top face.
-function cylinder(buf, kit, { cx, top, rx, ry, face, accent, windows }) {
-  const { P, rampPick } = kit;
-  const STONE = [P.abyss1, P.abyss2, P.abyss3, P.abyss4, P.abyss5, P.abyss6];
+// Oblique cylinder: gilt rim with lights in the accent colour, a band of lit
+// arched windows, and a brass ring inlaid on the top face.
+function cylinder(buf, kit, { cx, top, rx, ry, face, accent, windows, seed }) {
+  const { P, rampSoft } = kit;
+  const STONE = [P.cliff1, P.cliff2, P.cliff3, P.cliff4, P.abyss5, P.abyss6];
   layer(buf, Math.floor(cx - rx - 1), Math.floor(top - ry - 1), Math.ceil(cx + rx + 1), Math.ceil(top + ry + face + 2), (x, y) => {
     const px = x + 0.5;
     const py = y + 0.5;
@@ -84,29 +90,30 @@ function cylinder(buf, kit, { cx, top, rx, ry, face, accent, windows }) {
     if (py > frontY && py <= frontY + face) {
       const fy = py - frontY;
       if (fy < 1.2) return x % 3 === 0 ? accent : P.brass2;
-      if (windows && Math.abs(fy - face * 0.55) < 0.8 && x % 5 === 2 && Math.abs(ex) < 0.9) return P.lamp;
-      if (fy > face - 1.1) return P.abyss1;
-      return rampPick(STONE, 0.62 - ex * 0.35 - (fy / face) * 0.25, x, y);
+      if (windows && fy > face * 0.35 && fy < face * 0.8 && x % 5 < 2 && Math.abs(ex) < 0.9) return fy < face * 0.45 ? P.brass3 : P.lamp;
+      if (fy > face - 1.1) return P.cliff0;
+      return rampSoft(STONE, 0.6 - ex * 0.35 - (fy / face) * 0.25, x, y, seed);
     }
     const ey = (py - top) / ry;
     if (ex * ex + ey * ey <= 1) {
-      if (Math.abs(Math.hypot(ex, ey) - 0.86) < 0.07) return P.brass1;
-      return rampPick(STONE, 0.78 - ey * 0.22, x, y);
+      const r = Math.hypot(ex, ey);
+      if (Math.abs(r - 0.86) < 0.07) return (x % 4 === 0) ? P.lamp : P.brass1;
+      return rampSoft(STONE, 0.8 - ey * 0.2, x, y, seed + 3);
     }
     return null;
   });
 }
 
-// Glass hemisphere: a little lamp-lit city inside, brass ribs, a bright catch-light.
-function glassDome(buf, kit, { cx, baseY, drx, dry, seed, towers: n }, lamps) {
-  const { P, rampPick, hash2, mulberry32 } = kit;
+// Glass dome with a garden or a lamp-lit hall inside, riveted brass ribs, a
+// cyan sheen and a bright catch-light.
+function glassDome(buf, kit, { cx, baseY, drx, dry, seed, interior }, lamps) {
+  const { P, rampSoft, hash2, mulberry32, vnoise } = kit;
   const rng = mulberry32(seed);
-  const spires = [];
-  for (let i = 0; i < n; i++) {
-    const tw = 3 + ((rng() * 4) | 0);
-    const tx = Math.round(cx - drx * 0.75 + rng() * (drx * 1.5 - tw));
-    spires.push({ x: tx, w: tw, top: Math.round(baseY - dry * (0.2 + rng() * 0.6)) });
-  }
+  const LEAF = [P.leaf0, P.leaf1, P.leaf2, P.leaf3, P.leaf4];
+  const trees = [];
+  for (let i = 0; i < 9; i++) trees.push({ x: cx - drx * 0.8 + rng() * drx * 1.6, y: baseY - dry * (0.15 + rng() * 0.5), r: 3 + rng() * 5 });
+  const lights = [];
+  for (let i = 0; i < 10; i++) lights.push([Math.round(cx - drx * 0.7 + rng() * drx * 1.4), Math.round(baseY - 2 - rng() * dry * 0.55)]);
   layer(buf, cx - drx - 1, baseY - dry - 1, cx + drx + 1, baseY + 1, (x, y) => {
     const px = x + 0.5;
     const py = y + 0.5;
@@ -114,32 +121,55 @@ function glassDome(buf, kit, { cx, baseY, drx, dry, seed, towers: n }, lamps) {
     const dy = (py - baseY) / dry;
     const r = Math.sqrt(dx * dx + dy * dy);
     if (dy > 0 || r > 1) return null;
-    if (r > 1 - 1.3 / drx) return P.brass2;
+    if (r > 1 - 1.4 / drx) return dy < -0.5 ? P.brass3 : P.brass2;
     const span = Math.sqrt(Math.max(0, 1 - dy * dy));
-    if ([-0.6, -0.2, 0.2, 0.6].some((k) => Math.abs(dx - k * span) < 0.8 / drx) || [0.35, 0.7].some((k) => Math.abs(dy + k) < 0.55 / dry)) {
-      return (x + y) % 2 ? P.brass1 : P.brass2;
-    }
-    if (dx < -0.15 && dy < -0.3 && Math.abs(r - 0.8) < 0.06) return P.white;
-    if (dx < -0.05 && dy < -0.2 && Math.abs(r - 0.8) < 0.15 && (x + y) % 2 === 0) return P.glow;
-    const t = spires.find((q) => x >= q.x && x < q.x + q.w && y >= q.top);
+    const onRib = [-0.62, -0.22, 0.22, 0.62].some((k) => Math.abs(dx - k * span) < 0.75 / drx);
+    const onRing = [0.36, 0.7].some((k) => Math.abs(dy + k) < 0.5 / dry);
+    if (onRib && onRing) return P.lamp; // rivet where ribs cross
+    if (onRib || onRing) return (x + y) % 3 ? P.brass1 : P.brass2;
+    if (dx < -0.12 && dy < -0.3 && Math.abs(r - 0.8) < 0.05) return P.white;
+    if (dx < -0.02 && dy < -0.2 && Math.abs(r - 0.8) < 0.13) return P.glow;
     let col;
-    if (t) {
-      const lit = y > t.top && (x - t.x) % 2 === 1 && (y - t.top) % 3 === 1 && hash2(x, y, seed) < 0.85;
-      col = lit ? P.lamp : rampPick([P.ink2, P.abyss2, P.abyss3], 0.35 + ((x - t.x) / t.w) * 0.3, x, y);
-      if (y === t.top && (x - t.x) === (t.w >> 1)) col = P.brass3;
+    if (interior === 'garden') {
+      const t = trees.find((q) => Math.hypot(px - q.x, (py - q.y) * 1.2) < q.r);
+      if (t) {
+        const lit = 0.55 - (py - t.y) / (t.r * 2.2) - (px - t.x) / (t.r * 3) + (vnoise(x * 0.6, y * 0.6, seed) - 0.5) * 0.5;
+        col = rampSoft(LEAF, lit, x, y, seed);
+      } else if (py > baseY - 3) col = rampSoft([P.leaf0, P.leaf1, P.brass0], 0.5, x, y, seed);
+      else col = rampSoft([P.glassD, P.leaf1, P.leaf2, P.glass], 0.2 + (1 + dy) * 0.45, x, y, seed + 5);
     } else {
-      col = rampPick([P.brass0, P.brass1, P.brass2, P.brass3], 0.1 + (1 - r) * 0.2 + (1 + dy) * 0.5, x, y);
+      // a reading hall: tall lit shelves, a gallery, warm air
+      const shelf = (x - cx + 64) % 4 === 0;
+      const gallery = Math.abs(py - (baseY - dry * 0.45)) < 0.8;
+      if (gallery) col = P.brass2;
+      else if (shelf && py > baseY - dry * 0.75) col = P.wood1;
+      else if (py > baseY - dry * 0.75 && hash2(x, y >> 1, seed) < 0.35) col = [P.coral1, P.kelp2, P.vio2, P.brass1][(x + (y >> 1)) % 4];
+      else col = rampSoft([P.brass0, P.brass1, P.brass2, P.brass3, P.lamp], 0.15 + (1 + dy) * 0.55 - Math.abs(dx) * 0.2, x, y, seed);
     }
-    const tint = dy < -0.55 ? 0.55 : r > 0.82 ? 0.55 : 0.16;
-    if (hash2(x, y, 3) < tint && (x + y) % 2 === 0) col = rampPick([P.glassD, P.glass], 0.35 - dy * 0.2, x, y);
+    if (lights.some(([lx, ly]) => lx === x && ly === y)) return P.lamp;
+    // the glass: a cyan sheen, heavier toward the top where it catches the light
+    const sheen = dy < -0.55 ? 0.42 : r > 0.84 ? 0.4 : 0.1;
+    if (hash2(x, y, 3) < sheen) col = rampSoft([P.glassD, P.glass, P.glow], 0.35 - dy * 0.35, x, y, seed + 9);
     return col;
   });
-  const top = baseY - dry;
-  buf.rect(cx - 1, top - 6, 2, 6, P.brass2);
-  buf.set(cx - 1, top - 6, P.brass3);
-  buf.rect(cx - 1, top - 8, 2, 2, P.lamp);
-  buf.set(cx, top - 9, P.brass2);
-  lamps.push([cx, top - 8]);
+  for (const [lx, ly] of lights.slice(0, 5)) lamps.push([lx, ly]);
+  cupola(buf, kit, cx, baseY - dry - 6, lamps);
+}
+
+// A small lantern room with a glowing window, a cap and a finial.
+function cupola(buf, kit, cx, top, lamps) {
+  const { P } = kit;
+  for (let y = top; y < top + 6; y++) {
+    for (let x = cx - 3; x <= cx + 3; x++) {
+      const edge = x === cx - 3 || x === cx + 3;
+      const glass = y > top && y < top + 5 && x > cx - 3 && x < cx + 3 && x !== cx;
+      buf.set(x, y, edge ? P.brass1 : glass ? P.lamp : P.brass2);
+    }
+  }
+  for (let r = 1; r <= 3; r++) for (let x = cx - (4 - r); x <= cx + (4 - r); x++) buf.set(x, top - r, r === 1 ? P.brass3 : P.brass1);
+  buf.set(cx, top - 4, P.brass3);
+  buf.set(cx, top - 5, P.lamp);
+  lamps.push([cx, top + 3]);
 }
 
 function lampPost(buf, kit, x, y, h, lamps) {
@@ -150,41 +180,37 @@ function lampPost(buf, kit, x, y, h, lamps) {
   lamps.push([x, y - h - 1]);
 }
 
-function station(kit, accent, seed) {
+function station(kit, accent, seed, interior) {
   const { P, PixelBuffer, mulberry32 } = kit;
   const W = 88;
-  const H = 86;
+  const H = 88;
   const cx = 44;
-  const baseY = 56;
+  const baseY = 58;
   const rng = mulberry32(seed);
   const buf = new PixelBuffer(W, H);
   const lamps = [];
-  // towers behind the dome
   const back = [
-    { x: cx - 26, w: 7, top: Math.round(baseY - 24 - rng() * 12), roof: 5 },
-    { x: cx + 19, w: 7, top: Math.round(baseY - 20 - rng() * 14), roof: 5 },
-    { x: cx - 7 + Math.round(rng() * 10), w: 5, top: Math.round(baseY - 40 - rng() * 6), roof: 6 },
+    { x: cx - 27, w: 7, top: Math.round(baseY - 24 - rng() * 12), roof: 5 },
+    { x: cx + 20, w: 7, top: Math.round(baseY - 20 - rng() * 14), roof: 5 },
   ];
-  for (const t of back) tower(buf, kit, { ...t, bottom: baseY, lit: 0.75, seed }, lamps);
-  cylinder(buf, kit, { cx, top: baseY + 6, rx: 36, ry: 11, face: 5, accent, windows: true });
-  cylinder(buf, kit, { cx, top: baseY, rx: 30, ry: 9, face: 6, accent, windows: true });
-  glassDome(buf, kit, { cx, baseY, drx: 21, dry: 26, seed, towers: 7 }, lamps);
-  // squat front towers at the platform's shoulders
-  for (const x of [cx - 31, cx + 27]) tower(buf, kit, { x, w: 5, top: baseY - 6, bottom: baseY + 9, roof: 3, lit: 0.6, seed: seed + x }, lamps);
+  for (const t of back) tower(buf, kit, { ...t, bottom: baseY, lit: 0.8, seed }, lamps);
+  cylinder(buf, kit, { cx, top: baseY + 6, rx: 36, ry: 11, face: 5, accent, windows: true, seed });
+  cylinder(buf, kit, { cx, top: baseY, rx: 30, ry: 9, face: 6, accent, windows: true, seed: seed + 1 });
+  glassDome(buf, kit, { cx, baseY, drx: 21, dry: 25, seed, interior }, lamps);
+  for (const x of [cx - 32, cx + 28]) tower(buf, kit, { x, w: 5, top: baseY - 6, bottom: baseY + 9, roof: 3, lit: 0.6, seed: seed + x }, lamps);
   lampPost(buf, kit, cx - 14, baseY + 10, 5, lamps);
   lampPost(buf, kit, cx + 14, baseY + 10, 5, lamps);
-  // stair down the face
-  for (let k = 0; k < 4; k++) buf.rect(cx - 4 + k, baseY + 9 + k * 2, 9 - k * 2, 1, P.abyss5);
-  buf.outline(P.ink);
+  for (let k = 0; k < 4; k++) buf.rect(cx - 4 + k, baseY + 9 + k * 2, 9 - k * 2, 1, k % 2 ? P.abyss5 : P.abyss6);
+  buf.outline('auto');
   return { buf, lamps };
 }
 
 function hub(kit) {
   const { P, PixelBuffer } = kit;
   const W = 132;
-  const H = 122;
+  const H = 126;
   const cx = 66;
-  const baseY = 82;
+  const baseY = 86;
   const buf = new PixelBuffer(W, H);
   const lamps = [];
   const towers = [
@@ -192,100 +218,105 @@ function hub(kit) {
     { x: cx + 42, w: 9, top: baseY - 42, roof: 7 },
     { x: cx - 38, w: 7, top: baseY - 30, roof: 5 },
     { x: cx + 32, w: 7, top: baseY - 34, roof: 5 },
-    { x: cx - 22, w: 5, top: baseY - 52, roof: 6 },
-    { x: cx + 18, w: 5, top: baseY - 56, roof: 6 },
   ];
   for (const t of towers) tower(buf, kit, { ...t, bottom: baseY, lit: 0.85, seed: 5 + t.x }, lamps);
-  cylinder(buf, kit, { cx, top: baseY + 8, rx: 54, ry: 15, face: 7, accent: P.brass3, windows: true });
-  cylinder(buf, kit, { cx, top: baseY, rx: 46, ry: 13, face: 9, accent: P.brass3, windows: true });
-  glassDome(buf, kit, { cx, baseY, drx: 33, dry: 40, seed: 5, towers: 11 }, lamps);
-  // the orchestrator's seal: a trident in a brass medallion
-  const my = baseY - 12;
-  for (let y = -8; y <= 8; y++) {
-    for (let x = -8; x <= 8; x++) {
+  cylinder(buf, kit, { cx, top: baseY + 8, rx: 54, ry: 15, face: 7, accent: P.brass3, windows: true, seed: 7 });
+  cylinder(buf, kit, { cx, top: baseY, rx: 46, ry: 13, face: 9, accent: P.brass3, windows: true, seed: 8 });
+  glassDome(buf, kit, { cx, baseY, drx: 34, dry: 42, seed: 5, interior: 'garden' }, lamps);
+  // the orchestrator's seal: a trident in a riveted brass ring
+  const my = baseY - 16;
+  for (let y = -10; y <= 10; y++) {
+    for (let x = -10; x <= 10; x++) {
       const d = Math.hypot(x, y);
-      if (d <= 8.2) buf.set(cx + x, my + y, d > 6.6 ? P.brass3 : P.ink2);
+      if (d > 10.2) continue;
+      const rivet = d > 8.6 && Math.abs(((Math.atan2(y, x) / (Math.PI / 6)) % 1 + 1) % 1 - 0.5) > 0.4;
+      buf.set(cx + x, my + y, d > 8 ? (rivet ? P.lamp : y < 0 ? P.brass3 : P.brass1) : d > 7 ? P.brass0 : P.ink2);
     }
   }
-  for (let y = -5; y <= 6; y++) buf.set(cx, my + y, P.brass3);
-  for (const x of [-3, 3]) for (let y = -5; y <= -1; y++) buf.set(cx + x, my + y, P.brass3);
-  for (let x = -3; x <= 3; x++) buf.set(cx + x, my - 1, P.brass3);
-  for (const x of [-3, 0, 3]) buf.set(cx + x, my - 6, P.lamp);
+  for (let y = -5; y <= 7; y++) buf.set(cx, my + y, P.pearl);
+  for (const x of [-4, 4]) for (let y = -5; y <= -1; y++) buf.set(cx + x, my + y, P.pearl);
+  for (let x = -4; x <= 4; x++) buf.set(cx + x, my - 1 + (Math.abs(x) === 4 ? 0 : 1), P.pearl);
+  for (const x of [-4, 0, 4]) buf.set(cx + x, my - 6, P.white);
   for (const x of [cx - 44, cx + 42]) tower(buf, kit, { x, w: 6, top: baseY - 8, bottom: baseY + 12, roof: 4, lit: 0.7, seed: x }, lamps);
   for (const x of [cx - 24, cx + 24]) lampPost(buf, kit, x, baseY + 14, 6, lamps);
-  for (let k = 0; k < 5; k++) buf.rect(cx - 6 + k, baseY + 12 + k * 2, 13 - k * 2, 1, P.abyss5);
-  buf.outline(P.ink);
+  for (let k = 0; k < 5; k++) buf.rect(cx - 6 + k, baseY + 12 + k * 2, 13 - k * 2, 1, k % 2 ? P.abyss5 : P.abyss6);
+  buf.outline('auto');
   return { buf, lamps };
 }
 
-// Gothic rock pinnacles; far ones hazy, near ones dark. Some carry a lit ruin.
-function pinnacles(kit) {
-  const { P, paint, rampPick, hash2 } = kit;
-  const make = (w, h, seed, far, ruin) => {
-    const ramp = far ? [P.abyss3, P.abyss4, P.abyss5, P.abyss6] : [P.abyss0, P.abyss1, P.abyss2, P.abyss3];
-    const rim = far ? P.abyss7 : P.abyss5;
-    const hw = (y) => {
-      const t = y / h;
-      let v = (w / 2) * Math.pow(t, 0.55);
-      v += (hash2(Math.floor(y / 3), 1, seed) - 0.5) * 2.2 * t;
-      if (hash2(Math.floor(y / 9), 2, seed) < 0.25) v += 1.5 * t; // ledges
-      return v;
-    };
-    const cx = w / 2;
-    return paint(w, h, (x, y) => {
-      const half = hw(y);
-      const dx = x + 0.5 - cx;
-      if (Math.abs(dx) > half) return null;
-      if (ruin && y > h * 0.12 && y < h * 0.3 && Math.abs(dx) < 1.2 && y % 4 === 1) return P.lamp;
-      if (dx < -half + 1.2) return rim;
-      if (hash2(x, Math.floor(y / 2), seed + 7) < 0.05) return ramp[0];
-      return rampPick(ramp, 0.62 - dx / (w * 0.9) - (y / h) * 0.25, x, y);
-    });
-  };
-  return {
-    sprite: 'pinnacle',
-    frames: [
-      { name: 'far0', buf: make(18, 92, 1, true, true) },
-      { name: 'far1', buf: make(26, 128, 2, true, false) },
-      { name: 'far2', buf: make(14, 70, 3, true, false) },
-      { name: 'near0', buf: make(30, 150, 4, false, false) },
-      { name: 'near1', buf: make(22, 118, 5, false, true) },
-    ],
-    meta: {},
-  };
+// A brass bathyscaphe with a big glowing viewport, banded in the agent's colour.
+function subs(kit) {
+  const { P, paint, rampSoft, inPoly } = kit;
+  const agents = { aronnax: P.research, conseil: P.analyze, ned: P.build, cyrus: P.model, lidenbrock: P.test, barbicane: P.deploy, axel: P.remember };
+  const HULL = [P.brass0, P.brass1, P.brass2, P.brass3, P.lamp];
+  const frames = [];
+  for (const [id, accent] of Object.entries(agents)) {
+    for (const f of [0, 1]) {
+      const buf = paint(30, 20, (x, y) => {
+        const px = x + 0.5;
+        const py = y + 0.5;
+        const pd = Math.hypot(px - 22.5, py - 11);
+        if (pd <= 4.7) {
+          if (pd > 3.5) return pd > 4.2 ? P.brass1 : py < 11 ? P.brass3 : P.brass2;
+          if (Math.hypot(px - 21.4, py - 9.8) < 1.1) return P.white;
+          return rampSoft([P.glassD, P.glass, P.glow], 0.95 - pd / 3.5 - (py - 11) / 10, x, y, 4);
+        }
+        const hx = (px - 14) / 11;
+        const hy = (py - 11.5) / 6.6;
+        const hd = hx * hx + hy * hy;
+        if (hd <= 1) {
+          if (Math.abs(px - 9) < 1) return accent;
+          if (Math.abs(py - 14) < 0.5 && x % 3 === 0) return P.brass0;
+          return rampSoft(HULL, 0.82 - hy * 0.5 - hx * 0.1 - (hd > 0.78 ? 0.18 : 0), x, y, 2);
+        }
+        if (px >= 11 && px <= 18 && py >= 3.5 && py < 6.5) {
+          if (py < 4.5 && (px < 12 || px > 17)) return null;
+          return py < 4.5 ? P.brass3 : px < 13 ? P.brass2 : P.brass1;
+        }
+        if (px >= 15 && px <= 16 && py >= 0.5 && py < 3.5) return py < 1.5 ? P.brass2 : P.iron3;
+        if (inPoly(px, py, [[3, 6], [8, 8], [8, 9.5], [2, 8.5]])) return P.brass1;
+        if (inPoly(px, py, [[3, 17], [8, 15], [8, 13.5], [2, 14.5]])) return P.brass1;
+        if (px >= 0.5 && px <= 3) {
+          const blade = f ? (py > 7 && py < 10) || (py > 13 && py < 16) : py > 9.5 && py < 13.5;
+          if (blade) return P.iron4;
+          if (px > 1.8 && py > 10 && py < 13) return P.iron2;
+        }
+        return null;
+      }).padded(1).outline('auto');
+      frames.push({ name: `${id}.run${f}`, buf });
+    }
+  }
+  return { sprite: 'sub', frames, meta: { lamp: [27, 12] } };
 }
 
 function ruins(kit) {
-  const { P, paint, rampPick, hash2 } = kit;
-  const STONE = [P.abyss2, P.abyss3, P.abyss4, P.abyss5];
+  const { P, paint, rampSoft, hash2 } = kit;
+  const STONE = [P.cliff2, P.cliff3, P.cliff4, P.abyss5];
   const arch = paint(38, 32, (x, y) => {
     const px = x + 0.5;
     const py = y + 0.5;
     const pillar = (px >= 4 && px <= 10) || (px >= 28 && px <= 34);
     const r = Math.hypot(px - 19, py - 17);
-    const ring = py <= 17 && r >= 9 && r <= 15.5 && !(px > 27 && py < 8); // broken keystone side
+    const ring = py <= 17 && r >= 9 && r <= 15.5 && !(px > 27 && py < 8);
     if ((pillar && py > 16) || ring) {
-      if (hash2(x, y, 4) < 0.07) return P.kelp2;
+      if (hash2(x, y, 4) < 0.1) return P.moss4;
       if ((pillar && (px < 5 || (px > 28 && px < 29))) || (ring && r > 14.5)) return P.abyss6;
-      if (y % 5 === 0) return P.abyss2;
-      return rampPick(STONE, 0.6 - (px - 19) / 50, x, y);
+      return rampSoft(STONE, 0.6 - (px - 19) / 50, x, y, 3);
     }
-    if (py > 29 && px > 1 && px < 37) return y === 30 ? P.abyss5 : P.abyss2; // footing
+    if (py > 29 && px > 1 && px < 37) return y === 30 ? P.moss3 : P.cliff2;
     return null;
   });
   const column = paint(10, 28, (x, y) => {
     const top = 4 + ((x * 3) % 3);
-    if (y < top || x < 2 || x > 7) return y >= 24 && x >= 0 && x <= 9 ? P.abyss3 : null;
+    if (y < top || x < 2 || x > 7) return y >= 24 && x >= 0 && x <= 9 ? P.cliff3 : null;
     if (x === 2) return P.abyss6;
-    if (x === 4 || x === 6) return P.abyss3;
-    return rampPick(STONE, 0.55 - x / 20, x, y);
+    return rampSoft(STONE, 0.55 - x / 20, x, y, 5);
   });
-  return { sprite: 'ruin', frames: [{ name: 'arch', buf: arch.outline(P.ink) }, { name: 'column', buf: column.outline(P.ink) }], meta: {} };
+  return { sprite: 'ruin', frames: [{ name: 'arch', buf: arch.outline('auto') }, { name: 'column', buf: column.outline('auto') }], meta: {} };
 }
 
-// Anemones with bright tips, and tube coral.
 function reef(kit) {
-  const { P, PixelBuffer, mulberry32, paint, rampPick } = kit;
+  const { P, PixelBuffer, mulberry32, paint, rampSoft } = kit;
   const anemone = (ramp, seed) => {
     const rng = mulberry32(seed);
     const b = new PixelBuffer(15, 13);
@@ -299,17 +330,17 @@ function reef(kit) {
       }
     }
     for (let x = 3; x <= 11; x++) for (let y = 10; y <= 12; y++) if (Math.abs(x - 7) + (y - 10) * 2 < 6) b.set(x, y, y === 10 ? ramp[1] : ramp[0]);
-    return b.padded(1).outline(P.ink);
+    return b.padded(1).outline('auto');
   };
   const tubes = (ramp, seed) => {
     const rng = mulberry32(seed);
     const cols = [0, 1, 2, 3].map((i) => ({ x: 1 + i * 3 + (i > 1 ? 1 : 0), h: 6 + ((rng() * 8) | 0) }));
     return paint(15, 16, (x, y) => {
       for (const c of cols) {
-        if (x >= c.x && x < c.x + 3 && y >= 15 - c.h) return y === 15 - c.h ? ramp[3] : y === 16 - c.h ? ramp[0] : x === c.x ? ramp[2] : rampPick([ramp[0], ramp[1]], 0.6 - (x - c.x) * 0.3, x, y);
+        if (x >= c.x && x < c.x + 3 && y >= 15 - c.h) return y === 15 - c.h ? ramp[3] : y === 16 - c.h ? ramp[0] : x === c.x ? ramp[2] : rampSoft([ramp[0], ramp[1]], 0.6 - (x - c.x) * 0.3, x, y, seed);
       }
       return null;
-    }).outline(P.ink);
+    }).outline('auto');
   };
   return {
     sprite: 'reef',
@@ -325,9 +356,10 @@ function reef(kit) {
   };
 }
 
-// Front-facing octopus mantle; the page animates its arms.
+// A pale, ghostly octopus for the far water; the page animates its arms.
 function octopus(kit) {
-  const { P, paint, rampPick, hash2 } = kit;
+  const { P, paint, rampSoft, hash2 } = kit;
+  const GHOST = [P.ghost0, P.ghost1, P.ghost2, P.ghost3];
   const buf = paint(40, 36, (x, y) => {
     const px = x + 0.5;
     const py = y + 0.5;
@@ -335,21 +367,21 @@ function octopus(kit) {
     const skirt = py >= 20 && py <= 32 && Math.abs(px - 20) <= 11 - (py - 20) * 0.35;
     if (!mantle && !skirt) return null;
     for (const ex of [13, 24]) {
-      if (x >= ex && x <= ex + 3 && y >= 20 && y <= 22) return x === ex + 1 || x === ex + 2 ? (y === 21 ? P.ink : P.brass3) : P.lamp;
+      if (x >= ex && x <= ex + 3 && y >= 20 && y <= 22) return x === ex + 1 || x === ex + 2 ? (y === 21 ? P.ghost0 : P.stone4) : P.ghost3;
     }
-    if (mantle && hash2(x >> 1, y >> 1, 9) < 0.14 && py < 20) return P.pink4;
-    return rampPick([P.pink0, P.pink1, P.pink2, P.pink3], 0.72 - (py - 2) / 40 - (px - 20) / 45, x, y);
+    if (mantle && hash2(x >> 1, y >> 1, 9) < 0.12 && py < 20) return P.ghost3;
+    return rampSoft(GHOST, 0.72 - (py - 2) / 40 - (px - 20) / 45, x, y, 6);
   });
   return {
     sprite: 'octopus',
-    frames: [{ name: 'head', buf: buf.outline(P.ink) }],
-    meta: { roots: [[10, 30], [13, 32], [16, 33], [20, 33], [24, 33], [27, 32], [30, 30], [20, 31]].map(([x, y]) => [x + 0, y + 0]) },
+    frames: [{ name: 'head', buf: buf.outline('auto') }],
+    meta: { roots: [[10, 30], [13, 32], [16, 33], [20, 33], [24, 33], [27, 32], [30, 30], [20, 31]] },
   };
 }
 
-// Humpback, facing right, drawn at any length from continuous shapes.
+// Humpback, facing right, drawn from continuous shapes at any length.
 function whale(kit) {
-  const { P, paint, rampPick, inPoly } = kit;
+  const { P, paint, rampSoft, inPoly } = kit;
   const L = 132;
   const s = L / 78;
   const frames = [-1, 1].map((flip, i) => {
@@ -360,110 +392,153 @@ function whale(kit) {
       const py = y + 0.5;
       const ux = px / s;
       const uy = py / s;
-      if (inPoly(px, py, fin)) return uy > 24 ? P.pearlD : uy > 21 ? P.stone3 : P.iron3;
+      if (inPoly(px, py, fin)) return uy > 24 ? P.floor5 : P.floor4;
       if (ux >= 8 && ux <= 74) {
         const u = (ux - 8) / 66;
         const top = 13 - 8.5 * Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.92 + 0.08)), 0.6);
         const bot = 13 + 6.5 * Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.88 + 0.12)), 0.75);
         if (uy >= top && uy <= bot) {
           const v = (uy - top) / (bot - top);
-          if (Math.hypot(ux - 66, uy - 12) < 0.9) return P.ink;
-          if (v > 0.62 && u > 0.42 && Math.floor(uy * 2.2) % 2 === 0) return P.stone3; // throat grooves
-          if (u > 0.78 && v < 0.4 && (x * 7 + y * 3) % 13 === 0) return P.stone4; // barnacles
-          return rampPick([P.iron1, P.iron2, P.iron3, P.stone2], 0.86 - v * 0.62, x, y);
+          if (Math.hypot(ux - 66, uy - 12) < 0.9) return P.cliff0;
+          if (v > 0.62 && u > 0.42 && Math.floor(uy * 2.2) % 2 === 0) return P.floor5;
+          return rampSoft([P.cliff2, P.cliff3, P.floor3, P.floor4], 0.86 - v * 0.62, x, y, 7);
         }
       }
-      if (inPoly(px, py, fluke)) return P.iron2;
+      if (inPoly(px, py, fluke)) return P.cliff3;
       return null;
     });
-    return { name: `swim${i}`, buf: buf.outline(P.ink) };
+    return { name: `swim${i}`, buf: buf.outline('auto') };
   });
   return { sprite: 'whale', frames, meta: {} };
 }
 
-// The bridge: the great salon window with its spoked frame, Nemo at the helm,
-// Aronnax at his desk under a lamp.
+// The bridge by lamplight: the great spoked window, Nemo standing at it in his
+// hat, Aronnax at his desk with a lantern, books and a brass globe.
 function bridge(kit) {
-  const { P, paint, rampPick, inPoly, hash2 } = kit;
+  const { P, paint, rampSoft, inPoly, hash2 } = kit;
   const w = 180;
   const h = 236;
-  const wc = [104, 96];
-  const R = 86;
-  const nemo = [[52, 236], [55, 150], [60, 133], [80, 133], [86, 150], [89, 236]];
-  const arm = [[58, 142], [37, 170], [42, 174], [63, 150]];
-  const aron = [[126, 236], [129, 172], [136, 162], [156, 162], [163, 174], [165, 236]];
-  const shade = [[163, 150], [177, 150], [180, 160], [160, 160]];
+  const wc = [98, 186];
+  const R = 176;
+  const lamp = [84, 152];
+  const nemoBody = [[26, 236], [28, 150], [36, 128], [64, 128], [72, 150], [74, 236]];
+  const nemoArm = [[66, 142], [80, 172], [74, 176], [62, 150]];
+  const chair = [[84, 236], [86, 150], [120, 150], [122, 236]];
+  const aron = [[92, 186], [94, 150], [100, 140], [116, 140], [120, 152], [120, 186]];
+  const coat = [P.coat0, P.coat1, P.coat2];
+  // figures are lit: cool window light from behind, warm lamplight on the side
+  // that faces the lantern
+  const lit = (px, py, inside, cool, warm) => {
+    const toLamp = Math.sign(lamp[0] - px) || 1;
+    const edgeL = !inside(px + 1.5 * toLamp, py);
+    const edgeB = !inside(px - 1.5 * toLamp, py);
+    const edgeT = !inside(px, py - 1.5);
+    const d = Math.hypot(px - lamp[0], py - lamp[1]);
+    if ((edgeL || (edgeT && d < 40)) && d < 70) return warm;
+    if (edgeB || edgeT) return cool;
+    return null;
+  };
   const buf = paint(w, h, (x, y) => {
     const px = x + 0.5;
     const py = y + 0.5;
-    // Nemo
-    const nemoCap = (py >= 106 && py <= 110 && px >= 62 && px <= 78) || (py > 110 && py <= 112 && px >= 59 && px <= 81);
-    const nemoHead = Math.hypot(px - 70, py - 118) <= 7.5;
-    if (nemoCap || nemoHead || inPoly(px, py, nemo) || inPoly(px, py, arm)) {
-      const edge = !(inPoly(px + 1.3, py, nemo) || Math.hypot(px + 1.3 - 70, py - 118) <= 7.5 || nemoCap);
-      return edge && py < 200 ? P.abyss6 : P.ink;
+    const lampD = Math.hypot(px - lamp[0], py - lamp[1]);
+    // the lantern itself
+    if (px >= lamp[0] - 4 && px <= lamp[0] + 4 && py >= lamp[1] - 7 && py <= lamp[1] + 5) {
+      if (px < lamp[0] - 3 || px > lamp[0] + 3 || py < lamp[1] - 6 || py > lamp[1] + 4) return P.brass1;
+      return Math.abs(px - lamp[0]) < 1.5 && Math.abs(py - lamp[1]) < 2.5 ? P.white : P.lamp;
+    }
+    if (px >= lamp[0] - 1 && px <= lamp[0] + 1 && py > lamp[1] + 5 && py < 176) return P.brass2;
+    // books and the globe on the desk
+    if (px >= 125 + Math.floor((py - 164) / 3) % 2 && px <= 140 - Math.floor((py - 164) / 4) % 2 && py >= 164 && py < 176) {
+      if ((py - 164) % 3 === 2.5) return P.wood0;
+      return px < 127 + Math.floor((py - 164) / 3) % 2 ? P.paper : [P.coral0, P.kelp1, P.coat2, P.wood2][Math.floor((py - 164) / 3) % 4];
+    }
+    const gd = Math.hypot(px - 154, py - 154);
+    if (gd <= 11) return gd > 10 ? P.brass2 : rampSoft([P.glassD, P.glass, P.brass2, P.brass3], 0.85 - (px - 143) / 26 + (lampD < 75 ? 0.1 : 0), x, y, 2);
+    if (px >= 152 && px <= 156 && py > 165 && py < 176) return P.brass1;
+    if (px >= 148 && px <= 160 && py >= 174 && py < 176) return P.brass2;
+    // Aronnax at the desk, seen from behind, and his chair
+    const inAron = (qx, qy) => inPoly(qx, qy, aron) || Math.hypot(qx - 108, qy - 132) <= 7.5;
+    if (inAron(px, py)) {
+      if (Math.hypot(px - 108, py - 132) <= 7.5) return lit(px, py, inAron, P.coat2, P.skin1) ?? rampSoft([P.cliff0, P.skin0], 0.2, x, y, 1);
+      return lit(px, py, inAron, P.coat2, P.brass2) ?? rampSoft(coat, 0.35 + (px - 94) / 80, x, y, 1);
+    }
+    if (inPoly(px, py, chair)) {
+      if (py < 153 || px < 88 || px > 118) return (x + y) % 5 === 0 ? P.brass3 : P.wood2;
+      return rampSoft([P.wood0, P.wood1, P.wood2], 0.45 + (lampD < 50 ? 0.3 : 0) - (py - 150) / 200, x, y, 3);
+    }
+    // Nemo at the window, in his hat
+    const inHat = (qx, qy) => (qy >= 80 && qy <= 94 && qx >= 40 && qx <= 58) || (qy > 94 && qy <= 97 && qx >= 36 && qx <= 62);
+    const inHead = (qx, qy) => Math.hypot(qx - 49, qy - 106) <= 9;
+    const inNemo = (qx, qy) => inPoly(qx, qy, nemoBody) || inPoly(qx, qy, nemoArm) || inHead(qx, qy) || inHat(qx, qy) || (qy > 112 && qy < 130 && Math.abs(qx - 50) < 6);
+    if (inNemo(px, py)) {
+      if (inHat(px, py)) return lit(px, py, inNemo, P.coat2, P.coat2) ?? (py > 92 && py < 94 ? P.brass1 : P.coat0);
+      if (inHead(px, py)) return px > 53 ? P.skin0 : lit(px, py, inNemo, P.coat2, P.skin1) ?? P.cliff0;
+      const fold = Math.abs(px - 50) < 0.8 && py > 132;
+      return lit(px, py, inNemo, P.abyss6, P.brass1) ?? (fold ? P.coat0 : rampSoft(coat, 0.45 + (px - 50) / 60 - (py - 130) / 300, x, y, 4));
     }
     // helm wheel
-    const wd = Math.hypot(px - 34, py - 186);
+    const wd = Math.hypot(px - 18, py - 200);
     if (wd <= 27) {
       if (wd >= 22) return wd > 25.5 ? P.wood1 : wd > 23.5 ? P.wood3 : P.wood2;
-      const a = Math.atan2(py - 186, px - 34);
+      const a = Math.atan2(py - 200, px - 18);
       if (wd <= 4.5) return wd <= 2.5 ? P.brass3 : P.brass1;
       if (Math.abs(((a / (Math.PI / 4)) % 1 + 1) % 1 - 0.5) > 0.45) return P.wood2;
-    } else if (wd <= 31) {
-      const a = Math.atan2(py - 186, px - 34);
-      if (Math.abs(((a / (Math.PI / 4)) % 1 + 1) % 1 - 0.5) > 0.41) return P.wood3; // handles
     }
-    // Aronnax, the desk lamp, books and the globe
-    const aronHead = Math.hypot(px - 146, py - 152) <= 6.5;
-    if (aronHead || inPoly(px, py, aron)) {
-      const edge = !(inPoly(px - 1.3, py, aron) || Math.hypot(px - 1.3 - 146, py - 152) <= 6.5);
-      return edge && py < 205 ? P.brass2 : P.ink;
+    // desk
+    if (py >= 176) {
+      if (py < 178) return lampD < 60 ? P.brass3 : P.brass2;
+      if (py < 181) return rampSoft([P.wood2, P.wood3, P.brass2], 0.3 + Math.max(0, 1 - lampD / 70) * 0.7, x, y, 5);
+      if ((x % 30 === 0 && py > 186) || y === 210) return P.wood0;
+      if (x % 30 === 15 && y === 196) return P.brass2;
+      return rampSoft([P.wood0, P.wood1, P.wood2, P.wood3], 0.25 + Math.max(0, 1 - lampD / 90) * 0.55 - (py - 182) / 160, x, y, 6);
     }
-    if (inPoly(px, py, shade)) return py < 152 ? P.brass3 : P.brass1;
-    if (px >= 169 && px <= 171 && py > 160 && py < 178) return P.brass1;
-    if (py >= 160 && py < 178 && px > 150 && px < 180 && Math.hypot(px - 170, py - 162) < 14 && (x + y) % 2 === 0) return P.brass0; // lamplight
-    if (px >= 110 && px <= 124 && py >= 166 && py < 178) {
-      const book = Math.floor((py - 166) / 3);
-      return [P.coral1, P.kelp2, P.vio2, P.brass1][book % 4];
-    }
-    if (Math.hypot(px - 98, py - 166) <= 9) return rampPick([P.glassD, P.glass, P.brass2], 0.75 - (py - 157) / 20, x, y);
-    // desk / console
-    if (py >= 178) {
-      if (py < 180) return P.brass2;
-      if (py < 182) return P.wood3;
-      if ((x % 30 === 0 && py > 186) || (y === 208)) return P.wood0;
-      if (x % 30 === 15 && y === 195) return P.brass2;
-      return rampPick([P.wood0, P.wood1, P.wood2], 0.6 - (py - 182) / 90, x, y);
-    }
-    // the great window
+    // the great window: riveted arch, spokes, the lit sea beyond
     const d = Math.hypot(px - wc[0], py - wc[1]);
     if (d <= R) {
-      if (d >= R - 8) {
-        const a = Math.atan2(py - wc[1], px - wc[0]);
-        const rivet = d > R - 5 && d < R - 3 && Math.abs(((a / (Math.PI / 12)) % 1 + 1) % 1 - 0.5) > 0.4;
-        if (rivet) return P.lamp;
-        return rampPick([P.brass0, P.brass1, P.brass2, P.brass3], 0.55 - (py - wc[1]) / 150 - (px - wc[0]) / 220, x, y);
-      }
-      if (d <= 20 && d >= 16) return P.brass1;
       const a = Math.atan2(py - wc[1], px - wc[0]);
-      if (d > 20 && Math.abs(((a / (Math.PI / 4)) % 1 + 1) % 1 - 0.5) > 0.485) return P.brass1; // spokes
-      // the sea: domes glowing on the floor, rays from above
-      const floor = wc[1] + 36 + Math.sin(px * 0.08) * 4;
-      const domeA = Math.hypot((px - 140) / 16, (py - (wc[1] + 38)) / 14);
-      const domeB = Math.hypot((px - 76) / 10, (py - (wc[1] + 44)) / 9);
-      if (py < wc[1] + 38 && domeA <= 1) return domeA > 0.86 ? P.glass : hash2(x, y, 2) < 0.25 ? P.lamp : P.abyss4;
-      if (py < wc[1] + 44 && domeB <= 1) return domeB > 0.84 ? P.glass : hash2(x, y, 3) < 0.25 ? P.lamp : P.abyss4;
-      if (py > floor) return rampPick([P.abyss1, P.abyss2, P.abyss3], 0.5 - (py - floor) / 40, x, y);
-      const spire = Math.abs(px - 48) < 6 - (wc[1] + 36 - py) * 0.09 && py > wc[1] - 20;
-      if (spire) return P.abyss2;
-      const ray = Math.max(0, Math.sin((px + py * 0.45) * 0.12)) ** 8 * 0.3;
-      return rampPick([P.abyss2, P.abyss3, P.abyss4, P.abyss5, P.abyss6, P.abyss7], 0.95 - (py - (wc[1] - R)) / (R * 1.9) + ray, x, y);
+      const warmth = Math.max(0, 1 - lampD / 90) * 0.35;
+      if (d >= R - 12) {
+        // the frame: dark bronze, a lit bevel, bolts every few degrees
+        const seg = ((a / (Math.PI / 12)) % 1 + 1) % 1;
+        const bolt = Math.hypot((seg - 0.5) * (Math.PI / 12) * d, d - (R - 6)) < 2.6;
+        if (bolt) return Math.hypot((seg - 0.5) * (Math.PI / 12) * d + 0.8, d - (R - 6) + 0.8) < 1.2 ? P.brass3 : P.brass1;
+        if (d > R - 1.5 || d < R - 10.5) return P.brass0;
+        if (d < R - 9.5) return P.brass2;
+        return rampSoft([P.wood0, P.brass0, P.brass1, P.brass2], 0.35 - (py - 60) / 300 + warmth, x, y, 7);
+      }
+      if (Math.abs(d - 100) < 4) {
+        const seg = ((a / (Math.PI / 8)) % 1 + 1) % 1;
+        if (Math.abs(seg - 0.5) < 0.06 && Math.abs(d - 100) < 2.5) return P.brass3;
+        return d > 102.5 || d < 97.5 ? P.brass0 : rampSoft([P.brass0, P.brass1, P.brass2], 0.4 + warmth, x, y, 11);
+      }
+      if (Math.abs(((a / (Math.PI / 5)) % 1 + 1) % 1 - 0.5) > 0.485 && d > 30) return rampSoft([P.brass0, P.brass1], 0.5 + warmth, x, y, 12);
+      // beyond the glass: spires in the mist with lit windows, violet coral close by
+      const floor = 150 + Math.sin(px * 0.07) * 5;
+      for (const [cx, cy, r] of [[118, 150, 13], [132, 144, 10], [150, 152, 12], [168, 140, 14], [176, 150, 9]]) {
+        const cd = Math.hypot(px - cx, (py - cy) * 1.2);
+        if (cd <= r * (0.8 + 0.25 * kit.vnoise(Math.atan2(py - cy, px - cx) * 3, 0, cx))) {
+          const v = 0.55 - (px - cx) / (r * 2.2) - (py - cy) / (r * 2.4);
+          return rampSoft([P.vio0, P.vio1, P.vio2, P.vio3], v - 0.1 + (hash2(x, y, 4) - 0.5) * 0.25, x, y, 8);
+        }
+      }
+      if (py > floor) return rampSoft([P.rock1, P.rock2, P.silt1, P.silt2], 0.65 - (py - floor) / 30, x, y, 8);
+      for (const [sx, st, sw] of [[22, 40, 9], [44, 70, 7], [86, 30, 10], [104, 84, 6], [140, 56, 9], [162, 90, 7]]) {
+        const t = (py - st) / (floor - st);
+        const hw = sw * Math.pow(Math.max(0, t), 0.7) + (kit.vnoise(py * 0.2, 0, sx) - 0.5) * 2.5;
+        if (t > 0 && Math.abs(px - sx) < hw) {
+          if (hash2(x, y, sx) < 0.012) return P.window;
+          const fog = 0.35 + (sx % 3) * 0.12;
+          return rampSoft([P.rock1, P.rock2, P.rock3, P.mist1, P.mist2], (px < sx - hw + 1.5 ? 0.45 : 0.15) + fog + t * 0.25, x, y, 13);
+        }
+      }
+      const ray = Math.max(0, Math.sin((px + py * 0.45) * 0.1)) ** 8 * 0.3;
+      return rampSoft([P.mist0, P.mist1, P.mist2, P.mist3, P.mist4], 0.95 - (py - 10) / 150 + ray, x, y, 9);
     }
-    // bulkhead: iron ribs and rivets
+    // bulkhead
     if (x % 44 === 6) return P.iron1;
-    if (x % 44 === 7 && y % 9 === 4) return P.iron3;
-    return rampPick([P.ink, P.ink2, P.wood0], 0.35 + (py / h) * 0.25, x, y);
+    if (x % 44 === 7 && y % 9 === 4) return P.brass1;
+    return rampSoft([P.ink, P.ink2, P.wood0], 0.35 + (py / h) * 0.3, x, y, 10);
   });
-  return { sprite: 'bridge', frames: [{ name: 'salon', buf }], meta: { lamp: [170, 158] } };
+  return { sprite: 'bridge', frames: [{ name: 'salon', buf }], meta: { lamp } };
 }

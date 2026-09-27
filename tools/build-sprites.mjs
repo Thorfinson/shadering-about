@@ -16,7 +16,8 @@
 // .sprite format
 //   # comment
 //   @sprite <name>                 first directive; frames become <name>[.<variant>].<frame>
-//   @outline <colour>              pad each frame by 1px and outline it
+//   @outline <colour>|auto         pad each frame by 1px and outline it; auto = selective
+//                                  outline, a dark shade of each bordering pixel
 //   @thin <chars>                  characters drawn after the outline (hair-thin details)
 //   @map K=colour …                re-key characters for this sprite
 //   @variant <name> K=colour …     emit a recoloured copy of every frame
@@ -97,7 +98,7 @@ function parseSprite(text, file, pal) {
           spec.sprite = args[0];
           break;
         case 'outline':
-          spec.outline = colour(args[0], where);
+          spec.outline = args[0] === 'auto' ? 'auto' : colour(args[0], where);
           break;
         case 'thin':
           spec.thin = args.join('');

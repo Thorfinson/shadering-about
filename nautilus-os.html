@@ -109,7 +109,7 @@
   .nav .motto { margin: 10px 6px 4px; font: italic 13px/1.35 var(--book); color: var(--faint); }
   .nav .motto span { display: block; margin-top: 3px; font: 400 9.5px var(--caps); color: var(--brass); font-style: normal; }
   .bridge { flex: 1; min-height: 260px; padding: 0; overflow: hidden; background: #05070c; }
-  .bridge canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 40% 100%; image-rendering: pixelated; }
+  .bridge canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 45% 100%; image-rendering: pixelated; }
   .plaque {
     position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); white-space: nowrap;
     padding: 5px 12px; border-radius: 3px; border: 1px solid #8a6420;
@@ -468,13 +468,6 @@ function fbm(x, y, s, oct = 3) {
     f *= 2;
   }
   return v / n;
-}
-const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
-const bayer = (x, y) => BAYER[(y & 3) * 4 + (x & 3)];
-function rampPick(ramp, v, x, y) {
-  const f = clamp(v, 0, 1) * (ramp.length - 1);
-  const i = Math.floor(f);
-  return ramp[Math.min(ramp.length - 1, i + (f - i > bayer(x, y) ? 1 : 0))];
 }
 const C32 = new Map();
 function col32(hex) {
@@ -901,7 +894,6 @@ function layoutStations() {
     s.pry = m.pry;
     s.x = Math.round(W * s.fx);
     s.y = Math.round(H * s.fy);
-    s.gy = s.y + s.ph * K; // the map row whose plateau lifts it to s.y
     const c = spr(s.frame);
     s.sx = s.x - m.base[0];
     s.sy = s.y - m.base[1];
@@ -930,10 +922,16 @@ function layoutStations() {
       if (j) cum.push(cum[j - 1] + Math.hypot(x - pts[j - 1].x, y - pts[j - 1].y));
       pts.push({ x, y });
     }
-    paths[k] = { pts, cum, L: cum[cum.length - 1], busyUntil: 0, dir: 1 };
+    paths[k] = { pts, cum, L: cum[cum.length - 1], busyUntil: 0, dir: 1, beads: [] };
     s.col = P[s.color];
-    const [r1, g1, b1] = hexRGB(s.col), [r2, g2, b2] = hexRGB(P.abyss2);
-    s.dim = `rgb(${Math.round(lerp(r1, r2, 0.45))},${Math.round(lerp(g1, g2, 0.45))},${Math.round(lerp(b1, b2, 0.45))})`;
+    s.dim = mixHex(s.col, P.mist0, 0.5);
+    // glowing beads along the route, paling toward the hub
+    const p = paths[k];
+    for (let d = 4; d < p.L - 3; d += 6) {
+      const q = pathAt(k, d / p.L);
+      const f = d / p.L;
+      p.beads.push({ d, x: Math.round(q.x), y: Math.round(q.y), col: mixHex(s.col, P.pearl, (1 - f) * 0.45), dim: mixHex(s.col, P.mist0, 0.35 + (1 - f) * 0.1) });
+    }
   });
 }
 function pathAt(k, f) {
@@ -949,8 +947,10 @@ function pathAt(k, f) {
 }
 
 // ============================================================
-// Terrain — an oblique heightfield: mesas carry the stations,
-// spires crowd the haze at the back; then set dressing.
+// Terrain — painted, not dithered: open water with spires in
+// the mist, a terraced sea floor fading out of the haze, and a
+// floating island under every station. Colours mix in RGB, so
+// gradients stay soft; texture comes from clustered noise.
 // ============================================================
 const cv = $("#sea");
 const ctx = cv.getContext("2d");
@@ -959,208 +959,480 @@ const gctx = gcv.getContext("2d");
 let staticCanvas = null;
 let static32 = null;
 let light32 = null;
+let rayIdx = null;
 let frameImg = null;
 let frame32 = null;
 let rayBuf = null;
 let decorAnim = [];
-let emitters = []; // static glow points: lamps in ruins, anemone tips, bioluminescence
+let emitters = []; // static glow points: windows in the rock, lamps in ruins, anemone tips
 
+const HORIZON = 0.38; // where the sea floor comes out of the mist, as a fraction of the map height
+const rgb32 = (c) => ((0xff << 24) | (clamp(Math.round(c[2]), 0, 255) << 16) | (clamp(Math.round(c[1]), 0, 255) << 8) | clamp(Math.round(c[0]), 0, 255)) >>> 0;
+const mixRGB = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+const mixHex = (a, b, k) => "#" + mixRGB(hexRGB(a), hexRGB(b), k).map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+function rampRGB(r, v) {
+  const f = clamp(v, 0, 1) * (r.length - 1);
+  const i = Math.min(r.length - 2, Math.floor(f));
+  return mixRGB(r[i], r[i + 1], f - i);
+}
+function rng(seed) {
+  let s = (seed * 2654435761) % 2147483647 || 1;
+  return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
+}
+let TONE = null;
+function tones() {
+  const R = (...names) => names.map((n) => hexRGB(P[n]));
+  TONE = {
+    water: R("mist4", "mist3", "mist2", "mist1", "mist0"), // under the surface → the deep
+    rock: R("rock0", "rock1", "rock2", "rock3", "rock4"),
+    silt: R("silt0", "silt1", "silt2", "silt3"),
+    moss: R("moss2", "moss3", "moss4", "moss5"),
+    rim: hexRGB(P.rim), sun: hexRGB(P.rim), window: hexRGB(P.window), warm: hexRGB(P.brass3), deep: hexRGB(P.rock0),
+    coral: {
+      pink: R("pink1", "pink2", "pink3", "pink4"), violet: R("vio1", "vio2", "vio3", "pink4"),
+      orange: R("coral0", "coral1", "coral2", "coral3"), teal: R("glassD", "glass", "glow", "pearl"),
+    },
+  };
+}
+
+// The sea floor: broad formations cut into flat terraces.
 function heightAt(x, y) {
-  const H = map.H;
-  let v = fbm(x * 0.014, y * 0.025, 7, 3) * 0.3;
-  v += Math.max(0, fbm(x * 0.026 + 9, y * 0.048 + 4, 21, 2) - 0.55) * 3.4; // broad rock formations
-  const back = clamp(1 - y / (H * 0.4), 0, 1);
-  const sp = Math.max(0, vnoise(x * 0.085, y * 0.2, 33) - 0.55) / 0.45;
-  v += back * back * sp * sp * 6.5; // crags in the distance
-  for (const s of Object.values(STATIONS)) {
-    const d = Math.hypot((x - s.x) / s.pr, (y - s.gy) / (s.pr * 0.6));
-    if (d < 1.15) v = lerp(v, s.ph, smooth(1.15, 1.0, d)); // flat-topped mesa
-  }
-  return v;
+  let v = fbm(x * 0.012, y * 0.028, 7, 3) * 0.5;
+  v += Math.max(0, fbm(x * 0.017 + 9, y * 0.04 + 4, 21, 2) - 0.47) * 3.6;
+  return Math.floor(v * 2) / 2;
 }
 
-function buildTerrain() {
-  const { W, H } = map;
-  const N = W * H;
-  const u = new Uint32Array(N);
-  const TOP = ["abyss1", "abyss2", "abyss3", "abyss4", "abyss5", "abyss6", "abyss7"].map((n) => P[n]);
-  const CLIFF = ["abyss0", "abyss1", "abyss2", "abyss3"].map((n) => P[n]);
-  const HAZE = [P.abyss3, P.abyss4, P.abyss5, P.abyss6];
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) u[y * W + x] = col32(rampPick(HAZE, 0.95 - (y / H) * 1.7, x, y));
-  const R0 = 0, R1 = H + 52;
-  const HI_W = W + 2;
-  const hg = new Float32Array((R1 - R0 + 2) * HI_W);
-  for (let y = R0 - 1; y <= R1; y++) for (let x = -1; x <= W; x++) hg[(y - R0 + 1) * HI_W + (x + 1)] = heightAt(x, y);
-  const HI = (x, y) => hg[(y - R0 + 1) * HI_W + (x + 1)];
-  const topMask = new Uint8Array(N);
-  for (let y = R0; y < R1; y++) {
-    const fog = clamp(1 - y / (H * 0.5), 0, 1);
-    for (let x = 0; x < W; x++) {
-      const h = HI(x, y);
-      const top = Math.round(y - h * K);
-      const next = Math.round(y + 1 - HI(x, y + 1) * K);
-      if (top >= H) continue;
-      const gx = HI(x + 1, y) - HI(x - 1, y);
-      const gy = HI(x, y + 1) - HI(x, y - 1);
-      let lit = 0.22 + gy * K * 0.055 + gx * K * 0.035 + h * 0.2 + (fbm(x * 0.18, y * 0.28, 5, 2) - 0.5) * 0.08;
-      lit = lerp(lit, 0.62, fog * 0.6);
-      const cliff = next - top - 1;
-      for (let sy = Math.max(0, top); sy < Math.min(H, Math.max(top + 1, next)); sy++) {
-        const i = sy * W + x;
-        if (sy === top) {
-          let col = rampPick(TOP, lit, x, sy);
-          if (cliff >= 3 && h > 0.5) col = hash2(x, y, 4) < 0.45 ? P.rim : TOP[5];
-          u[i] = col32(col);
-          topMask[i] = 1;
-        } else {
-          const kk = (sy - top) / Math.max(1, cliff);
-          u[i] = col32(rampPick(fog > 0.3 ? HAZE : CLIFF, fog > 0.3 ? 0.6 - kk * 0.5 : 0.8 - kk * 0.7 + gx * K * 0.025, x, sy));
-          topMask[i] = 0;
-        }
-      }
-    }
+// A sprite pulled toward the colour of the water around it.
+const HAZED = new Map();
+function hazed(name, k) {
+  const key = `${name}|${k}`;
+  if (!HAZED.has(key)) {
+    const src = spr(name);
+    const c = makeCanvas(src.width, src.height);
+    const g = c.getContext("2d");
+    g.drawImage(src, 0, 0);
+    g.globalCompositeOperation = "source-atop";
+    g.globalAlpha = k;
+    g.fillStyle = P.mist1;
+    g.fillRect(0, 0, c.width, c.height);
+    HAZED.set(key, c);
   }
-  return { u, topMask };
-}
-
-function groundY(topMask, x) {
-  const { W, H } = map;
-  x = clamp(Math.round(x), 0, W - 1);
-  for (let y = 0; y < H; y++) if (topMask[y * W + x]) return y;
-  return H;
+  return HAZED.get(key);
 }
 
 function buildStatic() {
   const { W, H } = map;
   const N = W * H;
-  const { u, topMask } = buildTerrain();
+  tones();
+  emitters = [];
+  decorAnim = [];
+  const u = new Uint32Array(N);
+  const topMask = new Uint8Array(N);
+  const hz = Math.round(H * HORIZON);
+  const water = [];
+  for (let y = 0; y < H; y++) water.push(rampRGB(TONE.water, 0.1 + (y / H) * 0.95));
+  const put = (x, y, c) => {
+    x = Math.round(x);
+    y = Math.round(y);
+    if (x >= 0 && y >= 0 && x < W && y < H) u[y * W + x] = rgb32(c);
+  };
+  const lamp = (x, y, fog, r = 4, a = 0.4) => {
+    put(x, y, mixRGB(TONE.window, water[clamp(Math.round(y), 0, H - 1)], fog * 0.75));
+    emitters.push({ x, y, col: P.window, r, a: a * (1 - fog * 0.7) });
+  };
+
+  // 1. open water, brightest under the light from the surface
+  const sunX = W * 0.52;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const n = fbm(x * 0.012, y * 0.02, 3, 3) - 0.5;
+      const k = Math.exp(-(((x - sunX) / (W * 0.34)) ** 2)) * (1 - y / H) ** 2 * 0.3;
+      const c = mixRGB(water[y], TONE.sun, k);
+      u[y * W + x] = rgb32([c[0] * (1 + n * 0.24), c[1] * (1 + n * 0.22), c[2] * (1 + n * 0.18)]);
+    }
+  }
+
+  // 2. spires, three layers deep in the mist; the nearer ones are lived in
+  const spire = (cx, tip, base, w, fog, seed, windows, tower) => {
+    const h = base - tip;
+    const lean = (hash2(seed, 1, 5) - 0.5) * 0.14;
+    const widthAt = (y) => {
+      const t = (y - tip) / h, yy = y >> 1;
+      let hw = w * (0.05 + 0.95 * t ** 0.7) + (vnoise(yy * 0.35, 0, seed) - 0.5) * (1.4 + t * 4);
+      if (vnoise(yy * 0.13, 3, seed) > 0.7) hw += 1.5 + t * 2; // ledges
+      return hw;
+    };
+    for (let y = Math.max(0, Math.floor(tip)); y < Math.min(H, base); y++) {
+      const t = (y - tip) / h;
+      const hw = widthAt(y);
+      if (hw < 0.5) continue;
+      const mid = cx + lean * (y - tip);
+      const xl = Math.round(mid - hw), xr = Math.round(mid + hw);
+      const fogK = fog + (1 - fog) * smooth(0.5, 1, t) * 0.8; // the bases melt into the haze
+      for (let x = Math.max(0, xl); x <= Math.min(W - 1, xr); x++) {
+        const s = (x - xl) / Math.max(1, xr - xl);
+        const lit = 0.6 - s * 0.5 + (vnoise(x * 0.5, y * 0.07, seed) - 0.5) * 0.4 + (hash2(x, y, seed) - 0.5) * 0.07 + (1 - t) * 0.15;
+        let c = rampRGB(TONE.rock, lit);
+        if (x === xl && t < 0.85) c = mixRGB(c, TONE.rim, 0.45);
+        u[y * W + x] = rgb32(mixRGB(c, water[y], fogK));
+      }
+    }
+    const r = rng(seed);
+    for (let k = 0; k < windows; k++) {
+      const y = Math.round(tip + h * lerp(0.12, 0.62, r()));
+      const hw = Math.max(0, widthAt(y) - 1.5);
+      const x = Math.round(cx + lean * (y - tip) + (r() - 0.5) * 2 * hw);
+      lamp(x, y, fog, 3, 0.35);
+      if (r() < 0.4) put(x, y + 1, mixRGB(TONE.window, water[Math.min(H - 1, y + 1)], fog));
+    }
+    if (tower && tip > 8) {
+      const x = Math.round(cx), y = Math.round(tip) + 2;
+      const c = mixRGB(rampRGB(TONE.rock, 0.45), water[y], fog);
+      for (let j = 0; j < 7; j++) for (let i = -1; i <= 1; i++) put(x + i, y - j, c);
+      put(x, y - 8, c);
+      put(x, y - 9, mixRGB(TONE.rim, water[y], fog));
+      lamp(x, y - 4, fog, 5, 0.5);
+    }
+  };
+  const layers = [
+    { fog: 0.66, base: 0.5, tip: [0, 0.18], per: 26, w: [5, 11], win: 1, towers: 0.1, seed: 11 },
+    { fog: 0.4, base: 0.56, tip: [0.04, 0.27], per: 40, w: [6, 14], win: 3, towers: 0.3, seed: 23 },
+    { fog: 0.15, base: 0.62, tip: [0.1, 0.34], per: 70, w: [7, 16], win: 6, towers: 0.5, seed: 37 },
+    // great crags framing the view at both edges
+    { fog: 0.08, base: 0.7, tip: [0, 0.08], at: [0.015, 0.985], w: [22, 28], win: 8, towers: 0.5, seed: 51 },
+    { fog: 0.1, base: 0.66, tip: [0.08, 0.16], at: [0.09, 0.915], w: [11, 15], win: 5, towers: 1, seed: 53 },
+  ];
+  for (const L of layers) {
+    const r = rng(L.seed);
+    const n = L.at ? L.at.length : Math.round(W / L.per);
+    for (let i = 0; i < n; i++) {
+      const cx = L.at ? L.at[i] * W : ((i + 0.5 + (r() - 0.5) * 0.9) / n) * W;
+      const tip = H * lerp(L.tip[0], L.tip[1], r());
+      const w = lerp(L.w[0], L.w[1], r());
+      const base = H * L.base;
+      const seed = L.seed * 100 + i;
+      const kids = Math.floor(r() * (L.at ? 5 : 4));
+      for (let k = 0; k < kids; k++) {
+        const side = k % 2 ? 1 : -1;
+        spire(cx + side * w * lerp(0.5, 1, r()), tip + (base - tip) * lerp(0.2, 0.45, r()), base, w * lerp(0.5, 0.8, r()), L.fog, seed + 50 + k, Math.floor(L.win / 2), false);
+      }
+      spire(cx, tip, base, w, L.fog, seed, L.win, r() < L.towers);
+    }
+  }
+
+  // 3. the sea floor: an oblique heightfield of terraces, rows drawn back to front
+  const R0 = hz, R1 = H + 44;
+  const HI_W = W + 2;
+  const hg = new Float32Array((R1 - R0 + 4) * HI_W);
+  for (let y = R0 - 2; y <= R1 + 1; y++) for (let x = -1; x <= W; x++) hg[(y - R0 + 2) * HI_W + (x + 1)] = heightAt(x, y);
+  const HI = (x, y) => hg[(y - R0 + 2) * HI_W + (x + 1)];
+  const rowFog = (y) => 0.94 * clamp(1 - (y - hz) / (H * 0.42), 0, 1) ** 1.3;
+  const nearStation = (x, y, pad) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.prx + 14 + pad), (y - s.y) / (s.pry + 10 + pad)) < 1);
+  function ruin(x, base, kind, fog, seed) {
+    const r = rng(seed);
+    const body = (lit) => mixRGB(rampRGB(TONE.rock, lit), water[clamp(base, 0, H - 1)], fog);
+    const col = (x0, w, h0, lit) => {
+      for (let j = 0; j < h0; j++) for (let i = 0; i < w; i++) put(x0 + i, base - j, body(i === 0 ? lit + 0.3 : lit - i * 0.06 + (hash2(x0 + i, base - j, seed) - 0.5) * 0.1));
+    };
+    if (kind < 0.45) {
+      // a tower: pointed or domed, windows lit
+      const w = 3 + Math.floor(r() * 3), h0 = 7 + Math.floor(r() * r() * 16);
+      col(x, w, h0, 0.42);
+      const cx = x + (w - 1) / 2;
+      if (r() < 0.5) for (let j = 0; j < 3; j++) for (let i = -1 + j; i < w + 1 - j; i++) put(x + i, base - h0 - j, body(0.5 - i * 0.05));
+      else for (let i = 0; i < w; i++) put(x + i, base - h0, body(0.55)), put(x + i, base - h0 - 1, body(0.6)), i && i < w - 1 && put(x + i, base - h0 - 2, body(0.62));
+      put(cx, base - h0 - (w > 3 ? 4 : 3), body(0.7));
+      for (let k = 0; k < 1 + Math.floor(h0 / 6); k++) if (r() < 0.75) lamp(Math.round(x + 1 + r() * (w - 2)), base - 2 - Math.floor(r() * (h0 - 3)), fog, 3, 0.4);
+    } else if (kind < 0.7) {
+      // an arch
+      const w = 9 + Math.floor(r() * 5), h0 = 7 + Math.floor(r() * 4);
+      col(x, 2, h0, 0.4);
+      col(x + w - 2, 2, h0, 0.36);
+      for (let i = 0; i < w; i++) {
+        const lift = Math.round(Math.sin((i / (w - 1)) * Math.PI) * 2);
+        put(x + i, base - h0 - lift, body(0.62));
+        put(x + i, base - h0 + 1 - lift, body(0.44));
+      }
+      if (r() < 0.5) lamp(x + (w >> 1), base - h0 + 3, fog, 4, 0.5);
+    } else if (kind < 0.88) {
+      // a column, sometimes broken
+      const h0 = 4 + Math.floor(r() * 7);
+      col(x, 2, h0, 0.45);
+      for (let i = -1; i < 3; i++) put(x + i, base - h0, body(0.6));
+    } else {
+      // a lantern post
+      for (let j = 0; j < 6; j++) put(x, base - j, body(0.4));
+      lamp(x, base - 6, fog, 6, 0.6);
+    }
+  }
+
+  // corals: little clumps of colour, darkest at the root
+  const coral = (x, y, fam, size, fog, seed) => {
+    const r = rng(seed), ramp = TONE.coral[fam];
+    const blobs = [];
+    for (let k = 0; k < 2 + size; k++) blobs.push([x + (r() - 0.5) * size * 3, y - r() * size * 1.4 - 1, 0.8 + r() * (0.6 + size * 0.35)]);
+    const shade = (c) => mixRGB(c, water[clamp(Math.round(y), 0, H - 1)], fog);
+    for (const [bx, by, rad] of blobs) {
+      for (let j = -Math.ceil(rad) - 1; j <= Math.ceil(rad) + 1; j++) {
+        for (let i = -Math.ceil(rad) - 1; i <= Math.ceil(rad) + 1; i++) {
+          if (i * i + j * j > (rad + 1) ** 2) continue;
+          put(bx + i, by + j, shade(mixRGB(ramp[0], TONE.deep, 0.55)));
+        }
+      }
+    }
+    for (const [bx, by, rad] of blobs) {
+      for (let j = -Math.ceil(rad); j <= Math.ceil(rad); j++) {
+        for (let i = -Math.ceil(rad); i <= Math.ceil(rad); i++) {
+          if (i * i + j * j > rad * rad) continue;
+          const lit = 0.45 - (i + j) / (rad * 3) + (hash2(Math.round(bx + i), Math.round(by + j), seed) - 0.5) * 0.3;
+          put(bx + i, by + j, shade(rampRGB(ramp, lit)));
+        }
+      }
+      if (rad > 1.2) put(bx - 1, by - Math.round(rad) + 1, shade(ramp[3]));
+    }
+    if (r() < 0.5) emitters.push({ x, y: y - size, col: P[{ pink: "pink3", violet: "vio3", orange: "coral3", teal: "glow" }[fam]], r: 5 + size * 2, a: 0.3 * (1 - fog) });
+  };
+  const fams = ["pink", "violet", "orange", "teal", "violet", "pink"];
+
+  for (let y = R0; y < R1; y++) {
+    const fog = rowFog(y);
+    for (let x = 0; x < W; x++) {
+      const h = HI(x, y);
+      const top = Math.round(y - h * K);
+      const next = Math.round(y + 1 - HI(x, y + 1) * K);
+      if (top >= H) continue;
+      const cliff = next - top - 1;
+      let lit = 0.5 + (vnoise(x * 0.3, y * 0.45, 9) - 0.5) * 0.4 + (hash2(x, y, 3) - 0.5) * 0.12 + (HI(x - 1, y) - HI(x + 1, y)) * 0.9;
+      if (cliff >= 3) lit += 0.32; // the lit lip of a terrace
+      else if (HI(x, y - 2) > h + 0.1) lit -= 0.25; // in the shadow at the foot of one
+      const peb = hash2(x, y, 17);
+      if (peb < 0.035) lit -= 0.3;
+      else if (peb > 0.975) lit += 0.3;
+      let c = rampRGB(TONE.silt, lit);
+      const m = fbm(x * 0.045, y * 0.09, 41, 2);
+      if (m > 0.56) c = mixRGB(c, rampRGB(TONE.moss, lit * 0.8), smooth(0.56, 0.68, m) * 0.6);
+      if (top >= 0) {
+        u[top * W + x] = rgb32(mixRGB(c, water[top], fog));
+        topMask[top * W + x] = 1;
+      }
+      for (let sy = Math.max(0, top + 1); sy < Math.min(H, next); sy++) {
+        const kk = (sy - top) / Math.max(1, cliff);
+        const v = 0.5 - kk * 0.42 + (vnoise(x * 0.7, sy * 0.12, 13) - 0.5) * 0.3 + (HI(x - 1, y) - HI(x + 1, y)) * 0.5;
+        u[sy * W + x] = rgb32(mixRGB(rampRGB(TONE.rock, v), water[sy], fog));
+        topMask[sy * W + x] = 0;
+      }
+      if (cliff >= 6 && hash2(x, y, 8) < 0.02) lamp(x, top + Math.round(cliff * 0.45), fog, 3, 0.4);
+    }
+  }
+
+  // set dressing, stood only where a terrace top shows: ruins (towers, arches,
+  // columns, each with a light somewhere), a few drowned villages, corals
+  const standOn = (x, y) => {
+    x = Math.round(x);
+    for (let yy = Math.round(y); yy < Math.min(H, y + 8); yy++) if (x >= 0 && x < W && topMask[yy * W + x] && topMask[yy * W + x + 1]) return yy;
+    return -1;
+  };
+  const rr = rng(5);
+  const addRuin = (x, y, kind, seed) => {
+    const base = standOn(x, y);
+    if (base > 0 && !nearStation(x, base, 0)) ruin(Math.round(x), base, kind, rowFog(base + 4), seed);
+  };
+  for (let v = 0; v < Math.round(W / 110); v++) {
+    const vx = rr() * W, vy = hz + 10 + rr() * (H - hz - 30);
+    for (let k = 0; k < 6; k++) addRuin(vx + (rr() - 0.5) * 36, vy + (rr() - 0.5) * 14, k ? rr() * 0.5 : 0.5, 900 + v * 10 + k);
+  }
+  for (let n = 0; n < Math.round(W / 8); n++) addRuin(rr() * W, hz + 4 + rr() ** 0.8 * (H - hz), rr(), n * 13 + 1);
+  const cr = rng(9);
+  for (let n = 0; n < Math.round(W / 8); n++) {
+    const x = Math.round(cr() * W), y = Math.round(hz + 20 + cr() ** 0.7 * (H - hz - 10));
+    const fam = fams[Math.floor(cr() * fams.length)], size = 1 + Math.floor(cr() * 3);
+    const base = standOn(x, y);
+    if (base > 0 && !nearStation(x, base, -6)) coral(x, base, fam, size, rowFog(base + 4), 300 + n);
+  }
+
+  // 4. floating islands: one under every station, a few more adrift
+  const island = (cx, cy, rx, ry, depth, seed, lamps) => {
+    const r = rng(seed);
+    const front = new Map();
+    const inTop = (x, y) => {
+      const a = Math.atan2((y - cy) / ry, (x - cx) / rx);
+      const edge = 1 + (vnoise(a * 2.2 + 7, 0, seed) - 0.5) * 0.22;
+      return Math.hypot((x - cx) / rx, (y - cy) / ry) <= edge;
+    };
+    const x0 = Math.floor(cx - rx * 1.15), x1 = Math.ceil(cx + rx * 1.15);
+    const y0 = Math.floor(cy - ry * 1.15), y1 = Math.ceil(cy + ry * 1.15);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (inTop(x, y)) front.set(x, Math.max(front.get(x) ?? -1e9, y));
+    // the hanging rock: thickest in the middle, ragged with stalactites
+    const spikes = Array.from({ length: Math.max(2, Math.round(rx / 6)) }, () => ({ x: cx + (r() - 0.5) * rx * 1.6, w: 1.5 + r() * 3, len: depth * lerp(0.25, 0.7, r()) }));
+    for (const [x, fy] of front) {
+      const across = (x - cx) / rx;
+      let d = depth * Math.sqrt(Math.max(0, 1 - across * across)) * (0.65 + 0.35 * vnoise(x * 0.15, 1, seed));
+      for (const sp of spikes) d += Math.max(0, 1 - Math.abs(x - sp.x) / sp.w) * sp.len;
+      d += (hash2(x, 2, seed) - 0.5) * 3;
+      for (let y = fy + 1; y <= fy + d; y++) {
+        const kk = (y - fy) / Math.max(1, d);
+        let v = 0.5 - kk * 0.45 - across * 0.12 + (vnoise(x * 0.8, y * 0.1, seed) - 0.5) * 0.35;
+        if (y - fy <= 1) v += 0.35;
+        const yy = clamp(y, 0, H - 1);
+        put(x, y, mixRGB(rampRGB(TONE.rock, v), water[yy], smooth(0.45, 1, kk) * 0.6));
+      }
+    }
+    // the top: silt and moss, a bright lip along the front edge
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        if (!inTop(x, y)) continue;
+        let lit = 0.52 + (vnoise(x * 0.35, y * 0.5, seed) - 0.5) * 0.4 + (hash2(x, y, seed) - 0.5) * 0.12 - ((x - cx) / rx) * 0.1;
+        if (!inTop(x, y + 1)) lit += 0.45;
+        else if (!inTop(x, y - 1)) lit += 0.2;
+        let c = rampRGB(TONE.silt, lit);
+        if (fbm(x * 0.08, y * 0.12, seed, 2) > 0.55) c = mixRGB(c, rampRGB(TONE.moss, lit * 0.85), 0.55);
+        put(x, y, c);
+      }
+    }
+    // windows in the rock below, and a few lanterns on the rim
+    for (let k = 0; k < Math.round(rx / 7); k++) {
+      const x = Math.round(cx + (r() - 0.5) * rx * 1.3);
+      const fy = front.get(x);
+      if (fy === undefined) continue;
+      lamp(x, fy + 3 + Math.floor(r() * depth * 0.35), 0, 3, 0.45);
+    }
+    for (let k = 0; k < lamps; k++) {
+      const a = Math.PI * (0.15 + 0.7 * r()) + (k % 2 ? Math.PI : 0);
+      const x = Math.round(cx + Math.cos(a) * rx * 0.86), y = Math.round(cy + Math.abs(Math.sin(a)) * ry * 0.7);
+      const pole = mixRGB(rampRGB(TONE.rock, 0.35), TONE.warm, 0.15);
+      for (let j = 0; j < 5; j++) put(x, y - j, pole);
+      lamp(x, y - 5, 0, 6, 0.55);
+    }
+    for (let k = 0; k < Math.round(rx / 9); k++) {
+      const a = r() * Math.PI;
+      coral(Math.round(cx + Math.cos(a) * rx * 0.9), Math.round(cy + Math.sin(a) * ry * 0.85), fams[Math.floor(r() * fams.length)], 1 + Math.floor(r() * 2), 0, seed + k);
+    }
+  };
+  const drift = [[0.35, 0.19, 17, 101], [0.735, 0.15, 13, 102], [0.035, 0.47, 15, 103], [0.975, 0.5, 13, 104], [0.615, 0.45, 11, 105]];
+  const isles = [
+    ...drift.map(([fx, fy, rx, seed]) => ({ x: W * fx, y: H * fy, rx, ry: rx * 0.36, depth: rx * 0.9, seed, lamps: 1, ruin: true })),
+    ...Object.values(STATIONS).map((s, i) => ({ x: s.x, y: s.y + 2, rx: s.prx + 14, ry: s.pry + 7, depth: (s.prx + 14) * 0.62, seed: 200 + i, lamps: 2 })),
+  ].sort((a, b) => a.y - b.y);
+  for (const it of isles) {
+    island(it.x, it.y, it.rx, it.ry, it.depth, it.seed, it.lamps);
+    if (it.ruin) ruin(Math.round(it.x - 2), Math.round(it.y + 1), hash2(it.seed, 0, 1) * 0.7, 0, it.seed);
+  }
+
   const c = makeCanvas(W, H);
   const g = c.getContext("2d", { willReadFrequently: true });
   const img = g.createImageData(W, H);
   new Uint32Array(img.data.buffer).set(u);
   g.putImageData(img, 0, 0);
-  emitters = [];
-  decorAnim = [];
-  const near = (x, y, r) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.pr + r), (y - s.y) / ((s.pr + r) * 0.6)) < 1);
 
-  // the far crags: pinnacles in the haze, some with a lit ruin
-  const far = [[0.03, "far1", 0.2], [0.11, "far0", 0.24], [0.23, "far2", 0.18], [0.31, "far1", 0.22], [0.42, "far2", 0.2], [0.5, "far0", 0.17], [0.66, "far1", 0.19], [0.73, "far2", 0.22], [0.8, "far0", 0.2], [0.95, "far1", 0.24]];
-  for (const [fx, f, fy] of far) {
-    const s = spr(`pinnacle.${f}`);
-    const x = Math.round(W * fx - s.width / 2), y = Math.round(H * fy - s.height);
-    g.drawImage(s, x, y);
-    if (f === "far0") emitters.push({ x: x + s.width / 2, y: y + s.height * 0.2, col: P.lamp, r: 5, a: 0.7, ph: fx * 9 });
-  }
-  // ruins and reef across the floor
-  const place = (name, fx, fy) => {
-    const s = spr(name);
+  // sprite set dressing in the foreground, sunk a little into the haze
+  const place = (name, fx, fy, fog = 0.18) => {
+    const s = hazed(name, fog);
     const x = Math.round(W * fx - s.width / 2), y = Math.round(H * fy - s.height);
     g.drawImage(s, x, y);
     return { x, y, w: s.width, h: s.height };
   };
-  place("ruin.arch", 0.3, 0.5);
-  place("ruin.arch", 0.67, 0.44);
-  place("ruin.column", 0.58, 0.8);
-  place("ruin.column", 0.06, 0.93);
-  place("ruin.column", 0.97, 0.4);
   const reefSpots = [
-    ["reef.anemonePink", 0.08, 0.78], ["reef.tubesViolet", 0.04, 0.84], ["reef.anemoneOrange", 0.27, 0.93], ["reef.anemoneTeal", 0.25, 0.66],
-    ["reef.anemoneViolet", 0.53, 0.94], ["reef.tubesOrange", 0.61, 0.72], ["reef.anemonePink", 0.69, 0.82], ["reef.anemoneTeal", 0.82, 0.72],
-    ["reef.anemoneOrange", 0.97, 0.94], ["reef.tubesViolet", 0.99, 0.72], ["reef.anemoneViolet", 0.36, 0.44], ["reef.anemonePink", 0.93, 0.5],
-    ["reef.tubesOrange", 0.22, 0.46], ["reef.anemoneTeal", 0.46, 0.84], ["coral.fan", 0.13, 0.9], ["coral.branch0", 0.79, 0.95], ["coral.branch1", 0.02, 0.6],
+    ["reef.anemonePink", 0.08, 0.8], ["reef.tubesViolet", 0.04, 0.86], ["reef.anemoneOrange", 0.27, 0.95], ["reef.anemoneTeal", 0.25, 0.7],
+    ["reef.anemoneViolet", 0.53, 0.96], ["reef.tubesOrange", 0.61, 0.76], ["reef.anemonePink", 0.69, 0.84], ["reef.anemoneTeal", 0.82, 0.74],
+    ["reef.anemoneOrange", 0.97, 0.96], ["reef.tubesViolet", 0.99, 0.74], ["reef.anemoneTeal", 0.46, 0.86], ["coral.fan", 0.13, 0.92],
+    ["coral.branch0", 0.79, 0.97], ["coral.branch1", 0.02, 0.66],
   ];
   const tipCol = { anemonePink: P.pink3, anemoneViolet: P.vio3, anemoneOrange: P.coral3, anemoneTeal: P.glow };
   for (const [name, fx, fy] of reefSpots) {
-    if (near(W * fx, H * fy, -6)) continue;
+    if (nearStation(W * fx, H * fy, -6)) continue;
     const r = place(name, fx, fy);
     const kind = name.split(".")[1];
-    if (tipCol[kind]) emitters.push({ x: r.x + r.w / 2, y: r.y + 3, col: tipCol[kind], r: 7, a: 0.35, ph: fx * 13 });
+    if (tipCol[kind]) emitters.push({ x: r.x + r.w / 2, y: r.y + 3, col: tipCol[kind], r: 7, a: 0.35 });
   }
-  g.drawImage(spr("galleon.wreck"), Math.round(W * 0.55), H - 44);
-  for (const [f, fx, fy] of [["rock.r2", 0.28, 0.58], ["rock.r0", 0.64, 0.52], ["anchor.idle", 0.7, 0.76], ["rock.r1", 0.9, 0.64], ["rock.r0", 0.45, 0.7], ["coral.brain", 0.2, 0.97]]) place(f, fx, fy);
-  // the near crags framing the view
-  g.drawImage(spr("pinnacle.near0"), -10, Math.round(H * 0.66) - 150);
-  g.drawImage(spr("pinnacle.near1"), W - 16, Math.round(H * 0.55) - 118);
-  emitters.push({ x: W - 5, y: Math.round(H * 0.55) - 118 + 26, col: P.lamp, r: 6, a: 0.6, ph: 3 });
+  g.drawImage(hazed("galleon.wreck", 0.42), Math.round(W * 0.55), H - 44);
+  place("ruin.arch", 0.58, 0.99, 0.3);
+  for (const [f, fx, fy] of [["anchor.idle", 0.7, 0.8], ["rock.r1", 0.9, 0.68], ["rock.r0", 0.45, 0.74], ["coral.brain", 0.2, 0.99]]) place(f, fx, fy);
 
-  // kelp and glowing plants on the mesa tops
+  // kelp and glowing plants on the terraces
   let seed = 1;
-  for (let n = 0; n < W * 0.5; n++) {
+  for (let n = 0; n < W * 0.55; n++) {
     const x = Math.floor(hash2(n, 1, 77) * W);
-    const y = Math.floor(H * 0.34 + hash2(n, 2, 77) * H * 0.66);
-    if (!topMask[y * W + x] || near(x, y, 4)) continue;
+    const y = Math.floor(hz + 24 + hash2(n, 2, 77) * (H - hz - 24));
+    if (!topMask[y * W + x] || nearStation(x, y, 4)) continue;
     const kind = hash2(n, 3, 77);
-    if (kind < 0.42) decorAnim.push({ kind: "kelp", x, y, h: 4 + Math.floor(hash2(n, 4, 77) * 9), ph: n * 0.7 });
-    else if (kind < 0.62) {
-      const col = [P.coral1, P.vio2, P.pink2, P.kelp2][Math.floor(hash2(n, 5, 77) * 4)];
-      g.fillStyle = P.ink;
-      g.fillRect(x - 1, y - 1, 4, 3);
-      g.fillStyle = col;
-      g.fillRect(x, y - 1, 2, 2);
-    } else {
+    if (kind < 0.55) decorAnim.push({ kind: "kelp", x, y, h: 4 + Math.floor(hash2(n, 4, 77) * 10), ph: n * 0.7 });
+    else {
       decorAnim.push({ kind: "glow", x, y, ph: (seed = (seed * 7) % 13) });
-      emitters.push({ x, y, col: P.glow, r: 3, a: 0.5, ph: seed });
+      emitters.push({ x, y, col: P.glow, r: 3, a: 0.5 });
     }
   }
   // tall foreground kelp in the corners
-  for (const [fx, hgt] of [[0.01, 70], [0.025, 54], [0.045, 40], [0.955, 46], [0.975, 64], [0.99, 52]]) {
+  for (const [fx, hgt] of [[0.01, 76], [0.025, 58], [0.045, 42], [0.955, 50], [0.975, 70], [0.99, 56]]) {
     decorAnim.push({ kind: "tallkelp", x: Math.round(W * fx), y: H + 2, h: hgt, ph: fx * 40 });
   }
 
-  // warm light pooling round each station, and a vignette
+  // warm light pooling round each station, and a soft vignette
   const out = g.getImageData(0, 0, W, H);
   const s32 = new Uint32Array(out.data.buffer);
   const warm = hexRGB(P.brass2);
   for (const st of Object.values(STATIONS)) {
     const tint = st.key === "hub" ? warm : hexRGB(P[st.color]);
-    const rx = st.prx + 30, ry = st.pry + 22;
+    const rx = st.prx + 34, ry = st.pry + 26;
     for (let y = Math.max(0, st.y - ry); y < Math.min(H, st.y + ry); y++) {
       for (let x = Math.max(0, st.x - rx); x < Math.min(W, st.x + rx); x++) {
         const d = Math.hypot((x - st.x) / rx, (y - st.y) / ry);
         if (d >= 1) continue;
         const k = (1 - d) * (1 - d);
-        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.38), tint, k * 0.16);
+        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.34), tint, k * 0.12);
       }
     }
   }
-  const deep = hexRGB(P.abyss0);
+  const deep = hexRGB(P.ink);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const d = Math.hypot((x / W - 0.5) * 1.12, (y / H - 0.55) * 1.3);
-      const k = smooth(0.44, 0.8, d);
-      if (k > 0) s32[y * W + x] = mix32(s32[y * W + x], deep, k * (0.55 + bayer(x, y) * 0.3));
+      const d = Math.hypot((x / W - 0.5) * 1.1, (y / H - 0.5) * 1.25);
+      const k = smooth(0.46, 0.85, d);
+      if (k > 0) s32[y * W + x] = mix32(s32[y * W + x], deep, k * 0.6);
     }
   }
   g.putImageData(out, 0, 0);
 
   staticCanvas = c;
   static32 = new Uint32Array(g.getImageData(0, 0, W, H).data.buffer);
-  const sun = [150, 214, 226];
   light32 = new Uint32Array(N);
-  for (let i = 0; i < N; i++) light32[i] = mix32(static32[i], sun, 0.2);
+  const sun = [168, 226, 232];
+  for (let i = 0; i < N; i++) light32[i] = mix32(static32[i], sun, 0.34);
+  // god rays fan out from a point above the surface
+  const RAYS = 720;
+  rayIdx = new Uint16Array(N);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) rayIdx[y * W + x] = Math.round(((Math.atan2(x - sunX, y + H * 0.35) + 1.25) / 2.5) * (RAYS - 1));
+  }
+  rayBuf = new Float32Array(RAYS);
   frameImg = ctx.createImageData(W, H);
   frame32 = new Uint32Array(frameImg.data.buffer);
-  rayBuf = new Float32Array(Math.ceil(W + H * 0.6) + 2);
   gcv.width = Math.round(W / 2);
   gcv.height = Math.round(H / 2);
+  bakeEmitters();
   drawMinimapBase();
 }
 
 function renderSea(t) {
   const { W, H } = map;
   for (let k = 0; k < rayBuf.length; k++) {
-    const a = Math.max(0, Math.sin(k * 0.034 + t * 0.19));
-    const b = Math.max(0, Math.sin(k * 0.057 - t * 0.14 + 2));
-    const c = Math.max(0, Math.sin(k * 0.022 + t * 0.08 + 4.4));
-    rayBuf[k] = 0.55 * a ** 10 + 0.4 * b ** 14 + 0.5 * c ** 8;
+    const a = Math.max(0, Math.sin(k * 0.05 + t * 0.11));
+    const b = Math.max(0, Math.sin(k * 0.083 - t * 0.08 + 2));
+    const c = Math.max(0, Math.sin(k * 0.031 + t * 0.05 + 4.4));
+    rayBuf[k] = 0.5 * a ** 12 + 0.35 * b ** 16 + 0.45 * c ** 9;
   }
-  const u = frame32, st = static32, lt = light32;
+  const u = frame32, st = static32, lt = light32, ri = rayIdx;
   for (let y = 0; y < H; y++) {
-    const fall = 0.95 * Math.pow(1 - y / H, 1.3) + 0.06;
-    const row = y * W, by = (y & 3) * 4;
+    const fall = 0.9 * Math.pow(1 - y / H, 1.5) + 0.04;
+    const row = y * W;
     for (let x = 0; x < W; x++) {
       const i = row + x;
-      u[i] = rayBuf[(x + y * 0.6) | 0] * fall > BAYER[by + (x & 3)] + 0.12 ? lt[i] : st[i];
+      const a = (rayBuf[ri[i]] * fall * 256) | 0;
+      if (a < 6) {
+        u[i] = st[i];
+        continue;
+      }
+      const s = st[i], l = lt[i], k = a > 256 ? 256 : a;
+      u[i] = 0xff000000 | ((((s & 0xff00ff) * (256 - k) + (l & 0xff00ff) * k) >>> 8) & 0xff00ff) | ((((s & 0xff00) * (256 - k) + (l & 0xff00) * k) >>> 8) & 0xff00);
     }
   }
   ctx.putImageData(frameImg, 0, 0);
@@ -1187,11 +1459,23 @@ function glowSprite(col, r) {
   }
   return c;
 }
-function glowAt(x, y, col, r, a) {
+function glowAt(x, y, col, r, a, g = gctx) {
   if (a <= 0.01) return;
   const rr = Math.max(2, Math.round(r / 2));
-  gctx.globalAlpha = clamp(a, 0, 1);
-  gctx.drawImage(glowSprite(col, rr), x / 2 - rr, y / 2 - rr);
+  g.globalAlpha = clamp(a, 0, 1);
+  g.drawImage(glowSprite(col, rr), x / 2 - rr, y / 2 - rr);
+}
+// The static lights (hundreds of windows, lamps and anemone tips) are baked
+// into four layers once; each layer flickers as a whole, out of step.
+let emitterLayers = [];
+function bakeEmitters() {
+  emitterLayers = [0, 1, 2, 3].map(() => makeCanvas(gcv.width, gcv.height));
+  const gs = emitterLayers.map((c) => {
+    const g = c.getContext("2d");
+    g.globalCompositeOperation = "lighter";
+    return g;
+  });
+  emitters.forEach((e, i) => glowAt(e.x, e.y, e.col, e.r, e.a, gs[i % 4]));
 }
 function renderGlow(t) {
   const { W, H } = map;
@@ -1200,50 +1484,48 @@ function renderGlow(t) {
   gctx.fillStyle = "#000";
   gctx.fillRect(0, 0, gcv.width, gcv.height);
   gctx.globalCompositeOperation = "lighter";
-  // light from the surface: a band at the top and slow shafts
-  const top = gctx.createLinearGradient(0, 0, 0, gcv.height * 0.45);
-  top.addColorStop(0, "rgba(90, 170, 190, 0.32)");
-  top.addColorStop(1, "rgba(90, 170, 190, 0)");
+  // light from the surface: a haze at the top and shafts fanning down
+  const top = gctx.createLinearGradient(0, 0, 0, gcv.height * 0.5);
+  top.addColorStop(0, "rgba(110, 190, 205, 0.26)");
+  top.addColorStop(1, "rgba(110, 190, 205, 0)");
   gctx.globalAlpha = 1;
   gctx.fillStyle = top;
-  gctx.fillRect(0, 0, gcv.width, gcv.height * 0.45);
-  for (let i = 0; i < 4; i++) {
-    const cx = (W * (0.2 + i * 0.22) + Math.sin(t * 0.07 + i * 2) * 30) / 2;
-    const w0 = 6 + i * 3, w1 = 40 + i * 12, len = gcv.height * (0.75 + (i % 2) * 0.2);
-    const grd = gctx.createLinearGradient(0, 0, 0, len);
-    grd.addColorStop(0, `rgba(150, 215, 225, ${0.13 + 0.04 * Math.sin(t * 0.3 + i)})`);
-    grd.addColorStop(1, "rgba(150, 215, 225, 0)");
+  gctx.fillRect(0, 0, gcv.width, gcv.height * 0.5);
+  const sx = (W * 0.52) / 2, sy = -H * 0.175;
+  for (let i = 0; i < 5; i++) {
+    const a = -0.62 + i * 0.3 + Math.sin(t * 0.05 + i * 2.1) * 0.06;
+    const spread = 0.035 + (i % 3) * 0.02, len = gcv.height * (0.9 + (i % 2) * 0.35);
+    const grd = gctx.createLinearGradient(sx, sy, sx + Math.sin(a) * len, sy + Math.cos(a) * len);
+    grd.addColorStop(0, `rgba(160, 222, 230, ${0.12 + 0.05 * Math.sin(t * 0.3 + i)})`);
+    grd.addColorStop(1, "rgba(160, 222, 230, 0)");
     gctx.fillStyle = grd;
     gctx.beginPath();
-    gctx.moveTo(cx - w0, 0);
-    gctx.lineTo(cx + w0, 0);
-    gctx.lineTo(cx + w1 + len * 0.28, len);
-    gctx.lineTo(cx - w1 + len * 0.28, len);
+    gctx.moveTo(sx, sy);
+    gctx.lineTo(sx + Math.sin(a - spread) * len, sy + Math.cos(a - spread) * len);
+    gctx.lineTo(sx + Math.sin(a + spread) * len, sy + Math.cos(a + spread) * len);
     gctx.closePath();
     gctx.fill();
   }
-  // stations: warm interiors, their colour at the base, every lamp
+  // stations: warm light through the glass, their colour at the base, every lamp
   for (const k of STATION_KEYS) {
     const s = STATIONS[k];
     const busy = S?.busy?.[k] > 0;
-    const pulse = busy ? 0.75 + Math.sin(t * 4) * 0.15 : 0.5;
+    const pulse = busy ? 0.8 + Math.sin(t * 4) * 0.12 : 0.55;
     const hubK = k === "hub" ? 1.5 : 1;
-    glowAt(s.x, s.y - 18 * hubK, P.brass3, 46 * hubK, pulse);
-    glowAt(s.x, s.y - 14 * hubK, P.lamp, 20 * hubK, pulse * 0.8);
-    if (k !== "hub") glowAt(s.x, s.y + 6, s.col, 44, busy ? 0.55 : 0.28);
-    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.lamp, 9, 0.55 + 0.25 * Math.sin(t * 3 + lx));
+    glowAt(s.x, s.y - 20 * hubK, P.brass2, 58 * hubK, pulse * 0.42);
+    glowAt(s.x, s.y - 16 * hubK, P.lamp, 16 * hubK, pulse * 0.3);
+    if (k !== "hub") glowAt(s.x, s.y + 8, s.col, 48, busy ? 0.42 : 0.2);
+    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.window, 8, 0.5 + 0.2 * Math.sin(t * 3 + lx));
     if (k === "tests" && kraken.state === "rising") glowAt(s.x, s.y - 10, P.red, 70, 0.5 + Math.sin(t * 6) * 0.2);
   }
-  // routes: the bright heads, and packets in flight
+  // routes: every bead glows a little, the travelling ones brightly
   for (const k of SPOKES) {
     const p = paths[k];
-    const s = STATIONS[k];
     const busy = t < p.busyUntil;
-    const flow = t * (busy ? 30 : 10) * p.dir;
-    for (let d = 2; d < p.L - 2; d += 3) {
-      if (cycle((d - flow) / 3, busy ? 4 : 7) !== 0) continue;
-      const q = pathAt(k, d / p.L);
-      glowAt(q.x, q.y, s.col, busy ? 10 : 7, busy ? 0.85 : 0.5);
+    const flow = t * (busy ? 26 : 8) * p.dir;
+    for (const b of p.beads) {
+      const lead = cycle((b.d - flow) / 6, busy ? 3 : 6) === 0;
+      glowAt(b.x, b.y, b.col, lead ? 10 : 6, lead ? (busy ? 0.9 : 0.6) : busy ? 0.4 : 0.22);
     }
   }
   for (const pk of packets) {
@@ -1255,19 +1537,25 @@ function renderGlow(t) {
   // submarines: headlights, and whatever their lamp is lighting
   for (const sb of Object.values(subs)) {
     if (!sb.visible) continue;
-    glowAt(sb.x + sb.face * 9, sb.y + 1, P.lamp, 16, 0.75);
-    glowAt(sb.x, sb.y, P[sb.a.color], 18, 0.3);
+    glowAt(sb.x + sb.face * 12, sb.y + 1, P.lamp, 14, 0.65);
+    glowAt(sb.x + sb.face * 6, sb.y, P.glow, 10, 0.45);
+    glowAt(sb.x, sb.y, P[sb.a.color], 22, 0.28);
     if (sb.beam) glowAt(sb.beam.x, sb.beam.y, sb.beam.col, 24, 0.55);
   }
   // bioluminescence, lit ruins, anemone tips, jellies, eyes in the dark
-  for (const e of emitters) glowAt(e.x, e.y, e.col, e.r, e.a * (0.6 + 0.4 * Math.sin(t * 1.3 + e.ph)));
+  emitterLayers.forEach((c, k) => {
+    gctx.globalAlpha = 0.65 + 0.35 * Math.sin(t * 1.3 + k * 1.9);
+    gctx.drawImage(c, 0, 0);
+  });
   for (const j of ambient.jellies) glowAt(j.x + 4, j.y + 4, P.pink3, 14, 0.45);
   if (kraken.state !== "hidden") {
     const h = kraken.head();
     for (const [ex, ey] of ATLAS.meta.kraken.eyes) glowAt(h.x + ex, h.y + ey, P.red, 8, 0.9);
   }
   const o = ambient.octo;
-  if (o) glowAt(o.x + 20, o.y + 21, P.lamp, 14, 0.4);
+  if (o) glowAt(o.x + 20, o.y + 30, P.ghost3, 60, 0.18);
+  const w = ambient.whale;
+  if (w) glowAt(w.x, w.y + 22, P.mist4, 70, 0.14);
   gctx.globalAlpha = 1;
   gctx.globalCompositeOperation = "source-over";
 }
@@ -1303,7 +1591,7 @@ function updateSubs(dt) {
     sb.face = p.face;
     sb.bubT -= dt;
     if (sb.bubT <= 0) {
-      particles.push({ kind: "bubble", x: sb.x - sb.face * 10, y: sb.y, vy: -(6 + Math.random() * 5), ph: Math.random() * 6, t0: clock.t, life: 5 });
+      particles.push({ kind: "bubble", x: sb.x - sb.face * 17, y: sb.y - 2, vy: -(6 + Math.random() * 5), ph: Math.random() * 6, t0: clock.t, life: 5 });
       sb.bubT = 0.25 + Math.random() * 0.45;
     }
     if (sb.beam?.emit) {
@@ -1484,26 +1772,17 @@ function drawDecor(g, t, foreground) {
 function drawPaths(g, t) {
   for (const k of SPOKES) {
     const p = paths[k];
-    const s = STATIONS[k];
     const busy = t < p.busyUntil;
-    const flow = t * (busy ? 30 : 10) * p.dir;
-    for (let d = 2; d < p.L - 2; d += 3) {
-      const q = pathAt(k, d / p.L);
-      const x = Math.round(q.x), y = Math.round(q.y);
-      const lead = cycle((d - flow) / 3, busy ? 4 : 7) === 0;
+    const flow = t * (busy ? 26 : 8) * p.dir;
+    for (const b of p.beads) {
+      const lead = cycle((b.d - flow) / 6, busy ? 3 : 6) === 0;
+      // a round bead: a plus of colour, a white-hot core when the pulse passes
+      g.fillStyle = lead || busy ? b.col : b.dim;
+      g.fillRect(b.x - 1, b.y, 3, 1);
+      g.fillRect(b.x, b.y - 1, 1, 3);
       if (lead) {
-        g.fillStyle = s.dim;
-        g.fillRect(x - 1, y - 1, 3, 3);
-        g.fillStyle = busy ? P.white : s.col;
-        g.fillRect(x, y, 1, 1);
-        if (busy) {
-          g.fillStyle = s.col;
-          g.fillRect(x - 1, y, 1, 1);
-          g.fillRect(x + 1, y, 1, 1);
-        }
-      } else {
-        g.fillStyle = busy ? s.col : s.dim;
-        g.fillRect(x, y, 2, 1);
+        g.fillStyle = P.white;
+        g.fillRect(b.x, b.y, 1, 1);
       }
     }
   }
@@ -1536,16 +1815,16 @@ function drawStations(g, t) {
   }
 }
 
-function drawTentacle(g, pts, r0, r1, body, sucker) {
+function drawTentacle(g, pts, r0, r1, body, sucker, edge = P.ink) {
   const n = pts.length;
-  for (let i = 0; i < n; i++) disc(g, pts[i].x, pts[i].y, lerp(r0, r1, i / (n - 1)) + 1, P.ink);
+  for (let i = 0; i < n; i++) disc(g, pts[i].x, pts[i].y, lerp(r0, r1, i / (n - 1)) + 1, edge);
   for (let i = 0; i < n; i++) {
     const r = lerp(r0, r1, i / (n - 1));
     disc(g, pts[i].x, pts[i].y, r, body);
     if (i % 3 === 1 && r > 1) px(g, pts[i].x, pts[i].y + r - 0.5, sucker);
   }
 }
-function arms(g, t, x0, y0, roots, len, body, sucker, spread, seed) {
+function arms(g, t, x0, y0, roots, len, body, sucker, spread, seed, edge, r0 = 2.1) {
   roots.forEach(([rx, ry], j) => {
     const pts = [];
     let x = x0 + rx, y = y0 + ry, ang = Math.PI / 2 + (j - (roots.length - 1) / 2) * spread;
@@ -1555,7 +1834,7 @@ function arms(g, t, x0, y0, roots, len, body, sucker, spread, seed) {
       y += Math.sin(ang) * 2.2;
       pts.push({ x, y });
     }
-    drawTentacle(g, pts, 2.1, 0.6, body, sucker);
+    drawTentacle(g, pts, r0, 0.6, body, sucker, edge);
   });
 }
 function drawKraken(g, t) {
@@ -1586,25 +1865,34 @@ function drawKraken(g, t) {
     if (pts.length > 1) drawTentacle(g, pts, 2.3, 0.8, P.vio2, P.vio3);
   }
 }
+// The octopus drifts at the edge of the light, half seen: drawn whole
+// onto its own layer, then laid over the sea translucent.
+let octoLayer = null;
 function drawOctopus(g, t) {
   const o = ambient.octo;
-  const x = Math.round(o.x + Math.sin(t * 0.3) * 4), y = Math.round(o.y + Math.sin(t * 0.45) * 3);
-  arms(g, t, x, y, ATLAS.meta.octopus.roots, 16, P.pink2, P.pink4, 0.3, 2);
-  g.drawImage(spr("octopus.head"), x, y);
+  octoLayer ??= makeCanvas(110, 130);
+  const og = octoLayer.getContext("2d");
+  og.clearRect(0, 0, octoLayer.width, octoLayer.height);
+  arms(og, t, 35, 4, ATLAS.meta.octopus.roots, 26, P.ghost1, P.ghost3, 0.34, 2, P.ghost0, 2.6);
+  og.drawImage(spr("octopus.head"), 35, 4);
+  g.globalAlpha = 0.62;
+  g.drawImage(octoLayer, Math.round(o.x - 35 + Math.sin(t * 0.3) * 4), Math.round(o.y - 4 + Math.sin(t * 0.45) * 3));
+  g.globalAlpha = 1;
 }
 
 function drawSubs(g, t) {
   for (const sb of Object.values(subs)) {
     if (!sb.visible) continue;
     const bob = Math.round(Math.sin(t * 2.4 + sb.ph));
-    const x = Math.round(sb.x) - 10, y = Math.round(sb.y) - 5 + bob;
+    const x = Math.round(sb.x) - 16, y = Math.round(sb.y) - 11 + bob;
     if (sb.beam) {
-      const lx = sb.face > 0 ? x + 18 : x + 1;
-      const dx = sb.beam.x - lx, dy = sb.beam.y - (y + 6);
+      const [mx, my] = ATLAS.meta.sub.lamp;
+      const lx = sb.face > 0 ? x + mx : x + 31 - mx, ly = y + my;
+      const dx = sb.beam.x - lx, dy = sb.beam.y - ly;
       const len = Math.hypot(dx, dy) || 1;
-      const nx = (-dy / len) * 3.5, ny = (dx / len) * 3.5;
+      const nx = (-dy / len) * 4, ny = (dx / len) * 4;
       const shift = Math.floor(t * 8);
-      ditherTri(g, lx, y + 6, sb.beam.x + nx, sb.beam.y + ny, sb.beam.x - nx, sb.beam.y - ny, sb.beam.col, (px_, py_) => ((px_ + py_ + shift) & 1) === 0);
+      ditherTri(g, lx, ly, sb.beam.x + nx, sb.beam.y + ny, sb.beam.x - nx, sb.beam.y - ny, sb.beam.col, (px_, py_) => hash2(px_ >> 1, py_, shift) < 0.35);
     }
     g.drawImage(spr(`sub.${sb.a.id}.run${cycle(t * 8 + sb.ph)}`, sb.face < 0), x, y);
   }
@@ -1613,7 +1901,9 @@ function drawSubs(g, t) {
 function drawAmbient(g, t) {
   const w = ambient.whale;
   const ws = spr(`whale.swim${cycle(t * 0.7)}`, w.dir < 0);
+  g.globalAlpha = 0.6; // far off in the blue
   g.drawImage(ws, Math.round(w.x - ws.width / 2), Math.round(w.y + Math.sin(t * 0.5) * 2));
+  g.globalAlpha = 1;
   for (const s of ambient.schools) {
     for (const f of s.fish) {
       const fx = Math.round(s.x - s.dir * f.dx);
@@ -1630,7 +1920,7 @@ function drawParticles(g, t) {
     if (p.kind === "bubble") px(g, p.x, p.y, P.water11);
     else if (p.kind === "speck") {
       const s = easeInOut(clamp(age / p.life, 0, 1));
-      const port = { x: p.sb.x + p.sb.face * 8, y: p.sb.y + 1 };
+      const port = { x: p.sb.x + p.sb.face * 11, y: p.sb.y + 1 };
       const from = p.out ? port : { x: p.tx, y: p.ty };
       const to = p.out ? { x: p.tx, y: p.ty } : port;
       g.fillStyle = p.col;
@@ -1808,7 +2098,7 @@ function updateTags() {
       tg.w = tg.el.offsetWidth;
       tg.h = tg.el.offsetHeight;
     }
-    const p = artToCss(sb.x, sb.y - 6);
+    const p = artToCss(sb.x, sb.y - 9);
     const gap = 10 * map.scale;
     const spots = {
       above: { x: p.x - tg.w / 2, y: p.y - tg.h - 2 },
@@ -1819,7 +2109,8 @@ function updateTags() {
     const hits = (r) => cardRects.some((c) => r.x < c.x + c.w && r.x + tg.w > c.x && r.y < c.y + c.h && r.y + tg.h > c.y);
     if (!tg.side || hits(spots[tg.side])) tg.side = ["above", "right", "left", "below"].find((k) => !hits(spots[k])) ?? "above";
     const at = spots[tg.side];
-    tg.el.style.transform = `translate(${Math.round(at.x)}px, ${Math.round(at.y)}px)`;
+    const x = clamp(at.x, 4, mapEl.clientWidth - tg.w - 4), y = clamp(at.y, 4, mapEl.clientHeight - tg.h - 4);
+    tg.el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
 }
 
@@ -2623,12 +2914,40 @@ function frame(now) {
       updateAgentsPanel();
       updateProgress();
       drawMinimap(clock.t);
+      drawBridge(now / 1000);
       if (selected) renderPop(false);
     }
   } catch (e) {
     if (!frameErrorLogged) console.error(e);
     frameErrorLogged = true;
   }
+}
+
+// The bridge by lamplight: the lantern's warm pool flickers over the desk,
+// the men and the brass; the corners of the salon fall away into shadow.
+function drawBridge(t) {
+  const c = $("#bridge-art");
+  const g = c.getContext("2d");
+  const [lx, ly] = ATLAS.meta.bridge.lamp;
+  const flick = 0.85 + 0.1 * Math.sin(t * 7.3) + 0.05 * Math.sin(t * 17.1 + 1);
+  g.globalCompositeOperation = "source-over";
+  g.globalAlpha = 1;
+  g.drawImage(spr("bridge.salon"), 0, 0);
+  const shade = g.createRadialGradient(lx, ly, 20, lx - 20, ly - 30, 190);
+  shade.addColorStop(0, "rgba(255, 255, 255, 1)");
+  shade.addColorStop(0.55, "rgba(150, 165, 200, 1)");
+  shade.addColorStop(1, "rgba(40, 50, 80, 1)");
+  g.globalCompositeOperation = "multiply";
+  g.fillStyle = shade;
+  g.fillRect(0, 0, c.width, c.height);
+  const warm = g.createRadialGradient(lx, ly, 0, lx, ly, 110);
+  warm.addColorStop(0, `rgba(255, 200, 110, ${0.7 * flick})`);
+  warm.addColorStop(0.3, `rgba(255, 160, 70, ${0.26 * flick})`);
+  warm.addColorStop(1, "rgba(255, 140, 60, 0)");
+  g.globalCompositeOperation = "screen";
+  g.fillStyle = warm;
+  g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = "source-over";
 }
 
 async function boot() {
@@ -2651,7 +2970,7 @@ async function boot() {
   assetsReady = true;
   $("#boot-what").textContent = `${Object.keys(ATLAS.frames).length} frames · ${ATLAS.size[0]}×${ATLAS.size[1]} sheet · build ${ATLAS.hash}`;
   $("#brand-mark").getContext("2d").drawImage(spr("ri.trident"), 0, 0);
-  $("#bridge-art").getContext("2d").drawImage(spr("bridge.salon"), 0, 0);
+  drawBridge(0);
   $("#depth-icon").getContext("2d").drawImage(spr("icon.ocean"), 0, 0);
   buildPipeline();
   buildControls();

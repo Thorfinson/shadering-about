@@ -39,13 +39,18 @@ Its sprites come from the [sprite pipeline](#sprite-pipeline) below.
 
 ### Nautilus OS — agent orchestration console ([nautilus-os.html](nautilus-os.html))
 
-The same idea as an operations console, seen from above. The orchestrator's hub
-fortress sits in the middle of an oblique pixel-art sea floor, with rock spires in the
-haze behind; seven glass-domed station fortresses stand on rock mesas around it —
-Knowledge Base, Documents, Model Registry, Repositories, Testing Lab, Memory and
-Deployments — joined to the hub by glowing routes. A half-resolution glow layer,
-screened over the pixels, lights the domes, lamps, routes, submarines and
-bioluminescence; a whale and an octopus drift through the top of the map. Seven
+The same idea as an operations console, seen from above. The map is painted rather
+than dithered: open water with three layers of rock spires in the mist, a terraced sea
+floor coming out of the haze, drowned ruins and coral with lit windows everywhere,
+and a floating island under every station, its rock hanging in stalactites. Colours
+mix in RGB, so gradients stay soft, and texture comes from clustered noise instead of
+a Bayer matrix. The orchestrator's hub fortress sits in the middle; seven glass-domed
+station fortresses float around it — Knowledge Base, Documents, Model Registry,
+Repositories, Testing Lab, Memory and Deployments — joined to the hub by routes of
+glowing beads. A half-resolution glow layer, screened over the pixels, lights the
+domes, lamps, routes, submarines and bioluminescence; god rays fan down from the
+surface, a ghostly whale and octopus drift at the top of the map, and the bridge in
+the corner flickers by lamplight. Seven
 submarine agents (Aronnax, Conseil, Ned Land, Cyrus Smith, Lidenbrock, Barbicane and
 Axel) travel the routes, and each station's card updates as they read, write, train,
 test and deploy. Three projects run research → analyze → build → test → deploy, with a
@@ -133,7 +138,7 @@ npm run sprites:check    # exit 1 if the committed atlas is stale (also run in C
 |---|---|
 | `palette.txt` | Every colour, one per line — a key character for sprites and a name for code |
 | `sprites/*.sprite` | Hand-drawn pixel art as text: rows of palette keys, plus directives for outline, recolour variants and anchor points |
-| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) and `os.mjs` (station fortresses, the hub, rock pinnacles, ruins, anemones, octopus, whale, the bridge scene) |
+| `*.mjs` | Generators for the big set pieces — `procedural.mjs` (the Nautilus, Atlantis, library, wreck, clam, kraken, corals) and `os.mjs` (station fortresses, the hub, the agents' bathyscaphes, ruins, anemones, octopus, whale, the bridge scene) |
 
 [tools/build-sprites.mjs](tools/build-sprites.mjs) parses and validates the sources,
 renders every frame with [tools/pixelkit.mjs](tools/pixelkit.mjs), shelf-packs them

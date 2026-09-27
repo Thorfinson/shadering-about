@@ -63,18 +63,32 @@ export class PixelBuffer {
     return new PixelBuffer(this.w + p * 2, this.h + p * 2).blit(this, p, p);
   }
 
-  // Classic sprite outline: every empty pixel touching an opaque one (4-way).
+  // Sprite outline: every empty pixel touching an opaque one (4-way). With
+  // color 'auto' it is a selective outline ("selout"): each outline pixel is a
+  // dark shade of the pixel it borders instead of one flat ink colour.
   outline(color) {
     const hit = [];
+    const nb = [[0, 1], [1, 0], [-1, 0], [0, -1]];
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         if (this.alpha(x, y)) continue;
-        if (this.alpha(x - 1, y) || this.alpha(x + 1, y) || this.alpha(x, y - 1) || this.alpha(x, y + 1)) {
-          hit.push(x, y);
-        }
+        const n = nb.find(([dx, dy]) => this.alpha(x + dx, y + dy));
+        if (n) hit.push([x, y, x + n[0], y + n[1]]);
       }
     }
-    for (let i = 0; i < hit.length; i += 2) this.set(hit[i], hit[i + 1], color);
+    for (const [x, y, nx, ny] of hit) {
+      if (color !== 'auto') {
+        this.set(x, y, color);
+        continue;
+      }
+      const s = (ny * this.w + nx) * 4;
+      const i = (y * this.w + x) * 4;
+      const d = this.data;
+      d[i] = Math.round(d[s] * 0.3 + 7 * 0.7);
+      d[i + 1] = Math.round(d[s + 1] * 0.3 + 11 * 0.7);
+      d[i + 2] = Math.round(d[s + 2] * 0.3 + 20 * 0.7);
+      d[i + 3] = 255;
+    }
     return this;
   }
 
@@ -108,6 +122,28 @@ export function rampPick(ramp, v, x, y) {
   const f = clamp(v, 0, 1) * (ramp.length - 1);
   const i = Math.floor(f);
   return ramp[Math.min(ramp.length - 1, i + (f - i > bayer(x, y) ? 1 : 0))];
+}
+
+// Like rampPick, but thresholded with clustered value noise instead of the
+// Bayer matrix: steps break up in organic, hand-placed-looking clumps rather
+// than a regular checkerboard.
+export function rampSoft(ramp, v, x, y, s = 0) {
+  const f = clamp(v, 0, 1) * (ramp.length - 1);
+  const i = Math.floor(f);
+  const t = vnoise(x * 0.55, y * 0.55, s) * 0.75 + hash2(x, y, s + 1) * 0.25;
+  return ramp[Math.min(ramp.length - 1, i + (f - i > t ? 1 : 0))];
+}
+
+export function vnoise(x, y, s = 0) {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const xf = x - xi;
+  const yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf);
+  const v = yf * yf * (3 - 2 * yf);
+  const a = hash2(xi, yi, s) + (hash2(xi + 1, yi, s) - hash2(xi, yi, s)) * u;
+  const b = hash2(xi, yi + 1, s) + (hash2(xi + 1, yi + 1, s) - hash2(xi, yi + 1, s)) * u;
+  return a + (b - a) * v;
 }
 
 export function mulberry32(a) {
