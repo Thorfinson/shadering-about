@@ -3,12 +3,12 @@ name: sprites
 on:
   push:
     paths:
-      - 'assets/nautilus/**'
+      - 'assets/**'
       - 'tools/build-sprites.mjs'
       - 'tools/pixelkit.mjs'
   pull_request:
     paths:
-      - 'assets/nautilus/**'
+      - 'assets/**'
       - 'tools/build-sprites.mjs'
       - 'tools/pixelkit.mjs'
 
