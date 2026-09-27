@@ -1,0 +1,2897 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Nautilus — agents under the sea</title>
+<style>
+  :root {
+    --bg: #04070d;
+    --panel: #0a1320;
+    --panel-2: #0e1a2b;
+    --ink: #eadfc0;
+    --muted: rgba(234, 223, 192, 0.62);
+    --faint: rgba(234, 223, 192, 0.36);
+    --rule: rgba(230, 182, 79, 0.18);
+    --rule-strong: rgba(230, 182, 79, 0.45);
+    --rivet: rgba(230, 182, 79, 0.55);
+    --brass: #e6b64f;
+    --brass-2: #b8812e;
+    --cyan: #7ff0ff;
+    --green: #8fe07a;
+    --red: #ff6b5a;
+    --c-nemo: #e6b64f;
+    --c-aronnax: #9fb4e2;
+    --c-conseil: #86d0b4;
+    --c-ned: #f0996a;
+    --c-mate: #c3a6ea;
+    --c-kraken: #ff7a96;
+    --c-sys: rgba(234, 223, 192, 0.45);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.45 var(--serif); -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
+  button, select { font: inherit; }
+  code { font-family: var(--mono); }
+
+  /* ------------------------------------------------------------ header -- */
+  .bar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 12px 24px; padding: 14px 16px 12px; border-bottom: 1px solid var(--rule);
+  }
+  .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .brand canvas { width: 70px; height: 22px; image-rendering: pixelated; flex: none; }
+  .kicker { font: 600 10px/1 var(--mono); letter-spacing: 0.28em; text-transform: uppercase; color: var(--brass); }
+  h1 { margin: 4px 0 0; font-weight: 500; font-size: clamp(20px, 2.4vw, 27px); line-height: 1.1; }
+  h1 em { color: var(--brass); }
+  .sub { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; max-width: 74ch; }
+
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .btn, .seg button, .controls select {
+    background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--rule-strong); border-radius: 4px;
+    padding: 6px 11px; font: 12px/1.2 var(--mono); letter-spacing: 0.04em; cursor: pointer;
+  }
+  .btn:hover, .seg button:hover, .controls select:hover { border-color: var(--brass); }
+  .btn:focus-visible, .seg button:focus-visible, .controls select:focus-visible, .tabs button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--cyan); outline-offset: 2px;
+  }
+  .seg { display: inline-flex; }
+  .seg button { border-radius: 0; margin-left: -1px; min-width: 38px; }
+  .seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+  .seg button:last-child { border-radius: 0 4px 4px 0; }
+  .seg button.on { background: var(--brass); color: #1a1206; border-color: var(--brass); position: relative; }
+  label.ctl { display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; font: 10.5px var(--mono); color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
+  label.ctl select { min-width: 0; max-width: 100%; text-transform: none; }
+
+  /* ------------------------------------------------------------ layout -- */
+  .layout {
+    display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 14px;
+    padding: 14px 16px 24px; align-items: start;
+  }
+  .left, .side { display: grid; gap: 14px; min-width: 0; }
+
+  .stage {
+    position: relative; height: clamp(300px, 63vh, 780px);
+    background: #050d1b; border: 1px solid var(--rule-strong); border-radius: 4px; overflow: hidden;
+  }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+    object-fit: contain; image-rendering: crisp-edges; image-rendering: pixelated;
+  }
+
+  .pane {
+    position: relative; min-width: 0; border: 1px solid var(--rule); border-radius: 4px;
+    background:
+      radial-gradient(circle at 5px 5px, var(--rivet) 1.1px, transparent 1.7px),
+      radial-gradient(circle at calc(100% - 5px) 5px, var(--rivet) 1.1px, transparent 1.7px),
+      radial-gradient(circle at 5px calc(100% - 5px), var(--rivet) 1.1px, transparent 1.7px),
+      radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), var(--rivet) 1.1px, transparent 1.7px),
+      var(--panel);
+  }
+  .pane > header, .pane > summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 9px 14px 8px; border-bottom: 1px solid var(--rule); min-height: 36px;
+  }
+  .pane h2 { margin: 0; font: 600 10.5px/1 var(--mono); letter-spacing: 0.26em; text-transform: uppercase; color: var(--brass); }
+  .pane .aside { font: 11px var(--mono); color: var(--faint); }
+
+  /* ------------------------------------------------------- lower panes -- */
+  .lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 14px; }
+  .lower .pane { display: flex; flex-direction: column; height: clamp(270px, 36vh, 440px); }
+
+  .log { list-style: none; margin: 0; padding: 6px 0; overflow-y: auto; flex: 1; font: 12px/1.45 var(--mono); }
+  .log li { display: grid; grid-template-columns: 3.3em 5.7em minmax(0, 1fr); gap: 8px; padding: 2px 14px; }
+  .log li.fresh { animation: fresh 1.4s ease-out; }
+  @keyframes fresh { from { background: rgba(230, 182, 79, 0.16); } to { background: transparent; } }
+  .log time { color: var(--faint); }
+  .log .actor { font-weight: 700; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 1px; }
+  .log .msg { color: var(--muted); overflow-wrap: anywhere; }
+  .log .msg b { color: var(--ink); font-weight: 600; }
+  .log .meta { color: var(--faint); font-style: normal; white-space: nowrap; }
+  .log li.phase { display: block; color: var(--brass); letter-spacing: 0.2em; text-transform: uppercase; font-size: 10.5px; padding: 8px 14px 3px; }
+  .log code, .ctx code, .tip code { color: var(--cyan); }
+  .log q { color: var(--ink); font-style: italic; font-family: var(--serif); font-size: 13px; }
+  .who-nemo .actor { color: var(--c-nemo); }
+  .who-aronnax .actor { color: var(--c-aronnax); }
+  .who-conseil .actor { color: var(--c-conseil); }
+  .who-ned .actor { color: var(--c-ned); }
+  .who-mate .actor { color: var(--c-mate); }
+  .who-kraken .actor { color: var(--c-kraken); }
+  .who-sys .actor { color: var(--c-sys); }
+  .who-kraken .msg { color: #ffb3c2; }
+
+  .tabs { display: flex; gap: 2px; }
+  .tabs button {
+    background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted);
+    font: 11px/1 var(--mono); letter-spacing: 0.06em; padding: 4px 7px 5px; cursor: pointer;
+  }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brass); }
+  .tabs .n { color: var(--brass); }
+  .tab-body { flex: 1; overflow: auto; font: 12px/1.5 var(--mono); padding: 10px 0; }
+  .tab-body[hidden] { display: none; }
+  .empty { color: var(--faint); padding: 2px 14px; font: italic 13.5px/1.5 var(--serif); }
+
+  .file { margin: 0 14px 10px; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+  .fh { display: flex; justify-content: space-between; gap: 10px; padding: 5px 9px; background: rgba(230, 182, 79, 0.07); font-size: 11.5px; }
+  .fh .path { color: var(--ink); }
+  .fh .badge { color: var(--brass); margin-right: 6px; }
+  .fh .stat { white-space: nowrap; }
+  .a { color: var(--green); }
+  .d { color: var(--red); }
+  .file pre { margin: 0; padding: 4px 0; white-space: pre; overflow-x: auto; font: inherit; }
+  .l { display: block; padding: 0 9px; min-height: 1.5em; }
+  .l.add { background: rgba(127, 217, 106, 0.1); color: #c9f2bd; }
+  .l.del { background: rgba(255, 90, 74, 0.11); color: #ffb9ae; }
+  .l.ctx { color: var(--muted); }
+  .l.hunk { color: var(--cyan); opacity: 0.7; }
+  .l.live::after { content: "▌"; color: var(--brass); animation: blink 0.9s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .commit { margin: 0 14px 10px; padding: 7px 10px; border: 1px dashed var(--rule-strong); border-radius: 3px; color: var(--muted); }
+  .commit b { color: var(--brass); font-weight: 600; }
+
+  .run { margin: 0 14px 12px; }
+  .run .cmd { color: var(--faint); }
+  .run .ok { color: var(--green); }
+  .run .bad { color: var(--red); }
+  .run .why { color: #ffb9ae; padding-left: 2.2em; }
+  .run .sum { margin-top: 2px; color: var(--ink); }
+
+  .atlas-head { padding: 0 14px 10px; color: var(--muted); font-size: 11.5px; }
+  .atlas-head b { color: var(--ink); font-weight: 500; }
+  .atlas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 0 14px; }
+  .atlas-cell {
+    display: grid; grid-template-rows: 1fr auto; gap: 5px; justify-items: center; align-items: center;
+    border: 1px solid var(--rule); border-radius: 3px; padding: 7px 5px 5px; min-height: 84px;
+    background: repeating-conic-gradient(#0b1522 0 25%, #101c2c 0 50%) 0 0 / 10px 10px;
+  }
+  .atlas-cell canvas { image-rendering: pixelated; max-width: 100%; }
+  .atlas-cell span { font-size: 9.5px; line-height: 1.3; color: var(--muted); text-align: center; word-break: break-all; background: rgba(4, 7, 13, 0.85); padding: 1px 4px; border-radius: 2px; }
+
+  /* ------------------------------------------------------- side panes -- */
+  .body { padding: 10px 14px 13px; }
+  .mission h3 { margin: 0 0 7px; font-weight: 500; font-size: 19px; line-height: 1.2; }
+  .mission blockquote { margin: 0 0 9px; padding-left: 11px; border-left: 2px solid var(--brass-2); font-style: italic; }
+  .mission blockquote cite { display: block; margin-top: 2px; font: normal 11px var(--mono); color: var(--faint); letter-spacing: 0.06em; }
+  .ticket { margin: 0 0 11px; font: 12px/1.4 var(--mono); color: var(--muted); }
+  .ticket b { color: var(--cyan); font-weight: 500; }
+  .phases { list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 0; padding: 0; }
+  .phases li {
+    font: 9.5px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; text-align: center;
+    padding: 6px 1px; border: 1px solid var(--rule); border-radius: 3px; color: var(--faint);
+  }
+  .phases li.done { color: var(--muted); border-color: var(--rule-strong); }
+  .phases li.on { color: #1a1206; background: var(--brass); border-color: var(--brass); }
+  .phase-note { margin: 9px 0 0; font-size: 13.5px; color: var(--muted); min-height: 4.4em; }
+
+  .crew { list-style: none; margin: 0; padding: 3px 0; }
+  .crew li {
+    display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; column-gap: 11px; row-gap: 3px;
+    padding: 7px 14px; border-bottom: 1px solid rgba(230, 182, 79, 0.07); transition: background 0.3s;
+  }
+  .crew li:last-child { border-bottom: 0; }
+  .crew li.active { background: rgba(230, 182, 79, 0.07); }
+  .crew canvas { grid-row: 1 / 4; width: 39px; height: 36px; image-rendering: pixelated; align-self: center; }
+  .crew .nm { font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .crew .rl { font: 9.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+  .crew .tok { font: 10.5px var(--mono); color: var(--faint); text-align: right; white-space: nowrap; align-self: center; }
+  .crew .st { grid-column: 2 / 4; font: 11.5px/1.35 var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crew .meter { grid-column: 2 / 4; height: 3px; background: rgba(234, 223, 192, 0.08); border-radius: 2px; overflow: hidden; }
+  .crew .meter i { display: block; height: 100%; width: 0; background: currentColor; transition: width 0.3s; }
+
+  .plan { list-style: none; margin: 0; padding: 8px 14px 12px; counter-reset: step; }
+  .plan li {
+    display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; padding: 3px 0;
+    font-size: 13.5px; color: var(--muted); counter-increment: step; animation: fresh 1.4s ease-out;
+  }
+  .plan li::before { content: counter(step); font: 11px/1.8 var(--mono); color: var(--faint); }
+  .plan li.on { color: var(--ink); }
+  .plan li.on::before { content: "▸"; color: var(--brass); }
+  .plan li.done { color: var(--faint); }
+  .plan li.done::before { content: "✓"; color: var(--green); }
+  .plan .who { font: 9.5px/1.9 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .ctx-sum { padding: 10px 14px 2px; }
+  .ctx-bar { display: grid; grid-template-columns: 6.6em minmax(0, 1fr) 4.2em; gap: 8px; align-items: center; font: 11px/1.9 var(--mono); color: var(--muted); }
+  .ctx-bar .track { height: 6px; background: rgba(234, 223, 192, 0.07); border-radius: 3px; overflow: hidden; }
+  .ctx-bar .track i { display: block; height: 100%; width: 0; transition: width 0.4s; }
+  .ctx-bar .v { text-align: right; color: var(--ink); }
+  .ctx-note { margin: 5px 0 0; font-size: 12.5px; color: var(--faint); }
+  .ctx { list-style: none; margin: 0; padding: 6px 14px 12px; max-height: 196px; overflow-y: auto; font: 11px/1.45 var(--mono); }
+  .ctx li { display: grid; grid-template-columns: 3.6em minmax(0, 1fr) auto; gap: 7px; padding: 2px 0; color: var(--muted); }
+  .ctx .src { font-size: 9.5px; letter-spacing: 0.1em; padding-top: 1px; }
+  .ctx .n { color: var(--faint); }
+  .src-lib { color: var(--ink); }
+  .src-mem { color: #e8e0ff; }
+  .src-repo { color: var(--cyan); }
+  .src-git { color: var(--brass); }
+
+  details.key > summary { list-style: none; cursor: pointer; border-bottom-color: transparent; }
+  details.key[open] > summary { border-bottom-color: var(--rule); }
+  details.key > summary::-webkit-details-marker { display: none; }
+  details.key > summary::after { content: "+"; font: 14px/1 var(--mono); color: var(--brass); }
+  details.key[open] > summary::after { content: "–"; }
+  .key ul { list-style: none; margin: 0; padding: 12px 14px 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px 20px; }
+  .key li { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 11px; align-items: center; font-size: 13.5px; line-height: 1.35; color: var(--muted); }
+  .key li b { color: var(--ink); font-weight: 600; }
+  .key .ic { display: grid; place-items: center; min-height: 34px; }
+  .key canvas { image-rendering: pixelated; max-width: 54px; }
+  .key .swatch { width: 40px; height: 12px; background: repeating-linear-gradient(90deg, #fff0a8 0 2px, transparent 2px 4px); clip-path: polygon(0 50%, 100% 0, 100% 100%); }
+
+  /* --------------------------------------------------- stage overlays -- */
+  .tip {
+    position: absolute; z-index: 5; pointer-events: none; max-width: 270px; padding: 7px 10px;
+    background: rgba(4, 7, 13, 0.95); border: 1px solid var(--rule-strong); border-radius: 3px;
+    font: 11.5px/1.45 var(--mono); color: var(--muted);
+  }
+  .tip b { color: var(--ink); }
+  .tip .k { color: var(--brass); letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; }
+
+  .boot {
+    position: absolute; inset: 0; z-index: 6; display: grid; place-items: center;
+    background: #050d1b; transition: opacity 0.6s ease;
+  }
+  .boot.done { opacity: 0; pointer-events: none; }
+  .boot-card { width: min(440px, 86%); font: 12px/1.55 var(--mono); color: var(--muted); }
+  .boot-card h2 { margin: 0 0 4px; font: 600 11px var(--mono); letter-spacing: 0.26em; text-transform: uppercase; color: var(--brass); }
+  .boot-bar { height: 10px; border: 1px solid var(--rule-strong); padding: 1px; margin: 10px 0 8px; }
+  .boot-bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, var(--brass) 0 6px, var(--brass-2) 6px 8px); }
+  .boot-log { height: 7.8em; overflow: hidden; white-space: pre; color: var(--faint); }
+  .boot-err { color: var(--red); white-space: pre-wrap; }
+
+  @media (max-width: 1120px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .side { grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); align-items: start; }
+  }
+  @media (max-width: 760px) {
+    .bar, .layout { padding-left: 12px; padding-right: 12px; }
+    .lower { grid-template-columns: minmax(0, 1fr); }
+    .stage { height: auto; aspect-ratio: 5 / 3; }
+    .log li { grid-template-columns: 3.3em minmax(0, 1fr); }
+    .log .msg { grid-column: 1 / -1; }
+    .side { grid-template-columns: minmax(0, 1fr); }
+    /* one column: scene, then the mission and crew, then the log and chart table */
+    .left { display: contents; }
+    .stage { order: 0; }
+    .side { order: 1; }
+    .lower { order: 2; }
+    .key { order: 3; }
+    .controls, label.ctl { width: 100%; }
+    label.ctl select { flex: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .log li.fresh, .plan li { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <canvas id="brand-icon" width="140" height="44" aria-hidden="true"></canvas>
+    <div>
+      <div class="kicker">Nautilus · agents under the sea</div>
+      <h1>Twenty Thousand Leagues <em>Under the Repo</em></h1>
+      <p class="sub">An orchestrator and its diving sub-agents read the knowledge base, search the repository, change the code, and prove it before it lands.</p>
+    </div>
+  </div>
+  <div class="controls">
+    <label class="ctl" for="mission">Voyage <select id="mission"></select></label>
+    <button id="play" class="btn" type="button" aria-pressed="false">Pause</button>
+    <div class="seg" id="speed" role="group" aria-label="Speed">
+      <button type="button" data-speed="0.5">½×</button>
+      <button type="button" data-speed="1" class="on">1×</button>
+      <button type="button" data-speed="2">2×</button>
+      <button type="button" data-speed="4">4×</button>
+    </div>
+    <button id="restart" class="btn" type="button">Restart</button>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="left">
+    <div class="stage" id="stage">
+      <canvas id="sea" role="img" aria-label="Pixel-art sea floor: the submarine Nautilus sends brass-helmeted divers to a sunken library, a giant pearl, the ruins of Atlantis and a treasure wreck."></canvas>
+      <div class="boot" id="boot">
+        <div class="boot-card">
+          <h2>Loading sprite assets</h2>
+          <div id="boot-what">assets/nautilus/atlas.js</div>
+          <div class="boot-bar"><i id="boot-bar"></i></div>
+          <div class="boot-log" id="boot-log"></div>
+        </div>
+      </div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+
+    <div class="lower">
+      <section class="pane">
+        <header><h2>Captain's log</h2><span class="aside" id="clock">06:00</span></header>
+        <ol class="log" id="log" aria-live="off"></ol>
+      </section>
+      <section class="pane">
+        <header>
+          <h2>Chart table</h2>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" data-tab="diff" aria-selected="true">Changes <span class="n" id="diff-n"></span></button>
+            <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
+            <button type="button" role="tab" data-tab="atlas" aria-selected="false">Sprite atlas</button>
+          </div>
+        </header>
+        <div class="tab-body" id="tab-diff" role="tabpanel"></div>
+        <div class="tab-body" id="tab-tests" role="tabpanel" hidden></div>
+        <div class="tab-body" id="tab-atlas" role="tabpanel" hidden></div>
+      </section>
+    </div>
+    <details class="pane key" open>
+      <summary><h2>Key to the chart</h2></summary>
+      <ul id="key"></ul>
+    </details>
+  </div>
+
+  <aside class="side">
+    <section class="pane mission">
+      <header><h2 id="m-num">Voyage</h2><span class="aside" id="m-count"></span></header>
+      <div class="body">
+        <h3 id="m-title">&nbsp;</h3>
+        <blockquote><span id="m-order"></span><cite>— Captain Nemo, to the crew</cite></blockquote>
+        <p class="ticket">Ticket: <b id="m-ticket"></b></p>
+        <ol class="phases" id="phases"></ol>
+        <p class="phase-note" id="phase-note"></p>
+      </div>
+    </section>
+
+    <section class="pane">
+      <header><h2>Crew manifest</h2><span class="aside">agents</span></header>
+      <ul class="crew" id="crew"></ul>
+    </section>
+
+    <section class="pane">
+      <header><h2>Conseil's plan</h2><span class="aside" id="plan-n"></span></header>
+      <ol class="plan" id="plan"></ol>
+    </section>
+
+    <section class="pane">
+      <header><h2>Context ledger</h2><span class="aside">this voyage</span></header>
+      <div class="ctx-sum">
+        <div class="ctx-bar"><span>crew read</span><span class="track"><i id="bar-read" style="background: var(--c-aronnax)"></i></span><span class="v" id="v-read">0</span></div>
+        <div class="ctx-bar"><span>Nemo holds</span><span class="track"><i id="bar-held" style="background: var(--brass)"></i></span><span class="v" id="v-held">0</span></div>
+        <p class="ctx-note" id="ctx-note">Divers read in their own context; only their short reports reach the Nautilus.</p>
+      </div>
+      <ul class="ctx" id="ctx"></ul>
+    </section>
+
+  </aside>
+</main>
+
+<script src="assets/nautilus/atlas.js"></script>
+<script>
+"use strict";
+
+// ============================================================
+// Utilities
+// ============================================================
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fmtTok = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${Math.round(n)}`);
+const basename = (f) => f.slice(f.lastIndexOf("/") + 1);
+
+function makeCanvas(w, h) {
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  return c;
+}
+function flipX(src) {
+  const c = makeCanvas(src.width, src.height);
+  const g = c.getContext("2d");
+  g.translate(src.width, 0);
+  g.scale(-1, 1);
+  g.drawImage(src, 0, 0);
+  return c;
+}
+function tint(src, color) {
+  const c = makeCanvas(src.width, src.height);
+  const g = c.getContext("2d");
+  g.drawImage(src, 0, 0);
+  g.globalCompositeOperation = "source-in";
+  g.fillStyle = color;
+  g.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+function hash2(x, y, s = 0) {
+  let h = (x * 374761393 + y * 668265263 + s * 144665) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
+function rampPick(ramp, v, x, y) {
+  const f = clamp(v, 0, 1) * (ramp.length - 1);
+  const i = Math.floor(f);
+  return ramp[Math.min(ramp.length - 1, i + (f - i > BAYER[(y & 3) * 4 + (x & 3)] ? 1 : 0))];
+}
+const C32 = new Map();
+function col32(hex) {
+  let v = C32.get(hex);
+  if (v === undefined) {
+    const n = parseInt(hex.slice(1), 16);
+    v = ((0xff << 24) | ((n & 0xff) << 16) | (n & 0xff00) | (n >> 16)) >>> 0;
+    C32.set(hex, v);
+  }
+  return v;
+}
+function lighten32(c, k) {
+  const r = c & 0xff, g = (c >> 8) & 0xff, b = (c >> 16) & 0xff;
+  const R = Math.round(lerp(r, 207, k)), G = Math.round(lerp(g, 234, k)), B = Math.round(lerp(b, 219, k));
+  return ((0xff << 24) | (B << 16) | (G << 8) | R) >>> 0;
+}
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
+const macrotask = () => new Promise((r) => {
+  const ch = new MessageChannel();
+  ch.port1.onmessage = () => r();
+  ch.port2.postMessage(0);
+});
+
+// ============================================================
+// Sprite assets — built by tools/build-sprites.mjs into
+// assets/nautilus/atlas.js (palette, frames, anchor meta and the
+// PNG sheet as a data URI). Each frame is sliced into its own
+// canvas once, so drawing is a plain drawImage.
+// ============================================================
+let ATLAS = null;
+let P = null;      // palette, name -> #rrggbb
+let META = null;   // anchor points per sprite
+const FR = new Map();
+
+async function loadAtlas(onFrame) {
+  ATLAS = window.NAUTILUS_ATLAS;
+  if (!ATLAS) throw new Error("assets/nautilus/atlas.js did not load.\nRun `npm run sprites` to build it.");
+  P = ATLAS.palette;
+  META = ATLAS.meta;
+  const img = new Image();
+  img.src = ATLAS.image;
+  await img.decode();
+  const names = Object.keys(ATLAS.frames);
+  for (let i = 0; i < names.length; i++) {
+    const f = ATLAS.frames[names[i]];
+    const c = makeCanvas(f.w, f.h);
+    c.getContext("2d").drawImage(img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+    FR.set(names[i], { c, flip: null, white: null });
+    await onFrame(i + 1, names.length, names[i], f);
+  }
+}
+function spr(name, flip = false) {
+  const f = FR.get(name);
+  if (!f) throw new Error(`missing sprite ${name}`);
+  if (!flip) return f.c;
+  return (f.flip ??= flipX(f.c));
+}
+function sprWhite(name) {
+  const f = FR.get(name);
+  return (f.white ??= tint(f.c, "#ffffff"));
+}
+
+// ============================================================
+// Pixel font — 3×5 glyphs, one octal digit per row (4 = left px)
+// ============================================================
+const FONT = {
+  A: "25755", B: "65656", C: "34443", D: "65556", E: "74647", F: "74644", G: "34553", H: "55755",
+  I: "72227", J: "11152", K: "55655", L: "44447", M: "57755", N: "65555", O: "25552", P: "65644",
+  Q: "25563", R: "65655", S: "34216", T: "72222", U: "55557", V: "55552", W: "55775", X: "55255",
+  Y: "55222", Z: "71247", 0: "75557", 1: "26227", 2: "61247", 3: "61216", 4: "55711", 5: "74616",
+  6: "34757", 7: "71222", 8: "75757", 9: "75716", " ": "00000", ".": "00002", ",": "00024",
+  ":": "02020", "-": "00700", "+": "02720", "/": "11244", "!": "22202", "?": "61202", "(": "12221",
+  ")": "42224", "'": "22000", "#": "57575", ">": "42124", "<": "12421", "=": "07070", "%": "51245",
+  "_": "00007", "*": "05250", "·": "00200", "✓": "00152", "✗": "05250",
+};
+const TEXT = new Map();
+function textSprite(str, color) {
+  const key = `${color}|${str}`;
+  let c = TEXT.get(key);
+  if (c) return c;
+  const s = str.toUpperCase().replace(/→/g, ">").replace(/[–—]/g, "-");
+  c = makeCanvas(Math.max(1, s.length * 4 - 1), 5);
+  const g = c.getContext("2d");
+  g.fillStyle = color;
+  for (let i = 0; i < s.length; i++) {
+    const code = FONT[s[i]] ?? FONT["?"];
+    for (let r = 0; r < 5; r++) {
+      const bits = +code[r];
+      for (let b = 0; b < 3; b++) if (bits & (4 >> b)) g.fillRect(i * 4 + b, r, 1, 1);
+    }
+  }
+  if (TEXT.size > 500) TEXT.clear();
+  TEXT.set(key, c);
+  return c;
+}
+const textW = (s) => s.length * 4 - 1;
+function drawText(g, str, x, y, color, shadow) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (shadow) g.drawImage(textSprite(str, shadow), x + 1, y + 1);
+  g.drawImage(textSprite(str, color), x, y);
+}
+function textBox(g, str, x, y, fg, bg, border) {
+  const w = textW(str);
+  g.fillStyle = border;
+  g.fillRect(x - 3, y - 3, w + 6, 11);
+  g.fillStyle = bg;
+  g.fillRect(x - 2, y - 2, w + 4, 9);
+  drawText(g, str, x, y, fg);
+}
+
+// ============================================================
+// Sim clock. Every wait in a mission goes through sleep(), so
+// pause, speed and restart apply to the whole orchestration.
+// ============================================================
+const clock = { t: 0, speed: 1, paused: false };
+let timers = [];
+class Cancelled extends Error {}
+function sleep(sec) {
+  return new Promise((res, rej) => timers.push({ at: clock.t + sec, res, rej }));
+}
+function tickTimers() {
+  if (!timers.length) return;
+  const due = [];
+  const keep = [];
+  for (const tm of timers) (tm.at <= clock.t ? due : keep).push(tm);
+  if (!due.length) return;
+  timers = keep;
+  for (const tm of due) tm.res();
+}
+function cancelAll() {
+  const old = timers;
+  timers = [];
+  for (const tm of old) tm.rej(new Cancelled());
+}
+const fmtClock = (t) => {
+  const m = 6 * 60 + Math.floor(t);
+  return `${String(Math.floor((m % 1440) / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+};
+
+// ============================================================
+// The voyage — knowledge, repository, history and memory.
+// Everything below is what the crew reads and changes.
+// ============================================================
+const DOCS = {
+  hull:   { title: "Nautilus Manual §4 · Hull", tag: "HULL MANUAL", tok: 3400, shelf: 0, at: 0.2 },
+  maury:  { title: "Maury · Physical Geography of the Sea", tag: "MAURY", tok: 5200, shelf: 1, at: 0.72 },
+  coil:   { title: "Ruhmkorff · Induction Coil Notes", tag: "RUHMKORFF", tok: 2600, shelf: 2, at: 0.3 },
+  bunsen: { title: "Bunsen · On Sodium–Mercury Cells", tag: "BUNSEN", tok: 4100, shelf: 0, at: 0.8 },
+  depths: { title: "Aronnax · Mysteries of the Great Submarine Depths", tag: "ARONNAX", tok: 6100, shelf: 1, at: 0.18 },
+  ice:    { title: "Admiralty Ice Charts · Antarctic Circle", tag: "ICE CHARTS", tok: 3800, shelf: 2, at: 0.82 },
+};
+
+const MEMORY_BASE = [
+  "Hull tests are slow — run them last",
+  "Stage risky engine changes behind a flag",
+  "The Captain plays the organ at night — test lamps under load",
+];
+
+const HISTORY_BASE = [
+  ["2f7c10", "salon: tune the organ pedals"],
+  ["91ab4e", "helm: smoother diving planes"],
+  ["5c0d93", "engine: sodium cells v2"],
+  ["e41a77", "spur: reinforce the ram tip"],
+  ["7be2d0", "lamp: warm-white globes on mainCoil"],
+  ["a3f9c1", "hull: rivet spacing 12 → 10 cm"],
+];
+
+// One tablet per file, in Atlantis slot order (upper step, then lower step).
+const FILES = [
+  "helm/depth.js", "ballast/pumps.js", "hull/plates.js", "lamp/ruhmkorff.js", "engine/sodium.js",
+  "spur/ram.js", "salon/organ.js", "charts/route.js", "test/hull.test.js", "test/lamp.test.js",
+];
+
+// Diff lines: first character is the marker (" ", "-", "+").
+const EDITS = {
+  depth: {
+    file: "helm/depth.js", hunk: "@@ -10,4 +10,4 @@ diving planes",
+    lines: [
+      " // hard floor for the diving planes",
+      "-export const MAX_DEPTH = 8000;   // metres",
+      "+export const MAX_DEPTH = 16000;  // the Atlantic floor",
+      " export const DESCENT_RATE = 1.2; // m/s",
+    ],
+  },
+  pumps: {
+    file: "ballast/pumps.js", hunk: "@@ -38,5 +38,8 @@ function pumpOut",
+    lines: [
+      " function pumpOut(tank, litres) {",
+      "   const p = seaPressure(depth());",
+      "+  if (p > 800) {                  // atm",
+      "+    return staged(tank, litres, p);",
+      "+  }",
+      "   return drive(tank, litres, p);",
+      " }",
+    ],
+  },
+  plates: {
+    file: "hull/plates.js", hunk: "@@ -4,3 +4,4 @@",
+    lines: [
+      "-export const PLATE_CM = 4;       // rated 8 000 m",
+      "+export const PLATE_CM = 6.5;     // rated 16 500 m",
+      "+export const DOUBLE_HULL = true;",
+      " export const RIVET_CM = 10;",
+    ],
+  },
+  lampcoil: {
+    file: "lamp/ruhmkorff.js", hunk: "@@ -18,5 +18,6 @@",
+    lines: [
+      ' import { mainCoil } from "../engine/coils.js";',
+      '+import { lampCoil } from "../engine/coils.js";',
+      " ",
+      " export function lampPower() {",
+      "-  return mainCoil.draw(LAMP_W);",
+      "+  return lampCoil.draw(LAMP_W);   // its own bobbin",
+      " }",
+    ],
+  },
+  organbuf: {
+    file: "salon/organ.js", hunk: "@@ -52,3 +52,5 @@ export function playChord",
+    lines: [
+      " export function playChord(notes) {",
+      "-  mainCoil.draw(notes.length * PIPE_W);",
+      "+  const w = notes.length * PIPE_W;",
+      "+  condenser.charge(w);             // absorb the surge",
+      "+  mainCoil.draw(condenser.release());",
+      " }",
+    ],
+  },
+  extract: {
+    file: "engine/sodium.js", hunk: "@@ -30,6 +30,14 @@",
+    lines: [
+      "+export function extractSodium(litres) {",
+      "+  const brine = boil(seawater(litres));   // furnace heat",
+      "+  return electrolyse(brine).sodium;",
+      "+}",
+      "+",
+      " export function charge(cells) {",
+      "-  cells.fill(coalSodium());",
+      "+  const na = FLAGS.CHARGE_FROM_SEA",
+      "+    ? extractSodium(300) : coalSodium();",
+      "+  cells.fill(na);",
+      " }",
+    ],
+  },
+  sodiumtest: {
+    file: "test/sodium.test.js", hunk: "@@ -0,0 +1,9 @@", create: true,
+    lines: [
+      '+import { extractSodium, charge } from "../engine/sodium.js";',
+      "+",
+      '+test("300 L of sea water yields ~3.3 kg of sodium", () => {',
+      "+  expect(extractSodium(300)).toBeCloseTo(3.3, 1);",
+      "+});",
+      '+test("cells charge with CHARGE_FROM_SEA on", () => {',
+      "+  FLAGS.CHARGE_FROM_SEA = true;",
+      "+  expect(charge(new Cells(4)).full).toBe(true);",
+      "+});",
+    ],
+  },
+  fixunits: {
+    file: "engine/sodium.js", hunk: "@@ -32,1 +32,1 @@ export function extractSodium",
+    lines: [
+      "-  return electrolyse(brine).sodium;",
+      "+  return electrolyse(brine).sodium / 1000;  // grams → kg",
+    ],
+  },
+  hotjet: {
+    file: "spur/ram.js", hunk: "@@ -14,4 +14,6 @@ export function ram",
+    lines: [
+      " export function ram(ice) {",
+      "+  // keep the channel open: boiling water ahead of the spur",
+      '+  boilers.jet({ at: "spur", celsius: 100, litresPerMin: 400 });',
+      "   return strike(ice, SPUR_TONNES);",
+      " }",
+    ],
+  },
+  thinice: {
+    file: "charts/route.js", hunk: "@@ -8,3 +8,6 @@ export function nextHeading",
+    lines: [
+      " export function nextHeading(sonar) {",
+      '-  return sonar.bearingOf("open water");',
+      "+  const thin = sonar.soundings().filter((s) => s.iceM < 10);",
+      "+  return thin.length ? bearing(thin[0])",
+      '+                     : sonar.bearingOf("open water");',
+      " }",
+    ],
+  },
+};
+
+// Each voyage is one agent task: survey (parallel reads) → plan →
+// build (parallel edits) → verify (maybe a failing test to fix) → merge.
+const MISSIONS = [
+  {
+    num: "I", title: "Dive to sixteen thousand metres",
+    order: "Take us down to the floor of the Atlantic — sixteen thousand metres.",
+    ticket: "Raise the depth limit to 16 000 m",
+    survey: [
+      { agent: "aronnax", order: "Survey the hull and pressure literature", tag: "SURVEY HULL DOCS",
+        steps: [["read", "hull"], ["read", "maury"], ["recall", 0]],
+        report: "Hull rated to 8 000 m; ~1 600 atm at 16 km. Memory: hull tests are slow.", rtok: 160 },
+      { agent: "conseil", order: "Find every depth limit in the code", tag: "FIND DEPTH LIMITS",
+        steps: [["grep", "MAX_DEPTH", ["helm/depth.js", "ballast/pumps.js"]]],
+        report: "MAX_DEPTH is set in helm/depth.js and read by ballast/pumps.js.", rtok: 120 },
+      { agent: "mate", order: "Check the hull's history", tag: "CHECK HISTORY",
+        steps: [["history", "hull/", "a3f9c1"]],
+        report: "Last hull change a3f9c1 (rivet spacing), three voyages ago.", rtok: 90 },
+    ],
+    plan: [
+      { text: "Raise MAX_DEPTH to 16 000 m", agent: "ned", phase: 2 },
+      { text: "Stage the ballast pumps above 800 atm", agent: "ned", phase: 2 },
+      { text: "Run the hull suite (last — it is slow)", agent: "mate", phase: 3 },
+      { text: "Commit, and remember the lesson", agent: "mate", phase: 4 },
+    ],
+    build: [
+      { agent: "ned", order: "Raise the depth limit and stage the pumps", tag: "RAISE LIMIT",
+        edits: ["depth", "pumps"], report: "MAX_DEPTH 16 000; pumps staged above 800 atm.", rtok: 110 },
+    ],
+    verify: {
+      agent: "mate", suite: "test/hull.test.js", order: "Run the hull suite", tag: "RUN HULL TESTS",
+      runs: [
+        [[1, "rivets hold at 8 000 m"], [1, "ballast empties under 1 600 atm"], [0, "plates survive 16 000 m", "expected rating ≥ 16000, got 8000"]],
+        [[1, "rivets hold at 8 000 m"], [1, "ballast empties under 1 600 atm"], [1, "plates survive 16 000 m"]],
+      ],
+      report: "3 passing.", rtok: 50,
+      fix: { agent: "ned", file: "hull/plates.js", edit: "plates", order: "Harpoon the failing test in hull/plates.js",
+             tag: "HARPOON IT", report: "Plates 4 → 6.5 cm, double hull: rated 16 500 m.", rtok: 100 },
+    },
+    merge: { hash: "16d000", msg: "helm: dive to 16 000 m", memory: "Depth changes need a hull-plate review" },
+  },
+  {
+    num: "II", title: "Steady the salon lamps",
+    order: "The lamps gutter whenever I play the organ. See to it, gentlemen.",
+    ticket: "Fix lamp flicker under organ load",
+    survey: [
+      { agent: "aronnax", order: "Read up on induction coils", tag: "READ COIL NOTES",
+        steps: [["read", "coil"], ["recall", 2]],
+        report: "Two loads on one Ruhmkorff bobbin sag together. Memory: test lamps under organ load.", rtok: 150 },
+      { agent: "conseil", order: "Find everything that draws on the main coil", tag: "FIND COIL USERS",
+        steps: [["grep", "mainCoil", ["lamp/ruhmkorff.js", "salon/organ.js"]]],
+        report: "Lamps and organ both draw on mainCoil.", rtok: 100 },
+      { agent: "mate", order: "Find when the flicker started", tag: "BLAME LAMPS",
+        steps: [["history", "lamp/", "7be2d0"]],
+        report: "7be2d0 moved the lamps onto mainCoil — the regression.", rtok: 110 },
+    ],
+    plan: [
+      { text: "Give the lamps their own coil", agent: "ned", phase: 2 },
+      { text: "Buffer the organ through a condenser", agent: "conseil", phase: 2 },
+      { text: "Test the lamps under organ load", agent: "mate", phase: 3 },
+      { text: "Commit, and remember the lesson", agent: "mate", phase: 4 },
+    ],
+    build: [
+      { agent: "ned", order: "Move the lamps to their own coil", tag: "OWN COIL",
+        edits: ["lampcoil"], report: "Lamps now draw on lampCoil.", rtok: 80 },
+      { agent: "conseil", order: "Buffer the organ", tag: "CONDENSER",
+        edits: ["organbuf"], report: "Organ chords charge a condenser first.", rtok: 80 },
+    ],
+    verify: {
+      agent: "mate", suite: "test/lamp.test.js", order: "Run the lamp suite", tag: "RUN LAMP TESTS",
+      runs: [[[1, "lamps hold 600 lux at rest"], [1, "lamps hold 600 lux through a fugue"], [1, "the organ still reaches low C"]]],
+      report: "3 passing.", rtok: 50,
+    },
+    merge: { hash: "1a3b5c", msg: "lamp: own coil; organ through a condenser", memory: "Lamps and organ must not share mainCoil" },
+  },
+  {
+    num: "III", title: "Draw our power from the sea",
+    order: "We need no coal mines, Professor. The sea itself will give us sodium.",
+    ticket: "Extract sodium from sea water to charge the cells",
+    survey: [
+      { agent: "aronnax", order: "Study the sodium cells", tag: "READ BUNSEN",
+        steps: [["read", "bunsen"], ["recall", 1]],
+        report: "Sodium–mercury amalgam doubles Bunsen output. Memory: stage engine changes behind a flag.", rtok: 170 },
+      { agent: "conseil", order: "Read the charging code", tag: "READ ENGINE",
+        steps: [["open", "engine/sodium.js"]],
+        report: "charge() only knows coalSodium(); FLAGS exists but is unused.", rtok: 120 },
+    ],
+    plan: [
+      { text: "Add extractSodium() from sea water", agent: "ned", phase: 2 },
+      { text: "Wire it into charge() behind CHARGE_FROM_SEA", agent: "ned", phase: 2 },
+      { text: "Write test/sodium.test.js", agent: "conseil", phase: 2 },
+      { text: "Run it, commit, remember", agent: "mate", phase: 3 },
+    ],
+    build: [
+      { agent: "ned", order: "Add sodium extraction behind a flag", tag: "EXTRACT NA",
+        edits: ["extract"], report: "extractSodium() added; charge() uses it when flagged.", rtok: 110 },
+      { agent: "conseil", order: "Write the new test file", tag: "NEW TEST",
+        edits: ["sodiumtest"], report: "test/sodium.test.js: two cases.", rtok: 70 },
+    ],
+    verify: {
+      agent: "mate", suite: "test/sodium.test.js", order: "Run the new suite", tag: "RUN NA TESTS",
+      runs: [
+        [[0, "300 L of sea water yields ~3.3 kg of sodium", "expected 3.3, got 3300"], [1, "cells charge with CHARGE_FROM_SEA on"]],
+        [[1, "300 L of sea water yields ~3.3 kg of sodium"], [1, "cells charge with CHARGE_FROM_SEA on"]],
+      ],
+      report: "2 passing.", rtok: 40,
+      fix: { agent: "ned", file: "engine/sodium.js", edit: "fixunits", order: "Harpoon the units bug in engine/sodium.js",
+             tag: "HARPOON IT", report: "electrolyse() returns grams — now divided by 1 000.", rtok: 90 },
+    },
+    merge: { hash: "5eaf00", msg: "engine: draw sodium from the sea (flagged)", memory: "electrolyse() returns grams, not kilograms" },
+  },
+  {
+    num: "IV", title: "Keep the water open under the ice",
+    order: "The ice is closing over us. Keep the water open around the hull.",
+    ticket: "Hot-water jets on the ram; steer for thin ice",
+    survey: [
+      { agent: "aronnax", order: "Read the ice charts", tag: "READ ICE CHARTS",
+        steps: [["read", "ice"], ["read", "depths"]],
+        report: "Pack ice closes ~1 m an hour at −12 °C; boiling water holds a channel.", rtok: 160 },
+      { agent: "conseil", order: "Read the ram and the route", tag: "READ RAM",
+        steps: [["open", "spur/ram.js"], ["open", "charts/route.js"]],
+        report: "ram() only strikes; nextHeading() ignores ice thickness.", rtok: 130 },
+      { agent: "mate", order: "Check the ram's history", tag: "CHECK HISTORY",
+        steps: [["history", "spur/", "e41a77"]],
+        report: "e41a77 reinforced the tip; nothing about heating.", rtok: 80 },
+    ],
+    plan: [
+      { text: "Jet boiling water ahead of the ram", agent: "ned", phase: 2 },
+      { text: "Steer for soundings under 10 m of ice", agent: "conseil", phase: 2 },
+      { text: "Run the hull suite under ice", agent: "mate", phase: 3 },
+      { text: "Commit, and remember the lesson", agent: "mate", phase: 4 },
+    ],
+    build: [
+      { agent: "ned", order: "Add hot-water jets to the ram", tag: "HOT JETS",
+        edits: ["hotjet"], report: "ram() now jets 400 L/min at 100 °C.", rtok: 90 },
+      { agent: "conseil", order: "Steer for thin ice", tag: "THIN ICE",
+        edits: ["thinice"], report: "nextHeading() prefers ice under 10 m.", rtok: 90 },
+    ],
+    verify: {
+      agent: "mate", suite: "test/hull.test.js", order: "Run the hull suite under ice", tag: "RUN HULL TESTS",
+      runs: [[[1, "the ram breaks 10 m of pack ice"], [1, "jets keep a 2 m channel open"], [1, "plates hold under ice pressure"]]],
+      report: "3 passing.", rtok: 50,
+    },
+    merge: { hash: "1ce0ff", msg: "spur: boiling-water jets under the ice", memory: "Keep the jets hot until the hull is clear" },
+  },
+];
+
+const PHASES = ["Survey", "Plan", "Build", "Verify", "Merge"];
+const PHASE_NOTES = [
+  "Nemo fans the order out. Each diver leaves with a fresh context and one narrow job: read the knowledge base, search the repository, or check the history.",
+  "Reports come back as short summaries, not transcripts. Conseil classifies them into a plan: which files, which diver, in what order.",
+  "Divers carve changes into the repository tablet by tablet. Every line they write appears on the chart table.",
+  "The Mate runs the suite. A failing test surfaces as the kraken — someone has to go back, read the file, and fix it.",
+  "Green tests become a commit in the history, and the lesson goes into the pearl for the next voyage.",
+  "Voyage complete. Mobilis in mobili — the next order follows.",
+];
+
+// ============================================================
+// World layout (art pixels; the canvas is 216 px tall and as
+// wide as the stage's aspect allows)
+// ============================================================
+const ART_H = 216;
+const GROUND = 184;
+const world = { W: 384, H: ART_H, ground: null };
+const sites = {
+  library:  { key: "library", name: "Sunken library", role: "Knowledge base", frame: "library.ruin", fx: 0.13, sink: 2, isStatic: true },
+  clam:     { key: "clam", name: "Giant pearl", role: "Memory", frame: "clam.open0", fx: 0.335, sink: 2 },
+  atlantis: { key: "atlantis", name: "Atlantis", role: "Repository", frame: "atlantis.temple", fx: 0.585, sink: 2, isStatic: true },
+  galleon:  { key: "galleon", name: "Vigo Bay wreck", role: "Git history", frame: "galleon.wreck", fx: 0.875, sink: 8, isStatic: true },
+};
+let decor = [];
+let kelp = [];
+
+function layout() {
+  const W = world.W;
+  for (const s of Object.values(sites)) {
+    const c = spr(s.frame);
+    s.w = c.width;
+    s.h = c.height;
+    s.x = Math.round(W * s.fx - s.w / 2);
+    s.y = GROUND + s.sink - s.h;
+  }
+  ship.x = Math.round(W * 0.47 - 70);
+  ship.y = 12;
+  const g = sites.galleon;
+  decor = [
+    ["rock.r0", W * 0.025], ["coral.branch2", W * 0.055], ["starfish.idle", W * 0.2], ["coral.brain", W * 0.225],
+    ["rock.r2", W * 0.245], ["coral.branch0", W * 0.262], ["anchor.idle", W * 0.4], ["shell.idle", W * 0.425],
+    ["coral.fan", W * 0.447], ["rock.r1", W * 0.3], ["coral.branch1", W * 0.975], ["rock.r0", W * 0.955],
+  ].map(([frame, x]) => {
+    const c = spr(frame);
+    return { frame, x: Math.round(x - c.width / 2), y: GROUND + 3 - c.height };
+  });
+  decor.push({ frame: "chest.idle", x: g.x + g.w - 22, y: GROUND + 2 - 10 });
+  kelp = [0.012, 0.04, 0.27, 0.285, 0.455, 0.47, 0.99].map((fx, i) => ({
+    x: Math.round(W * fx), h: 34 + ((i * 17) % 30), ph: i * 1.7, amp: 2.2 + (i % 3),
+  }));
+}
+
+function buildGround() {
+  const W = world.W;
+  const g = new Int16Array(W);
+  for (let x = 0; x < W; x++) {
+    let y = GROUND + 3 * Math.sin(x * 0.023 + 1.1) + 2 * Math.sin(x * 0.061 + 0.4) + Math.sin(x * 0.17 + 2);
+    for (const s of Object.values(sites)) {
+      const d = x < s.x ? s.x - x : x > s.x + s.w ? x - s.x - s.w : 0;
+      if (d < 8) y = lerp(GROUND, y, d / 8);
+    }
+    g[x] = Math.round(y);
+  }
+  world.ground = g;
+}
+
+// ============================================================
+// Static layer: far ridge, sea floor, set pieces, decor and
+// labels are baked once per resize into a 32-bit buffer. Each
+// frame composes water (dithered, god-rayed) around it.
+// ============================================================
+const cv = $("#sea");
+const ctx = cv.getContext("2d");
+let frameImg = null;
+let frame32 = null;
+let static32 = null;
+let sandD = null;
+let light32 = null;
+let water32 = null;
+let rayBuf = null;
+let surfBuf = null;
+const WATER = ["water0", "water1", "water2", "water3", "water4", "water5", "water6", "water7", "water8", "water9", "water10", "water11", "water12", "foam"];
+
+function ridgeY(x) {
+  return Math.round(150 + 8 * Math.sin(x * 0.011 + 2.1) + 6 * Math.sin(x * 0.034 + 0.3) + 2.5 * Math.sin(x * 0.09 + 1));
+}
+
+function buildStatic() {
+  const W = world.W;
+  const H = world.H;
+  const N = W * H;
+  buildGround();
+  const ground = world.ground;
+  const c = makeCanvas(W, H);
+  const g = c.getContext("2d", { willReadFrequently: true });
+  const img = g.createImageData(W, H);
+  const u = new Uint32Array(img.data.buffer);
+  const floor = new Uint32Array(N);
+  const depth = new Uint8Array(N);
+  const SAND = [P.sand0, P.sand1, P.sand2, P.sand3, P.sand4];
+
+  // far ridge with the silhouettes of drowned columns
+  const cols = [0.07, 0.19, 0.36, 0.52, 0.7, 0.92].map((f) => Math.round(W * f));
+  for (let x = 0; x < W; x++) {
+    const fy = ridgeY(x);
+    for (let y = fy; y < ground[x]; y++) {
+      u[y * W + x] = col32(y === fy ? P.water4 : rampPick([P.water1, P.water2], 0.65 - (y - fy) * 0.03, x, y));
+    }
+    for (let k = 0; k < cols.length; k++) {
+      const cx = cols[k];
+      const ch = 12 + ((k * 7) % 11);
+      if (x >= cx && x < cx + 3) {
+        for (let y = ridgeY(cx) - ch; y < ridgeY(cx); y++) u[y * W + x] = col32(x === cx ? P.water4 : P.water3);
+        if (k % 2 === 0) for (let dx = -1; dx <= 3; dx++) u[(ridgeY(cx) - ch - 1) * W + cx + dx] = col32(P.water3);
+      }
+    }
+  }
+  // sand
+  for (let x = 0; x < W; x++) {
+    for (let y = ground[x]; y < H; y++) {
+      const d = y - ground[x];
+      const i = y * W + x;
+      let col;
+      if (d === 0) col = P.sand5;
+      else if (d === 1) col = P.sand4;
+      else col = rampPick(SAND, 0.8 - d * 0.028 + (hash2(x >> 1, y, 7) - 0.5) * 0.22, x, y);
+      if (d > 2 && hash2(x, y, 11) < 0.018) col = P.stone2;
+      if (d > 3 && y % 5 === 0 && (x + y * 7) % 17 < 3) col = P.sand3;
+      u[i] = floor[i] = col32(col);
+      depth[i] = Math.min(255, d + 1);
+    }
+  }
+  g.putImageData(img, 0, 0);
+
+  for (const s of Object.values(sites)) if (s.isStatic) g.drawImage(spr(s.frame), s.x, s.y);
+  for (const d of decor) g.drawImage(spr(d.frame), d.x, d.y);
+
+  // bury the bottoms of everything in a ragged lip of sand
+  const out = g.getImageData(0, 0, W, H);
+  const s32 = new Uint32Array(out.data.buffer);
+  for (let x = 0; x < W; x++) {
+    const lip = ground[x] + 3 + (hash2(x, 1, 5) < 0.35 ? 1 : 0) - (hash2(x >> 2, 2, 5) < 0.3 ? 1 : 0);
+    for (let y = lip; y < H; y++) s32[y * W + x] = floor[y * W + x];
+  }
+  g.putImageData(out, 0, 0);
+
+  for (const s of Object.values(sites)) {
+    const cx = s.x + s.w / 2;
+    const name = s.name.toUpperCase();
+    const role = s.role.toUpperCase();
+    drawText(g, name, cx - textW(name) / 2, GROUND + 9, P.brass3, P.ink);
+    drawText(g, role, cx - textW(role) / 2, GROUND + 16, P.sand5, P.ink);
+  }
+
+  static32 = new Uint32Array(g.getImageData(0, 0, W, H).data.buffer);
+  sandD = new Uint8Array(N);
+  light32 = new Uint32Array(N);
+  for (let i = 0; i < N; i++) {
+    if (depth[i] && depth[i] <= 14 && static32[i] === floor[i]) {
+      sandD[i] = depth[i];
+      light32[i] = lighten32(floor[i], 0.3);
+    }
+  }
+  frameImg = ctx.createImageData(W, H);
+  frame32 = new Uint32Array(frameImg.data.buffer);
+  water32 = WATER.map((n) => col32(P[n]));
+  rayBuf = new Float32Array(Math.ceil(W + H * 0.42) + 2);
+  surfBuf = new Float32Array(W);
+}
+
+function renderWater(t) {
+  const W = world.W;
+  const H = world.H;
+  const u = frame32;
+  const st = static32;
+  const sd = sandD;
+  const lt = light32;
+  const wr = water32;
+  const n = wr.length;
+  for (let k = 0; k < rayBuf.length; k++) {
+    const a = Math.max(0, Math.sin(k * 0.045 + t * 0.21));
+    const b = Math.max(0, Math.sin(k * 0.071 - t * 0.16 + 2));
+    const c = Math.max(0, Math.sin(k * 0.028 + t * 0.09 + 4.4));
+    rayBuf[k] = 0.5 * a ** 12 + 0.35 * b ** 16 + 0.45 * c ** 10;
+  }
+  for (let x = 0; x < W; x++) surfBuf[x] = 4.5 + 1.4 * Math.sin(x * 0.09 + t * 1.3) + 0.8 * Math.sin(x * 0.23 - t * 1.9);
+  for (let y = 0; y < H; y++) {
+    const base = 0.06 + 0.8 * Math.pow(1 - y / H, 1.7);
+    const rays = 0.3 * Math.pow(1 - y / H, 1.1);
+    const row = y * W;
+    const by = (y & 3) * 4;
+    for (let x = 0; x < W; x++) {
+      const i = row + x;
+      const s = st[i];
+      if (s >>> 24) {
+        const d = sd[i];
+        if (d) {
+          const c = Math.sin(x * 0.31 + t * 1.1 + Math.sin(y * 0.7 + t * 0.6) * 1.8) + Math.sin(x * 0.13 - t * 0.9 + y * 0.45) * 0.9;
+          u[i] = c > 1.05 + d * 0.09 ? lt[i] : s;
+        } else {
+          u[i] = s;
+        }
+        continue;
+      }
+      let v = base + rayBuf[(x + y * 0.42) | 0] * rays;
+      const sy = surfBuf[x];
+      if (y < sy) v = 0.9 + (y / sy) * 0.06;
+      else if (y < sy + 1) v = 1;
+      const f = Math.round(v * (n - 1) + BAYER[by + (x & 3)] - 0.5);
+      u[i] = wr[f < 0 ? 0 : f >= n ? n - 1 : f];
+    }
+  }
+  ctx.putImageData(frameImg, 0, 0);
+}
+
+// ============================================================
+// The Nautilus — orchestrator. Never leaves its station: it
+// dispatches divers through the airlock and receives capsules.
+// ============================================================
+const ship = {
+  x: 0, y: 12, bob: 0, hatchUntil: 0, pulseAt: -9,
+  focus: { x: 0, y: 120 }, lamp: { x: 0, y: 120 },
+  airlock() {
+    const [ax, ay] = META.nautilus.airlock;
+    return { x: this.x + ax, y: this.y + this.bob + ay };
+  },
+  lantern() {
+    const [lx, ly] = META.nautilus.lantern;
+    return { x: this.x + lx, y: this.y + this.bob + ly };
+  },
+  update(dt) {
+    this.bob = Math.round(Math.sin(clock.t * 0.9) * 1.6);
+    const k = Math.min(1, dt * 1.8);
+    this.lamp.x += (this.focus.x - this.lamp.x) * k;
+    this.lamp.y += (this.focus.y - this.lamp.y) * k;
+  },
+  pulse() {
+    this.pulseAt = clock.t;
+  },
+};
+// status is what Nemo is waiting on; note is a short-lived action on top of it
+const nemo = { id: "nemo", name: "Nemo", role: "Orchestrator", ctx: 0, reports: 0, status: "at the helm", note: null };
+function focus(x, y) {
+  ship.focus.x = x;
+  ship.focus.y = y;
+}
+
+// ============================================================
+// Divers — sub-agents
+// ============================================================
+class Diver {
+  constructor(def) {
+    Object.assign(this, def);
+    this.x = 0;
+    this.y = 0;
+    this.face = 1;
+    this.docked = true;
+    this.behind = false;
+    this.target = null;
+    this.speed = 54;
+    this.moving = false;
+    this.phase = Math.random() * 6;
+    this.mode = "idle";
+    this.beam = null;
+    this.bubble = null;
+    this.status = "aboard";
+    this.readTok = 0;
+    this.taskTok = 0;
+    this.sentTok = 0;
+    this.bubT = 0;
+    this.emitAcc = 0;
+    this.scroll = 0;
+    this.harpoonOut = false;
+  }
+  bobY() {
+    return this.docked || this.behind ? 0 : Math.round(Math.sin(clock.t * 2.2 + this.phase));
+  }
+  // top-left of the sprite
+  get sx() { return Math.round(this.x) - 6; }
+  get sy() { return Math.round(this.y) + this.bobY() - 17; }
+  port() {
+    const [px, py] = META.diver.port;
+    return { x: this.sx + (this.face > 0 ? px : 12 - px), y: this.sy + py };
+  }
+  hand() {
+    const [hx, hy] = META.diver.hand;
+    return { x: this.sx + (this.face > 0 ? hx : 12 - hx), y: this.sy + hy };
+  }
+  say(text, dur = 2.4) {
+    this.bubble = { text, until: clock.t + dur };
+  }
+  lookAt(x) {
+    if (Math.abs(x - this.x) > 1) this.face = x > this.x ? 1 : -1;
+  }
+  update(dt) {
+    if (this.target) {
+      const dx = this.target.x - this.x;
+      const dy = this.target.y - this.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 0.4) {
+        this.x = this.target.x;
+        this.y = this.target.y;
+        this.target = null;
+        this.moving = false;
+      } else {
+        const v = Math.min(this.target.speed ?? this.speed, d * 2.4 + 8);
+        const s = Math.min(d, v * dt);
+        this.x += (dx / d) * s;
+        this.y += (dy / d) * s;
+        this.moving = true;
+        if (Math.abs(dx) > 1 && !this.target.keepFace) this.face = dx > 0 ? 1 : -1;
+      }
+    } else {
+      this.moving = false;
+    }
+    if (this.docked) return;
+    this.bubT -= dt;
+    if (this.bubT <= 0 && !this.behind) {
+      const p = this.port();
+      spawnBubble(p.x - this.face * 4, p.y - 5);
+      this.bubT = 0.8 + Math.random() * 1.2;
+    }
+    if (this.beam?.emit) {
+      this.emitAcc += dt * 20;
+      while (this.emitAcc >= 1) {
+        this.emitAcc -= 1;
+        spawnGlyph(this);
+      }
+    }
+  }
+}
+
+const CREW = [
+  { id: "aronnax", name: "Aronnax", role: "Explorer", blurb: "reads the knowledge base and memory", css: "var(--c-aronnax)" },
+  { id: "conseil", name: "Conseil", role: "Classifier", blurb: "searches the repository, drafts the plan", css: "var(--c-conseil)" },
+  { id: "ned", name: "Ned Land", role: "Harpooner", blurb: "implements changes, harpoons failing tests", css: "var(--c-ned)" },
+  { id: "mate", name: "The Mate", role: "Verifier", blurb: "runs tests, reads history, commits", css: "var(--c-mate)" },
+];
+const divers = CREW.map((d) => new Diver(d));
+const D = Object.fromEntries(divers.map((d) => [d.id, d]));
+const ACTOR = { nemo: "Nemo", aronnax: "Aronnax", conseil: "Conseil", ned: "Ned", mate: "Mate", kraken: "Kraken", sys: "·" };
+const SUIT = { nemo: "#4a6296", aronnax: "#8aa0c8", conseil: "#76c4a8", ned: "#dc8a5e", mate: "#b09ad6" };
+
+// ============================================================
+// Repository tablets, history coins, pearl memory, library
+// ============================================================
+class Tablet {
+  constructor(file, slot) {
+    this.file = file;
+    this.slot = slot;
+    this.rows = [0, 1, 2, 3].map((r) => 2 + Math.floor(hash2(slot, r, 4) * 4));
+    this.flash = [null, null, null, null];
+    this.glow = null;
+    this.dirty = false;
+    this.born = -99;
+    this.labelUntil = 0;
+  }
+  get x() { return sites.atlantis.x + META.atlantis.slots[this.slot][0]; }
+  get y() { return sites.atlantis.y + META.atlantis.slots[this.slot][1] + Math.round(8 * (1 - clamp((clock.t - this.born) / 0.9, 0, 1))); }
+  get cx() { return this.x + 5; }
+  get cy() { return this.y + 7; }
+  spot(dx = 0) { return { x: this.x - 6 + dx, y: this.y + 12, face: 1 }; }
+  light(col, dur, blink = false) {
+    this.glow = { col, until: clock.t + dur, blink };
+    this.labelUntil = Math.max(this.labelUntil, clock.t + dur);
+  }
+  flashRow(col, dur = 1.2) {
+    const r = Math.floor(Math.random() * 4);
+    this.flash[r] = { col, until: clock.t + dur };
+  }
+}
+let tablets = [];
+let history = [];
+let memory = [];
+const tabletByFile = (f) => tablets.find((t) => t.file === f);
+function addTablet(file, animate) {
+  const tb = new Tablet(file, tablets.length);
+  if (animate) tb.born = clock.t;
+  tablets.push(tb);
+  return tb;
+}
+const stackX = (i) => sites.galleon.x + 8 + i * 6;
+const stackH = (c) => 3 + Math.floor(hash2(parseInt(c.hash.slice(0, 4), 16), 9, 2) * 5);
+
+function bookRect(doc) {
+  const shelf = META.library.shelves[doc.shelf];
+  const [bx0] = shelf[0];
+  const [bx1] = shelf[shelf.length - 1];
+  const want = lerp(bx0, bx1, doc.at);
+  let best = shelf[0];
+  for (const b of shelf) if (Math.abs(b[0] - want) < Math.abs(best[0] - want)) best = b;
+  const [x, y, w, h] = best;
+  return { x: sites.library.x + x, y: sites.library.y + y, w, h };
+}
+const library = { hi: null };
+const clam = {
+  open: 0, target: 0,
+  update(dt) {
+    this.open += (this.target - this.open) * Math.min(1, dt * 5);
+  },
+  pearl() {
+    const [px, py] = META.clam.pearl;
+    return { x: sites.clam.x + px, y: sites.clam.y + py, r: Math.min(3.4, 1.3 + memory.length * 0.3) };
+  },
+};
+
+// ============================================================
+// The kraken — a failing test. It rises from the trench beside
+// Atlantis and wraps a tentacle around the file that broke.
+// ============================================================
+const kraken = {
+  state: "hidden", k: 0, grab: 0, target: null, hitUntil: 0, failing: "",
+  head() {
+    const a = sites.atlantis;
+    return { x: a.x + a.w - 4, y: Math.round(GROUND + 4 - this.k * 58) };
+  },
+  rise(tb, failing) {
+    this.state = "rising";
+    this.target = tb;
+    this.failing = failing;
+    tb.light(P.red, 999, true);
+  },
+  hit() {
+    this.hitUntil = clock.t + 0.35;
+  },
+  retreat() {
+    this.state = "sinking";
+    const h = this.head();
+    for (let i = 0; i < 46; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 6 + Math.random() * 16;
+      particles.push({ kind: "ink", x: h.x + 15, y: h.y + 26, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 3, t0: clock.t, life: 1.4 + Math.random() * 0.8 });
+    }
+  },
+  update(dt) {
+    if (this.state === "rising") {
+      this.k = Math.min(1, this.k + dt * 0.7);
+      if (this.k > 0.6) this.grab = Math.min(1, this.grab + dt * 0.8);
+    } else if (this.state === "sinking") {
+      this.grab = Math.max(0, this.grab - dt * 2.5);
+      this.k = Math.max(0, this.k - dt * 0.8);
+      if (this.k === 0) {
+        this.state = "hidden";
+        this.target = null;
+      }
+    }
+  },
+};
+
+// ============================================================
+// Particles, capsules, projectiles, ambient life
+// ============================================================
+let particles = [];
+let capsules = [];
+let projectiles = [];
+
+function spawnBubble(x, y) {
+  particles.push({ kind: "bubble", x, y, vy: -(9 + Math.random() * 7), ph: Math.random() * 6, big: Math.random() < 0.25, t0: clock.t, life: 30 });
+}
+function spawnGlyph(a) {
+  const b = a.beam;
+  particles.push({ kind: "glyph", a, tx: b.x + (Math.random() - 0.5) * 4, ty: b.y + (Math.random() - 0.5) * 4, out: b.out, col: b.col, t0: clock.t, life: 0.7 + Math.random() * 0.3, wig: (Math.random() - 0.5) * 6, w: Math.random() < 0.5 ? 2 : 1 });
+}
+function spawnSparks(x, y, n = 6) {
+  for (let i = 0; i < n; i++) {
+    particles.push({ kind: "spark", x, y, vx: (Math.random() - 0.5) * 34, vy: -8 - Math.random() * 22, t0: clock.t, life: 0.35 + Math.random() * 0.3 });
+  }
+}
+function spawnFloat(text, col, x, y) {
+  particles.push({ kind: "float", text, col, x, y, t0: clock.t, life: 1.6 });
+}
+function spawnRing(x, y, col) {
+  particles.push({ kind: "ring", x, y, col, t0: clock.t, life: 0.45 });
+}
+
+function updateParticles(dt) {
+  const t = clock.t;
+  for (const p of particles) {
+    if (p.kind === "bubble") {
+      p.y += p.vy * dt;
+      p.x += Math.sin(t * 3 + p.ph) * 4 * dt;
+      if (p.y < surfaceY()) p.dead = true;
+    } else if (p.kind === "spark") {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 60 * dt;
+    } else if (p.kind === "ink") {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 1 - dt * 1.6;
+      p.vy *= 1 - dt * 1.6;
+    }
+    if (t - p.t0 > p.life) p.dead = true;
+  }
+  particles = particles.filter((p) => !p.dead);
+  if (particles.length > 900) particles.splice(0, particles.length - 900);
+}
+const surfaceY = () => 7;
+
+// Brass message capsule: resolves when it arrives.
+async function capsule(from, toFn, col) {
+  const to = toFn();
+  const c = { fx: from.x, fy: from.y, to: toFn, t0: clock.t, dur: clamp(Math.hypot(to.x - from.x, to.y - from.y) / 80, 0.7, 2), col };
+  capsules.push(c);
+  await sleep(c.dur);
+  capsules = capsules.filter((k) => k !== c);
+  const end = toFn();
+  spawnRing(end.x, end.y, col);
+}
+
+const ambient = { schools: [], jellies: [], crabs: [], turtle: null, shark: null, snow: [] };
+function seedAmbient() {
+  const W = world.W;
+  const kinds = ["coral", "tang", "blue", "silver"];
+  ambient.schools = [0, 1, 2].map((i) => ({
+    x: Math.random() * W, y: 70 + i * 26 + Math.random() * 10, dir: i % 2 ? -1 : 1, speed: 9 + i * 3,
+    kind: kinds[i % kinds.length],
+    fish: Array.from({ length: 4 + i }, (_, j) => ({ dx: j * 9 + Math.random() * 5, dy: (Math.random() - 0.5) * 12, ph: Math.random() * 6 })),
+  }));
+  ambient.jellies = [0.08, 0.38, 0.8].map((fx, i) => ({ x: W * fx, y: 80 + i * 30, ph: i * 2 }));
+  ambient.crabs = [0.2, 0.93].map((fx, i) => ({ x: W * fx, dir: i ? -1 : 1, x0: W * fx - 16, x1: W * fx + 16 }));
+  ambient.turtle = { x: -30, y: 96, active: false, next: 18 };
+  ambient.shark = { x: W * 0.8, y: 104 };
+  ambient.snow = Array.from({ length: 55 }, () => ({ x: Math.random() * W, y: Math.random() * GROUND, s: 2 + Math.random() * 4, ph: Math.random() * 6 }));
+}
+function updateAmbient(dt) {
+  const W = world.W;
+  for (const s of ambient.schools) {
+    s.x += s.dir * s.speed * dt;
+    if (s.dir > 0 && s.x > W + 20) { s.x = -60; s.y = 66 + Math.random() * 70; }
+    if (s.dir < 0 && s.x < -70) { s.x = W + 20; s.y = 66 + Math.random() * 70; }
+  }
+  for (const j of ambient.jellies) {
+    j.y -= 2.4 * dt;
+    if (j.y < 22) { j.y = 170; j.x = Math.random() * W; }
+  }
+  for (const c of ambient.crabs) {
+    c.x += c.dir * 5 * dt;
+    if (c.x > c.x1) c.dir = -1;
+    if (c.x < c.x0) c.dir = 1;
+  }
+  const tu = ambient.turtle;
+  if (tu.active) {
+    tu.x += 7 * dt;
+    if (tu.x > W + 20) { tu.active = false; tu.next = clock.t + 30 + Math.random() * 20; }
+  } else if (clock.t > tu.next) {
+    tu.active = true;
+    tu.x = -24;
+    tu.y = 76 + Math.random() * 40;
+  }
+  ambient.shark.x -= 5 * dt;
+  if (ambient.shark.x < -40) ambient.shark.x = W + 30;
+  for (const f of ambient.snow) {
+    f.y += f.s * dt;
+    if (f.y > GROUND) { f.y = 8; f.x = Math.random() * W; }
+  }
+}
+
+// ============================================================
+// Rendering
+// ============================================================
+function px(g, x, y, col) {
+  g.fillStyle = col;
+  g.fillRect(Math.round(x), Math.round(y), 1, 1);
+}
+function disc(g, cx, cy, r, col) {
+  g.fillStyle = col;
+  cx = Math.round(cx);
+  cy = Math.round(cy);
+  const R = Math.ceil(r);
+  for (let dy = -R; dy <= R; dy++) {
+    const half = Math.floor(Math.sqrt(Math.max(0, r * r - dy * dy)));
+    if (r * r - dy * dy < 0) continue;
+    g.fillRect(cx - half, cy + dy, half * 2 + 1, 1);
+  }
+}
+// Dithered triangle — how light is drawn without alpha.
+function ditherTri(g, ax, ay, bx, by, cx, cy, col, pattern) {
+  const minX = Math.max(0, Math.floor(Math.min(ax, bx, cx)));
+  const maxX = Math.min(world.W - 1, Math.ceil(Math.max(ax, bx, cx)));
+  const minY = Math.max(0, Math.floor(Math.min(ay, by, cy)));
+  const maxY = Math.min(world.H - 1, Math.ceil(Math.max(ay, by, cy)));
+  g.fillStyle = col;
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (!pattern(x, y)) continue;
+      const qx = x + 0.5;
+      const qy = y + 0.5;
+      const w0 = (bx - ax) * (qy - ay) - (by - ay) * (qx - ax);
+      const w1 = (cx - bx) * (qy - by) - (cy - by) * (qx - bx);
+      const w2 = (ax - cx) * (qy - cy) - (ay - cy) * (qx - cx);
+      if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0)) g.fillRect(x, y, 1, 1);
+    }
+  }
+}
+function cone(g, from, to, spread, col, pattern) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  ditherTri(g, from.x, from.y, to.x + nx * spread, to.y + ny * spread, to.x - nx * spread, to.y - ny * spread, col, pattern);
+}
+
+function drawShip(g, t) {
+  const x = ship.x;
+  const y = ship.y + ship.bob;
+  // screw propeller, turning
+  const [prx, pry] = META.nautilus.prop;
+  const ph = Math.floor(t * 12) % 4;
+  const up = [6, 4, 1, 4][ph];
+  const dn = [1, 4, 6, 4][ph];
+  g.fillStyle = P.ink;
+  g.fillRect(x + prx - 1, y + pry - up - 1, 3, up + dn + 3);
+  g.fillStyle = P.brass2;
+  g.fillRect(x + prx, y + pry - up, 1, up + dn + 1);
+  px(g, x + prx, y + pry - up, P.brass3);
+  g.drawImage(spr("nautilus.hull"), x, y);
+  // portholes: brighter when a capsule has just arrived
+  const pulse = clamp(1 - (t - ship.pulseAt) / 0.9, 0, 1);
+  for (const [hx, hy] of META.nautilus.portholes) {
+    const flick = hash2(hx, Math.floor(t * 4), 3) < 0.05;
+    g.fillStyle = pulse > 0 ? P.white : flick ? P.brass3 : P.lamp;
+    g.fillRect(x + hx, y + hy, 2, 2);
+    if (pulse > 0.4) {
+      g.fillStyle = P.lamp;
+      g.fillRect(x + hx - 1, y + hy + 3, 1, 1);
+      g.fillRect(x + hx + 2, y + hy - 1, 1, 1);
+    }
+  }
+  if (t < ship.hatchUntil) {
+    const [ax, ay] = META.nautilus.airlock;
+    g.fillStyle = P.ink2;
+    g.fillRect(x + ax - 3, y + ay - 2, 7, 2);
+    g.fillStyle = P.lamp;
+    g.fillRect(x + ax - 2, y + ay - 2, 5, 1);
+  }
+}
+
+function drawLantern(g, t) {
+  const from = ship.lantern();
+  const to = { x: ship.lamp.x, y: ship.lamp.y };
+  const len = Math.hypot(to.x - from.x, to.y - from.y);
+  cone(g, from, to, Math.max(8, len * 0.2), P.water11, (x, y) => (y & 1) === 0 && ((x + (y >> 1)) & 3) === 0);
+}
+
+function drawKelp(g, t) {
+  const ground = world.ground;
+  for (const k of kelp) {
+    const base = ground[clamp(k.x, 0, world.W - 1)] + 1;
+    for (let s = 0; s < k.h; s++) {
+      const f = s / k.h;
+      const x = Math.round(k.x + Math.sin(t * 1.1 + k.ph + s * 0.09) * f * k.amp + Math.sin(t * 2.3 + s * 0.3) * 0.5 * f);
+      const y = base - s;
+      g.fillStyle = P.ink;
+      g.fillRect(x - 1, y, 4, 1);
+      g.fillStyle = s % 3 ? P.kelp1 : P.kelp2;
+      g.fillRect(x, y, 2, 1);
+      if (s % 6 === 3) {
+        const side = (s / 6) & 1 ? 1 : -1;
+        g.fillStyle = P.kelp3;
+        g.fillRect(side > 0 ? x + 2 : x - 2, y - 1, 2, 1);
+        g.fillStyle = P.kelp2;
+        g.fillRect(side > 0 ? x + 2 : x - 2, y, 2, 1);
+      }
+    }
+  }
+}
+
+function drawAmbient(g, t) {
+  const W = world.W;
+  g.drawImage(spr("shark.far"), Math.round(ambient.shark.x), ambient.shark.y);
+  for (const s of ambient.schools) {
+    for (const f of s.fish) {
+      const fx = Math.round(s.x - s.dir * f.dx);
+      if (fx < -12 || fx > W + 2) continue;
+      const fy = Math.round(s.y + f.dy + Math.sin(t * 1.4 + f.ph) * 2);
+      g.drawImage(spr(`fish.${s.kind}.swim${Math.floor(t * 5 + f.ph) % 2}`, s.dir < 0), fx, fy);
+    }
+  }
+  for (const j of ambient.jellies) {
+    g.drawImage(spr(`jelly.pulse${Math.floor(t * 1.5 + j.ph) % 2}`), Math.round(j.x + Math.sin(t * 0.5 + j.ph) * 3), Math.round(j.y));
+  }
+  const tu = ambient.turtle;
+  if (tu.active) g.drawImage(spr(`turtle.swim${Math.floor(t * 2) % 2}`), Math.round(tu.x), Math.round(tu.y + Math.sin(t) * 2));
+  for (const c of ambient.crabs) {
+    const gy = world.ground[clamp(Math.round(c.x), 0, W - 1)];
+    g.drawImage(spr(`crab.walk${Math.floor(t * 4) % 2}`), Math.round(c.x) - 5, gy - 5);
+  }
+}
+
+function drawSites(g, t) {
+  // library: the book being read glows
+  if (library.hi && t < library.hi.until) {
+    const b = library.hi.rect;
+    const on = Math.floor(t * 6) % 2 === 0;
+    g.fillStyle = on ? P.lamp : P.brass3;
+    g.fillRect(b.x - 1, b.y - 1, b.w + 2, 1);
+    g.fillRect(b.x - 1, b.y + b.h, b.w + 2, 1);
+    g.fillRect(b.x - 1, b.y, 1, b.h);
+    g.fillRect(b.x + b.w, b.y, 1, b.h);
+    g.fillStyle = P.lamp;
+    g.fillRect(b.x, b.y, b.w, 1);
+  }
+  // clam and pearl
+  const s = sites.clam;
+  const f = Math.round(clam.open * 3);
+  const p = clam.pearl();
+  if (clam.open > 0.25) {
+    disc(g, p.x, p.y, p.r + 1, P.ink);
+    disc(g, p.x, p.y, p.r, P.pearlD);
+    disc(g, p.x - 0.4, p.y - 0.4, Math.max(0.6, p.r - 0.8), P.pearl);
+    px(g, p.x - 1, p.y - 1, P.white);
+    if (Math.floor(t * 3) % 2) px(g, p.x + p.r + 1, p.y - p.r - 1, P.lamp);
+  }
+  g.drawImage(spr(`clam.open${f}`), s.x, s.y);
+  if (clam.open < 0.25 && Math.floor(t * 1.2) % 3 === 0) px(g, p.x, s.y + 18, P.glow);
+  // history: one coin stack per commit
+  history.forEach((c, i) => {
+    const x = stackX(i);
+    const grow = clamp((t - c.born) / 0.8, 0, 1);
+    const h = Math.max(1, Math.round(stackH(c) * grow));
+    const y = GROUND + 1 - h;
+    g.fillStyle = P.ink;
+    g.fillRect(x - 1, y - 1, 6, h + 1);
+    for (let k = 0; k < h; k++) {
+      g.fillStyle = k === 0 ? P.brass3 : k % 2 ? P.brass1 : P.brass2;
+      g.fillRect(x, y + k, 4, 1);
+    }
+    if (c.hi && t < c.hi) {
+      if (Math.floor(t * 8) % 2) px(g, x + 1 + (Math.floor(t * 4) % 2), y - 2, P.white);
+      g.fillStyle = P.lamp;
+      g.fillRect(x, y, 4, 1);
+    }
+    if (t - c.born < 1.4 && Math.floor(t * 10) % 2) px(g, x + 2, y - 3, P.lamp);
+  });
+}
+
+function drawTablets(g, t) {
+  const text = META.tablet.text;
+  for (const tb of tablets) {
+    if (t < tb.born) continue;
+    const x = tb.x;
+    const y = tb.y;
+    const gl = tb.glow && t < tb.glow.until ? tb.glow : null;
+    if (gl && (!gl.blink || Math.floor(t * 5) % 2)) {
+      g.fillStyle = gl.col;
+      g.fillRect(x - 1, y, 13, 14);
+      g.fillRect(x, y - 1, 11, 16);
+    }
+    g.drawImage(spr("tablet.idle"), x, y);
+    for (let r = 0; r < 4; r++) {
+      const fl = tb.flash[r];
+      g.fillStyle = fl && t < fl.until ? fl.col : gl && gl.col === P.glow ? P.glass : tb.dirty ? P.brass1 : P.stone1;
+      g.fillRect(x + text[0], y + text[1] + r * 2, tb.rows[r], 1);
+    }
+    if (tb.dirty) px(g, x + 9, y + 2, P.brass3);
+  }
+}
+
+function drawTentacle(g, pts, r0, r1, col, grip) {
+  const n = pts.length;
+  for (let i = 0; i < n; i++) disc(g, pts[i].x, pts[i].y, lerp(r0, r1, i / (n - 1)) + 1, P.ink);
+  for (let i = 0; i < n; i++) {
+    const r = lerp(r0, r1, i / (n - 1));
+    disc(g, pts[i].x, pts[i].y, r, col);
+    if (r > 1.2) px(g, pts[i].x - 0.6, pts[i].y - r + 0.5, P.vio3);
+    if (i % 3 === 1 && r > 1) px(g, pts[i].x, pts[i].y + r - 0.5, grip ? P.pearlD : P.vio3);
+  }
+}
+
+function drawKraken(g, t) {
+  if (kraken.state === "hidden") return;
+  const h = kraken.head();
+  const shake = t < kraken.hitUntil ? Math.round(Math.sin(t * 90) * 2) : 0;
+  const hx = h.x + shake;
+  const roots = META.kraken.roots;
+  g.save();
+  g.beginPath();
+  g.rect(0, 0, world.W, GROUND + 2);
+  g.clip();
+  // writhing arms
+  roots.forEach(([rx, ry], j) => {
+    if (j === 0) return;
+    const pts = [];
+    let x = hx + rx;
+    let y = h.y + ry;
+    let ang = Math.PI / 2 + (j - 3.5) * 0.36;
+    for (let s = 0; s < 13; s++) {
+      ang += Math.sin(t * 2.1 + j * 1.3 + s * 0.35) * 0.2;
+      x += Math.cos(ang) * 2.1;
+      y += Math.sin(ang) * 2.1;
+      pts.push({ x, y });
+    }
+    drawTentacle(g, pts, 2, 0.6, P.vio2, false);
+  });
+  const white = t < kraken.hitUntil && Math.floor(t * 20) % 2;
+  g.drawImage(white ? sprWhite("kraken.head") : spr("kraken.head"), hx, h.y);
+  g.restore();
+  // the arm that has hold of the failing file
+  if (kraken.target && kraken.grab > 0) {
+    const [rx, ry] = roots[0];
+    const a = { x: hx + rx, y: h.y + ry };
+    const b = { x: kraken.target.cx, y: kraken.target.cy };
+    const c = { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - 22 };
+    const N = Math.max(10, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / 2.2));
+    const upto = Math.round(N * kraken.grab);
+    const pts = [];
+    for (let i = 0; i <= upto; i++) {
+      const s = i / N;
+      const x = (1 - s) * (1 - s) * a.x + 2 * (1 - s) * s * c.x + s * s * b.x;
+      const y = (1 - s) * (1 - s) * a.y + 2 * (1 - s) * s * c.y + s * s * b.y;
+      const w = Math.sin(t * 3 + i * 0.45) * 1.3 * Math.sin(Math.PI * s);
+      pts.push({ x: x + w, y: y + w * 0.5 });
+    }
+    if (kraken.grab >= 1) {
+      for (let k = 0; k <= 12; k++) {
+        const an = -Math.PI / 2 + (k / 12) * Math.PI * 1.6 + Math.sin(t * 2) * 0.1;
+        pts.push({ x: b.x + Math.cos(an) * 7, y: b.y + Math.sin(an) * 8 });
+      }
+    }
+    if (pts.length > 1) drawTentacle(g, pts, 2.2, 0.8, P.vio2, true);
+  }
+}
+
+function drawBeams(g, t) {
+  for (const a of divers) {
+    if (a.docked || !a.beam) continue;
+    const p = a.port();
+    const b = a.beam;
+    const shift = Math.floor(t * 8);
+    cone(g, p, b, 2.6, b.col, (x, y) => ((x + y + shift) & 1) === 0);
+  }
+}
+
+function drawDiver(g, a, t) {
+  const walk = a.moving && Math.floor(t * 6 + a.phase) % 2;
+  const flip = a.face < 0;
+  const x = a.sx;
+  const y = a.sy;
+  // Ned never goes anywhere without his harpoon
+  if (a.id === "ned" && !a.harpoonOut) {
+    const bx = flip ? x + 10 : x + 2;
+    for (let k = 0; k < 16; k++) px(g, bx + (flip ? -1 : 1) * Math.floor(k / 5), y + 16 - k, k > 13 ? P.iron4 : P.wood3);
+  }
+  g.drawImage(spr(`diver.${a.id}.${walk ? "walk" : "stand"}`, flip), x, y);
+  const hand = a.hand();
+  const dir = a.face;
+  if (a.mode === "write") {
+    const up = Math.floor(t * 7) % 2;
+    g.fillStyle = P.wood3;
+    g.fillRect(hand.x + dir, hand.y - 1 - up, 1, 3);
+    g.fillStyle = P.iron4;
+    g.fillRect(hand.x + dir * 2 - (dir < 0 ? 1 : 0), hand.y - 2 - up, 2, 2);
+  } else if (a.mode === "test") {
+    const gx = hand.x + (dir > 0 ? 1 : -9);
+    const gy = hand.y - 12;
+    g.drawImage(spr("gauge.idle"), gx, gy);
+    const [pvx, pvy] = META.gauge.pivot;
+    const ang = a.gauge ?? Math.sin(t * 7) * 1.2 - Math.PI / 2;
+    for (let k = 1; k <= 2; k++) px(g, gx + pvx + Math.cos(ang) * k, gy + pvy + Math.sin(ang) * k, P.ink);
+  } else if (a.mode === "plan") {
+    const sx = dir > 0 ? hand.x + 1 : hand.x - 15;
+    const sy = hand.y - 9;
+    g.fillStyle = P.ink;
+    g.fillRect(sx - 1, sy - 1, 17, 13);
+    g.fillStyle = P.paper;
+    g.fillRect(sx, sy, 15, 11);
+    g.fillStyle = P.wood2;
+    g.fillRect(sx, sy, 15, 1);
+    g.fillRect(sx, sy + 10, 15, 1);
+    const lines = Math.round(a.scroll * 4);
+    for (let i = 0; i < lines; i++) {
+      g.fillStyle = P.wood1;
+      g.fillRect(sx + 2, sy + 2 + i * 2, 3 + ((i * 5) % 8), 1);
+      px(g, sx + 12, sy + 2 + i * 2, P.brass1);
+    }
+  } else if (a.mode === "fight" && !a.harpoonOut) {
+    g.fillStyle = P.wood3;
+    g.fillRect(dir > 0 ? hand.x - 4 : hand.x - 6, hand.y - 1, 11, 1);
+    px(g, hand.x + dir * 7, hand.y - 1, P.iron4);
+    px(g, hand.x + dir * 6, hand.y - 2, P.iron4);
+  }
+}
+
+function drawCapsules(g, t) {
+  for (const c of capsules) {
+    const to = c.to();
+    const s = easeInOut(clamp((t - c.t0) / c.dur, 0, 1));
+    const mx = (c.fx + to.x) / 2 + (to.y - c.fy) * 0.18;
+    const my = (c.fy + to.y) / 2 - 10;
+    const x = (1 - s) * (1 - s) * c.fx + 2 * (1 - s) * s * mx + s * s * to.x;
+    const y = (1 - s) * (1 - s) * c.fy + 2 * (1 - s) * s * my + s * s * to.y;
+    for (let k = 1; k <= 3; k++) {
+      const ss = Math.max(0, s - k * 0.04);
+      const tx = (1 - ss) * (1 - ss) * c.fx + 2 * (1 - ss) * ss * mx + ss * ss * to.x;
+      const ty = (1 - ss) * (1 - ss) * c.fy + 2 * (1 - ss) * ss * my + ss * ss * to.y;
+      px(g, tx, ty, k === 1 ? c.col : P.water11);
+    }
+    g.drawImage(spr("capsule.idle", to.x < c.fx), Math.round(x) - 4, Math.round(y) - 2);
+  }
+  for (const p of projectiles) {
+    const s = clamp((t - p.t0) / p.dur, 0, 1);
+    const x = lerp(p.fx, p.tx, s);
+    const y = lerp(p.fy, p.ty, s) - Math.sin(Math.PI * s) * 4;
+    const dx = p.tx - p.fx;
+    const dy = p.ty - p.fy;
+    const len = Math.hypot(dx, dy) || 1;
+    for (let k = 0; k < 10; k++) px(g, x - (dx / len) * k, y - (dy / len) * k, k < 2 ? P.iron4 : P.wood3);
+  }
+}
+
+function drawParticles(g, t) {
+  for (const p of particles) {
+    const age = t - p.t0;
+    if (p.kind === "bubble") {
+      if (p.big) {
+        g.fillStyle = P.water12;
+        g.fillRect(Math.round(p.x), Math.round(p.y) - 1, 1, 1);
+        g.fillRect(Math.round(p.x) - 1, Math.round(p.y), 1, 1);
+        g.fillRect(Math.round(p.x) + 1, Math.round(p.y), 1, 1);
+        g.fillRect(Math.round(p.x), Math.round(p.y) + 1, 1, 1);
+      } else {
+        px(g, p.x, p.y, P.water12);
+      }
+    } else if (p.kind === "glyph") {
+      const a = p.a;
+      const port = a.port();
+      const s = easeInOut(clamp(age / p.life, 0, 1));
+      const from = p.out ? port : { x: p.tx, y: p.ty };
+      const to = p.out ? { x: p.tx, y: p.ty } : port;
+      const x = lerp(from.x, to.x, s);
+      const y = lerp(from.y, to.y, s) + Math.sin(Math.PI * s) * p.wig;
+      g.fillStyle = p.col;
+      g.fillRect(Math.round(x), Math.round(y), p.w, 1);
+    } else if (p.kind === "spark") {
+      px(g, p.x, p.y, age < 0.2 ? P.white : P.lamp);
+    } else if (p.kind === "ink") {
+      const k = age / p.life;
+      const r = 1 + k * 2.5;
+      if (hash2(Math.round(p.x), Math.round(p.y), Math.floor(t * 10)) > k * 0.9) {
+        disc(g, p.x, p.y, r, k < 0.5 ? P.vio0 : P.ink2);
+      }
+    } else if (p.kind === "ring") {
+      const r = 1 + (age / p.life) * 6;
+      g.fillStyle = p.col;
+      for (let k = 0; k < 12; k++) {
+        const an = (k / 12) * Math.PI * 2;
+        g.fillRect(Math.round(p.x + Math.cos(an) * r), Math.round(p.y + Math.sin(an) * r), 1, 1);
+      }
+    } else if (p.kind === "float") {
+      const y = p.y - age * 12;
+      if (age < p.life - 0.3 || Math.floor(t * 10) % 2) drawText(g, p.text, p.x - 1, y, p.col, P.ink);
+    }
+  }
+  g.fillStyle = P.water10;
+  for (const f of ambient.snow) g.fillRect(Math.round(f.x + Math.sin(t * 0.7 + f.ph) * 2), Math.round(f.y), 1, 1);
+}
+
+// File-name labels over active tablets, then speech bubbles.
+function drawLabels(g, t) {
+  const placed = [];
+  const place = (x, y, w) => {
+    let ty = y;
+    for (let guard = 0; guard < 6; guard++) {
+      const hit = placed.some((r) => x < r.x + r.w + 4 && x + w + 4 > r.x && ty < r.y + 10 && ty + 10 > r.y);
+      if (!hit) break;
+      ty -= 9;
+    }
+    placed.push({ x, y: ty, w });
+    return ty;
+  };
+  for (const tb of tablets) {
+    if (t >= tb.labelUntil && !(hover?.kind === "tablet" && hover.tb === tb)) continue;
+    const name = basename(tb.file);
+    const w = textW(name);
+    const x = clamp(Math.round(tb.cx - w / 2), 3, world.W - w - 3);
+    const y = place(x, tb.y - 9, w);
+    textBox(g, name, x, y, P.stone4, P.ink2, P.stone1);
+  }
+  if (kraken.state !== "hidden" && kraken.k > 0.8) {
+    const h = kraken.head();
+    const txt = "FAILING TEST";
+    const w = textW(txt);
+    const x = clamp(h.x + 15 - Math.round(w / 2), 3, world.W - w - 3);
+    textBox(g, txt, x, place(x, h.y - 10, w), P.white, P.vio0, P.red);
+  }
+  for (const a of divers) {
+    if (a.docked || !a.bubble || t > a.bubble.until) continue;
+    const s = a.bubble.text;
+    const w = textW(s);
+    const x = clamp(Math.round(a.x - w / 2), 3, world.W - w - 3);
+    const y = place(x, a.sy - 10, w);
+    textBox(g, s, x, y, P.ink, P.paper, SUIT[a.id]);
+    g.fillStyle = P.paper;
+    g.fillRect(clamp(Math.round(a.x), x, x + w), y + 7, 1, 2);
+  }
+}
+
+let hudFlash = -9;
+function drawHUD(g, t) {
+  const m = voyage.mission;
+  if (!m) return;
+  const label = voyage.phase >= 5 ? `VOYAGE ${m.num} · COMPLETE` : voyage.phase >= 0 ? `VOYAGE ${m.num} · ${PHASES[voyage.phase].toUpperCase()}` : `VOYAGE ${m.num} · ORDERS`;
+  const flash = t - hudFlash < 0.8 && Math.floor(t * 8) % 2;
+  textBox(g, label, 7, 12, flash ? P.ink : P.brass3, flash ? P.brass3 : P.ink2, P.brass1);
+  const clk = fmtClock(t);
+  textBox(g, clk, world.W - textW(clk) - 7, 12, P.stone4, P.ink2, P.brass1);
+}
+
+function render() {
+  const t = clock.t;
+  renderWater(t);
+  drawAmbient(ctx, t);
+  drawLantern(ctx, t);
+  drawKelp(ctx, t);
+  drawSites(ctx, t);
+  drawTablets(ctx, t);
+  drawKraken(ctx, t);
+  for (const a of divers) if (!a.docked && a.behind) drawDiver(ctx, a, t);
+  drawShip(ctx, t);
+  drawBeams(ctx, t);
+  for (const a of divers) if (!a.docked && !a.behind) drawDiver(ctx, a, t);
+  drawCapsules(ctx, t);
+  drawParticles(ctx, t);
+  drawLabels(ctx, t);
+  drawHUD(ctx, t);
+}
+
+// ============================================================
+// Panels
+// ============================================================
+const logEl = $("#log");
+const logUI = {
+  add(who, html, meta) {
+    const li = document.createElement("li");
+    li.className = `who-${who} fresh`;
+    li.innerHTML = `<time>${fmtClock(clock.t)}</time><span class="actor">${ACTOR[who]}</span><span class="msg">${html}${meta ? ` <em class="meta">${meta}</em>` : ""}</span>`;
+    this.push(li);
+  },
+  phase(text) {
+    const li = document.createElement("li");
+    li.className = "phase";
+    li.textContent = text;
+    this.push(li);
+  },
+  push(li) {
+    const stick = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 60;
+    logEl.appendChild(li);
+    while (logEl.children.length > 260) logEl.firstChild.remove();
+    if (stick) logEl.scrollTop = logEl.scrollHeight;
+  },
+  clear() {
+    logEl.textContent = "";
+  },
+};
+const code = (s) => `<code>${esc(s)}</code>`;
+
+// Tabs follow the action unless the reader picked one recently.
+let tabPinnedUntil = 0;
+function showTab(name, byUser) {
+  if (!byUser && performance.now() < tabPinnedUntil) return;
+  if (byUser) tabPinnedUntil = performance.now() + 20000;
+  for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === name));
+  for (const id of ["diff", "tests", "atlas"]) $(`#tab-${id}`).hidden = id !== name;
+}
+for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => showTab(b.dataset.tab, true));
+
+const diffEl = $("#tab-diff");
+const diffUI = {
+  files: new Map(),
+  clear() {
+    this.files.clear();
+    diffEl.innerHTML = `<p class="empty">No changes yet. Edits appear here line by line as the divers carve them into Atlantis.</p>`;
+    $("#diff-n").textContent = "";
+  },
+  file(path, hunk, created) {
+    if (this.files.size === 0) diffEl.textContent = "";
+    let f = this.files.get(path);
+    if (!f) {
+      const box = document.createElement("div");
+      box.className = "file";
+      box.innerHTML = `<div class="fh"><span><span class="badge">${created ? "A" : "M"}</span><span class="path">${esc(path)}</span></span><span class="stat"><span class="a">+0</span> <span class="d">−0</span></span></div><pre></pre>`;
+      diffEl.appendChild(box);
+      f = { box, pre: box.querySelector("pre"), add: 0, del: 0 };
+      this.files.set(path, f);
+      $("#diff-n").textContent = this.files.size;
+    }
+    this.line(f, hunk, "hunk");
+    return f;
+  },
+  line(f, text, cls) {
+    for (const el of f.pre.querySelectorAll(".live")) el.classList.remove("live");
+    const span = document.createElement("span");
+    span.className = `l ${cls} live`;
+    span.textContent = cls === "hunk" ? text : text[0] + " " + text.slice(1);
+    f.pre.appendChild(span);
+    if (cls === "add") f.add++;
+    if (cls === "del") f.del++;
+    f.box.querySelector(".stat").innerHTML = `<span class="a">+${f.add}</span> <span class="d">−${f.del}</span>`;
+    const stick = diffEl.scrollHeight - diffEl.scrollTop - diffEl.clientHeight < 80;
+    if (stick) diffEl.scrollTop = diffEl.scrollHeight;
+  },
+  settle() {
+    for (const el of diffEl.querySelectorAll(".live")) el.classList.remove("live");
+  },
+  commit(hash, msg) {
+    const d = document.createElement("div");
+    d.className = "commit";
+    d.innerHTML = `commit <b>${esc(hash)}</b> — ${esc(msg)}<br>${this.files.size} file${this.files.size === 1 ? "" : "s"} changed, recorded in the Vigo Bay history.`;
+    diffEl.appendChild(d);
+    diffEl.scrollTop = diffEl.scrollHeight;
+  },
+};
+
+const testsEl = $("#tab-tests");
+const testsUI = {
+  runs: 0,
+  clear() {
+    this.runs = 0;
+    testsEl.innerHTML = `<p class="empty">No test runs yet. The Mate runs the suite once the changes are in.</p>`;
+    $("#tests-n").textContent = "";
+  },
+  start(suite) {
+    if (!this.runs) testsEl.textContent = "";
+    this.runs++;
+    const d = document.createElement("div");
+    d.className = "run";
+    d.innerHTML = `<div class="cmd">$ run ${esc(suite)}</div>`;
+    testsEl.appendChild(d);
+    $("#tests-n").textContent = this.runs;
+    return d;
+  },
+  add(run, [ok, name, why]) {
+    run.insertAdjacentHTML("beforeend", `<div class="${ok ? "ok" : "bad"}">${ok ? "✓" : "✗"} ${esc(name)}</div>${why ? `<div class="why">${esc(why)}</div>` : ""}`);
+    testsEl.scrollTop = testsEl.scrollHeight;
+  },
+  sum(run, pass, fail) {
+    run.insertAdjacentHTML("beforeend", `<div class="sum">${pass} passing${fail ? `, <span class="bad">${fail} failing</span>` : ""}</div>`);
+    testsEl.scrollTop = testsEl.scrollHeight;
+  },
+};
+
+const planEl = $("#plan");
+const planUI = {
+  items: [],
+  clear() {
+    this.items = [];
+    planEl.innerHTML = `<li class="empty" style="display:block">Conseil drafts the plan once the survey reports are in.</li>`;
+    $("#plan-n").textContent = "";
+  },
+  add(item) {
+    if (!this.items.length) planEl.textContent = "";
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${esc(item.text)}</span><span class="who" style="color:var(--c-${item.agent})">${ACTOR[item.agent]}</span>`;
+    planEl.appendChild(li);
+    this.items.push({ ...item, li });
+    $("#plan-n").textContent = `${this.items.length} steps`;
+  },
+  phase(p) {
+    for (const it of this.items) {
+      it.li.classList.toggle("done", it.phase < p);
+      it.li.classList.toggle("on", it.phase === p);
+    }
+  },
+};
+
+const ctxEl = $("#ctx");
+const ctxUI = {
+  clear() {
+    ctxEl.textContent = "";
+  },
+  add(src, html, tok, who) {
+    const li = document.createElement("li");
+    const tag = { lib: "LIB", mem: "MEM", repo: "REPO", git: "GIT" }[src];
+    li.innerHTML = `<span class="src src-${src}">${tag}</span><span>${html} <span class="n">· ${ACTOR[who]}</span></span><span class="n">${fmtTok(tok)}</span>`;
+    ctxEl.appendChild(li);
+    ctxEl.scrollTop = ctxEl.scrollHeight;
+  },
+};
+
+// Crew cards: portraits from the atlas, refreshed a few times a second.
+const crewEl = $("#crew");
+const crewCards = {};
+function buildCrew() {
+  const rows = [{ ...nemo, blurb: "holds the order; dispatches divers; merges their reports", css: "var(--c-nemo)" }, ...CREW];
+  crewEl.textContent = "";
+  for (const r of rows) {
+    const li = document.createElement("li");
+    li.style.color = r.css;
+    const cvs = makeCanvas(13, 12);
+    cvs.getContext("2d").drawImage(spr(`diver.${r.id}.stand`), 0, 0, 13, 12, 0, 0, 13, 12);
+    li.appendChild(cvs);
+    li.insertAdjacentHTML("beforeend", `<div><span class="nm">${esc(r.name)}</span><span class="rl">${esc(r.role)}</span></div><span class="tok"></span><div class="st"></div><div class="meter"><i></i></div>`);
+    li.title = `${r.name} — ${r.blurb}`;
+    crewEl.appendChild(li);
+    crewCards[r.id] = { li, st: li.querySelector(".st"), tok: li.querySelector(".tok"), bar: li.querySelector(".meter i"), last: "" };
+  }
+}
+function updateCrew() {
+  const maxRead = Math.max(1000, ...divers.map((a) => a.readTok));
+  const set = (id, st, tok, frac, active) => {
+    const c = crewCards[id];
+    const key = `${st}|${tok}|${frac.toFixed(3)}|${active}`;
+    if (c.last === key) return;
+    c.last = key;
+    c.st.textContent = st;
+    c.tok.textContent = tok;
+    c.bar.style.width = `${(frac * 100).toFixed(1)}%`;
+    c.li.classList.toggle("active", active);
+  };
+  const nemoSt = nemo.note && clock.t < nemo.note.until ? nemo.note.text : nemo.status;
+  set("nemo", nemoSt, `${fmtTok(nemo.ctx)} tok`, clamp(nemo.ctx / maxRead, 0, 1), !!voyage.mission && voyage.phase < 5);
+  for (const a of divers) set(a.id, a.status, `${fmtTok(a.readTok)} read`, a.readTok / maxRead, !a.docked);
+  const read = divers.reduce((s, a) => s + a.readTok, 0);
+  const maxBar = Math.max(read, nemo.ctx, 1);
+  $("#bar-read").style.width = `${(read / maxBar) * 100}%`;
+  $("#bar-held").style.width = `${(nemo.ctx / maxBar) * 100}%`;
+  $("#v-read").textContent = fmtTok(read);
+  $("#v-held").textContent = fmtTok(nemo.ctx);
+  $("#ctx-note").textContent = read > 0 && nemo.ctx > 0
+    ? `Divers read ${fmtTok(read)} tokens in their own contexts; the Nautilus holds ${fmtTok(nemo.ctx)} — about ${Math.max(1, Math.round(read / nemo.ctx))}× less.`
+    : "Divers read in their own contexts; only their short reports reach the Nautilus.";
+  $("#clock").textContent = `ship's time ${fmtClock(clock.t)}`;
+}
+
+function setMissionPanel(m, idx) {
+  $("#m-num").textContent = `Voyage ${m.num}`;
+  $("#m-count").textContent = `${idx + 1} of ${MISSIONS.length}`;
+  $("#m-title").textContent = m.title;
+  $("#m-order").textContent = `“${m.order}”`;
+  $("#m-ticket").textContent = m.ticket;
+  $("#mission").value = String(idx);
+}
+function setPhaseUI(p) {
+  const lis = $("#phases").children;
+  for (let i = 0; i < lis.length; i++) {
+    lis[i].classList.toggle("done", i < p);
+    lis[i].classList.toggle("on", i === p);
+  }
+  $("#phase-note").textContent = p < 0 ? "Nemo reads the order and decides who to send." : PHASE_NOTES[p];
+  planUI.phase(p);
+}
+
+// ============================================================
+// Director — what each diver does, step by step
+// ============================================================
+const voyage = { mission: null, index: 0, phase: -1 };
+
+async function moveTo(a, x, y, speed) {
+  a.target = { x, y, speed };
+  while (a.target) await sleep(1 / 30);
+}
+async function goTo(a, spot, status) {
+  if (status) a.status = status;
+  await moveTo(a, spot.x, spot.y);
+  if (spot.face) a.face = spot.face;
+}
+async function absorb(a, tok, dur) {
+  const n = Math.max(1, Math.round(dur / 0.1));
+  for (let i = 0; i < n; i++) {
+    await sleep(dur / n);
+    a.readTok += tok / n;
+    a.taskTok += tok / n;
+  }
+}
+function aim(a, x, y, col, emit = true, out = false) {
+  a.beam = { x, y, col, emit, out };
+  a.lookAt(x);
+}
+
+async function emerge(a) {
+  const p = ship.airlock();
+  a.x = p.x;
+  a.y = p.y - 2;
+  a.docked = false;
+  a.behind = true;
+  a.face = 1;
+  ship.hatchUntil = clock.t + 1.4;
+  await moveTo(a, p.x, p.y + 21, 24);
+  a.behind = false;
+}
+async function dock(a) {
+  a.status = "returning to the Nautilus";
+  a.mode = "idle";
+  a.beam = null;
+  const p = ship.airlock();
+  await moveTo(a, p.x, p.y + 21);
+  a.behind = true;
+  ship.hatchUntil = clock.t + 1.2;
+  await moveTo(a, p.x, p.y - 2, 24);
+  a.docked = true;
+  a.behind = false;
+  a.status = "aboard";
+}
+
+async function dispatch(a, order, tag) {
+  nemo.note = { text: `dispatching ${a.name}`, until: clock.t + 1.6 };
+  ship.pulse();
+  logUI.add("nemo", `dispatch → <b>${esc(a.name)}</b> · ${esc(order)}`, "fresh context");
+  a.taskTok = 0;
+  a.status = `orders: ${order}`;
+  focus(ship.airlock().x, ship.airlock().y + 30);
+  if (a.docked) await emerge(a);
+  else await capsule(ship.airlock(), () => a.port(), P.brass3);
+  a.say(tag, 2.2);
+}
+async function report(a, text, tok, bad) {
+  a.say(bad ? "REPORT: FAILING" : "REPORT", 1.6);
+  a.status = "sending report";
+  a.beam = null;
+  a.mode = "idle";
+  await capsule(a.port(), () => ship.airlock(), bad ? P.red : P.glow);
+  a.sentTok += tok;
+  nemo.ctx += tok;
+  nemo.note = { text: `reading ${a.name}'s report`, until: clock.t + 1.4 };
+  nemo.reports++;
+  ship.pulse();
+  logUI.add(a.id, `report → Nemo · ${esc(text)}`, `${fmtTok(a.taskTok)} read → ${tok} sent`);
+}
+
+// Survey / build steps. Each one moves the diver, aims the lamp, and logs.
+const STEPS = {
+  async read(a, id) {
+    const doc = DOCS[id];
+    const b = bookRect(doc);
+    await goTo(a, { x: b.x - 11, y: b.y + 14, face: 1 }, "swimming to the library");
+    a.mode = "read";
+    a.status = `reading ${doc.title}`;
+    a.say(doc.tag, 2.8);
+    library.hi = { rect: b, until: clock.t + 2.8 };
+    aim(a, b.x + b.w / 2, b.y + b.h / 2, P.lamp);
+    focus(b.x, b.y);
+    await absorb(a, doc.tok, 2.8);
+    a.beam = null;
+    a.mode = "idle";
+    ctxUI.add("lib", esc(doc.title), doc.tok, a.id);
+    logUI.add(a.id, `read <b>library</b> · ${esc(doc.title)}`, `+${fmtTok(doc.tok)} tok`);
+  },
+  async recall(a, idx) {
+    const p = clam.pearl();
+    await goTo(a, { x: sites.clam.x - 5, y: GROUND - 2, face: 1 }, "swimming to the pearl");
+    clam.target = 1;
+    await sleep(0.6);
+    a.mode = "read";
+    a.status = "recalling a memory";
+    a.say("RECALL MEMORY", 2.2);
+    aim(a, p.x, p.y, P.pearl);
+    focus(p.x, p.y);
+    await absorb(a, 380, 2);
+    a.beam = null;
+    a.mode = "idle";
+    clam.target = 0;
+    ctxUI.add("mem", `“${esc(memory[idx])}”`, 380, a.id);
+    logUI.add(a.id, `recall <b>pearl</b> · <q>${esc(memory[idx])}</q>`, "+0.4k tok");
+  },
+  async grep(a, pattern, files) {
+    const at = sites.atlantis;
+    await goTo(a, { x: at.x + at.w / 2 - 4, y: at.y + 34 }, "swimming to Atlantis");
+    a.mode = "read";
+    a.status = `searching /${pattern}/`;
+    a.say(`GREP ${pattern}`, 3.2);
+    logUI.add(a.id, `grep <b>atlantis</b> · ${code(`/${pattern}/`)} across ${tablets.length} files`);
+    focus(at.x + at.w / 2, at.y + 50);
+    for (const tb of [...tablets].sort((p, q) => p.x - q.x)) {
+      aim(a, tb.cx, tb.cy, P.glow, false);
+      tb.light(P.glass, 0.25);
+      a.readTok += 40;
+      a.taskTok += 40;
+      await sleep(0.14);
+    }
+    for (const f of files) {
+      const tb = tabletByFile(f);
+      aim(a, tb.cx, tb.cy, P.glow);
+      tb.light(P.glow, 3.5);
+      await absorb(a, 450, 0.8);
+    }
+    a.beam = null;
+    a.mode = "idle";
+    const tok = tablets.length * 40 + files.length * 450;
+    ctxUI.add("repo", `grep ${code(`/${pattern}/`)} → ${files.map(code).join(", ")}`, tok, a.id);
+    logUI.add(a.id, `→ ${files.length} matches: ${files.map(code).join(", ")}`, `+${fmtTok(tok)} tok`);
+  },
+  async open(a, file, tok = 1800) {
+    const tb = tabletByFile(file);
+    await goTo(a, tb.spot(), "swimming to Atlantis");
+    a.mode = "read";
+    a.status = `reading ${file}`;
+    a.say(`READ ${basename(file)}`, 2.4);
+    tb.light(P.glow, 2.4);
+    aim(a, tb.cx, tb.cy, P.glow);
+    focus(tb.cx, tb.cy);
+    await absorb(a, tok, 2.2);
+    a.beam = null;
+    a.mode = "idle";
+    ctxUI.add("repo", code(file), tok, a.id);
+    logUI.add(a.id, `read <b>atlantis</b> · ${code(file)}`, `+${fmtTok(tok)} tok`);
+  },
+  async history(a, path, hash) {
+    const i = Math.max(0, history.findIndex((c) => c.hash === hash));
+    const x = stackX(i);
+    await goTo(a, { x: x - 7, y: GROUND - 1, face: 1 }, "swimming to the wreck");
+    a.mode = "read";
+    a.status = `git log ${path}`;
+    a.say(`LOG ${path}`, 2.6);
+    focus(x, GROUND - 6);
+    for (let k = history.length - 1; k >= i; k--) {
+      aim(a, stackX(k) + 2, GROUND - 3, P.brass3, k === i);
+      history[k].hi = clock.t + (k === i ? 2.4 : 0.3);
+      await sleep(k === i ? 0.2 : 0.22);
+    }
+    await absorb(a, 900, 1.6);
+    a.beam = null;
+    a.mode = "idle";
+    const c = history[i];
+    ctxUI.add("git", `${code(c.hash)} ${esc(c.msg)}`, 900, a.id);
+    logUI.add(a.id, `git log <b>${esc(path)}</b> · ${code(c.hash)} ${esc(c.msg)}`, "+0.9k tok");
+  },
+  async edit(a, id) {
+    const e = EDITS[id];
+    let tb = tabletByFile(e.file);
+    if (!tb) {
+      tb = addTablet(e.file, true);
+      tb.labelUntil = clock.t + 3;
+    }
+    await goTo(a, tb.spot(), `swimming to ${e.file}`);
+    focus(tb.cx, tb.cy);
+    if (!e.create) {
+      a.mode = "read";
+      a.status = `reading ${e.file}`;
+      tb.light(P.glow, 1.2);
+      aim(a, tb.cx, tb.cy, P.glow);
+      await absorb(a, 1100, 1.1);
+    }
+    a.beam = null;
+    a.mode = "write";
+    a.status = `${e.create ? "creating" : "editing"} ${e.file}`;
+    a.say(`${e.create ? "NEW" : "EDIT"} ${basename(e.file)}`, 3);
+    showTab("diff");
+    logUI.add(a.id, `${e.create ? "create" : "edit"} ${code(e.file)}`);
+    const f = diffUI.file(e.file, e.hunk, e.create);
+    let add = 0;
+    let del = 0;
+    for (const line of e.lines) {
+      const kind = line[0] === "+" ? "add" : line[0] === "-" ? "del" : "ctx";
+      diffUI.line(f, line, kind);
+      tb.light(P.brass3, 0.6);
+      if (kind === "add") {
+        add++;
+        tb.flashRow(P.green);
+        spawnSparks(tb.cx - 2, tb.cy);
+        await sleep(0.55);
+      } else if (kind === "del") {
+        del++;
+        tb.flashRow(P.red);
+        spawnSparks(tb.cx - 2, tb.cy, 3);
+        await sleep(0.45);
+      } else {
+        await sleep(0.18);
+      }
+    }
+    diffUI.settle();
+    tb.dirty = true;
+    tb.labelUntil = clock.t + 1.5;
+    a.mode = "idle";
+    logUI.add(a.id, `wrote ${code(e.file)}`, `<span class="a">+${add}</span> <span class="d">−${del}</span>`);
+  },
+};
+
+async function runTests(a, suite, cases) {
+  const tb = tabletByFile(suite);
+  await goTo(a, tb.spot(), `swimming to ${suite}`);
+  a.mode = "test";
+  a.gauge = null;
+  a.status = `running ${suite}`;
+  a.say(`RUN ${basename(suite)}`, 2.4);
+  tb.light(P.vio3, 99);
+  focus(tb.cx, tb.cy);
+  showTab("tests");
+  logUI.add(a.id, `run ${code(suite)}`);
+  const run = testsUI.start(suite);
+  const fails = [];
+  for (const c of cases) {
+    await sleep(1);
+    a.readTok += 120;
+    a.taskTok += 120;
+    testsUI.add(run, c);
+    spawnFloat(c[0] ? "✓" : "✗", c[0] ? P.green : P.red, tb.cx, tb.y - 4);
+    if (!c[0]) fails.push(c);
+  }
+  const pass = cases.length - fails.length;
+  testsUI.sum(run, pass, fails.length);
+  a.gauge = fails.length ? -Math.PI * 0.15 : -Math.PI * 0.85;
+  tb.light(fails.length ? P.red : P.green, fails.length ? 999 : 2.5, !!fails.length);
+  logUI.add(a.id, `${pass} passing${fails.length ? `, <b>${fails.length} failing</b>` : ""}`);
+  await sleep(0.6);
+  a.mode = "idle";
+  return fails;
+}
+
+async function harpoon(a) {
+  const h = kraken.head();
+  a.mode = "fight";
+  a.status = "harpooning the kraken";
+  a.lookAt(h.x + 15);
+  a.say("HARPOON!", 1.6);
+  await sleep(0.9);
+  const hand = a.hand();
+  const pr = { fx: hand.x, fy: hand.y, tx: h.x + 14, ty: h.y + 24, t0: clock.t, dur: 0.4 };
+  projectiles.push(pr);
+  a.harpoonOut = true;
+  await sleep(0.4);
+  projectiles = projectiles.filter((p) => p !== pr);
+  kraken.hit();
+  spawnSparks(pr.tx, pr.ty, 10);
+  logUI.add(a.id, "harpoon strikes — the kraken lets go of the tablet");
+  await sleep(0.5);
+  a.harpoonOut = false;
+  a.mode = "idle";
+}
+
+async function runTask(t) {
+  const a = D[t.agent];
+  await dispatch(a, t.order, t.tag);
+  for (const [op, ...args] of t.steps) await STEPS[op](a, ...args);
+  const r = report(a, t.report, t.rtok);
+  await sleep(0.4);
+  await Promise.all([r, dock(a)]);
+}
+
+async function phase(i) {
+  voyage.phase = i;
+  hudFlash = clock.t;
+  setPhaseUI(i);
+  logUI.phase(`${["I", "II", "III", "IV", "V"][i]} · ${PHASES[i]}`);
+  await sleep(1.1);
+}
+
+async function runMission(m, idx) {
+  beginMission(m, idx);
+  logUI.add("nemo", `order received · <q>${esc(m.order)}</q>`, `ticket: ${esc(m.ticket)}`);
+  nemo.status = "reading the order";
+  focus(ship.x + 60, 110);
+  await sleep(2.2);
+
+  // I · Survey — fan out, in parallel
+  await phase(0);
+  nemo.status = `waiting on ${m.survey.length} divers`;
+  await Promise.all(m.survey.map((t, i) => sleep(i * 0.8).then(() => runTask(t))));
+
+  // II · Plan
+  await phase(1);
+  nemo.status = "waiting on the plan";
+  const c = D.conseil;
+  await dispatch(c, "Classify the reports into a plan", "CLASSIFYING");
+  const p = ship.airlock();
+  await goTo(c, { x: p.x - 34, y: p.y + 38, face: 1 }, "drafting the plan");
+  c.mode = "plan";
+  c.scroll = 0;
+  for (let i = 0; i < m.plan.length; i++) {
+    await sleep(1.1);
+    c.scroll = (i + 1) / m.plan.length;
+    planUI.add(m.plan[i]);
+    c.readTok += 60;
+    c.taskTok += 60;
+  }
+  await sleep(0.6);
+  logUI.add("conseil", `plan · ${m.plan.length} steps, ${new Set(m.plan.map((s) => s.agent)).size} divers`);
+  {
+    const r = report(c, `plan of ${m.plan.length} steps`, 90);
+    await sleep(0.4);
+    await Promise.all([r, dock(c)]);
+  }
+
+  // III · Build — parallel edits on separate files
+  await phase(2);
+  nemo.status = `waiting on ${m.build.length} diver${m.build.length > 1 ? "s" : ""}`;
+  await Promise.all(m.build.map((b, i) => sleep(i * 0.8).then(() => runTask({ ...b, steps: b.edits.map((id) => ["edit", id]) }))));
+
+  // IV · Verify — the kraken may rise
+  await phase(3);
+  const v = m.verify;
+  const mate = D[v.agent];
+  nemo.status = "waiting on the tests";
+  await dispatch(mate, v.order, v.tag);
+  let fails = await runTests(mate, v.suite, v.runs[0]);
+  if (fails.length) {
+    const fx = v.fix;
+    const tb = tabletByFile(fx.file);
+    kraken.rise(tb, fails[0][1]);
+    focus(kraken.head().x, GROUND - 30);
+    logUI.add("kraken", `rises from the trench · ✗ ${esc(fails[0][1])} — ${esc(fails[0][2])}`);
+    await sleep(1.6);
+    await report(mate, `${fails.length} failing — ${fails[0][1]} (${fails[0][2]})`, 90, true);
+    mate.status = "waiting beside the suite";
+    const ned = D[fx.agent];
+    nemo.status = `sending ${ned.name} after the bug`;
+    await dispatch(ned, fx.order, fx.tag);
+    await STEPS.open(ned, fx.file, 900);
+    await harpoon(ned);
+    await STEPS.edit(ned, fx.edit);
+    tb.glow = null;
+    kraken.retreat();
+    logUI.add("kraken", "retreats into the dark in a cloud of ink");
+    const r = report(ned, fx.report, fx.rtok);
+    await sleep(0.4);
+    await Promise.all([
+      Promise.all([r, dock(ned)]),
+      (async () => {
+        await r;
+        nemo.status = "waiting on the re-run";
+        await dispatch(mate, "Run the suite again", "RE-RUN");
+        fails = await runTests(mate, v.suite, v.runs[1]);
+      })(),
+    ]);
+  }
+  {
+    const r = report(mate, v.report, v.rtok);
+    await sleep(0.4);
+    await Promise.all([r, dock(mate)]);
+  }
+
+  // V · Merge — commit to history, lesson to memory
+  await phase(4);
+  nemo.status = "merging";
+  await Promise.all([
+    runTask({ agent: "mate", order: "Commit the change to the history", tag: "COMMIT", steps: [["commit", m.merge]], report: `commit ${m.merge.hash}`, rtok: 30 }),
+    sleep(0.8).then(() => runTask({ agent: "conseil", order: "Store the lesson", tag: "REMEMBER", steps: [["remember", m.merge.memory]], report: "lesson stored in the pearl", rtok: 20 })),
+  ]);
+  for (const tb of tablets) tb.dirty = false;
+  voyage.phase = 5;
+  hudFlash = clock.t;
+  setPhaseUI(5);
+  nemo.status = "voyage complete";
+  focus(ship.x + 60, 110);
+  logUI.add("nemo", `voyage complete · <q>Mobilis in mobili.</q>`, `held ${fmtTok(nemo.ctx)} tok`);
+  await sleep(5);
+}
+
+STEPS.commit = async (a, merge) => {
+  const i = history.length;
+  const x = stackX(i);
+  await goTo(a, { x: x - 7, y: GROUND - 1, face: 1 }, "swimming to the wreck");
+  a.mode = "write";
+  a.status = `committing ${merge.hash}`;
+  a.say(`COMMIT ${merge.hash}`, 2.6);
+  focus(x, GROUND - 6);
+  for (const tb of tablets) if (tb.dirty) tb.light(P.brass3, 1.6);
+  await sleep(0.8);
+  history.push({ hash: merge.hash, msg: merge.msg, born: clock.t, hi: clock.t + 2 });
+  spawnSparks(x + 2, GROUND - 5, 10);
+  diffUI.commit(merge.hash, merge.msg);
+  showTab("diff");
+  logUI.add(a.id, `commit ${code(merge.hash)} · ${esc(merge.msg)}`, `${history.length} in history`);
+  await sleep(1.4);
+  a.mode = "idle";
+};
+STEPS.remember = async (a, text) => {
+  await goTo(a, { x: sites.clam.x - 5, y: GROUND - 2, face: 1 }, "swimming to the pearl");
+  clam.target = 1;
+  await sleep(0.6);
+  const p = clam.pearl();
+  a.mode = "read";
+  a.status = "storing a lesson";
+  a.say("REMEMBER", 2.2);
+  aim(a, p.x, p.y, P.pearl, true, true);
+  focus(p.x, p.y);
+  await sleep(1.8);
+  memory.push(text);
+  spawnRing(p.x, p.y, P.pearl);
+  a.beam = null;
+  a.mode = "idle";
+  logUI.add(a.id, `remember · <q>${esc(text)}</q>`, `${memory.length} lessons`);
+  await sleep(0.4);
+  clam.target = 0;
+};
+
+// ============================================================
+// Voyage state and control
+// ============================================================
+let voyageToken = 0;
+
+function resetVoyageState(idx) {
+  history = HISTORY_BASE.map(([hash, msg]) => ({ hash, msg, born: -99, hi: 0 }));
+  memory = [...MEMORY_BASE];
+  tablets = FILES.map((f, i) => new Tablet(f, i));
+  for (let i = 0; i < idx; i++) {
+    const m = MISSIONS[i];
+    history.push({ hash: m.merge.hash, msg: m.merge.msg, born: -99, hi: 0 });
+    memory.push(m.merge.memory);
+    for (const b of m.build) for (const id of b.edits) if (EDITS[id].create && !tabletByFile(EDITS[id].file)) addTablet(EDITS[id].file, false);
+  }
+}
+function resetWorld() {
+  particles = [];
+  capsules = [];
+  projectiles = [];
+  kraken.state = "hidden";
+  kraken.k = 0;
+  kraken.grab = 0;
+  kraken.target = null;
+  clam.target = 0;
+  library.hi = null;
+  for (const a of divers) {
+    Object.assign(a, { docked: true, behind: false, target: null, beam: null, bubble: null, mode: "idle", status: "aboard", harpoonOut: false });
+  }
+  for (const tb of tablets) {
+    tb.glow = null;
+    tb.dirty = false;
+    tb.labelUntil = 0;
+  }
+}
+function beginMission(m, idx) {
+  voyage.mission = m;
+  voyage.index = idx;
+  voyage.phase = -1;
+  resetWorld();
+  nemo.ctx = 60;
+  nemo.reports = 0;
+  nemo.note = null;
+  for (const a of divers) {
+    a.readTok = 0;
+    a.taskTok = 0;
+    a.sentTok = 0;
+  }
+  setMissionPanel(m, idx);
+  setPhaseUI(-1);
+  planUI.clear();
+  diffUI.clear();
+  testsUI.clear();
+  ctxUI.clear();
+  logUI.phase(`Voyage ${m.num} · ${m.title}`);
+}
+
+function startVoyage(idx) {
+  cancelAll();
+  const token = ++voyageToken;
+  resetVoyageState(idx);
+  resetWorld();
+  (async () => {
+    let i = idx;
+    try {
+      for (;;) {
+        await runMission(MISSIONS[i], i);
+        if (token !== voyageToken) return;
+        i = (i + 1) % MISSIONS.length;
+        if (i === 0) resetVoyageState(0);
+      }
+    } catch (e) {
+      if (!(e instanceof Cancelled)) {
+        console.error(e);
+        logUI.add("sys", `error: ${esc(e.message)}`);
+      }
+    }
+  })();
+}
+
+// ============================================================
+// Controls, hover, resize
+// ============================================================
+function buildControls() {
+  const sel = $("#mission");
+  sel.innerHTML = MISSIONS.map((m, i) => `<option value="${i}">${m.num} · ${esc(m.title)}</option>`).join("");
+  sel.addEventListener("change", () => startVoyage(+sel.value));
+  $("#restart").addEventListener("click", () => startVoyage(voyage.index));
+  const play = $("#play");
+  const setPaused = (p) => {
+    clock.paused = p;
+    play.textContent = p ? "Play" : "Pause";
+    play.setAttribute("aria-pressed", String(p));
+  };
+  play.addEventListener("click", () => setPaused(!clock.paused));
+  for (const b of document.querySelectorAll("#speed button")) {
+    b.addEventListener("click", () => {
+      clock.speed = +b.dataset.speed;
+      for (const o of document.querySelectorAll("#speed button")) o.classList.toggle("on", o === b);
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest("select, input, textarea")) return;
+    if (e.code === "Space" && !e.target.closest("button")) {
+      e.preventDefault();
+      setPaused(!clock.paused);
+    }
+  });
+  $("#phases").innerHTML = PHASES.map((p) => `<li>${p}</li>`).join("");
+}
+
+let hover = null;
+const tip = $("#tip");
+function hitTest(ax, ay) {
+  for (const a of divers) {
+    if (!a.docked && !a.behind && Math.abs(ax - a.x) <= 7 && ay >= a.sy && ay <= a.sy + 18) return { kind: "diver", a };
+  }
+  if (kraken.state !== "hidden") {
+    const h = kraken.head();
+    if (ax >= h.x && ax <= h.x + 30 && ay >= h.y && ay <= Math.min(GROUND, h.y + 50)) return { kind: "kraken" };
+  }
+  for (const tb of tablets) if (ax >= tb.x && ax < tb.x + 11 && ay >= tb.y && ay < tb.y + 14) return { kind: "tablet", tb };
+  if (ax >= stackX(0) - 1 && ax <= stackX(history.length - 1) + 5 && ay >= GROUND - 10 && ay <= GROUND + 2) return { kind: "history" };
+  if (ax >= ship.x + 8 && ax <= ship.x + 138 && ay >= ship.y + 2 && ay <= ship.y + 40) return { kind: "ship" };
+  for (const s of Object.values(sites)) if (ax >= s.x && ax < s.x + s.w && ay >= s.y && ay < GROUND + 20) return { kind: "site", s };
+  return null;
+}
+function tipHTML(h) {
+  switch (h.kind) {
+    case "diver": {
+      const a = h.a;
+      return `<div class="k">${esc(a.role)} · sub-agent</div><b>${esc(a.name)}</b> — ${esc(a.blurb)}<br>${esc(a.status)}<br>${fmtTok(a.readTok)} tok read this voyage`;
+    }
+    case "ship":
+      return `<div class="k">orchestrator</div><b>The Nautilus</b> — Captain Nemo holds the order, dispatches divers through the airlock and merges their reports.<br>context: ${fmtTok(nemo.ctx)} tok, ${nemo.reports} reports`;
+    case "kraken":
+      return `<div class="k">failing test</div><b>The kraken</b> — ✗ ${esc(kraken.failing)}<br>It lets go once the fix is in and the suite re-runs green.`;
+    case "tablet": {
+      const tb = h.tb;
+      return `<div class="k">repository file</div><b>${esc(tb.file)}</b><br>${tb.dirty ? "changed, not yet committed" : "unchanged this voyage"}`;
+    }
+    case "history":
+      return `<div class="k">git history · ${history.length} commits</div>${history.slice(-4).reverse().map((c) => `${code(c.hash)} ${esc(c.msg)}`).join("<br>")}`;
+    case "site": {
+      const s = h.s;
+      const extra = {
+        library: "Manuals, papers and charts — twelve thousand volumes. Divers read here; nothing is changed.",
+        clam: `${memory.length} lessons kept between voyages. Latest: “${esc(memory[memory.length - 1])}”`,
+        atlantis: `The codebase: ${tablets.length} stone tablets, one per file. Divers read and carve them.`,
+        galleon: `Every coin stack is a commit — ${history.length} so far.`,
+      }[s.key];
+      return `<div class="k">${esc(s.role)}</div><b>${esc(s.name)}</b><br>${extra}`;
+    }
+  }
+  return "";
+}
+function artCoords(e) {
+  const r = cv.getBoundingClientRect();
+  const scale = Math.min(r.width / world.W, r.height / world.H);
+  const ox = (r.width - world.W * scale) / 2;
+  const oy = (r.height - world.H * scale) / 2;
+  return { ax: (e.clientX - r.left - ox) / scale, ay: (e.clientY - r.top - oy) / scale, r };
+}
+cv.addEventListener("mousemove", (e) => {
+  if (!P) return;
+  const { ax, ay, r } = artCoords(e);
+  hover = hitTest(ax, ay);
+  if (!hover) {
+    tip.hidden = true;
+    return;
+  }
+  tip.innerHTML = tipHTML(hover);
+  tip.hidden = false;
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  tip.style.left = `${Math.min(x + 14, r.width - tip.offsetWidth - 8)}px`;
+  tip.style.top = `${y + 16 + tip.offsetHeight > r.height ? y - tip.offsetHeight - 10 : y + 16}px`;
+});
+cv.addEventListener("mouseleave", () => {
+  hover = null;
+  tip.hidden = true;
+});
+
+const stage = $("#stage");
+let staticReady = false;
+let assetsReady = false;
+function resize() {
+  const r = stage.getBoundingClientRect();
+  if (!assetsReady || !r.width || !r.height) return;
+  const W = clamp(Math.round((ART_H * r.width) / r.height), 360, 640);
+  if (W === world.W && staticReady) return;
+  const sx = W / world.W;
+  world.W = W;
+  cv.width = W;
+  cv.height = ART_H;
+  layout();
+  buildStatic();
+  if (staticReady) {
+    for (const a of divers) {
+      a.x *= sx;
+      if (a.target) a.target.x *= sx;
+    }
+    for (const c of capsules) c.fx *= sx;
+    seedAmbient();
+  }
+  staticReady = true;
+  ship.lamp.x = ship.focus.x = ship.focus.x || ship.x + 60;
+}
+let resizeTimer = 0;
+new ResizeObserver(() => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(resize, staticReady ? 120 : 0);
+}).observe(stage);
+
+// ============================================================
+// Key and atlas panels
+// ============================================================
+function iconCanvas(frame, crop, max = 54) {
+  const src = spr(frame);
+  const [sx, sy, sw, sh] = crop ?? [0, 0, src.width, src.height];
+  const s = Math.max(1, Math.floor(Math.min(max / sw, 40 / sh)));
+  const c = makeCanvas(sw * s, sh * s);
+  const g = c.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  g.drawImage(src, sx, sy, sw, sh, 0, 0, sw * s, sh * s);
+  return c;
+}
+function buildKey() {
+  const rows = [
+    ["nautilus.hull", [70, 0, 54, 36], "<b>The Nautilus</b> — the orchestrator. Holds the order, dispatches divers, merges results."],
+    ["diver.aronnax.stand", null, "<b>Divers</b> — sub-agents. Each leaves the airlock with a fresh context and one narrow job."],
+    ["capsule.idle", null, "<b>Brass capsules</b> — messages: orders out, short reports back."],
+    [null, null, "<b>Lamp beams</b> — what a diver is reading right now; the specks are tokens flowing into its context."],
+    ["library.ruin", [12, 18, 46, 34], "<b>Sunken library</b> — the knowledge base: manuals, papers, charts."],
+    ["clam.open3", null, "<b>Giant pearl</b> — long-term memory. Recalled before work, grows after it."],
+    ["tablet.idle", null, "<b>Atlantis tablets</b> — the repository, one tablet per file."],
+    ["chest.idle", null, "<b>Vigo Bay wreck</b> — git history; every coin stack is a commit."],
+    ["kraken.head", null, "<b>The kraken</b> — a failing test. Harpoon it, fix the file, re-run."],
+  ];
+  const ul = $("#key");
+  for (const [frame, crop, html] of rows) {
+    const li = document.createElement("li");
+    const ic = document.createElement("div");
+    ic.className = "ic";
+    if (frame) ic.appendChild(iconCanvas(frame, crop));
+    else ic.innerHTML = `<span class="swatch"></span>`;
+    li.appendChild(ic);
+    li.insertAdjacentHTML("beforeend", `<span>${html}</span>`);
+    ul.appendChild(li);
+  }
+}
+function buildAtlasTab() {
+  const el = $("#tab-atlas");
+  const n = Object.keys(ATLAS.frames).length;
+  el.innerHTML = `<div class="atlas-head"><b>assets/nautilus/atlas.png</b> · ${ATLAS.size[0]}×${ATLAS.size[1]} · ${n} frames from ${Object.keys(ATLAS.sprites).length} sprites · build ${ATLAS.hash}<br>Built by <code>npm run sprites</code> from <code>assets/nautilus/src</code>: hand-drawn <code>.sprite</code> text files plus <code>procedural.mjs</code>.</div><div class="atlas-grid"></div>`;
+  const grid = el.querySelector(".atlas-grid");
+  for (const [name, f] of Object.entries(ATLAS.frames)) {
+    const cell = document.createElement("div");
+    cell.className = "atlas-cell";
+    const s = f.w <= 20 ? 3 : f.w <= 45 ? 2 : 1;
+    const c = makeCanvas(f.w, f.h);
+    c.getContext("2d").drawImage(spr(name), 0, 0);
+    c.style.width = `${Math.min(f.w * s, 84)}px`;
+    cell.appendChild(c);
+    cell.insertAdjacentHTML("beforeend", `<span>${esc(name)}<br>${f.w}×${f.h}</span>`);
+    grid.appendChild(cell);
+  }
+}
+
+// ============================================================
+// Boot
+// ============================================================
+let lastT = performance.now();
+let uiT = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  if (!clock.paused) stepSim(dt * clock.speed);
+  render();
+  if (now - uiT > 150) {
+    uiT = now;
+    updateCrew();
+  }
+  requestAnimationFrame(frame);
+}
+function stepSim(dt) {
+  clock.t += dt;
+  for (const a of divers) a.update(dt);
+  ship.update(dt);
+  kraken.update(dt);
+  clam.update(dt);
+  updateParticles(dt);
+  updateAmbient(dt);
+  tickTimers();
+}
+
+async function boot() {
+  const params = new URLSearchParams(location.search);
+  const at = parseFloat(params.get("at")) || 0;
+  const startAt = clamp(parseInt(params.get("voyage"), 10) - 1 || 0, 0, MISSIONS.length - 1);
+  const fast = at > 0;
+  const bar = $("#boot-bar");
+  const blog = $("#boot-log");
+  const lines = [];
+  try {
+    await loadAtlas(async (i, n, name, f) => {
+      bar.style.width = `${(i / n) * 100}%`;
+      lines.push(`${name.padEnd(24, " ")} ${f.w}×${f.h}`);
+      blog.textContent = lines.slice(-6).join("\n");
+      if (!fast && i % 3 === 0) await nextFrame();
+    });
+  } catch (e) {
+    $("#boot-what").innerHTML = `<span class="boot-err">${esc(e.message)}</span>`;
+    return;
+  }
+  assetsReady = true;
+  $("#boot-what").textContent = `${Object.keys(ATLAS.frames).length} frames · ${ATLAS.size[0]}×${ATLAS.size[1]} sheet · build ${ATLAS.hash}`;
+  {
+    const g = $("#brand-icon").getContext("2d");
+    g.drawImage(spr("nautilus.hull"), 0, 0);
+  }
+  buildControls();
+  buildCrew();
+  buildKey();
+  buildAtlasTab();
+  planUI.clear();
+  diffUI.clear();
+  testsUI.clear();
+  resize();
+  seedAmbient();
+  startVoyage(startAt);
+  if (fast) {
+    while (clock.t < at) {
+      stepSim(1 / 30);
+      await macrotask();
+    }
+    updateCrew();
+  } else {
+    await new Promise((r) => setTimeout(r, 450));
+  }
+  $("#boot").classList.add("done");
+  document.body.dataset.ready = "1";
+  lastT = performance.now();
+  requestAnimationFrame(frame);
+}
+boot();
+</script>
+</body>
+</html>

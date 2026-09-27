@@ -1,11 +1,14 @@
 {
   "name": "shadering",
   "version": "1.0.0",
-  "description": "Standalone generative-art and shader studies: cosmic webs, HDR caustics, and procedural underwater islands.",
+  "description": "Standalone generative-art and shader studies: cosmic webs, HDR caustics, procedural underwater islands, and a pixel-art agent orchestration.",
   "type": "module",
   "private": true,
   "scripts": {
-    "shots": "node tools/screenshot.mjs"
+    "shots": "node tools/screenshot.mjs",
+    "sprites": "node tools/build-sprites.mjs",
+    "sprites:check": "node tools/build-sprites.mjs --check",
+    "sprites:watch": "node tools/build-sprites.mjs --watch"
   },
   "devDependencies": {
     "playwright": "1.58.2"

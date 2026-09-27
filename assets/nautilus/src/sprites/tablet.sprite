@@ -1,0 +1,18 @@
+# A stone file tablet in Atlantis. The page carves the code lines on top at runtime.
+@sprite tablet
+@outline ink
+@point text 2,3
+
+@frame idle
+..onnnn..
+.onnnnnnm
+onnnnnnnm
+onnnnnnnm
+onnnnnnnm
+onnnnnnnm
+onnnnnnnm
+onnnnnnnm
+onnnnnnnm
+onnnnnnnm
+mmmmmmmml
+lllllllll

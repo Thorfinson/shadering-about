@@ -1,0 +1,8 @@
+# Pneumatic message capsule — orders out, reports back.
+@sprite capsule
+@outline ink
+
+@frame idle
+.8999.
+7899a9
+.7887.

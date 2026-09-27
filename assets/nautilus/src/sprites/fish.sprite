@@ -1,0 +1,21 @@
+# Reef fish, facing right. B body, H back highlight, b belly.
+@sprite fish
+@outline ink
+@variant coral  B=coral2 H=coral3 b=coral1
+@variant tang   B=brass3 H=lamp   b=brass2
+@variant blue   B=glass  H=glow   b=glassD
+@variant silver B=iron4  H=white  b=iron3
+
+@frame swim0
+...HH...
+B.BBBBB.
+BBBBBB0B
+B.bbbbb.
+...bb...
+
+@frame swim1
+...HH...
+..BBBBB.
+BBBBBB0B
+..bbbbb.
+...bb...

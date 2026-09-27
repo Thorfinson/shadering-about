@@ -1,0 +1,84 @@
+# Nautilus palette — the single source of colour for the sprite atlas and the page.
+#
+# key  hex      name
+#
+# `key` is the character a .sprite file uses for that colour ("-" = no key,
+# name-only). `name` is how procedural.mjs, @map / @variant lines, and the page
+# refer to it. Every colour ships in atlas.json, so the page never hard-codes one.
+
+0  #070b14  ink
+G  #0c1626  ink2
+
+1  #1c2530  iron0
+2  #2e3b48  iron1
+3  #475866  iron2
+4  #6d8290  iron3
+5  #a3b6bf  iron4
+
+6  #4a2f14  brass0
+7  #7d5220  brass1
+8  #b8812e  brass2
+9  #e6b64f  brass3
+a  #fff0a8  lamp
+
+b  #2e1c12  wood0
+c  #4d3020  wood1
+d  #74492c  wood2
+e  #a06a3c  wood3
+
+f  #7ff0ff  glow
+g  #3fb6c8  glass
+h  #1f6f85  glassD
+i  #f4f0ff  pearl
+j  #c8c0e0  pearlD
+
+k  #2f3a40  stone0
+l  #4b5a5e  stone1
+m  #73817f  stone2
+n  #a4ada3  stone3
+o  #d6d8c8  stone4
+
+p  #7a2a3a  coral0
+q  #c2475a  coral1
+r  #ef7a6a  coral2
+s  #ffb08a  coral3
+
+t  #16392e  kelp0
+u  #22563a  kelp1
+v  #3d7d45  kelp2
+w  #6aa85a  kelp3
+
+x  #2a1838  vio0
+y  #4e2a5e  vio1
+z  #86407e  vio2
+A  #c86a9a  vio3
+
+B  #ff5a4a  red
+C  #7fd96a  green
+D  #e8dcb8  paper
+E  #ffffff  white
+F  #9ab07a  skin
+
+# Water, deep -> surface. The page dithers between these every frame.
+-  #050d1b  water0
+-  #081729  water1
+-  #0b2138  water2
+-  #0e2b46  water3
+-  #123652  water4
+-  #16425e  water5
+-  #1b506a  water6
+-  #225f75  water7
+-  #2c6f80  water8
+-  #3a8189  water9
+-  #4f9492  water10
+-  #6caa9e  water11
+-  #98c9b6  water12
+-  #cfeadb  foam
+
+# Sea floor, deep -> lit.
+-  #1d2a2c  sand0
+-  #2c3b3a  sand1
+-  #415249  sand2
+-  #5c6c5c  sand3
+-  #7f8e76  sand4
+-  #a8b394  sand5

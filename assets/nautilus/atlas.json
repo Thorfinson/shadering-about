@@ -1,0 +1,666 @@
+{
+  "generator": "tools/build-sprites.mjs",
+  "hash": "4622edcb0436e15f",
+  "version": 1,
+  "size": [216, 210],
+  "palette": {
+    "ink": "#070b14",
+    "ink2": "#0c1626",
+    "iron0": "#1c2530",
+    "iron1": "#2e3b48",
+    "iron2": "#475866",
+    "iron3": "#6d8290",
+    "iron4": "#a3b6bf",
+    "brass0": "#4a2f14",
+    "brass1": "#7d5220",
+    "brass2": "#b8812e",
+    "brass3": "#e6b64f",
+    "lamp": "#fff0a8",
+    "wood0": "#2e1c12",
+    "wood1": "#4d3020",
+    "wood2": "#74492c",
+    "wood3": "#a06a3c",
+    "glow": "#7ff0ff",
+    "glass": "#3fb6c8",
+    "glassD": "#1f6f85",
+    "pearl": "#f4f0ff",
+    "pearlD": "#c8c0e0",
+    "stone0": "#2f3a40",
+    "stone1": "#4b5a5e",
+    "stone2": "#73817f",
+    "stone3": "#a4ada3",
+    "stone4": "#d6d8c8",
+    "coral0": "#7a2a3a",
+    "coral1": "#c2475a",
+    "coral2": "#ef7a6a",
+    "coral3": "#ffb08a",
+    "kelp0": "#16392e",
+    "kelp1": "#22563a",
+    "kelp2": "#3d7d45",
+    "kelp3": "#6aa85a",
+    "vio0": "#2a1838",
+    "vio1": "#4e2a5e",
+    "vio2": "#86407e",
+    "vio3": "#c86a9a",
+    "red": "#ff5a4a",
+    "green": "#7fd96a",
+    "paper": "#e8dcb8",
+    "white": "#ffffff",
+    "skin": "#9ab07a",
+    "water0": "#050d1b",
+    "water1": "#081729",
+    "water2": "#0b2138",
+    "water3": "#0e2b46",
+    "water4": "#123652",
+    "water5": "#16425e",
+    "water6": "#1b506a",
+    "water7": "#225f75",
+    "water8": "#2c6f80",
+    "water9": "#3a8189",
+    "water10": "#4f9492",
+    "water11": "#6caa9e",
+    "water12": "#98c9b6",
+    "foam": "#cfeadb",
+    "sand0": "#1d2a2c",
+    "sand1": "#2c3b3a",
+    "sand2": "#415249",
+    "sand3": "#5c6c5c",
+    "sand4": "#7f8e76",
+    "sand5": "#a8b394"
+  },
+  "sprites": {
+    "anchor": {
+      "source": "assets/nautilus/src/sprites/anchor.sprite",
+      "frames": [
+        "anchor.idle"
+      ]
+    },
+    "capsule": {
+      "source": "assets/nautilus/src/sprites/capsule.sprite",
+      "frames": [
+        "capsule.idle"
+      ]
+    },
+    "chest": {
+      "source": "assets/nautilus/src/sprites/chest.sprite",
+      "frames": [
+        "chest.idle"
+      ]
+    },
+    "crab": {
+      "source": "assets/nautilus/src/sprites/crab.sprite",
+      "frames": [
+        "crab.walk0",
+        "crab.walk1"
+      ]
+    },
+    "diver": {
+      "source": "assets/nautilus/src/sprites/diver.sprite",
+      "frames": [
+        "diver.nemo.stand",
+        "diver.nemo.walk",
+        "diver.aronnax.stand",
+        "diver.aronnax.walk",
+        "diver.conseil.stand",
+        "diver.conseil.walk",
+        "diver.ned.stand",
+        "diver.ned.walk",
+        "diver.mate.stand",
+        "diver.mate.walk"
+      ]
+    },
+    "fish": {
+      "source": "assets/nautilus/src/sprites/fish.sprite",
+      "frames": [
+        "fish.coral.swim0",
+        "fish.coral.swim1",
+        "fish.tang.swim0",
+        "fish.tang.swim1",
+        "fish.blue.swim0",
+        "fish.blue.swim1",
+        "fish.silver.swim0",
+        "fish.silver.swim1"
+      ]
+    },
+    "gauge": {
+      "source": "assets/nautilus/src/sprites/gauge.sprite",
+      "frames": [
+        "gauge.idle"
+      ]
+    },
+    "jelly": {
+      "source": "assets/nautilus/src/sprites/jelly.sprite",
+      "frames": [
+        "jelly.pulse0",
+        "jelly.pulse1"
+      ]
+    },
+    "shell": {
+      "source": "assets/nautilus/src/sprites/shell.sprite",
+      "frames": [
+        "shell.idle"
+      ]
+    },
+    "starfish": {
+      "source": "assets/nautilus/src/sprites/starfish.sprite",
+      "frames": [
+        "starfish.idle"
+      ]
+    },
+    "tablet": {
+      "source": "assets/nautilus/src/sprites/tablet.sprite",
+      "frames": [
+        "tablet.idle"
+      ]
+    },
+    "turtle": {
+      "source": "assets/nautilus/src/sprites/turtle.sprite",
+      "frames": [
+        "turtle.swim0",
+        "turtle.swim1"
+      ]
+    },
+    "nautilus": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "nautilus.hull"
+      ]
+    },
+    "library": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "library.ruin"
+      ]
+    },
+    "atlantis": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "atlantis.temple"
+      ]
+    },
+    "galleon": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "galleon.wreck"
+      ]
+    },
+    "clam": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "clam.open0",
+        "clam.open1",
+        "clam.open2",
+        "clam.open3"
+      ]
+    },
+    "kraken": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "kraken.head"
+      ]
+    },
+    "shark": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "shark.far"
+      ]
+    },
+    "coral": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "coral.branch0",
+        "coral.branch1",
+        "coral.branch2",
+        "coral.brain",
+        "coral.fan"
+      ]
+    },
+    "rock": {
+      "source": "assets/nautilus/src/procedural.mjs",
+      "frames": [
+        "rock.r0",
+        "rock.r1",
+        "rock.r2"
+      ]
+    }
+  },
+  "frames": {
+    "anchor.idle": {
+      "x": 10,
+      "y": 190,
+      "w": 9,
+      "h": 11
+    },
+    "capsule.idle": {
+      "x": 62,
+      "y": 203,
+      "w": 8,
+      "h": 5
+    },
+    "chest.idle": {
+      "x": 20,
+      "y": 190,
+      "w": 13,
+      "h": 10
+    },
+    "crab.walk0": {
+      "x": 139,
+      "y": 190,
+      "w": 11,
+      "h": 7
+    },
+    "crab.walk1": {
+      "x": 151,
+      "y": 190,
+      "w": 11,
+      "h": 7
+    },
+    "diver.nemo.stand": {
+      "x": 112,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.nemo.walk": {
+      "x": 126,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.aronnax.stand": {
+      "x": 0,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.aronnax.walk": {
+      "x": 14,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.conseil.stand": {
+      "x": 28,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.conseil.walk": {
+      "x": 42,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.ned.stand": {
+      "x": 84,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.ned.walk": {
+      "x": 98,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.mate.stand": {
+      "x": 56,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "diver.mate.walk": {
+      "x": 70,
+      "y": 171,
+      "w": 13,
+      "h": 18
+    },
+    "fish.coral.swim0": {
+      "x": 185,
+      "y": 190,
+      "w": 10,
+      "h": 7
+    },
+    "fish.coral.swim1": {
+      "x": 196,
+      "y": 190,
+      "w": 10,
+      "h": 7
+    },
+    "fish.tang.swim0": {
+      "x": 22,
+      "y": 203,
+      "w": 10,
+      "h": 7
+    },
+    "fish.tang.swim1": {
+      "x": 33,
+      "y": 203,
+      "w": 10,
+      "h": 7
+    },
+    "fish.blue.swim0": {
+      "x": 163,
+      "y": 190,
+      "w": 10,
+      "h": 7
+    },
+    "fish.blue.swim1": {
+      "x": 174,
+      "y": 190,
+      "w": 10,
+      "h": 7
+    },
+    "fish.silver.swim0": {
+      "x": 0,
+      "y": 203,
+      "w": 10,
+      "h": 7
+    },
+    "fish.silver.swim1": {
+      "x": 11,
+      "y": 203,
+      "w": 10,
+      "h": 7
+    },
+    "gauge.idle": {
+      "x": 67,
+      "y": 190,
+      "w": 9,
+      "h": 9
+    },
+    "jelly.pulse0": {
+      "x": 199,
+      "y": 171,
+      "w": 9,
+      "h": 12
+    },
+    "jelly.pulse1": {
+      "x": 0,
+      "y": 190,
+      "w": 9,
+      "h": 12
+    },
+    "shell.idle": {
+      "x": 129,
+      "y": 190,
+      "w": 9,
+      "h": 8
+    },
+    "starfish.idle": {
+      "x": 44,
+      "y": 203,
+      "w": 7,
+      "h": 7
+    },
+    "tablet.idle": {
+      "x": 156,
+      "y": 171,
+      "w": 11,
+      "h": 14
+    },
+    "turtle.swim0": {
+      "x": 77,
+      "y": 190,
+      "w": 18,
+      "h": 8
+    },
+    "turtle.swim1": {
+      "x": 96,
+      "y": 190,
+      "w": 18,
+      "h": 8
+    },
+    "nautilus.hull": {
+      "x": 69,
+      "y": 71,
+      "w": 140,
+      "h": 44
+    },
+    "library.ruin": {
+      "x": 0,
+      "y": 71,
+      "w": 68,
+      "h": 60
+    },
+    "atlantis.temple": {
+      "x": 0,
+      "y": 0,
+      "w": 124,
+      "h": 70
+    },
+    "galleon.wreck": {
+      "x": 125,
+      "y": 0,
+      "w": 90,
+      "h": 66
+    },
+    "clam.open0": {
+      "x": 31,
+      "y": 132,
+      "w": 28,
+      "h": 26
+    },
+    "clam.open1": {
+      "x": 60,
+      "y": 132,
+      "w": 28,
+      "h": 26
+    },
+    "clam.open2": {
+      "x": 89,
+      "y": 132,
+      "w": 28,
+      "h": 26
+    },
+    "clam.open3": {
+      "x": 118,
+      "y": 132,
+      "w": 28,
+      "h": 26
+    },
+    "kraken.head": {
+      "x": 0,
+      "y": 132,
+      "w": 30,
+      "h": 38
+    },
+    "shark.far": {
+      "x": 168,
+      "y": 171,
+      "w": 30,
+      "h": 12
+    },
+    "coral.branch0": {
+      "x": 147,
+      "y": 132,
+      "w": 18,
+      "h": 20
+    },
+    "coral.branch1": {
+      "x": 166,
+      "y": 132,
+      "w": 18,
+      "h": 20
+    },
+    "coral.branch2": {
+      "x": 185,
+      "y": 132,
+      "w": 18,
+      "h": 20
+    },
+    "coral.brain": {
+      "x": 52,
+      "y": 190,
+      "w": 14,
+      "h": 9
+    },
+    "coral.fan": {
+      "x": 140,
+      "y": 171,
+      "w": 15,
+      "h": 14
+    },
+    "rock.r0": {
+      "x": 115,
+      "y": 190,
+      "w": 13,
+      "h": 8
+    },
+    "rock.r1": {
+      "x": 52,
+      "y": 203,
+      "w": 9,
+      "h": 6
+    },
+    "rock.r2": {
+      "x": 34,
+      "y": 190,
+      "w": 17,
+      "h": 9
+    }
+  },
+  "meta": {
+    "diver": {
+      "port": [11, 5],
+      "hand": [11, 10]
+    },
+    "gauge": {
+      "pivot": [4, 4]
+    },
+    "tablet": {
+      "text": [3, 4]
+    },
+    "nautilus": {
+      "cy": 25,
+      "airlock": [61, 35],
+      "lantern": [98, 14],
+      "portholes": [
+        [30, 26],
+        [40, 26],
+        [74, 26],
+        [84, 26],
+        [94, 26],
+        [105, 26]
+      ],
+      "windows": [
+        [77, 9],
+        [81, 9]
+      ],
+      "prop": [8, 25]
+    },
+    "library": {
+      "shelves": [
+        [
+          [15, 25, 1, 5],
+          [16, 25, 2, 5],
+          [18, 25, 1, 5],
+          [19, 26, 2, 4],
+          [21, 25, 2, 5],
+          [23, 24, 1, 6],
+          [24, 24, 2, 6],
+          [26, 25, 1, 5],
+          [27, 24, 2, 6],
+          [30, 25, 1, 5],
+          [31, 25, 2, 5],
+          [33, 25, 1, 5],
+          [36, 26, 1, 4],
+          [37, 26, 2, 4],
+          [39, 25, 1, 5],
+          [40, 24, 1, 6],
+          [41, 26, 1, 4],
+          [42, 26, 2, 4],
+          [44, 25, 2, 5],
+          [46, 25, 1, 5],
+          [49, 24, 1, 6],
+          [50, 25, 1, 5],
+          [51, 26, 1, 4],
+          [52, 26, 1, 4]
+        ],
+        [
+          [17, 33, 2, 6],
+          [20, 33, 1, 6],
+          [21, 35, 1, 4],
+          [24, 33, 1, 6],
+          [26, 34, 1, 5],
+          [28, 33, 1, 6],
+          [29, 33, 1, 6],
+          [30, 35, 1, 4],
+          [32, 35, 1, 4],
+          [33, 33, 1, 6],
+          [36, 34, 2, 5],
+          [38, 34, 1, 5],
+          [39, 35, 1, 4],
+          [40, 34, 2, 5],
+          [42, 35, 1, 4],
+          [43, 35, 1, 4],
+          [44, 34, 1, 5],
+          [47, 34, 1, 5],
+          [50, 34, 2, 5]
+        ],
+        [
+          [15, 42, 1, 6],
+          [16, 43, 2, 5],
+          [18, 44, 1, 4],
+          [20, 44, 2, 4],
+          [22, 42, 1, 6],
+          [23, 42, 2, 6],
+          [25, 44, 1, 4],
+          [26, 43, 1, 5],
+          [27, 43, 1, 5],
+          [28, 44, 1, 4],
+          [29, 43, 1, 5],
+          [30, 44, 2, 4],
+          [32, 44, 1, 4],
+          [33, 42, 1, 6],
+          [34, 44, 1, 4],
+          [35, 42, 1, 6],
+          [36, 44, 2, 4],
+          [38, 43, 2, 5],
+          [41, 43, 1, 5],
+          [42, 44, 1, 4],
+          [43, 43, 1, 5],
+          [44, 44, 2, 4],
+          [46, 44, 2, 4],
+          [50, 44, 1, 4],
+          [51, 44, 1, 4]
+        ]
+      ]
+    },
+    "atlantis": {
+      "slots": [
+        [14, 44],
+        [32, 44],
+        [50, 44],
+        [68, 44],
+        [86, 44],
+        [104, 44],
+        [23, 50],
+        [41, 50],
+        [59, 50],
+        [77, 50],
+        [95, 50],
+        [113, 50]
+      ],
+      "door": [61, 41]
+    },
+    "clam": {
+      "pearl": [14, 17]
+    },
+    "kraken": {
+      "roots": [
+        [8, 34],
+        [11, 35],
+        [14, 35],
+        [17, 35],
+        [20, 34],
+        [22, 33],
+        [6, 33]
+      ],
+      "eyes": [
+        [9, 29],
+        [20, 29]
+      ]
+    }
+  }
+}

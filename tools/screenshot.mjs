@@ -39,6 +39,13 @@ const STUDIES = [
     readySelector: 'canvas[data-ready="1"]',
     readyCount: 9,
   },
+  {
+    name: 'nautilus-agents',
+    // fast-forward to the moment the kraken (a failing test) has hold of hull/plates.js
+    page: 'nautilus-agents.html?at=62',
+    settle: 600,
+    readySelector: 'body[data-ready="1"]',
+  },
   { name: 'reef-islands', page: 'reef-islands.html', settle: 2000 },
   {
     name: 'reef-islands-volcanic',

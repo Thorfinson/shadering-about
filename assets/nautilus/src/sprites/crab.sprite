@@ -1,0 +1,17 @@
+# Sand crab, two-step scuttle.
+@sprite crab
+@outline ink
+
+@frame walk0
+q.......q
+qq.0.0.qq
+.qqrrrqq.
+.qqqqqqq.
+q.q...q.q
+
+@frame walk1
+.q.....q.
+qq.0.0.qq
+.qqrrrqq.
+.qqqqqqq.
+.q.q.q.q.
