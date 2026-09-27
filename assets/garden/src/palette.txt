@@ -1,0 +1,142 @@
+# Hortus palette — the single source of colour for the garden atlas and for
+# hortus-os.html. A garden at the golden hour, turning to dusk.
+#
+# key  hex      name
+#
+# `key` is the character a .sprite file uses for that colour ("-" = no key,
+# name-only). The icon sprites share their keys with the other sets: 8/9 the
+# accent, a lamp, f glow, g glass, i pearl, n/o pale greys, B red, C green, E white.
+
+0  #120e1a  ink
+G  #1c1626  ink2
+
+8  #c98a2e  honey2
+9  #f2c14e  honey3
+a  #fff2b0  lamp
+f  #d8ff8a  glow
+g  #7fc8c0  glass
+i  #fbf6ea  pearl
+j  #d8cfc0  pearlD
+n  #b7ad98  stone3
+o  #e2d8c0  stone4
+B  #e2463c  red
+C  #8fd35f  green
+E  #ffffff  white
+
+# Pipeline stages — also each station's route colour.
+-  #f2b13b  research
+-  #ff8a7a  analyze
+-  #7fd35f  build
+-  #4fd1b0  model
+-  #6cc3f5  test
+-  #b58cf0  deploy
+-  #f3e9ff  remember
+
+# The sky at the golden hour, top → horizon.
+-  #2b2d5c  sky0
+-  #4a3f78  sky1
+-  #7c5a8c  sky2
+-  #c2708a  sky3
+-  #ee9d78  sky4
+-  #ffd08a  sky5
+-  #fff0c2  sun
+-  #9a86b8  haze
+
+# Hills and far woods in the haze.
+-  #3a3f6a  hill0
+-  #4d5a7a  hill1
+-  #5f7a78  hill2
+-  #6f8c6a  hill3
+
+# Grass, deep shade → sunlit tips.
+-  #0f231c  grass0
+-  #173524  grass1
+-  #22492a  grass2
+-  #336230  grass3
+-  #4f7f38  grass4
+-  #7ea046  grass5
+-  #b9c25a  grass6
+
+# Leaves of trees and hedges.
+-  #0c2020  leaf0
+-  #133526  leaf1
+-  #1d4d30  leaf2
+-  #2e6a38  leaf3
+-  #4f8c40  leaf4
+-  #93b85a  leaf5
+-  #d8d27a  leafLit
+
+# Earth, bark, timber.
+-  #22150e  soil0
+-  #3a2416  soil1
+-  #5a3a22  soil2
+-  #7e5430  soil3
+-  #2a1a12  wood0
+-  #452c1c  wood1
+-  #6a4428  wood2
+-  #946038  wood3
+-  #c08850  wood4
+
+# Dry-stone walls, gravel paths.
+-  #2c2830  stone0
+-  #463f44  stone1
+-  #6a6060  stone2
+
+# Thatch and straw.
+-  #6a4a1c  straw0
+-  #9c7430  straw1
+-  #d0a048  straw2
+-  #f0cc70  straw3
+
+# Water, reflecting the sky.
+-  #1e2a4a  pond0
+-  #2c4466  pond1
+-  #466a86  pond2
+-  #7aa0b0  pond3
+-  #c8d8d0  pond4
+
+# Glasshouse panes and their white-painted iron.
+-  #2a4a4a  pane0
+-  #3e6a66  pane1
+-  #5e908a  pane2
+-  #92c0b4  pane3
+-  #d4ece2  pane4
+-  #b8b4a8  iron2
+-  #dcd8ca  iron3
+
+# Flowers.
+-  #7a1e3a  rose0
+-  #c2365a  rose1
+-  #f06a8a  rose2
+-  #ffb0c4  rose3
+-  #e8453a  poppy
+-  #f6c43a  sunny
+-  #6a4a9c  lav0
+-  #9a78d0  lav1
+-  #c8b0f0  lav2
+-  #3a6ac8  blue0
+-  #7ab0f0  blue1
+-  #f4f0e0  daisy
+
+# Bees and their honey.
+-  #1a1410  bee0
+-  #3a2a18  bee1
+-  #e8a82a  bee2
+-  #ffd650  bee3
+-  #e8eef8  wing
+
+# The bramble: a failing test, come up through the soil.
+-  #1a0e18  thorn0
+-  #34182a  thorn1
+-  #5a2838  thorn2
+-  #8a4048  thorn3
+-  #d8584a  berry
+
+# Figures in the potting shed.
+-  #1c2030  coat0
+-  #2c3450  coat1
+-  #445070  coat2
+-  #6b4a36  skin0
+-  #b8866a  skin1
+-  #3a4a3a  tweed0
+-  #5a6a4e  tweed1

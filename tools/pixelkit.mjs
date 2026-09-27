@@ -146,6 +146,34 @@ export function vnoise(x, y, s = 0) {
   return a + (b - a) * v;
 }
 
+// Calls fn(x, y) for every pixel of a rectangle and sets what it returns.
+export function layer(buf, x0, y0, x1, y1, fn) {
+  for (let y = Math.max(0, Math.floor(y0)); y < Math.min(buf.h, Math.ceil(y1)); y++) {
+    for (let x = Math.max(0, Math.floor(x0)); x < Math.min(buf.w, Math.ceil(x1)); x++) {
+      const c = fn(x, y);
+      if (c) buf.set(x, y, c);
+    }
+  }
+}
+
+// Blends two colours; k = 0 is a, 1 is b.
+export function mixHex(a, b, k) {
+  const A = rgba(a);
+  const B = rgba(b);
+  return '#' + [0, 1, 2].map((i) => Math.round(A[i] + (B[i] - A[i]) * k).toString(16).padStart(2, '0')).join('');
+}
+
+// A colour with an alpha, as #rrggbbaa: glass, holograms, light.
+export const withAlpha = (hex, a) => hex.slice(0, 7) + Math.round(clamp(a, 0, 1) * 255).toString(16).padStart(2, '0');
+
+// The colour already at (x, y) if it is opaque, so glass can be laid over it.
+export function opaqueAt(buf, x, y) {
+  if (!buf.inside(x, y)) return null;
+  const i = (y * buf.w + x) * 4;
+  if (buf.data[i + 3] < 255) return null;
+  return '#' + [0, 1, 2].map((k) => buf.data[i + k].toString(16).padStart(2, '0')).join('');
+}
+
 export function mulberry32(a) {
   return function () {
     a |= 0;
