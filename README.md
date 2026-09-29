@@ -110,6 +110,45 @@ hacker works at three screens while the rain runs down the window.
 
 ![NEON//OS](screenshots/neon-os.png)
 
+### NEON variants — the same city in 3D and side-on, each in high fidelity and in pixels
+
+Four more consoles run NEON//OS's story over the city drawn four other ways. The
+story lives in [assets/neon/story.js](assets/neon/story.js): the runners, the
+blocks, the three projects with their orders, edits and test runs, and the city's
+own words. neon-os.html uses the same file.
+
+| Page | View | How it is drawn |
+|---|---|---|
+| [neon-3d.html](neon-3d.html) | 3D, high fidelity | three.js: bloom, wet streets that mirror the neon, a colour grade, glass panels and line icons |
+| [neon-3d-pixel.html](neon-3d-pixel.html) | 3D, pixel | the same scene rendered at the map's art resolution, outlined by depth and reduced to the NEON palette, with no dithering |
+| [neon-2d.html](neon-2d.html) | side-on, high fidelity | vectors at the screen's own resolution: gradients, soft light, smoke |
+| [neon-2d-pixel.html](neon-2d-pixel.html) | side-on, pixel | painted pixel by pixel, with the blocks as sprites |
+
+**3D** ([assets/neon/city3d.js](assets/neon/city3d.js)): a district plate seen from
+high above, with its street grid turned against the view. The eight blocks are built
+in geometry: the arcology with a wireframe globe, a data archive with blinking
+racks, a holo kiosk with floating documents, an AI lab with a hologram head, container
+stacks under a crane, a firewall dome, a pagoda circled by koi, and a skyport.
+Past the plate's edge, megatowers fall away into smog lit from below. The runners
+are hover cars cut from the pixel sprite's profile. ICE climbs out of the firewall,
+and the corner shows a CCTV feed from a street corner beside the arcology. The engine still runs
+the scenario on its flat map: that map is the screen of a fixed camera, and every
+route, runner and speck is cast onto the plane the routes fly on. three.js 0.186.1
+loads from cdn.jsdelivr.net through an import map, so these two pages need a network
+connection.
+
+**Side-on** ([assets/neon/skyline.js](assets/neon/skyline.js) is the shared plan):
+ranks of towers fading into magenta smog under a drowned moon. Each block stands on
+a tower of its own, and neon arcs join the decks. A maglev viaduct carries a train
+through now and then, and the wet street holds it all upside down. ICE climbs the
+Testing Lab's tower out of the street. The pixel page draws the blocks from
+`assets/neon/src/side.mjs`; the high-fidelity page draws the same plan as vectors.
+
+![NEON//3D](screenshots/neon-3d.png)
+![NEON//3D Pixel](screenshots/neon-3d-pixel.png)
+![NEON//2D](screenshots/neon-2d.png)
+![NEON//2D Pixel](screenshots/neon-2d-pixel.png)
+
 All three consoles share one engine, [assets/os/engine.js](assets/os/engine.js), and
 one stylesheet, [assets/os/os.css](assets/os/os.css). The engine owns the layout,
 the cards, the agents' routes, the director that runs the projects, the villain's
@@ -118,6 +157,11 @@ agents, projects, texts) plus hooks that paint the static map, draw the agents a
 the villain, add ambient life and decorate the chrome, then calls `startOS(world)`.
 The stylesheet is themed through CSS variables, so every page restyles it with a
 short `<style>` block.
+
+A world can also do without sprites for its stations. `placeStation(s)` then sizes
+each station itself; the 3D and vector consoles use it. The high-fidelity consoles
+swap the atlas's pixel icons for line drawings from
+[assets/os/hifi-icons.js](assets/os/hifi-icons.js).
 
 ### Aqua — 16-bit underwater study ([aqua-16bit.html](aqua-16bit.html))
 
@@ -171,9 +215,11 @@ Open any `.html` file directly in a browser — everything is self-contained.
 
 `nautilus-agents.html` and `nautilus-os.html` load their sprite atlas from
 `assets/nautilus/atlas.js`, `hortus-os.html` from `assets/garden/atlas.js` and
-`neon-os.html` from `assets/neon/atlas.js`. The three consoles also load
-`assets/os/engine.js` and `assets/os/os.css`. All of these are plain script and link
-tags, so the pages still work from `file://`. The one exception is
+`neon-os.html` and its four variants from `assets/neon/atlas.js`. The consoles also
+load `assets/os/engine.js` and `assets/os/os.css`. All of these are plain script and
+link tags, so the pages still work from `file://`. `neon-3d.html` and
+`neon-3d-pixel.html` also import three.js from cdn.jsdelivr.net, so they need a
+network connection. The one exception is
 `cosmic-filament.html`, which imports an ES module and therefore needs to be served
 over HTTP:
 
@@ -201,7 +247,7 @@ npm run sprites:check        # exit 1 if a committed atlas is stale (also run in
 |---|---|
 | `palette.txt` | Every colour, one per line — a key character for sprites and a name for code |
 | `sprites/*.sprite` | Hand-drawn pixel art as text: rows of palette keys, plus directives for outline, recolour variants and anchor points |
-| `*.mjs` | Generators for the big set pieces. Each set has a `places.mjs` for its stations and hub, plus the animated parts the page lays over them (a globe, books, a hologram, windmill sails, a holo head). The rest differs by set: `procedural.mjs` and `os.mjs` in `nautilus` (the Nautilus, Atlantis, the kraken, the agents' bathyscaphes, ruins, the bridge scene), and `creatures.mjs` in `garden` and `neon` (bees, butterflies and the bramble; hover cars, ICE, the blimp and the koi; the corner vignettes) |
+| `*.mjs` | Generators for the big set pieces. Each set has a `places.mjs` for its stations and hub, plus the animated parts the page lays over them (a globe, books, a hologram, windmill sails, a holo head). The rest differs by set: `procedural.mjs` and `os.mjs` in `nautilus` (the Nautilus, Atlantis, the kraken, the agents' bathyscaphes, ruins, the bridge scene), and `creatures.mjs` in `garden` and `neon` (bees, butterflies and the bramble; hover cars, ICE, the blimp and the koi; the corner vignettes), and `side.mjs` in `neon` (the blocks seen side-on, for neon-2d-pixel.html) |
 
 [tools/build-sprites.mjs](tools/build-sprites.mjs) parses and validates the sources,
 renders every frame with [tools/pixelkit.mjs](tools/pixelkit.mjs), shelf-packs them
@@ -246,6 +292,9 @@ npm install
 npm run shots           # capture everything into screenshots/
 npm run shots -- reef   # capture only studies matching "reef"
 ```
+
+three.js is a dev dependency too: the capture serves the 3D consoles' CDN imports from
+`node_modules/three`, so they render offline.
 
 ## License
 

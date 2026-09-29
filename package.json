@@ -11,7 +11,8 @@
     "sprites:watch": "node tools/build-sprites.mjs --watch"
   },
   "devDependencies": {
-    "playwright": "1.58.2"
+    "playwright": "1.58.2",
+    "three": "0.186.1"
   },
   "license": "MIT"
 }

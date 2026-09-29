@@ -16,6 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'screenshots');
 const VIEWPORT = { width: 1400, height: 900 };
 const UI_IDS = ['ui', 'ui-toggle', 'legend', 'hint'];
+const THREE_CDN = /^https:\/\/cdn\.jsdelivr\.net\/npm\/three@[^/]+\//;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -54,6 +55,14 @@ const STUDIES = [
     viewport: { width: 1700, height: 1000 },
     readySelector: 'body[data-ready="1"]',
   },
+  // the four NEON variants: side-on and 3D, each in high fidelity and in pixels
+  ...['neon-2d', 'neon-2d-pixel', 'neon-3d', 'neon-3d-pixel'].map((name) => ({
+    name,
+    page: `${name}.html?at=40`,
+    settle: name.includes('3d') ? 2500 : 900,
+    viewport: { width: 1700, height: 1000 },
+    readySelector: 'body[data-ready="1"]',
+  })),
   {
     name: 'hortus-os',
     // the build phase of the Pollinator Census: Dickon coding, Martha training
@@ -108,6 +117,16 @@ async function captureStudy(browser, baseUrl, study) {
   const ctx = await browser.newContext({
     viewport: study.viewport ?? VIEWPORT,
     deviceScaleFactor: 1,
+  });
+  // neon-3d*.html import three.js from the CDN: serve it from node_modules when installed
+  await ctx.route(THREE_CDN, async (route) => {
+    const rel = route.request().url().replace(THREE_CDN, '');
+    try {
+      const body = await readFile(path.join(ROOT, 'node_modules/three', rel));
+      await route.fulfill({ body, contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' } });
+    } catch {
+      await route.continue();
+    }
   });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log(`[${study.name}] pageerror:`, e.message));

@@ -1401,7 +1401,7 @@ function NeonCity3D(THREE, X, opts) {
   buildPoints();
   buildPost();
 
-  // the CCTV camera for the corner: at the foot of the arcology, looking up
+  // the CCTV camera for the corner: on a pole at a street corner by the arcology, looking up
   const cctv = new THREE.PerspectiveCamera(58, 180 / 236, 0.5, 900);
   {
     const [gx, gz] = toGrid(SITE.hub.x - 14, SITE.hub.z + 20);
@@ -1558,18 +1558,18 @@ function NeonCity3D(THREE, X, opts) {
       g.fillStyle = "rgba(0,0,0,0.22)";
       for (let y = 0; y < c.height; y += 3 * s) g.fillRect(0, y, c.width, s);
       g.font = PIXEL ? `${Math.round(9 * s)}px 'Share Tech Mono', monospace` : `500 ${Math.round(8 * s)}px 'JetBrains Mono', monospace`;
+      // the timecode, centred where the panel's crop keeps it in view
+      const cx = c.width * 0.45;
+      g.textAlign = "center";
       g.fillStyle = "rgba(234,232,255,0.85)";
-      g.fillText("CAM 07", 34 * s, 20 * s);
-      g.fillText(`SECTOR 7 · ${fmtClock(t)}`, 34 * s, 32 * s);
+      g.fillText("CAM 07 · REC", cx + 5 * s, 20 * s);
+      g.fillText(`SECTOR 7 · ${fmtClock(t)}`, cx, 32 * s);
       if (Math.floor(now * 1.5) % 2) {
         g.fillStyle = PAL.red;
         g.beginPath();
-        g.arc(c.width - 36 * s, 17 * s, 3.5 * s, 0, Math.PI * 2);
+        g.arc(cx - g.measureText("CAM 07 · REC").width / 2 - 2 * s, 17 * s, 3 * s, 0, Math.PI * 2);
         g.fill();
       }
-      g.fillStyle = "rgba(234,232,255,0.85)";
-      g.textAlign = "right";
-      g.fillText("REC", c.width - 43 * s, 20 * s);
       g.textAlign = "left";
     },
     decorateChrome() {
