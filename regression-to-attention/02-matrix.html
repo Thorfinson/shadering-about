@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Die Matrix · Kapitel 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>
+  .chapter-head { display: grid; gap: 18px; padding-block: 8px 12px; }
+  .side { display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .side p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-2); }
+  .status { font-size: 14px; color: var(--fg-2); min-height: 1.6em; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+
+  /* a matrix as a bracketed grid */
+  .matrix { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .matrix .name { font-family: var(--font-math); font-size: 22px; }
+  .matrix .name b { font-weight: 700; }
+  .mbr { display: grid; gap: 4px 6px; position: relative; padding: 4px 10px; }
+  .mbr::before, .mbr::after { content: ""; position: absolute; top: 0; bottom: 0; width: 7px; border: 1.5px solid var(--fg-2); }
+  .mbr::before { left: 0; border-right: 0; border-radius: 3px 0 0 3px; }
+  .mbr::after { right: 0; border-left: 0; border-radius: 0 3px 3px 0; }
+  .mbr input, .mbr span {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    width: 5.2em;
+    text-align: right;
+    color: var(--fg);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid var(--rule);
+    border-radius: 0;
+    padding: 3px 4px;
+  }
+  .mbr span { display: block; width: 4.4em; }
+  .mbr .c1 { border-bottom-color: var(--col1); }
+  .mbr .c2 { border-bottom-color: var(--col2); }
+  .mbr input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* a column vector, typeset inline */
+  .vec { display: inline-flex; flex-direction: column; vertical-align: middle; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.25; padding: 1px 6px; border-left: 1.5px solid var(--fg-2); border-right: 1.5px solid var(--fg-2); border-radius: 6px; text-align: right; margin-inline: 2px; font-variant-numeric: tabular-nums; }
+  .vec.c1 { border-color: var(--col1); }
+  .vec.c2 { border-color: var(--col2); }
+  .vec.pr { border-color: var(--probe); }
+  .probe-eq { font-family: var(--font-math); font-size: 16px; line-height: 2; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; }
+  .probe-eq i { font-style: italic; }
+  .probe-eq b { font-weight: 700; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button.btn { padding: 7px 11px; font-size: 13px; }
+  .presets button.btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+  /* flows of small panels with arrows between them */
+  .flow { display: grid; align-items: start; gap: 8px; }
+  .flow.four { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr); }
+  .flow.three { grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr) 34px minmax(0, 1fr); }
+  .flow .panel { display: grid; gap: 6px; min-width: 0; }
+  .flow .cap { font-size: 13px; line-height: 1.4; color: var(--fg-2); text-align: center; }
+  .flow .cap b { color: var(--fg); font-weight: 600; }
+  .flow .arr { align-self: center; text-align: center; font-family: var(--font-math); font-size: 14px; color: var(--muted); line-height: 1.1; transform: translateY(-14px); }
+  .flow .arr i { font-style: italic; }
+  .flow .arr b { font-weight: 700; color: var(--fg-2); }
+  .flow .arr::after { content: "→"; display: block; font-size: 20px; color: var(--fg-2); }
+  @media (max-width: 620px) {
+    .flow.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .flow.four .arr { display: none; }
+  }
+  .rowlabel { font-size: 13px; color: var(--muted); margin-bottom: -4px; }
+  .rowlabel b { color: var(--fg); font-weight: 600; font-family: var(--font-math); font-style: italic; }
+  select.sel { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface-2); color: var(--fg); }
+
+  /* regression matrix table */
+  .mx-scroll { overflow-x: auto; padding-block: 4px; }
+  .mx { display: flex; align-items: center; gap: 12px; width: max-content; margin-inline: auto; font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--fg-2); }
+  .mxg { display: grid; justify-items: center; gap: 6px; }
+  .mxh { font-family: var(--font-math); font-size: 18px; color: var(--fg); white-space: nowrap; }
+  .mxh b { font-weight: 700; }
+  .mxh small { font-family: var(--font-body); font-size: 11px; color: var(--muted); }
+  .mxs { font-size: 11px; color: var(--muted); }
+  .mxb { display: grid; position: relative; padding: 3px 9px; }
+  .mxb::before, .mxb::after { content: ""; position: absolute; top: 0; bottom: 0; width: 7px; border: 1.5px solid var(--fg-2); }
+  .mxb::before { left: 0; border-right: 0; border-radius: 3px 0 0 3px; }
+  .mxb::after { right: 0; border-left: 0; border-radius: 0 3px 3px 0; }
+  .mxb > div { padding: 1px 8px; text-align: right; border-radius: 3px; }
+  .mxb > div.on { background: var(--accent-wash); color: var(--fg); }
+  .mxb.theta > div { color: var(--fg); }
+  .mxop { font-family: var(--font-math); font-size: 22px; color: var(--fg-2); }
+  .mxgap { width: 14px; }
+  .mx-eq { font-family: var(--font-math); font-size: 19px; text-align: center; overflow-x: auto; white-space: nowrap; display: grid; gap: 2px; }
+  .mx-eq i { font-style: italic; }
+  .mx-eq .row { color: var(--accent); }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 2 von 9</div>
+    <h1>Die Matrix</h1>
+    <p class="lead">Was eine Matrixmultiplikation mit Daten macht: drehen, spiegeln, strecken, scheren, plattdrücken, und in welchem Raum die Daten danach landen.</p>
+    <div class="idea">
+      <span class="eyebrow">Die neue Idee</span>
+      <p>Eine Matrix verformt den ganzen Raum auf einmal. Wohin die Einheitspfeile gehen, bestimmt, wohin jeder andere Punkt geht.</p>
+    </div>
+  </header>
+
+  <!-- 1 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="pfeile">
+    <h2><span class="no">1</span>Zwei Pfeile bestimmen alles</h2>
+    <p>Eine 2×2-Matrix nimmt jeden Punkt der Ebene und schickt ihn woandershin. Welche Verformung sie ist, sieht man an ihren beiden Spalten.</p>
+  </section>
+
+  <figure class="lab wide" id="figA">
+    <div class="lab-head">
+      <span class="title">Eine Matrix verformt die Ebene</span>
+      <span class="hint">Ziehe die Pfeilspitzen, den grünen Ring oder wähle eine Vorlage.</span>
+    </div>
+    <div class="lab-grid wide-left">
+      <div class="pane">
+        <div class="plot r11" id="a-plane" role="img" aria-label="Die Ebene mit Gitter, einem Buchstaben F und vierzehn Datenpunkten, verformt durch die Matrix M. Die Spalten von M sind als blauer und oranger Pfeil gezeichnet."></div>
+        <p class="status" id="a-status" aria-live="polite"></p>
+      </div>
+      <div class="side">
+        <div class="matrix">
+          <span class="name"><b>M</b> =</span>
+          <div class="mbr" style="grid-template-columns: auto auto">
+            <input id="a-m0" class="c1" type="number" step="0.1" aria-label="M Zeile 1 Spalte 1" />
+            <input id="a-m1" class="c2" type="number" step="0.1" aria-label="M Zeile 1 Spalte 2" />
+            <input id="a-m2" class="c1" type="number" step="0.1" aria-label="M Zeile 2 Spalte 1" />
+            <input id="a-m3" class="c2" type="number" step="0.1" aria-label="M Zeile 2 Spalte 2" />
+          </div>
+        </div>
+        <div class="presets" id="a-presets"></div>
+        <div class="ctl">
+          <label for="a-t"><span>Übergang: ohne Matrix → mit Matrix</span><output id="a-tv" for="a-t"></output></label>
+          <input type="range" id="a-t" min="0" max="1" step="0.01" value="1" />
+        </div>
+        <div class="btns"><button class="btn primary" id="a-play" type="button">Verformung abspielen</button></div>
+        <dl class="readout">
+          <div><dt>Fläche</dt><dd id="a-det"></dd></div>
+          <div><dt>Orientierung</dt><dd id="a-or"></dd></div>
+          <div><dt>Rang</dt><dd id="a-rank"></dd></div>
+          <div><dt>Streckung</dt><dd id="a-sv"></dd></div>
+        </dl>
+        <div class="probe-eq" id="a-probe"></div>
+        <label class="check"><input type="checkbox" id="a-data" checked /> Wohnungen aus Kapitel 1 zeigen</label>
+        <div class="try">
+          <span class="eyebrow">Probier</span>
+          <ol>
+            <li>„Spiegelung“: Das F steht seitenverkehrt, die Fläche wird negativ.</li>
+            <li>Ziehe die blaue Pfeilspitze genau auf die orange Linie. Die ganze Ebene fällt auf eine Gerade.</li>
+            <li>Finde eine Drehung, nach der die Wohnungswolke waagerecht liegt.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <span style="color: var(--col1)"><i class="key"></i><span style="color: var(--fg-2)">Spalte 1 = wohin (1, 0) geht</span></span>
+      <span style="color: var(--col2)"><i class="key"></i><span style="color: var(--fg-2)">Spalte 2 = wohin (0, 1) geht</span></span>
+      <span style="color: var(--probe)"><i class="key"></i><span style="color: var(--fg-2)">ein Punkt x und sein Ziel Mx</span></span>
+      <span style="color: var(--fg-2)"><i class="key sq" style="opacity: 0.35"></i><span>Einheitsquadrat und Einheitskreis nach der Verformung</span></span>
+    </div>
+  </figure>
+
+  <section class="col prose">
+    <div class="note">
+      <span class="eyebrow">Dahinter steckt</span>
+      <p>Spalte 1 ist das Ziel von <span class="m">(1, 0)</span>, Spalte 2 das Ziel von <span class="m">(0, 1)</span>. Jeder andere Punkt ist eine Mischung aus beiden, und genau so wird er abgebildet:</p>
+      <span class="mblock"><b>M</b><b>x</b> = <i>x</i><sub>1</sub> · <span style="color: var(--col1)">Spalte 1</span> + <i>x</i><sub>2</sub> · <span style="color: var(--col2)">Spalte 2</span></span>
+      <p>Deshalb bleiben Gitterlinien gerade, parallel und gleichmäßig verteilt, und der Ursprung bleibt, wo er ist. Die <strong>Determinante</strong> sagt, um wie viel sich Flächen ändern; ist sie negativ, ist die Ebene gespiegelt, ist sie null, wird eine Richtung ganz plattgedrückt.</p>
+    </div>
+  </section>
+
+  <!-- 2 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="zerlegung">
+    <h2><span class="no">2</span>Drehen, strecken, drehen</h2>
+    <p>Egal wie verdreht eine Matrix aussieht: Sie lässt sich immer in drei einfache Schritte zerlegen. Das hier ist die Matrix von oben, zerlegt.</p>
+  </section>
+
+  <figure class="lab wide" id="figB">
+    <div class="lab-head">
+      <span class="title">Jede Matrix in drei Schritten</span>
+      <span class="hint">Ändere die Matrix in Abbildung 1 und sieh zu, wie sich die Schritte anpassen.</span>
+    </div>
+    <div class="flow four">
+      <div class="panel"><div class="plot r11" id="b-0" role="img" aria-label="Start: Einheitskreis und F unverändert."></div><div class="cap"><b>Start</b></div></div>
+      <div class="arr"><b>V</b><sup>⊤</sup></div>
+      <div class="panel"><div class="plot r11" id="b-1" role="img" aria-label="Nach dem ersten Schritt: gedreht."></div><div class="cap" id="b-c1"></div></div>
+      <div class="arr"><b>Σ</b></div>
+      <div class="panel"><div class="plot r11" id="b-2" role="img" aria-label="Nach dem zweiten Schritt: entlang der Achsen gestreckt."></div><div class="cap" id="b-c2"></div></div>
+      <div class="arr"><b>U</b></div>
+      <div class="panel"><div class="plot r11" id="b-3" role="img" aria-label="Nach dem dritten Schritt: noch einmal gedreht. Das Ergebnis ist die Matrix M."></div><div class="cap" id="b-c3"></div></div>
+    </div>
+  </figure>
+
+  <section class="col prose">
+    <div class="note">
+      <span class="eyebrow">Dahinter steckt</span>
+      <p>Das ist die <strong>Singulärwertzerlegung</strong> <span class="m"><b>M</b> = <b>U</b> <b>Σ</b> <b>V</b><sup>⊤</sup></span>. Aus dem Kreis wird eine Ellipse; ihre Halbachsen <span class="m"><i>σ</i><sub>1</sub></span> und <span class="m"><i>σ</i><sub>2</sub></span> sind die stärkste und die schwächste Streckung, die die Matrix überhaupt kann. Ist <span class="m"><i>σ</i><sub>2</sub> = 0</span>, geht eine Richtung ganz verloren. Diese Zerlegung begegnet uns wieder, wenn wir in Kapitel 9 die Gewichte eines Transformers lesen.</p>
+    </div>
+  </section>
+
+  <!-- 3 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="nacheinander">
+    <h2><span class="no">3</span>Hintereinander ausführen</h2>
+    <p>Das Produkt zweier Matrizen ist die Verformung, die beide nacheinander ausführt. Das ist die eigentliche Bedeutung der Matrixmultiplikation.</p>
+  </section>
+
+  <figure class="lab wide" id="figD">
+    <div class="lab-head">
+      <span class="title">Erst B, dann A, oder umgekehrt?</span>
+      <span class="hint">Wähle zwei Verformungen und vergleiche die Reihenfolgen.</span>
+    </div>
+    <div class="controls">
+      <div class="ctl" style="flex: 0 1 220px"><label for="d-a"><span>Matrix <span class="m"><b>A</b></span></span></label><select class="sel" id="d-a"></select></div>
+      <div class="ctl" style="flex: 0 1 220px"><label for="d-b"><span>Matrix <span class="m"><b>B</b></span></span></label><select class="sel" id="d-b"></select></div>
+    </div>
+    <div class="rowlabel">Erst <b>B</b>, dann <b>A</b>: das Produkt <span class="m"><b>A</b><b>B</b></span> <span id="d-ab"></span></div>
+    <div class="flow three">
+      <div class="panel"><div class="plot r11" id="d-00"></div></div>
+      <div class="arr"><b>B</b></div>
+      <div class="panel"><div class="plot r11" id="d-01"></div></div>
+      <div class="arr"><b>A</b></div>
+      <div class="panel"><div class="plot r11" id="d-02"></div></div>
+    </div>
+    <div class="rowlabel">Erst <b>A</b>, dann <b>B</b>: das Produkt <span class="m"><b>B</b><b>A</b></span> <span id="d-ba"></span></div>
+    <div class="flow three">
+      <div class="panel"><div class="plot r11" id="d-10"></div></div>
+      <div class="arr"><b>A</b></div>
+      <div class="panel"><div class="plot r11" id="d-11"></div></div>
+      <div class="arr"><b>B</b></div>
+      <div class="panel"><div class="plot r11" id="d-12"></div></div>
+    </div>
+    <p class="status" id="d-status"></p>
+  </figure>
+
+  <section class="col prose">
+    <div class="note">
+      <span class="eyebrow">Dahinter steckt</span>
+      <p><span class="m"><b>A</b><b>B</b><b>x</b></span> liest man von rechts: erst <span class="m"><b>B</b></span>, dann <span class="m"><b>A</b></span>. Meist zählt die Reihenfolge. Und egal wie viele Matrizen man hintereinanderschaltet, heraus kommt wieder <strong>eine einzige Matrix</strong>. Ein Netz aus lauter Matrizen wäre also nicht mächtiger als eine Schicht. Das ändert erst eine Nichtlinearität dazwischen, in Kapitel 4.</p>
+    </div>
+  </section>
+
+  <!-- 4 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="hinauf">
+    <h2><span class="no">4</span>Hinauf in den Raum</h2>
+    <p>Eine Matrix muss nicht quadratisch sein. Eine 3×2-Matrix nimmt einen Punkt der Ebene und macht daraus einen Punkt im Raum.</p>
+  </section>
+
+  <figure class="lab wide" id="figC1">
+    <div class="lab-head">
+      <span class="title">Von zwei auf drei Dimensionen</span>
+      <span class="hint">Wähle eine Matrix, ziehe links den grünen Ring, drehe rechts den Raum.</span>
+    </div>
+    <div class="presets" id="c1-presets"></div>
+    <div class="lab-grid" style="grid-template-columns: minmax(0, 2fr) minmax(0, 3fr)">
+      <div class="side">
+        <div class="pane-label"><span id="c1-inlbl">Eingabe: die Ebene</span></div>
+        <div class="plot r11" id="c1-in" role="img" aria-label="Die Eingabeebene mit Gitter, F und Datenpunkten."></div>
+        <div class="matrix">
+          <span class="name"><b>A</b> =</span>
+          <div class="mbr" id="c1-mat" style="grid-template-columns: auto auto"></div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="pane-label"><span>Ausgabe im Raum (ziehen zum Drehen)</span><span id="c1-rank"></span></div>
+        <div class="plot r43" id="c1-out" role="img" aria-label="Der dreidimensionale Raum. Die Bilder aller Punkte liegen auf einer Ebene durch den Ursprung, dem Spaltenraum."></div>
+      </div>
+    </div>
+    <p class="status" id="c1-note"></p>
+  </figure>
+
+  <section class="col prose">
+    <div class="note">
+      <span class="eyebrow">Dahinter steckt</span>
+      <p>Das Ergebnis hat drei Koordinaten, füllt aber nur eine Ebene: den <strong>Spaltenraum</strong>, aufgespannt von den beiden Spalten. Mehr Freiheitsgrade als Eingaben kann eine Matrix nicht erzeugen. Die Vorlage „X aus Kapitel 1“ ist genau die Ebene aller Vorhersagen aus Kapitel 1: Jeder Punkt <span class="m">(<i>w</i>, <i>b</i>)</span> der Eingabe ist eine Gerade, sein Bild sind ihre drei Vorhersagen.</p>
+    </div>
+  </section>
+
+  <!-- 5 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="hinunter">
+    <h2><span class="no">5</span>Hinunter in die Ebene</h2>
+    <p>Eine 2×3-Matrix macht das Umgekehrte: Sie wirft den Raum auf eine Ebene. Jedes Foto ist so eine Matrix.</p>
+  </section>
+
+  <figure class="lab wide" id="figC2">
+    <div class="lab-head">
+      <span class="title">Von drei auf zwei Dimensionen</span>
+      <span class="hint">Ändere die Blickrichtung. Zeige rechts auf einen Punkt.</span>
+    </div>
+    <div class="lab-grid even">
+      <div class="pane">
+        <div class="pane-label"><span>Der Raum mit einer Spirale (ziehen zum Drehen)</span></div>
+        <div class="plot r11" id="c2-3d" role="img" aria-label="Eine Spirale im Raum, die Blickrichtung der Projektion als gestrichelte Linie."></div>
+      </div>
+      <div class="pane">
+        <div class="pane-label"><span>Was die Matrix daraus macht</span></div>
+        <div class="plot r11" id="c2-2d" role="img" aria-label="Die Spirale nach der Projektion in die Ebene."></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="c2-az"><span>Blickrichtung, Azimut</span><output id="c2-azv" for="c2-az"></output></label><input type="range" id="c2-az" min="0" max="360" step="1" value="35" /></div>
+      <div class="ctl"><label for="c2-el"><span>Blickrichtung, Höhe</span><output id="c2-elv" for="c2-el"></output></label><input type="range" id="c2-el" min="-90" max="90" step="1" value="20" /></div>
+      <div class="presets" id="c2-presets"></div>
+    </div>
+    <div class="matrix">
+      <span class="name"><b>P</b> =</span>
+      <div class="mbr" id="c2-mat" style="grid-template-columns: auto auto auto"></div>
+      <span class="status" style="min-height: 0">Kern (verschwindet): <span class="vec pr" id="c2-ker"></span></span>
+    </div>
+    <div class="legend">
+      <span style="color: var(--col1)"><i class="key"></i><span style="color: var(--fg-2)">Zeile 1: neue waagerechte Richtung</span></span>
+      <span style="color: var(--col2)"><i class="key"></i><span style="color: var(--fg-2)">Zeile 2: neue senkrechte Richtung</span></span>
+      <span style="color: var(--fg)"><i class="key dash"></i><span style="color: var(--fg-2)">Kern: diese Richtung geht verloren</span></span>
+      <span style="color: var(--probe)"><i class="key dash"></i><span style="color: var(--fg-2)">alle Punkte, die auf denselben Bildpunkt fallen</span></span>
+    </div>
+  </figure>
+
+  <section class="col prose">
+    <div class="note">
+      <span class="eyebrow">Dahinter steckt</span>
+      <p>Jede Zeile der Matrix liest eine Koordinate ab: ein Skalarprodukt, also wie weit der Punkt in Richtung dieser Zeile liegt. Eine Richtung bleibt dabei ungelesen, der <strong>Kern</strong>. Alle Punkte auf einer Linie entlang des Kerns fallen auf denselben Bildpunkt; von oben wird die Spirale zum Kreis, die Höhe ist weg. Welche Richtungen man beim Plattdrücken behalten sollte, ist eine Leitfrage für Kapitel 5.</p>
+    </div>
+  </section>
+
+  <!-- 6 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="zeilen">
+    <h2><span class="no">6</span>Zeile mal Spalte</h2>
+    <p>Zurück zu den Wohnungen aus Kapitel 1. Die Matrix <span class="m"><b>X</b></span> hat eine Zeile pro Wohnung: (Fläche, 1). Mal <span class="m"><b>θ</b> = (<i>w</i>, <i>b</i>)</span> ergibt sie alle 14 Vorhersagen auf einmal.</p>
+  </section>
+
+  <figure class="lab wide" id="figE">
+    <div class="lab-head">
+      <span class="title">Die Regression als Matrixprodukt</span>
+      <span class="hint">Zeige auf eine Zeile, verstelle θ.</span>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="e-w"><span>Steigung <span class="m"><i>w</i></span></span><output id="e-wv" for="e-w"></output></label><input type="range" id="e-w" min="0" max="16" step="0.01" value="8.98" /></div>
+      <div class="ctl"><label for="e-b"><span>Grundbetrag <span class="m"><i>b</i></span></span><output id="e-bv" for="e-b"></output></label><input type="range" id="e-b" min="-200" max="800" step="1" value="267" /></div>
+    </div>
+    <div class="mx-eq" id="e-eq" aria-live="polite"></div>
+    <div class="mx-scroll"><div class="mx" id="e-mx"></div></div>
+  </figure>
+
+  <section class="col prose">
+    <div class="note">
+      <span class="eyebrow">Dahinter steckt</span>
+      <p>Jeder Eintrag des Ergebnisses ist ein Skalarprodukt: eine Zeile mal <span class="m"><b>θ</b></span>. Die Formate verketten sich: <span class="m">(14 × 2) · (2 × 1) = (14 × 1)</span>. Dasselbe Muster kommt in der Attention wieder, als <span class="m">(<i>n</i> × <i>d</i>) · (<i>d</i> × <i>n</i>)</span>: jedes Wort mit jedem.</p>
+    </div>
+
+    <h2><span class="no">7</span>Was eine Matrix nicht kann</h2>
+    <p>Drehen, spiegeln, strecken, projizieren: alles, was eine Matrix tut, hält Geraden gerade und den Ursprung an seinem Platz. Biegen oder falten kann sie nicht. Um zwei ineinander verschlungene Datenwolken zu trennen, braucht man genau das. Kapitel 3 zeigt zuerst, wie man mit einer einzigen Grenze klassifiziert; Kapitel 4 faltet dann den Raum.</p>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="01-linear-regression.html"><span class="dir">Zurück · Kapitel 1</span><span class="name">Die Gerade</span></a>
+    <span class="soon next"><span class="dir">Kapitel 3 · geplant</span><span class="name">Die Grenze</span></span>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const { add, sub, mul, dot, norm, cross } = S.v3;
+
+  // ════════════════════════════════════════════════════════════════
+  //  2×2 algebra (row-major [a, b, c, d] = [[a, b], [c, d]])
+  // ════════════════════════════════════════════════════════════════
+  const I2 = [1, 0, 0, 1];
+  const ap = (M, p) => [M[0] * p[0] + M[1] * p[1], M[2] * p[0] + M[3] * p[1]];
+  const mm = (A, B) => [A[0] * B[0] + A[1] * B[2], A[0] * B[1] + A[1] * B[3], A[2] * B[0] + A[3] * B[2], A[2] * B[1] + A[3] * B[3]];
+  const det2 = (M) => M[0] * M[3] - M[1] * M[2];
+  const lerpM = (A, B, t) => A.map((v, i) => v + (B[i] - v) * t);
+  const rot = (deg) => { const a = (deg * Math.PI) / 180; return [Math.cos(a), -Math.sin(a), Math.sin(a), Math.cos(a)]; };
+  const r2 = (v) => Math.round(v * 100) / 100;
+
+  function svd2(M) {
+    const [a, b, c, d] = M;
+    const E = a * a + c * c, F = a * b + c * d, G = b * b + d * d;
+    const th = 0.5 * Math.atan2(2 * F, E - G);
+    const h = Math.sqrt(((E - G) / 2) ** 2 + F * F);
+    const s1 = Math.sqrt(Math.max(0, (E + G) / 2 + h)), s2 = Math.sqrt(Math.max(0, (E + G) / 2 - h));
+    const v1 = [Math.cos(th), Math.sin(th)], v2 = [-Math.sin(th), Math.cos(th)];
+    const u1 = s1 > 1e-9 ? [(a * v1[0] + b * v1[1]) / s1, (c * v1[0] + d * v1[1]) / s1] : [1, 0];
+    let u2 = s2 > 1e-9 ? [(a * v2[0] + b * v2[1]) / s2, (c * v2[0] + d * v2[1]) / s2] : [-u1[1], u1[0]];
+    return { s1, s2, th, V: [v1[0], v2[0], v1[1], v2[1]], U: [u1[0], u2[0], u1[1], u2[1]], detU: u1[0] * u2[1] - u2[0] * u1[1] };
+  }
+  const rankOf = (sv) => (sv.s1 < 0.02 ? 0 : sv.s2 < 0.02 * Math.max(1, sv.s1) ? 1 : 2);
+
+  // the flats from chapter 1, standardized (area, rent) → a correlated cloud around 0
+  const DATA0 = [[28, 675], [34, 550], [41, 555], [47, 675], [52, 710], [58, 835], [63, 770],
+                 [69, 795], [76, 840], [82, 1095], [90, 1145], [97, 1205], [105, 1175], [116, 1315]];
+  const DZ = (() => {
+    const n = DATA0.length;
+    const mx = DATA0.reduce((s, p) => s + p[0], 0) / n, my = DATA0.reduce((s, p) => s + p[1], 0) / n;
+    const sx = Math.sqrt(DATA0.reduce((s, p) => s + (p[0] - mx) ** 2, 0) / n), sy = Math.sqrt(DATA0.reduce((s, p) => s + (p[1] - my) ** 2, 0) / n);
+    return DATA0.map(([x, y]) => [(x - mx) / sx, (y - my) / sy]);
+  })();
+  const F_SHAPE = [[[0.25, 0.1], [0.25, 0.9], [0.75, 0.9]], [[0.25, 0.52], [0.62, 0.52]]];
+
+  function planeFrame(W, H, R) {
+    const k = (Math.min(W, H) / 2 - 4) / R, cx = W / 2, cy = H / 2;
+    return { k, R, W, H, X: (v) => cx + v * k, Y: (v) => cy - v * k, inv: (px, py) => [(px - cx) / k, (cy - py) / k] };
+  }
+
+  /** Draw the plane after applying M: grid, unit square, unit circle, data, F and the images of e1/e2. */
+  function drawPlane(ctx, fr, M, o = {}) {
+    const { X, Y, W, H } = fr;
+    const small = !!o.small;
+    const P = (p) => { const q = ap(M, p); return [X(q[0]), Y(q[1])]; };
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+    // untouched grid underneath, for reference
+    if (o.ghost !== false) {
+      const N = Math.ceil(fr.R) + 1;
+      ctx.strokeStyle = S.alpha('fg', 0.06); ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let k = -N; k <= N; k++) { ctx.moveTo(X(k), Y(-N)); ctx.lineTo(X(k), Y(N)); ctx.moveTo(X(-N), Y(k)); ctx.lineTo(X(N), Y(k)); }
+      ctx.stroke();
+    }
+    // deformed grid
+    const K = 12, L = 40;
+    for (let k = -K; k <= K; k++) {
+      ctx.strokeStyle = S.alpha('fg', k === 0 ? 0.42 : small ? 0.14 : 0.18);
+      ctx.lineWidth = k === 0 ? 1.25 : 1;
+      ctx.beginPath();
+      let a = P([k, -L]), b = P([k, L]); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+      a = P([-L, k]); b = P([L, k]); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+      ctx.stroke();
+    }
+    // unit square → parallelogram
+    ctx.fillStyle = S.alpha('fg', 0.08);
+    ctx.strokeStyle = S.alpha('fg', 0.3);
+    ctx.beginPath();
+    [[0, 0], [1, 0], [1, 1], [0, 1]].forEach((p, i) => { const q = P(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // unit circle → ellipse
+    ctx.setLineDash(small ? [3, 3] : [4, 4]);
+    ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    for (let i = 0; i <= 96; i++) { const t = (i / 96) * Math.PI * 2, q = P([Math.cos(t), Math.sin(t)]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }
+    ctx.stroke(); ctx.setLineDash([]);
+    // data
+    if (o.data) o.data.forEach((p, i) => { const q = P(p); S.dot(ctx, q[0], q[1], o.hover === i ? 5.5 : small ? 2.2 : 3.5, S.c['fg-2'], S.c.surface, small ? 1 : 1.5); });
+    // F
+    ctx.strokeStyle = S.c.fg; ctx.lineWidth = small ? 2.5 : 4.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const stroke of F_SHAPE) { ctx.beginPath(); stroke.forEach((p, i) => { const q = P(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.stroke(); }
+    // images of e1, e2 = the columns
+    const o0 = P([0, 0]), e1 = P([1, 0]), e2 = P([0, 1]);
+    ctx.strokeStyle = S.c.col1; ctx.fillStyle = S.c.col1; S.arrow(ctx, o0[0], o0[1], e1[0], e1[1], small ? 7 : 11, small ? 2 : 3);
+    ctx.strokeStyle = S.c.col2; ctx.fillStyle = S.c.col2; S.arrow(ctx, o0[0], o0[1], e2[0], e2[1], small ? 7 : 11, small ? 2 : 3);
+    ctx.restore();
+    return { e1, e2, o0 };
+  }
+
+  const vecHTML = (v, cls = '', d = 2) => `<span class="vec ${cls}"><span>${fmt(v[0], d)}</span><span>${fmt(v[1], d)}</span></span>`;
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. A — drag the columns
+  // ════════════════════════════════════════════════════════════════
+  const PRESETS = [
+    ['Identität', () => [1, 0, 0, 1]],
+    ['Drehung', () => rot(30).map(r2)],
+    ['Spiegelung', () => [-1, 0, 0, 1]],
+    ['Streckung', () => [1.8, 0, 0, 0.6]],
+    ['Scherung', () => [1, 0.8, 0, 1]],
+    ['Projektion', () => [0.5, 0.5, 0.5, 0.5]],
+    ['Zufällig', () => [0, 0, 0, 0].map(() => Math.round((Math.random() * 3 - 1.5) * 10) / 10)],
+  ];
+  const A = { M: [1.1, -0.6, 0.4, 0.9], t: 1, x: [1.5, 1.0], showData: true, anim: null, fr: null, hover: -1, drag: null };
+  const aTip = S.tip($('#a-plane'));
+  const Mt = () => lerpM(I2, A.M, A.t);
+
+  const aPlane = S.canvas($('#a-plane'), (ctx, W, H) => {
+    const fr = planeFrame(W, H, 3.2);
+    A.fr = fr;
+    const M = Mt();
+    const { X, Y } = fr;
+    const sv = svd2(M);
+    const rank = rankOf(sv);
+    const pts = drawPlane(ctx, fr, M, { data: A.showData ? DZ : null, hover: A.hover });
+    // rank 1: the image is a line, the kernel is the direction that vanishes
+    if (rank === 1 && A.t > 0.99) {
+      const u = [sv.U[0], sv.U[2]], v2 = [sv.V[1], sv.V[3]];
+      ctx.save();
+      ctx.strokeStyle = S.c.accent; ctx.lineWidth = 3; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.moveTo(X(-9 * u[0]), Y(-9 * u[1])); ctx.lineTo(X(9 * u[0]), Y(9 * u[1])); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(X(-9 * v2[0]), Y(-9 * v2[1])); ctx.lineTo(X(9 * v2[0]), Y(9 * v2[1])); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      S.label(ctx, 'Bild: eine Gerade', X(2.4 * u[0]) + 8, Y(2.4 * u[1]) - 12, S.c.accent, S.font(12.5, 'body', '600'), 'left');
+      S.label(ctx, 'Kern: wird zu 0', X(2.2 * v2[0]) + 8, Y(2.2 * v2[1]) + 12, S.c.fg, S.font(12.5, 'body'), 'left');
+    }
+    // probe: x (ring) and Mx (arrow) with the column construction
+    const x = A.x, mx = ap(M, x), c1 = [M[0], M[2]], c2 = [M[1], M[3]];
+    const p1 = mul([...c1, 0], x[0]);
+    ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+    ctx.strokeStyle = S.c.col1; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(p1[0]), Y(p1[1])); ctx.stroke();
+    ctx.strokeStyle = S.c.col2; ctx.beginPath(); ctx.moveTo(X(p1[0]), Y(p1[1])); ctx.lineTo(X(mx[0]), Y(mx[1])); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = S.c.probe; ctx.fillStyle = S.c.probe;
+    S.arrow(ctx, X(0), Y(0), X(mx[0]), Y(mx[1]), 10, 2.5);
+    ctx.beginPath(); ctx.arc(X(x[0]), Y(x[1]), 7, 0, Math.PI * 2); ctx.lineWidth = 2.5; ctx.strokeStyle = S.c.probe; ctx.stroke();
+    S.label(ctx, 'x', X(x[0]) + 10, Y(x[1]) + 14, S.c.probe, S.font(17, 'math', 'bold'), 'left');
+    S.label(ctx, 'Mx', X(mx[0]) - 8, Y(mx[1]) - 12, S.c.probe, S.font(17, 'math', 'bold'), 'right');
+    // column handles
+    for (const [p, col, name] of [[pts.e1, S.c.col1, 'Spalte 1'], [pts.e2, S.c.col2, 'Spalte 2']]) {
+      ctx.beginPath(); ctx.arc(p[0], p[1], 8, 0, Math.PI * 2);
+      ctx.fillStyle = S.c.surface; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = col; ctx.stroke();
+      S.label(ctx, name, p[0] + 12, p[1] - 12, S.c['fg-2'], S.font(12, 'body'), 'left');
+    }
+  });
+
+  function hitA(q) {
+    if (!A.fr) return null;
+    const M = Mt(), { X, Y } = A.fr, R = q.touch ? 24 : 13;
+    const e1 = [X(M[0]), Y(M[2])], e2 = [X(M[1]), Y(M[3])], px = [X(A.x[0]), Y(A.x[1])];
+    const d = (p) => Math.hypot(q.x - p[0], q.y - p[1]);
+    const cand = [[d(e1), 'c1'], [d(e2), 'c2'], [d(px), 'x']].filter((c) => c[0] < R).sort((a, b) => a[0] - b[0]);
+    if (cand.length) return cand[0][1];
+    if (A.showData) {
+      let best = -1, bd = q.touch ? 16 : 9;
+      DZ.forEach((p, i) => { const r = ap(M, p), dd = Math.hypot(q.x - X(r[0]), q.y - Y(r[1])); if (dd < bd) { bd = dd; best = i; } });
+      if (best >= 0) return 'd' + best;
+    }
+    return null;
+  }
+  const snap = (v) => Math.round(v * 20) / 20;
+  S.pointer(aPlane, {
+    pick(q) {
+      const h = hitA(q);
+      if (!h || h[0] === 'd') return null;
+      if (q.probe) return true;
+      aTip.hide();
+      if (A.anim) { A.anim(); A.anim = null; }
+      if (h === 'x') return { move(q2) { A.x = A.fr.inv(q2.x, q2.y).map(snap); renderA(); } };
+      A.t = 1;
+      const col = h === 'c1' ? 0 : 1;
+      return {
+        move(q2) {
+          const p = A.fr.inv(q2.x, q2.y).map(snap);
+          A.M[col] = p[0]; A.M[col + 2] = p[1];
+          markPreset(null);
+          renderA();
+        },
+      };
+    },
+    hover(q) {
+      if (!q) { aTip.hide(); return; }
+      const h = hitA(q);
+      aPlane.cv.style.cursor = h && h[0] !== 'd' ? 'grab' : '';
+      const i = h && h[0] === 'd' ? +h.slice(1) : -1;
+      if (i !== A.hover) { A.hover = i; aPlane.redraw(); }
+      if (i >= 0) {
+        const r = ap(Mt(), DZ[i]);
+        aTip.show(q.x, q.y, S.tipRows(`Wohnung ${i + 1}`, [['vorher', `(${fmt(DZ[i][0], 2)}; ${fmt(DZ[i][1], 2)})`], ['nachher', `(${fmt(r[0], 2)}; ${fmt(r[1], 2)})`]]));
+      } else aTip.hide();
+    },
+    leave() { aTip.hide(); if (A.hover !== -1) { A.hover = -1; aPlane.redraw(); } },
+  });
+
+  const mIn = [0, 1, 2, 3].map((i) => $('#a-m' + i));
+  mIn.forEach((el, i) => el.addEventListener('input', () => {
+    const v = parseFloat(el.value);
+    if (!isFinite(v)) return;
+    if (A.anim) { A.anim(); A.anim = null; }
+    A.M[i] = clamp(v, -9, 9); A.t = 1; markPreset(null); renderA(true);
+  }));
+  const presetHost = $('#a-presets');
+  PRESETS.forEach(([name, make], k) => {
+    const b = document.createElement('button');
+    b.className = 'btn'; b.type = 'button'; b.textContent = name; b.dataset.k = k;
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => {
+      if (A.anim) A.anim();
+      const from = A.M.slice(), to = make();
+      markPreset(k);
+      A.t = 1;
+      A.anim = S.tween(650, (t) => { A.M = lerpM(from, to, t); renderA(); }, () => { A.anim = null; A.M = to; renderA(); });
+    });
+    presetHost.appendChild(b);
+  });
+  function markPreset(k) { presetHost.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.k === k))); }
+  $('#a-t').addEventListener('input', (e) => { if (A.anim) { A.anim(); A.anim = null; } A.t = +e.target.value; renderA(); });
+  $('#a-play').addEventListener('click', () => {
+    if (A.anim) A.anim();
+    A.t = 0; renderA();
+    A.anim = S.tween(1600, (t) => { A.t = t; renderA(); }, () => (A.anim = null));
+  });
+  $('#a-data').addEventListener('change', (e) => { A.showData = e.target.checked; renderA(); });
+
+  function renderA(fromInput) {
+    const M = A.M, sv = svd2(M), dt = det2(M), rank = rankOf(sv);
+    if (!fromInput) mIn.forEach((el, i) => { if (document.activeElement !== el) el.value = r2(M[i]); });
+    $('#a-t').value = A.t;
+    $('#a-tv').textContent = fmt(A.t, 2);
+    $('#a-det').textContent = '× ' + fmt(dt, 2);
+    $('#a-or').innerHTML = Math.abs(dt) < 0.02 ? '<span class="chip neutral">plattgedrückt</span>' : dt < 0 ? '<span class="chip warn">gespiegelt</span>' : '<span class="chip ok">erhalten</span>';
+    $('#a-rank').textContent = rank === 2 ? '2: Ebene → Ebene' : rank === 1 ? '1: Ebene → Gerade' : '0: alles → Punkt';
+    $('#a-sv').textContent = `×${fmt(sv.s1, 2)} bis ×${fmt(sv.s2, 2)}`;
+    const Mcur = Mt(), x = A.x, mx = ap(Mcur, x);
+    $('#a-probe').innerHTML = `<b>M</b>${vecHTML(x, 'pr', 2)} = ${fmt(x[0], 2)} · ${vecHTML([Mcur[0], Mcur[2]], 'c1')} + ${fmt(x[1], 2)} · ${vecHTML([Mcur[1], Mcur[3]], 'c2')} = ${vecHTML(mx, 'pr')}`;
+    // challenge: is the cloud lying flat? (no correlation left, wide rather than tall)
+    let sxx = 0, syy = 0, sxy = 0;
+    DZ.forEach((p) => { const r = ap(Mcur, p); sxx += r[0] * r[0]; syy += r[1] * r[1]; sxy += r[0] * r[1]; });
+    const corr = sxy / Math.sqrt(sxx * syy || 1);
+    const flat = A.showData && rank === 2 && Math.abs(corr) < 0.04 && sxx > syy;
+    $('#a-status').innerHTML = flat
+      ? '<span class="chip ok">waagerecht</span> Die Wolke liegt flach: Fläche und Miete sind in diesen neuen Koordinaten nicht mehr korreliert.'
+      : A.showData ? `Korrelation der Wolke nach der Verformung: ${fmt(corr, 2)}` : '';
+    aPlane.redraw();
+    renderB();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. B — the SVD as three steps
+  // ════════════════════════════════════════════════════════════════
+  const bStage = [I2, I2, I2, I2];
+  const bCanvases = [0, 1, 2, 3].map((k) => S.canvas($('#b-' + k), (ctx, W, H) => {
+    const fr = planeFrame(W, H, 2.4);
+    drawPlane(ctx, fr, bStage[k], { small: true, ghost: true });
+  }));
+  function renderB() {
+    const M = A.M, sv = svd2(M);
+    const Vt = [sv.V[0], sv.V[2], sv.V[1], sv.V[3]];
+    const Sg = [sv.s1, 0, 0, sv.s2];
+    bStage[1] = Vt;
+    bStage[2] = mm(Sg, Vt);
+    bStage[3] = mm(sv.U, bStage[2]);
+    const deg = (r) => fmt((r * 180) / Math.PI, 0) + '°';
+    const phi = Math.atan2(sv.U[2], sv.U[0]);
+    $('#b-c1').innerHTML = `<b>1 · Drehen</b><br>um ${deg(-sv.th)}`;
+    $('#b-c2').innerHTML = `<b>2 · Strecken</b><br>×${fmt(sv.s1, 2)} und ×${fmt(sv.s2, 2)}`;
+    $('#b-c3').innerHTML = sv.detU < 0 ? `<b>3 · Spiegeln und drehen</b><br>= <b>M</b>` : `<b>3 · Drehen</b><br>um ${deg(phi)} = <b>M</b>`;
+    bCanvases.forEach((c) => c.redraw());
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. D — composition AB vs BA
+  // ════════════════════════════════════════════════════════════════
+  const DPRE = [
+    ['Drehung um 45°', rot(45)],
+    ['Drehung um 90°', rot(90)],
+    ['Streckung (×1,8 / ×0,5)', [1.8, 0, 0, 0.5]],
+    ['Scherung', [1, 0.9, 0, 1]],
+    ['Spiegelung', [-1, 0, 0, 1]],
+    ['Projektion auf x-Achse', [1, 0, 0, 0]],
+  ];
+  const D = { a: 0, b: 2 };
+  const selA = $('#d-a'), selB = $('#d-b');
+  DPRE.forEach(([name], k) => { selA.add(new Option(name, k)); selB.add(new Option(name, k)); });
+  selA.value = D.a; selB.value = D.b;
+  const dStage = {};
+  const dCanvases = ['00', '01', '02', '10', '11', '12'].map((id) => S.canvas($('#d-' + id), (ctx, W, H) => {
+    drawPlane(ctx, planeFrame(W, H, 2.4), dStage[id] || I2, { small: true });
+  }));
+  const matInline = (M) => `= [${fmt(M[0], 2)}  ${fmt(M[1], 2)} ; ${fmt(M[2], 2)}  ${fmt(M[3], 2)}]`;
+  function renderD() {
+    const Am = DPRE[D.a][1], Bm = DPRE[D.b][1];
+    dStage['00'] = I2; dStage['01'] = Bm; dStage['02'] = mm(Am, Bm);
+    dStage['10'] = I2; dStage['11'] = Am; dStage['12'] = mm(Bm, Am);
+    $('#d-ab').textContent = matInline(dStage['02']);
+    $('#d-ba').textContent = matInline(dStage['12']);
+    const same = dStage['02'].every((v, i) => Math.abs(v - dStage['12'][i]) < 1e-9);
+    $('#d-status').innerHTML = same
+      ? '<span class="chip ok">gleich</span> Diese beiden vertragen sich: Die Reihenfolge ist egal.'
+      : '<span class="chip warn">verschieden</span> Das F landet unterschiedlich: AB und BA sind verschiedene Matrizen.';
+    dCanvases.forEach((c) => c.redraw());
+  }
+  selA.addEventListener('change', () => { D.a = +selA.value; renderD(); });
+  selB.addEventListener('change', () => { D.b = +selB.value; renderD(); });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. C1 — a 3×2 matrix lifts the plane into space
+  // ════════════════════════════════════════════════════════════════
+  const C1PRE = [
+    ['Flach', [1, 0, 0, 1, 0, 0], ['x₁', 'x₂'], ['y₁', 'y₂', 'y₃']],
+    ['Geneigt', [1, 0, 0, 1, 0.7, -0.5], ['x₁', 'x₂'], ['y₁', 'y₂', 'y₃']],
+    ['Gedreht und gestreckt', [0.9, -0.5, 0.3, 1.1, 0.8, 0.6], ['x₁', 'x₂'], ['y₁', 'y₂', 'y₃']],
+    ['Rang 1', [1, 0.5, 0.4, 0.2, 0.8, 0.4], ['x₁', 'x₂'], ['y₁', 'y₂', 'y₃']],
+    ['X aus Kapitel 1', [0.4, 1, 0.65, 1, 1.0, 1], ['w', 'b'], ['Wohnung 1', 'Wohnung 2', 'Wohnung 3']],
+  ];
+  const C1 = { k: 1, A: C1PRE[1][1].slice(), x: [0.8, 0.6], anim: null, fr: null };
+  const ap32 = (M, p) => [M[0] * p[0] + M[1] * p[1], M[2] * p[0] + M[3] * p[1], M[4] * p[0] + M[5] * p[1]];
+  const c1Rank = () => {
+    const a = [C1.A[0], C1.A[2], C1.A[4]], b = [C1.A[1], C1.A[3], C1.A[5]];
+    const cr = S.v3.len(cross(a, b)), sc = Math.max(S.v3.len(a) * S.v3.len(b), 1e-9);
+    return S.v3.len(a) < 1e-6 && S.v3.len(b) < 1e-6 ? 0 : cr / sc < 0.02 ? 1 : 2;
+  };
+
+  const c1In = S.canvas($('#c1-in'), (ctx, W, H) => {
+    const fr = planeFrame(W, H, 2.2);
+    C1.fr = fr;
+    drawPlane(ctx, fr, I2, { data: C1.k === 4 ? null : DZ, ghost: false });
+    const { X, Y } = fr;
+    const names = C1PRE[C1.k][2];
+    S.label(ctx, names[0], X(2.05), Y(0) - 12, S.c.muted, S.font(14, 'math', 'italic'), 'right');
+    S.label(ctx, names[1], X(0) + 10, Y(2.05), S.c.muted, S.font(14, 'math', 'italic'), 'left');
+    ctx.beginPath(); ctx.arc(X(C1.x[0]), Y(C1.x[1]), 7, 0, Math.PI * 2);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = S.c.probe; ctx.stroke();
+    S.label(ctx, 'x', X(C1.x[0]) + 10, Y(C1.x[1]) - 10, S.c.probe, S.font(17, 'math', 'bold'), 'left');
+  });
+  S.pointer(c1In, {
+    pick(q) {
+      if (!C1.fr) return null;
+      const near = Math.hypot(q.x - C1.fr.X(C1.x[0]), q.y - C1.fr.Y(C1.x[1])) < (q.touch ? 24 : 13);
+      if (!near) return null;
+      if (q.probe) return true;
+      return { move(q2) { C1.x = C1.fr.inv(q2.x, q2.y).map((v) => clamp(Math.round(v * 20) / 20, -2.1, 2.1)); renderC1(); } };
+    },
+    hover(q) { c1In.cv.style.cursor = q && C1.fr && Math.hypot(q.x - C1.fr.X(C1.x[0]), q.y - C1.fr.Y(C1.x[1])) < 13 ? 'grab' : ''; },
+  });
+
+  const cam1 = S.orbit($('#c1-out'), {
+    yaw: -0.75, pitch: 0.6, zoom: 0.42, cz: 0.05, dist: 6,
+    draw(ctx, W, H, cam) {
+      const M = C1.A;
+      const R = 2.2, rank = c1Rank();
+      const img = (p) => ap32(M, p);
+      // fit the view to whatever the matrix does with the input square
+      const ext = Math.max(2.2, ...[[-R, -R], [R, -R], [R, R], [-R, R]].map((p) => S.v3.len(img(p))));
+      const sc = 1.45 / ext;
+      const P = (v) => cam.P([v[0] * sc, v[1] * sc, v[2] * sc]);
+      const pre = C1PRE[C1.k];
+      S.axes3(ctx, P, ext * 0.95, pre[3]);
+      // image plane (column space)
+      if (rank === 2) {
+        ctx.fillStyle = S.alpha('fg', 0.07); ctx.strokeStyle = S.alpha('fg', 0.3); ctx.lineWidth = 1;
+        ctx.beginPath();
+        [[-R, -R], [R, -R], [R, R], [-R, R]].forEach((p, i) => { const s = P(img(p)); i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); });
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      ctx.strokeStyle = S.alpha('fg', 0.18); ctx.lineWidth = 1;
+      for (let k = -2; k <= 2; k++) { S.seg3(ctx, P, img([k, -R]), img([k, R])); S.seg3(ctx, P, img([-R, k]), img([R, k])); }
+      if (rank === 1) {
+        const c = [M[0], M[2], M[4]], n = norm(S.v3.len(c) > 1e-6 ? c : [M[1], M[3], M[5]]);
+        ctx.strokeStyle = S.c.accent; ctx.lineWidth = 3; ctx.globalAlpha = 0.8;
+        S.seg3(ctx, P, mul(n, -ext), mul(n, ext)); ctx.globalAlpha = 1;
+        const s = P(mul(n, ext * 0.7)); S.label(ctx, 'Bild: eine Gerade', s[0] + 8, s[1] - 10, S.c.accent, S.font(12.5, 'body', '600'), 'left');
+      }
+      if (C1.k !== 4) DZ.forEach((p) => { const s = P(img(p)); S.dot(ctx, s[0], s[1], 3, S.c['fg-2'], S.c.surface, 1.2); });
+      ctx.strokeStyle = S.c.fg; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const stroke of F_SHAPE) { ctx.beginPath(); stroke.forEach((p, i) => { const s = P(img(p)); i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); }); ctx.stroke(); }
+      const c1v = [M[0], M[2], M[4]], c2v = [M[1], M[3], M[5]];
+      S.arrow3(ctx, P, [0, 0, 0], c1v, S.c.col1, 3, 11);
+      S.arrow3(ctx, P, [0, 0, 0], c2v, S.c.col2, 3, 11);
+      const ax = img(C1.x);
+      S.arrow3(ctx, P, [0, 0, 0], ax, S.c.probe, 2.5, 10);
+      const s = P(ax);
+      S.label(ctx, 'Ax', s[0] + 10, s[1] - 10, S.c.probe, S.font(17, 'math', 'bold'), 'left');
+      const l1 = P(c1v), l2 = P(c2v);
+      S.label(ctx, 'Spalte 1', l1[0] + 10, l1[1] + 12, S.c['fg-2'], S.font(12, 'body'), 'left');
+      S.label(ctx, 'Spalte 2', l2[0] + 10, l2[1] + 12, S.c['fg-2'], S.font(12, 'body'), 'left');
+    },
+  });
+
+  const c1PresetHost = $('#c1-presets');
+  C1PRE.forEach(([name, M], k) => {
+    const b = document.createElement('button');
+    b.className = 'btn'; b.type = 'button'; b.textContent = name; b.dataset.k = k;
+    b.addEventListener('click', () => {
+      if (C1.anim) C1.anim();
+      const from = C1.A.slice();
+      C1.k = k;
+      if (k === 4) C1.x = [0.9, 0.35];
+      C1.anim = S.tween(700, (t) => { C1.A = lerpM(from, M, t); renderC1(); }, () => { C1.anim = null; C1.A = M.slice(); renderC1(); });
+    });
+    c1PresetHost.appendChild(b);
+  });
+  function renderC1() {
+    c1PresetHost.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.k === C1.k)));
+    const M = C1.A;
+    $('#c1-mat').innerHTML = [0, 1, 2, 3, 4, 5].map((i) => `<span class="${i % 2 ? 'c2' : 'c1'}">${fmt(M[i], 2)}</span>`).join('');
+    const rank = c1Rank();
+    $('#c1-rank').textContent = rank === 2 ? 'Rang 2: das Bild ist eine Ebene' : rank === 1 ? 'Rang 1: das Bild ist eine Gerade' : 'Rang 0';
+    $('#c1-inlbl').textContent = C1.k === 4 ? 'Eingabe: die Ebene der Geraden (w, b)' : 'Eingabe: die Ebene';
+    const ax = ap32(M, C1.x);
+    $('#c1-note').innerHTML = `<span><span class="m"><b>A</b><b>x</b></span> = ${fmt(C1.x[0], 2)} · Spalte 1 + ${fmt(C1.x[1], 2)} · Spalte 2 = (${ax.map((v) => fmt(v, 2)).join('; ')})</span>` +
+      (C1.k === 4 ? '<span>Das sind die drei Mieten, die die Gerade mit diesem <span class="m"><i>w</i></span> und <span class="m"><i>b</i></span> vorhersagt (in 1000 €).</span>' : '');
+    c1In.redraw(); cam1.redraw();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. C2 — a 2×3 matrix: a camera
+  // ════════════════════════════════════════════════════════════════
+  const HELIX = Array.from({ length: 160 }, (_, i) => { const t = (i / 159) * 6 * Math.PI; return [Math.cos(t), Math.sin(t), t / (3 * Math.PI) - 1]; });
+  const C2 = { az: 35, el: 20, hover: -1, fr: null };
+  function camRows() {
+    const a = (C2.az * Math.PI) / 180, e = (C2.el * Math.PI) / 180;
+    const r1 = [-Math.sin(a), Math.cos(a), 0];
+    const d = [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)];
+    return { r1, r2: cross(d, r1), d };
+  }
+  const SC2 = 0.5;
+  const cam2 = S.orbit($('#c2-3d'), {
+    yaw: -0.4, pitch: 0.4, zoom: 0.44, cz: 0, dist: 6,
+    draw(ctx, W, H, cam) {
+      const { r1, r2, d } = camRows();
+      const P = (v) => cam.P([v[0] * SC2, v[1] * SC2, v[2] * SC2]);
+      S.axes3(ctx, P, 1.7, ['x₁', 'x₂', 'x₃']);
+      // the "screen": plane spanned by the rows
+      const Q = 1.5;
+      ctx.fillStyle = S.alpha('fg', 0.06); ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1;
+      ctx.beginPath();
+      [[-Q, -Q], [Q, -Q], [Q, Q], [-Q, Q]].forEach(([u, v], i) => { const s = P(add(mul(r1, u), mul(r2, v))); i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); });
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      // kernel line
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.5;
+      S.seg3(ctx, P, mul(d, -2.6), mul(d, 2.6)); ctx.setLineDash([]);
+      const kd = P(mul(d, 2.75)); S.label(ctx, 'Kern', kd[0], kd[1], S.c.fg, S.font(12.5, 'body', '600'), 'center');
+      // helix
+      for (let i = 1; i < HELIX.length; i++) {
+        const a = P(HELIX[i - 1]), b = P(HELIX[i]);
+        ctx.strokeStyle = S.rgb(S.seqColor(i / HELIX.length)); ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      }
+      // rows
+      S.arrow3(ctx, P, [0, 0, 0], r1, S.c.col1, 2.5, 9);
+      S.arrow3(ctx, P, [0, 0, 0], r2, S.c.col2, 2.5, 9);
+      // preimage of the hovered image point: a whole line along the kernel
+      if (C2.hover >= 0) {
+        const h = HELIX[C2.hover];
+        ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.probe; ctx.lineWidth = 2;
+        S.seg3(ctx, P, add(h, mul(d, -2.5)), add(h, mul(d, 2.5))); ctx.setLineDash([]);
+        const s = P(h); S.dot(ctx, s[0], s[1], 5, S.c.probe, S.c.surface, 2);
+      }
+    },
+  });
+  const c2Flat = S.canvas($('#c2-2d'), (ctx, W, H) => {
+    const { r1, r2 } = camRows();
+    const fr = planeFrame(W, H, 1.9);
+    C2.fr = fr;
+    const { X, Y } = fr;
+    ctx.strokeStyle = S.alpha('fg', 0.08); ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let k = -2; k <= 2; k++) { ctx.moveTo(X(k), Y(-2)); ctx.lineTo(X(k), Y(2)); ctx.moveTo(X(-2), Y(k)); ctx.lineTo(X(2), Y(k)); }
+    ctx.stroke();
+    ctx.strokeStyle = S.c.col1; ctx.fillStyle = S.c.col1; S.arrow(ctx, X(0), Y(0), X(1), Y(0), 9, 2.5);
+    ctx.strokeStyle = S.c.col2; ctx.fillStyle = S.c.col2; S.arrow(ctx, X(0), Y(0), X(0), Y(1), 9, 2.5);
+    S.label(ctx, 'Zeile 1 · x', X(1.85), Y(0) + 14, S.c.muted, S.font(12, 'body'), 'right');
+    S.label(ctx, 'Zeile 2 · x', X(0) + 8, Y(1.8), S.c.muted, S.font(12, 'body'), 'left');
+    const img = HELIX.map((h) => [dot(r1, h), dot(r2, h)]);
+    C2.img = img;
+    for (let i = 1; i < img.length; i++) {
+      ctx.strokeStyle = S.rgb(S.seqColor(i / img.length)); ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(X(img[i - 1][0]), Y(img[i - 1][1])); ctx.lineTo(X(img[i][0]), Y(img[i][1])); ctx.stroke();
+    }
+    if (C2.hover >= 0) { const p = img[C2.hover]; S.dot(ctx, X(p[0]), Y(p[1]), 5.5, S.c.probe, S.c.surface, 2); }
+  });
+  const c2Tip = S.tip($('#c2-2d'));
+  S.pointer(c2Flat, {
+    hover(q) {
+      if (!q || !C2.img || !C2.fr) { c2Tip.hide(); return; }
+      let best = -1, bd = 14;
+      C2.img.forEach((p, i) => { const d = Math.hypot(q.x - C2.fr.X(p[0]), q.y - C2.fr.Y(p[1])); if (d < bd) { bd = d; best = i; } });
+      if (best !== C2.hover) { C2.hover = best; c2Flat.redraw(); cam2.redraw(); }
+      if (best >= 0) {
+        const h = HELIX[best];
+        c2Tip.show(q.x, q.y, S.tipRows('Spiralpunkt', [['im Raum', `(${h.map((v) => fmt(v, 2)).join('; ')})`], ['im Bild', `(${C2.img[best].map((v) => fmt(v, 2)).join('; ')})`]]));
+      } else c2Tip.hide();
+    },
+    leave() { c2Tip.hide(); if (C2.hover !== -1) { C2.hover = -1; c2Flat.redraw(); cam2.redraw(); } },
+  });
+  const azEl = $('#c2-az'), elEl = $('#c2-el');
+  azEl.addEventListener('input', () => { C2.az = +azEl.value; renderC2(); });
+  elEl.addEventListener('input', () => { C2.el = +elEl.value; renderC2(); });
+  const c2PresetHost = $('#c2-presets');
+  [['Von oben', 0, 90], ['Von der Seite', 0, 0], ['Schräg', 35, 20]].forEach(([name, az, el]) => {
+    const b = document.createElement('button');
+    b.className = 'btn'; b.type = 'button'; b.textContent = name;
+    b.addEventListener('click', () => {
+      const a0 = C2.az, e0 = C2.el;
+      S.tween(700, (t) => { C2.az = S.lerp(a0, az, t); C2.el = S.lerp(e0, el, t); renderC2(); });
+    });
+    c2PresetHost.appendChild(b);
+  });
+  function renderC2() {
+    const { r1, r2, d } = camRows();
+    azEl.value = C2.az; elEl.value = C2.el;
+    $('#c2-azv').textContent = fmt(C2.az, 0) + '°';
+    $('#c2-elv').textContent = fmt(C2.el, 0) + '°';
+    $('#c2-mat').innerHTML = [...r1, ...r2].map((v, i) => `<span class="${i < 3 ? 'c1' : 'c2'}">${fmt(v, 2)}</span>`).join('');
+    $('#c2-ker').innerHTML = d.map((v) => `<span>${fmt(v, 2)}</span>`).join('');
+    cam2.redraw(); c2Flat.redraw();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. E — X θ = ŷ, row by row
+  // ════════════════════════════════════════════════════════════════
+  const E = { w: 8.98, b: 267, row: 6, cells: [], theta: [] };
+  (function buildMatrix() {
+    const host = $('#e-mx');
+    const n = DATA0.length;
+    const mk = (cls, html) => { const d = document.createElement('div'); d.className = cls; if (html != null) d.innerHTML = html; return d; };
+    const group = (head, cols, shape, extra = '') => {
+      const g = mk('mxg');
+      g.append(mk('mxh', head));
+      const b = mk('mxb ' + extra);
+      b.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+      g.append(b);
+      g.append(mk('mxs', shape));
+      host.append(g);
+      return b;
+    };
+    const op = (t) => host.append(mk('mxop', t));
+    const bX = group('<b>X</b> <small>Fläche · 1</small>', 2, `${n} × 2`);
+    op('·');
+    const bT = group('<b>θ</b>', 1, '2 × 1', 'theta');
+    op('=');
+    const bY = group('<b>ŷ</b>', 1, `${n} × 1`);
+    host.append(mk('mxgap'));
+    const bD = group('<b>y</b>', 1, `${n} × 1`);
+    for (let i = 0; i < n; i++) {
+      const row = [mk(''), mk(''), mk(''), mk('')];
+      bX.append(row[0], row[1]); bY.append(row[2]); bD.append(row[3]);
+      row.forEach((c) => { c.dataset.row = i; });
+      row[2].tabIndex = 0;
+      row[2].setAttribute('aria-label', `Zeile ${i + 1}`);
+      E.cells.push(row);
+    }
+    E.theta = [mk(''), mk('')];
+    bT.append(E.theta[0], E.theta[1]);
+    const pick = (e) => { const r = e.target.closest('[data-row]'); if (r) { E.row = +r.dataset.row; renderE(); } };
+    host.addEventListener('pointerover', pick);
+    host.addEventListener('focusin', pick);
+    host.addEventListener('click', pick);
+  })();
+  function renderE() {
+    const { w, b } = E;
+    DATA0.forEach(([x, y], i) => {
+      const c = E.cells[i];
+      c[0].textContent = x; c[1].textContent = '1';
+      c[2].textContent = fmt(w * x + b, 1); c[3].textContent = fmt(y);
+      c.forEach((el) => el.classList.toggle('on', i === E.row));
+    });
+    E.theta[0].textContent = fmt(w, 2);
+    E.theta[1].textContent = fmt(b, 0);
+    $('#e-wv').textContent = fmt(w, 2) + ' €/m²';
+    $('#e-bv').textContent = fmt(b) + ' €';
+    const i = E.row, [x, y] = DATA0[i], yh = w * x + b, k = i + 1;
+    $('#e-eq').innerHTML =
+      `<div><i>ŷ</i><sub class="row">${k}</sub> = (${x}, 1) · (${fmt(w, 2)}, ${fmt(b)}) = ${x} · ${fmt(w, 2)} + 1 · ${fmt(b)} = ${fmt(yh, 1)} €</div>` +
+      `<div style="font-size: 15px; color: var(--fg-2)">Wohnung ${k}: tatsächlich ${fmt(y)} €, Fehler ${S.signed(y - yh, 1)} €</div>`;
+  }
+  $('#e-w').addEventListener('input', (e) => { E.w = +e.target.value; renderE(); });
+  $('#e-b').addEventListener('input', (e) => { E.b = +e.target.value; renderE(); });
+
+  renderA(); renderD(); renderC1(); renderC2(); renderE();
+})();
+</script>
+</body>
+</html>

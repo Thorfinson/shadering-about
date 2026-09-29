@@ -8,6 +8,7 @@
   const TOKENS = [
     'bg', 'surface', 'surface-2', 'fg', 'fg-2', 'muted', 'rule', 'grid', 'axis',
     'accent', 'accent-wash', 'data', 'model', 'error', 'grad', 'model-wash', 'error-wash',
+    'col1', 'col2', 'probe',
     'font-display', 'font-body', 'font-mono', 'font-math',
   ];
   S.c = {};
@@ -150,7 +151,15 @@
       );
     }
     S.lossLUT = lut;
+    // ordinal blue ramp for colouring points along a sequence (e.g. along a curve)
+    const seq = [];
+    for (let i = 0; i < 256; i++) {
+      const t = i / 255;
+      seq.push(S.dark ? S.oklch(0.5 + 0.38 * t, 0.16 - 0.07 * t, 255 - 25 * t) : S.oklch(0.78 - 0.42 * t, 0.09 + 0.07 * t, 235 + 20 * t));
+    }
+    S.seqLUT = seq;
   }
+  S.seqColor = (t) => S.seqLUT[Math.round(S.clamp(t, 0, 1) * 255)];
   S.lossColor = (t) => S.lossLUT[Math.round(S.clamp(t, 0, 1) * 255)];
 
   // ---------- small store ----------
@@ -459,6 +468,70 @@
       requestAnimationFrame(spin);
     }
     return cam;
+  };
+
+  // ---------- 3D vector helpers (used with an orbit camera's P) ----------
+  S.v3 = {
+    add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
+    sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+    mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k],
+    dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+    cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+    len: (a) => Math.hypot(a[0], a[1], a[2]),
+    norm: (a) => {
+      const l = Math.hypot(a[0], a[1], a[2]) || 1;
+      return [a[0] / l, a[1] / l, a[2] / l];
+    },
+  };
+  S.seg3 = (ctx, P, a, b) => {
+    const s = P(a), t = P(b);
+    ctx.beginPath();
+    ctx.moveTo(s[0], s[1]);
+    ctx.lineTo(t[0], t[1]);
+    ctx.stroke();
+  };
+  S.arrow3 = (ctx, P, a, b, color, width = 2, head = 9) => {
+    const s = P(a), t = P(b);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    S.arrow(ctx, s[0], s[1], t[0], t[1], head, width);
+  };
+  /** Axes through the origin with small ticks and end labels. */
+  S.axes3 = (ctx, P, len, labels, hl = -1) => {
+    for (let k = 0; k < 3; k++) {
+      const e = [0, 0, 0];
+      e[k] = len;
+      const n = [0, 0, 0];
+      n[k] = -len * 0.25;
+      ctx.strokeStyle = k === hl ? S.c.accent : S.c.axis;
+      ctx.lineWidth = k === hl ? 2 : 1;
+      S.seg3(ctx, P, n, e);
+      const tip = [0, 0, 0];
+      tip[k] = len * 1.1;
+      const q = P(tip);
+      S.label(ctx, labels[k], q[0], q[1], k === hl ? S.c.accent : S.c.muted, S.font(12, 'body'), 'center');
+    }
+  };
+
+  /** A spring (zigzag) from (x0,y0) to (x1,y1) in screen space. */
+  S.spring = (ctx, x0, y0, x1, y1, coils = 7, amp = 4) => {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    if (len < 14) {
+      ctx.lineTo(x1, y1);
+    } else {
+      const ux = (x1 - x0) / len, uy = (y1 - y0) / len, nx = -uy, ny = ux;
+      const lead = 5, body = len - 2 * lead, n = coils * 2;
+      ctx.lineTo(x0 + ux * lead, y0 + uy * lead);
+      for (let i = 1; i < n; i++) {
+        const d = lead + (body * i) / n, s = i % 2 ? amp : -amp;
+        ctx.lineTo(x0 + ux * d + nx * s, y0 + uy * d + ny * s);
+      }
+      ctx.lineTo(x1 - ux * lead, y1 - uy * lead);
+      ctx.lineTo(x1, y1);
+    }
+    ctx.stroke();
   };
 
   // ---------- misc ----------

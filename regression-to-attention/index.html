@@ -67,16 +67,6 @@
   .rung .formula .small { font-size: 0.7em; color: var(--fg-2); }
   .rung:not(.ready) .formula { color: var(--fg-2); }
 
-  .chip {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    border-radius: 999px;
-    white-space: nowrap;
-    border: 1px solid transparent;
-  }
   .chip.ready { background: var(--accent-wash); color: var(--accent); border-color: var(--accent-wash); }
   .chip.planned { color: var(--muted); border: 1px dashed var(--axis); }
   .open-link { font-size: 14px; color: var(--accent); text-decoration: none; width: fit-content; }
@@ -101,9 +91,9 @@
 <main class="page">
 
   <header class="col hub-head">
-    <div class="eyebrow">Interaktive Visualisierungen · 8 Kapitel</div>
+    <div class="eyebrow">Interaktive Visualisierungen · 9 Kapitel</div>
     <h1>Von der Geraden zur Attention</h1>
-    <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann.</p>
+    <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann. Zum Anfassen statt zum Lesen.</p>
   </header>
 
   <section class="wide ladder" aria-labelledby="ladder-title">
@@ -116,17 +106,16 @@
       <li class="rung ready">
         <div class="num">1</div>
         <div class="body">
-          <div class="top"><h2><a href="01-linear-regression.html">Die Gerade</a></h2><span class="chip ready">Erste Fassung</span></div>
+          <div class="top"><h2><a href="01-linear-regression.html">Die Gerade</a></h2><span class="chip ready">Zweite Fassung</span></div>
           <div class="sub">Lineare Regression, Verlust, Gradientenabstieg</div>
           <p class="new"><b>Neue Idee</b>Einen Fehler mit einer Zahl messen und die Parameter bergab schieben, bis er nicht mehr kleiner wird.</p>
           <details>
             <summary>Abbildungen</summary>
             <ul>
-              <li>Eine Gerade von Hand anpassen, mit den Fehlerquadraten als echten Quadraten</li>
-              <li>Die Verlustlandschaft in 2D und als Schüssel in 3D</li>
-              <li>Gradientenabstieg: Lernrate, Divergenz und warum Standardisieren hilft</li>
-              <li>Drei Wohnungen als ein Punkt in ℝ³: Anpassen heißt Projizieren</li>
-              <li>Die ganze Rechnung als Matrixprodukt</li>
+              <li>Die Gerade an Federn: loslassen, und sie schnappt in die beste Lage</li>
+              <li>Quadrat gegen Betrag: wie stark ein Ausreißer zieht</li>
+              <li>Eine Kugel rollt in der 3D-Schüssel bergab, in Rohdaten und standardisiert</li>
+              <li>Drei Wohnungen als ein Punkt im Raum: Anpassen heißt Projizieren</li>
             </ul>
           </details>
           <a class="open-link" href="01-linear-regression.html">Kapitel öffnen →</a>
@@ -137,8 +126,33 @@
         </div>
       </li>
 
-      <li class="rung">
+      <li class="rung ready">
         <div class="num">2</div>
+        <div class="body">
+          <div class="top"><h2><a href="02-matrix.html">Die Matrix</a></h2><span class="chip ready">Erste Fassung</span></div>
+          <div class="sub">Was eine Matrixmultiplikation mit den Daten macht</div>
+          <p class="new"><b>Neue Idee</b>Eine Matrix verformt den ganzen Raum auf einmal: drehen, spiegeln, strecken, scheren, plattdrücken. Wohin die Einheitspfeile gehen, bestimmt alles.</p>
+          <details>
+            <summary>Abbildungen</summary>
+            <ul>
+              <li>Pfeilspitzen ziehen und zusehen, wie sich Gitter, Buchstabe und Daten verformen</li>
+              <li>Jede Matrix in drei Schritten: drehen, strecken, drehen</li>
+              <li>Hintereinander ausführen: AB gegen BA</li>
+              <li>Von zwei auf drei Dimensionen: der Spaltenraum</li>
+              <li>Von drei auf zwei Dimensionen: der Kern, oder warum ein Foto die Tiefe verliert</li>
+              <li>Die Regression als Matrixprodukt</li>
+            </ul>
+          </details>
+          <a class="open-link" href="02-matrix.html">Kapitel öffnen →</a>
+        </div>
+        <div class="formula">
+          <span><b>y</b> = <span class="hl-new"><b>W</b></span> <b>x</b></span>
+          <span class="small">viele Neuronen auf einmal</span>
+        </div>
+      </li>
+
+      <li class="rung">
+        <div class="num">3</div>
         <div class="body">
           <div class="top"><h2>Die Grenze</h2><span class="chip planned">Geplant</span></div>
           <div class="sub">Logistische Regression, Wahrscheinlichkeit, Softmax</div>
@@ -157,26 +171,26 @@
       </li>
 
       <li class="rung">
-        <div class="num">3</div>
+        <div class="num">4</div>
         <div class="body">
           <div class="top"><h2>Den Raum falten</h2><span class="chip planned">Geplant</span></div>
           <div class="sub">Neuronale Netze und Backpropagation</div>
-          <p class="new"><b>Neue Idee</b>Nichtlinearitäten zwischen den Schichten lassen das Netz den Raum verbiegen, bis die Daten durch eine einzige Grenze trennbar sind.</p>
+          <p class="new"><b>Neue Idee</b>Eine Nichtlinearität zwischen zwei Matrizen lässt das Netz den Raum falten, bis die Daten durch eine einzige Grenze trennbar sind.</p>
           <details>
             <summary>Geplante Abbildungen</summary>
             <ul>
               <li>Ein Gitter, das Schicht für Schicht verformt wird (nach Olah, 2014)</li>
-              <li>ReLU als Faltung des Raums</li>
+              <li>ReLU als Falte im Raum</li>
               <li>Zwei verschlungene Spiralen entwirren</li>
               <li>Backpropagation als Fluss rückwärts durch den Rechengraphen</li>
             </ul>
           </details>
         </div>
-        <div class="formula"><span><i>ŷ</i> = <b>W</b><sub>2</sub> <span class="hl-new">σ(<b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub>)</span> + <b>b</b><sub>2</sub></span></div>
+        <div class="formula"><span><i>ŷ</i> = <b>W</b><sub>2</sub> <span class="hl-new">σ(</span><b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub><span class="hl-new">)</span> + <b>b</b><sub>2</sub></span></div>
       </li>
 
       <li class="rung">
-        <div class="num">4</div>
+        <div class="num">5</div>
         <div class="body">
           <div class="top"><h2>Viele Dimensionen</h2><span class="chip planned">Geplant</span></div>
           <div class="sub">Geometrie in ℝ<sup>d</sup> und Superposition</div>
@@ -198,7 +212,7 @@
       </li>
 
       <li class="rung">
-        <div class="num">5</div>
+        <div class="num">6</div>
         <div class="body">
           <div class="top"><h2>Bedeutung als Richtung</h2><span class="chip planned">Geplant</span></div>
           <div class="sub">Embeddings</div>
@@ -217,7 +231,7 @@
       </li>
 
       <li class="rung">
-        <div class="num">6</div>
+        <div class="num">7</div>
         <div class="body">
           <div class="top"><h2>Aufmerksamkeit</h2><span class="chip planned">Geplant</span></div>
           <div class="sub">Attention: Query, Key, Value</div>
@@ -225,7 +239,7 @@
           <details>
             <summary>Geplante Abbildungen</summary>
             <ul>
-              <li>Q, K und V als drei lineare Abbildungen</li>
+              <li>Q, K und V als drei Matrizen, die dieselben Wörter unterschiedlich abbilden</li>
               <li>Die Attention-Matrix live an einem Satz</li>
               <li>Warum durch √d geteilt wird</li>
               <li>Mehrere Köpfe, mehrere Muster</li>
@@ -236,17 +250,17 @@
       </li>
 
       <li class="rung">
-        <div class="num">7</div>
+        <div class="num">8</div>
         <div class="body">
           <div class="top"><h2>Der Strom</h2><span class="chip planned">Geplant</span></div>
-          <div class="sub">Transformer und Residual Stream</div>
+          <div class="sub">Transformer und Residual Stream, an einem selbst trainierten Mini-Transformer</div>
           <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Strom und addieren ihr Ergebnis zurück. Das Netz ist eine Folge kleiner Korrekturen.</p>
           <details>
             <summary>Geplante Abbildungen</summary>
             <ul>
+              <li>Wir trainieren einen winzigen Transformer (zwei Schichten) auf einer Spielaufgabe und schauen beim Lernen zu</li>
               <li>Der Residual Stream als Band durch die Schichten</li>
-              <li>Positionskodierung</li>
-              <li>LayerNorm als Projektion auf eine Kugel</li>
+              <li>Positionskodierung und LayerNorm als Projektion auf eine Kugel</li>
               <li>Die Vorhersage des nächsten Tokens</li>
             </ul>
           </details>
@@ -258,17 +272,18 @@
       </li>
 
       <li class="rung">
-        <div class="num">8</div>
+        <div class="num">9</div>
         <div class="body">
           <div class="top"><h2>Schaltkreise</h2><span class="chip planned">Geplant</span></div>
-          <div class="sub">Circuits: ein trainiertes Netz lesen</div>
+          <div class="sub">Circuits: unseren Mini-Transformer lesen</div>
           <p class="new"><b>Neue Idee</b>Merkmale sind Richtungen im Raum, Schaltkreise sind die Gewichte, die sie verbinden, und beides lässt sich lesen.</p>
           <details>
             <summary>Geplante Abbildungen</summary>
             <ul>
               <li>Features und Circuits in Bildnetzen (Zoom In, 2020)</li>
-              <li>QK- und OV-Schaltkreise eines Attention-Kopfs (2021)</li>
-              <li>Induction Heads: wie ein Modell Muster fortsetzt (2022)</li>
+              <li>QK- und OV-Schaltkreise der Köpfe unseres eigenen Modells (nach dem Mathematical Framework, 2021)</li>
+              <li>Induction Heads: der Moment im Training, in dem das Modell lernt, Muster fortzusetzen (2022)</li>
+              <li>Eingriffe: einen Kopf abschalten und sehen, was kaputtgeht</li>
               <li>Superposition, dünne Autoencoder und Attributionsgraphen</li>
             </ul>
           </details>
@@ -286,20 +301,20 @@
     <div class="threads">
       <div>
         <h3>Das Skalarprodukt</h3>
-        <p><span class="m"><i>w</i> · <i>x</i></span> in Kapitel 1, Ähnlichkeit zweier Wörter in Kapitel 5, <span class="m"><b>q</b> · <b>k</b></span> in Kapitel 6. Fast jede Rechnung in einem Transformer ist ein Skalarprodukt.</p>
+        <p><span class="m"><i>w</i> · <i>x</i></span> in Kapitel 1, Zeile mal Vektor in Kapitel 2, Ähnlichkeit zweier Wörter in Kapitel 6, <span class="m"><b>q</b> · <b>k</b></span> in Kapitel 7. Fast jede Rechnung in einem Transformer ist ein Skalarprodukt.</p>
       </div>
       <div>
         <h3>Der Raum</h3>
-        <p>In Kapitel 1 wird ein ganzer Datensatz zu einem Punkt in <span class="m">ℝ<sup><i>n</i></sup></span>. Kapitel 4 zeigt, wie sich hohe Dimensionen verhalten, Kapitel 8 findet dort die Merkmale, die ein Netz gelernt hat.</p>
+        <p>In Kapitel 1 wird ein Datensatz zu einem Punkt in <span class="m">ℝ<sup><i>n</i></sup></span>, in Kapitel 2 verformen Matrizen den Raum. Kapitel 5 zeigt, wie sich hohe Dimensionen verhalten, Kapitel 9 findet dort die Merkmale, die ein Netz gelernt hat.</p>
       </div>
       <div>
         <h3>Bergab</h3>
-        <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Transformer in Kapitel 7.</p>
+        <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Mini-Transformer in Kapitel 8.</p>
       </div>
     </div>
 
     <h2>Arbeitsstand</h2>
-    <p>Kapitel 1 liegt in einer ersten Fassung vor. Die übrigen Kapitel sind geplant; die Abbildungslisten sind ein Vorschlag und werden sich beim Bauen ändern. Jede Abbildung läuft im Browser, ohne Bibliotheken und ohne Server.</p>
+    <p>Kapitel 1 liegt in einer zweiten, stärker interaktiven Fassung vor, Kapitel 2 in einer ersten. Die übrigen Kapitel sind geplant; die Abbildungslisten sind ein Vorschlag und werden sich beim Bauen ändern. Jede Abbildung läuft im Browser, ohne Bibliotheken und ohne Server.</p>
 
     <h2>Quellen der Reihe</h2>
     <ol class="refs">

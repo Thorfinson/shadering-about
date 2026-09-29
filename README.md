@@ -10,10 +10,18 @@ in a browser and it runs.
 
 An interactive series (in German) that goes from linear regression to the Transformer
 and Olah's circuits work. Each chapter adds exactly one idea to the previous chapter's
-formula. Chapter 1, *Die Gerade*, is done: residuals drawn as real squares, the loss
-landscape in 2D and as a 3D bowl, gradient descent with learning rate and
-standardization, least squares as an orthogonal projection in ℝ³, and the matrix form.
-Chapters 2–8 are planned; the hub page lists the figures proposed for each.
+formula, and each idea is something to drag, drop and watch rather than read.
+
+- **Chapter 1, *Die Gerade*:** a line hung on springs that snaps into the
+  least-squares fit, squared vs. absolute error with a draggable outlier, a ball rolling
+  down the 3D loss bowl (raw vs. standardized), and least squares as an orthogonal
+  projection in ℝ³.
+- **Chapter 2, *Die Matrix*:** drag a 2×2 matrix's columns and watch the plane, a letter
+  F and the data deform; the SVD as rotate–stretch–rotate; AB vs. BA; a 3×2 matrix
+  lifting the plane into space (column space); a 2×3 matrix as a camera (kernel); the
+  regression as a matrix product.
+- Chapters 3–9 are planned; the hub page lists the figures proposed for each. The
+  circuits chapter will read a small transformer we train ourselves.
 
 Unlike the studies below, the chapters share `series.css` and `series.js`. Both are
 loaded as plain (non-module) files, so the pages still open straight from `file://`.

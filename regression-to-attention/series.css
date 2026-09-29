@@ -23,6 +23,10 @@
   --grad: #199e70;
   --model-wash: rgba(57, 135, 229, 0.16);
   --error-wash: rgba(217, 89, 38, 0.24);
+  /* matrix roles: column 1, column 2, a probe vector (same validated slots) */
+  --col1: #3987e5;
+  --col2: #d95926;
+  --probe: #199e70;
 
   --font-display: "STIX Two Text", Cambria, "Times New Roman", serif;
   --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -55,6 +59,9 @@
     --grad: #1baf7a;
     --model-wash: rgba(42, 120, 214, 0.12);
     --error-wash: rgba(235, 104, 52, 0.22);
+    --col1: #2a78d6;
+    --col2: #eb6834;
+    --probe: #1baf7a;
   }
 }
 :root[data-theme="light"] {
@@ -77,6 +84,9 @@
   --grad: #1baf7a;
   --model-wash: rgba(42, 120, 214, 0.12);
   --error-wash: rgba(235, 104, 52, 0.22);
+  --col1: #2a78d6;
+  --col2: #eb6834;
+  --probe: #1baf7a;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -163,6 +173,32 @@ h3 { font-size: 22px; line-height: 1.2; }
   padding: 14px 16px;
 }
 .aside b { color: var(--fg); font-weight: 600; }
+
+/* what's behind an experiment: short, set apart from the running text */
+.note { display: grid; gap: 6px; padding: 2px 0 2px 18px; border-left: 2px solid var(--rule); }
+.note > .eyebrow { color: var(--muted); }
+.note p { margin: 0; color: var(--fg-2); }
+.note p strong { color: var(--fg); }
+.note ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--fg-2); }
+
+.try { display: grid; gap: 8px; }
+.try > .eyebrow { color: var(--probe); }
+.try ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; font-size: 14px; line-height: 1.45; color: var(--fg-2); }
+.try li::marker { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.chip.ok { color: var(--grad); background: color-mix(in srgb, var(--grad) 14%, transparent); }
+.chip.warn { color: var(--error); background: color-mix(in srgb, var(--error) 14%, transparent); }
+.chip.neutral { color: var(--fg-2); border-color: var(--rule); }
 
 /* ---------- math, typeset by hand in HTML ---------- */
 
@@ -251,6 +287,8 @@ h3 { font-size: 22px; line-height: 1.2; }
 .plot.r32 { aspect-ratio: 3 / 2; }
 .plot.r21 { aspect-ratio: 2 / 1; }
 .plot.r31 { aspect-ratio: 3 / 1; }
+.plot.r52 { aspect-ratio: 5 / 2; }
+@media (max-width: 620px) { .plot.r52 { aspect-ratio: 4 / 3; } }
 .plot.grab canvas { cursor: grab; }
 .plot.grabbing canvas { cursor: grabbing; }
 
