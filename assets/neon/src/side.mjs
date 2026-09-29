@@ -26,10 +26,12 @@ export default function generate(kit) {
     const l = [];
     deck(buf, kit, 48, 92, 40, accent, seed, l);
     fx[name] = make(buf, kit, accent, seed, l) ?? {};
+    grime(buf, kit, seed);
     lamps[name] = l;
     return { name, buf };
   });
   const hub = arcology(kit);
+  grime(hub.buf, kit, 61);
   return [
     { sprite: 'side', frames, meta: { base: [48, 92], prx: 38, pry: 4, lamps, fx } },
     { sprite: 'sidehub', frames: [{ name: 'orchestrator', buf: hub.buf }], meta: { base: [70, 188], prx: 56, pry: 5, lamps: hub.lamps, globe: [70, 24] } },
@@ -94,6 +96,36 @@ function antenna(buf, kit, x, y, h, lamps) {
 function box(buf, kit, x0, y0, x1, y1, ramp, seed, shade = 0.5) {
   const { rampSoft } = kit;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) buf.set(x, y, rampSoft(ramp, shade - ((x - x0) / (x1 - x0)) * 0.35 - ((y - y0) / (y1 - y0)) * 0.1, x, y, seed));
+}
+
+// Years of rain: streaks running down from the sills, rust, dirt. Lights and
+// neon (bright or saturated pixels) stay as they are.
+function grime(buf, kit, seed) {
+  const { hash2 } = kit;
+  const d = buf.data;
+  for (let x = 0; x < buf.w; x++) {
+    const streaks = [0, 1].filter((k) => hash2(x, seed + k, 1) < 0.3).map((k) => [Math.floor(hash2(x, seed + k, 2) * buf.h), 4 + Math.floor(hash2(x, seed + k, 3) * 20), hash2(x, seed + k, 5) < 0.3]);
+    for (let y = 0; y < buf.h; y++) {
+      const i = (y * buf.w + x) * 4;
+      if (!d[i + 3]) continue;
+      const lum = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
+      const sat = Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]);
+      if (lum > 110 || sat > 90) continue;
+      let k = 0, rust = false;
+      for (const [y0, len, r] of streaks) {
+        if (y >= y0 && y < y0 + len) {
+          k = Math.max(k, 0.35 * (1 - (y - y0) / len));
+          rust ||= r;
+        }
+      }
+      if (hash2(x, y, seed + 4) < 0.05) k = Math.max(k, 0.3);
+      if (!k) continue;
+      const [tr, tg, tb] = rust ? [80, 34, 20] : [7, 6, 15];
+      d[i] = Math.round(d[i] + (tr - d[i]) * k);
+      d[i + 1] = Math.round(d[i + 1] + (tg - d[i + 1]) * k);
+      d[i + 2] = Math.round(d[i + 2] + (tb - d[i + 2]) * k);
+    }
+  }
 }
 
 // ---------------------------------------------------------------- places --

@@ -16,6 +16,7 @@
 //   nav                [[target, icon, label], …]; the first is the map itself
 //   text               the world's words (see TEXT below)
 //   clockStart         minutes after midnight at t = 0
+//   mapH               the map's height in art pixels (default 352); more is a finer grain
 //   agentLift          how far above its route an agent rides, in art pixels
 //   agentIcon(a)       sprite for the agent's row in the dock
 //   agentPort(ag)      where beams and specks leave an agent
@@ -217,8 +218,9 @@ const TEXT_DEFAULTS = {
 // ============================================================
 // Map geometry
 // ============================================================
-const MAP_H = 352;
+const MAP_H = 352; // art pixels high, unless the world asks for more (W.mapH: a finer grain, the city seen from further off)
 const map = { W: 680, H: MAP_H, scale: 1, ox: 0, oy: 0 };
+const grain = () => map.H / MAP_H; // how much finer this map's art pixels are than the default
 const paths = {};
 
 function layoutStations() {
@@ -414,7 +416,7 @@ function updateFleet(dt) {
   }
 }
 async function travel(ag, key, f0, f1) {
-  const dur = clamp((paths[key].L * Math.abs(f1 - f0)) / 68, 0.8, 4);
+  const dur = clamp((paths[key].L * Math.abs(f1 - f0)) / (68 * grain()), 0.8, 4); // the same pace on a finer map
   ag.travel = { path: key, f0, f1, t0: clock.t, dur };
   paths[key].busyUntil = clock.t + dur + 0.5;
   paths[key].dir = f1 > f0 ? 1 : -1;
@@ -426,7 +428,7 @@ let particles = [];
 let packets = [];
 async function packet(key, fromHub, col) {
   const p = paths[key];
-  const pk = { key, fromHub, col, t0: clock.t, dur: clamp(p.L / 120, 0.6, 2.2) };
+  const pk = { key, fromHub, col, t0: clock.t, dur: clamp(p.L / (120 * grain()), 0.6, 2.2) };
   packets.push(pk);
   p.busyUntil = clock.t + pk.dur + 0.6;
   p.dir = fromHub ? 1 : -1;
@@ -717,7 +719,7 @@ function placeCards() {
   cardRects = [];
   const MW = mapEl.clientWidth, MH = mapEl.clientHeight;
   mapEl.classList.toggle("compact", MW < 860);
-  const cardK = clamp(map.scale / 1.9, 0.7, 1);
+  const cardK = clamp((map.scale * grain()) / 1.9, 0.7, 1);
   mapEl.style.setProperty("--card-k", cardK.toFixed(3));
   const places = STATION_KEYS.map((key) => {
     const s = STATIONS[key];
@@ -776,7 +778,7 @@ function updateTags() {
       tg.h = tg.el.offsetHeight;
     }
     const p = artToCss(ag.x, ag.y - 9);
-    const gap = 10 * map.scale;
+    const gap = 10 * map.scale * grain();
     const spots = {
       above: { x: p.x - tg.w / 2, y: p.y - tg.h - 2 },
       below: { x: p.x - tg.w / 2, y: p.y + gap },
@@ -1538,16 +1540,16 @@ function resize() {
   if (!assetsReady) return;
   const r = mapEl.getBoundingClientRect();
   if (!r.width || !r.height) return;
-  const MW = clamp(Math.round((MAP_H * r.width) / r.height), 560, 820);
+  const MW = clamp(Math.round((map.H * r.width) / r.height), Math.round(560 * grain()), Math.round(820 * grain()));
   if (MW !== map.W || !staticReady) {
     map.W = MW;
     cv.width = MW;
-    cv.height = MAP_H;
+    cv.height = map.H;
     layoutStations();
     emitters = [];
     W.buildStatic();
     gcv.width = Math.round(MW / 2);
-    gcv.height = Math.round(MAP_H / 2);
+    gcv.height = Math.round(map.H / 2);
     bakeEmitters();
     drawMinimapBase();
     if (staticReady) W.seedAmbient();
@@ -1605,6 +1607,7 @@ function frame(now) {
 
 async function startOS(world) {
   W = world;
+  map.H = world.mapH ?? MAP_H;
   STATIONS = world.stations;
   STATION_KEYS = Object.keys(STATIONS);
   SPOKES = STATION_KEYS.filter((k) => k !== "hub");

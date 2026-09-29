@@ -125,7 +125,10 @@ own words. neon-os.html uses the same file.
 | [neon-2d-pixel.html](neon-2d-pixel.html) | side-on, pixel | painted pixel by pixel, with the blocks as sprites |
 
 **3D** ([assets/neon/city3d.js](assets/neon/city3d.js)): a district plate seen from
-high above, with its street grid turned against the view. The eight blocks are built
+high above and far off, with its street grid turned against the view. The blocks,
+buildings and cars keep their size while every distance in the layout grows, so a
+great deal of city fits between them. The pixel page renders on a finer map (520
+art pixels high) to keep its detail. The eight blocks are built
 in geometry: the arcology with a wireframe globe, a data archive with blinking
 racks, a holo kiosk with floating documents, an AI lab with a hologram head, container
 stacks under a crane, a firewall dome, a pagoda circled by koi, and a skyport.
@@ -138,10 +141,21 @@ loads from cdn.jsdelivr.net through an import map, so these two pages need a net
 connection.
 
 **Side-on** ([assets/neon/skyline.js](assets/neon/skyline.js) is the shared plan):
-ranks of towers fading into magenta smog under a drowned moon. Each block stands on
-a tower of its own, and neon arcs join the decks. A maglev viaduct carries a train
-through now and then, and the wet street holds it all upside down. ICE climbs the
-Testing Lab's tower out of the street. The pixel page draws the blocks from
+the city from far off, on a map 560 art pixels high. Colossal towers stand at the back
+in the smog under a drowned moon. In front of them are four ranks of towers, and they
+are not clean:
+- rain streaks and rust running down from the sills, pipes, air-conditioners dripping,
+  and fire escapes;
+- water tanks, dishes and billboards on the roofs;
+- neon signs with dead letters;
+- skybridges between towers, and a tangle of cables, some hung with washing.
+
+Low cloud lies between the ranks, and holograms hang over the middle distance. Smoke
+rises from the roofs, and the low air is lit orange by the sodium lamps. Each block
+stands on a grimy tower of its own, and neon arcs join the decks. A highway and the
+maglev cross the city. On the street, shops glow under striped awnings, cars pass and
+people walk under umbrellas, and the wet asphalt holds it all upside down. ICE climbs
+the Testing Lab's tower out of the street. The pixel page draws the blocks from
 `assets/neon/src/side.mjs`; the high-fidelity page draws the same plan as vectors.
 
 ![NEON//3D](screenshots/neon-3d.png)
@@ -158,7 +172,8 @@ the villain, add ambient life and decorate the chrome, then calls `startOS(world
 The stylesheet is themed through CSS variables, so every page restyles it with a
 short `<style>` block.
 
-A world can also do without sprites for its stations. `placeStation(s)` then sizes
+A world can ask for a finer map with `mapH`: its art pixels are then smaller, so
+the city is seen from further off. A world can also do without sprites for its stations. `placeStation(s)` then sizes
 each station itself; the 3D and vector consoles use it. The high-fidelity consoles
 swap the atlas's pixel icons for line drawings from
 [assets/os/hifi-icons.js](assets/os/hifi-icons.js).

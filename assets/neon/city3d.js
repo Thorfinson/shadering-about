@@ -30,8 +30,12 @@ function NeonCity3D(THREE, X, opts) {
   // Camera, and the map ↔ world mapping
   // ============================================================
   const DOCK = 11; // the altitude of the routes: where the runners fly
-  const VIEW = { dist: 300, pitch: THREE.MathUtils.degToRad(33), hfov: THREE.MathUtils.degToRad(31), target: new THREE.Vector3(0, 0, -6) };
-  const camera = new THREE.PerspectiveCamera(20, 2.2, 20, 1400);
+  // Z: how far out the view is. Every distance in the layout (the camera's, the
+  // blocks' spacing, the plate, the gulf, the smog) grows with it; the buildings,
+  // blocks and cars keep their size, so more of the city fits between them.
+  const Z = 1.65;
+  const VIEW = { dist: 300 * Z, pitch: THREE.MathUtils.degToRad(33), hfov: THREE.MathUtils.degToRad(31), target: new THREE.Vector3(0, 0, -6 * Z) };
+  const camera = new THREE.PerspectiveCamera(20, 2.2, 30, 1400 * Z);
   let aspectNow = 0;
   function aim(aspect) {
     if (aspect === aspectNow) return;
@@ -71,7 +75,7 @@ function NeonCity3D(THREE, X, opts) {
     documents: [0.6, 0.29, ["right", "left", "above"]],
     models: [0.86, 0.35, ["above", "left"]],
     repos: [0.15, 0.72, ["right", "above", "below"]],
-    tests: [0.76, 0.65, ["right", "below", "left"]],
+    tests: [0.76, 0.65, ["below", "right", "left"]],
     memory: [0.38, 0.86, ["left", "right", "above"]],
     deploy: [0.88, 0.86, ["left", "above"]],
   };
@@ -98,11 +102,12 @@ function NeonCity3D(THREE, X, opts) {
   renderer.toneMapping = PIXEL ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   const scene = new THREE.Scene();
-  const SMOG = C("#2a1036");
+  // the pixel city is quantized to the palette's darks, so it gets more light and a paler smog
+  const SMOG = C(PIXEL ? "#3e1a58" : "#2a1036");
   scene.background = SMOG.clone();
-  scene.fog = new THREE.Fog(SMOG.clone(), 300, 1150);
-  scene.add(new THREE.HemisphereLight(C("#6a4ab0"), C("#0a0a18"), 0.9));
-  const moon = new THREE.DirectionalLight(C("#8fb4ff"), 0.35);
+  scene.fog = new THREE.Fog(SMOG.clone(), (PIXEL ? 230 : 300) * Z, (PIXEL ? 900 : 1150) * Z);
+  scene.add(new THREE.HemisphereLight(C("#6a4ab0"), C("#0a0a18"), PIXEL ? 1.15 : 0.9));
+  const moon = new THREE.DirectionalLight(C("#8fb4ff"), PIXEL ? 0.7 : 0.35);
   moon.position.set(-60, 120, 40);
   scene.add(moon);
 
@@ -167,7 +172,7 @@ function NeonCity3D(THREE, X, opts) {
       lit *= step(0.28, wh(vec3(1.0, cell.y, s + 3.0)));
       float hue = wh(vec3(floor(cell.x / 5.0), cell.y, s + 9.0));
       vec3 wc = hue < 0.55 ? vec3(1.0, 0.55, 0.22) : hue < 0.85 ? vec3(0.35, 0.75, 1.0) : vec3(1.0, 0.3, 0.65);
-      float flick = wh(vec3(cell, s + 1.0)) < 0.03 ? step(0.45, fract(uTime * 0.9 + s * 0.07)) : 1.0;
+      float flick = wh(vec3(cell, s + 1.0)) < 0.008 ? step(0.3, fract(uTime * 0.35 + s * 0.07)) : 1.0;
       if (vWPos.y < 1.2) {
         // shopfronts at street level, some in neon
         win = step(0.08, fract(u / 3.1)) * step(fract(u / 3.1), 0.92) * step(0.15, vWPos.y) * step(vWPos.y, 1.0);
@@ -176,7 +181,7 @@ function NeonCity3D(THREE, X, opts) {
         wc = shop < 0.6 ? vec3(1.0, 0.25, 0.6) : shop < 0.8 ? vec3(0.2, 0.9, 1.0) : vec3(1.0, 0.7, 0.35);
       }
       base = mix(base, vec3(0.015, 0.02, 0.035), win);
-      emit += win * lit * flick * wc * ${PIXEL ? "1.25" : "1.5"};
+      emit += win * lit * flick * wc * ${PIXEL ? "1.5" : "1.5"} * (vWPos.y < 1.2 ? ${PIXEL ? "0.55" : "1.0"} : 1.0);
     }`;
   function windowMaterial(color, rough = 0.75, metal = 0.25) {
     const m = std(color, rough, metal);
@@ -216,7 +221,7 @@ function NeonCity3D(THREE, X, opts) {
   // ============================================================
   // The plate: wet streets, blocks of towers, signs and crowns
   // ============================================================
-  const PLATE = { x0: -150, x1: 150, z0: -46, z1: 90 };
+  const PLATE = { x0: -150 * Z, x1: 150 * Z, z0: -46 * Z, z1: 90 * Z };
   const CELL = 12;
   // the street grid is turned against the view: two-point perspective, not rows
   const GRID = THREE.MathUtils.degToRad(28), GC = Math.cos(GRID), GS = Math.sin(GRID);
@@ -253,7 +258,7 @@ function NeonCity3D(THREE, X, opts) {
           const gx = bx + bw * (u + uw / 2), gz = bz + bw * (v + vw / 2);
           const [x, z] = toWorld(gx, gz);
           if (!onPlate(x, z, Math.max(w, d) * 0.72) || nearSite(x, z, 3.5)) continue;
-          const side = smooth(70, 150, Math.abs(x)), back = smooth(-16, -44, z), front = smooth(30, 70, z);
+          const side = smooth(70 * Z, 150 * Z, Math.abs(x)), back = smooth(-16 * Z, -44 * Z, z), front = smooth(30 * Z, 70 * Z, z);
           let h = lerp(2.2, 9, rand() ** 1.6) + side * lerp(4, 40, rand() ** 2) + back * lerp(0, 18, rand() ** 2) - front * 3;
           // keep the air over the docks clear
           if (Object.values(SITE).some((s) => Math.hypot(x - s.x, z - s.z) < s.r + 12)) h = Math.min(h, 6 + rand() * 3);
@@ -277,19 +282,19 @@ function NeonCity3D(THREE, X, opts) {
     }
     // the megatowers: rising out of the undercity past the plate's far edge
     const r = rng(77);
-    for (let n = 0; n < 90; n++) {
-      const z = lerp(-80, -520, r() ** 0.8), x = (r() - 0.5) * lerp(360, 900, (-z - 80) / 440);
+    for (let n = 0; n < 150; n++) {
+      const z = lerp(-80, -520, r() ** 0.8) * Z, x = (r() - 0.5) * lerp(360, 900, (-z / Z - 80) / 440) * Z;
       const [gx, gz] = toGrid(x, z);
       const w = 12 + r() * 22, d = 12 + r() * 18;
       // some stop short, so their roofs and crowns show in the gulf below the plate
-      const top = r() < 0.4 ? lerp(-120, -25, r()) - smooth(-100, -400, z) * 40 : lerp(-10, 70, r());
-      const base = -320;
+      const top = (r() < 0.4 ? lerp(-120, -25, r()) - smooth(-100 * Z, -400 * Z, z) * 40 : lerp(-10, 70, r())) * Z;
+      const base = -320 * Z;
       const seed = litSeed(0.25 + r() * 0.35, 20 + n);
       box(w, top - base, d, gx, (top + base) / 2, gz, seed);
       if (r() < 0.5) box(w * 0.6, 18 + r() * 30, d * 0.6, gx, top + 9 + r() * 15, gz, seed);
       if (r() < 0.7) crowns.push({ gx, gz, y: top, w, d, col: pick(NEON) });
-      if (r() < 0.35) screens.push({ ...faceOf(gx, gz, 0, d, 0, 0.2), y: top - 18 - r() * 30, w: Math.min(w * 0.8, 20), h: 9 + r() * 5 });
-      if (r() < 0.5) signs.push({ ...faceOf(gx, gz, w, d, r() < 0.5 ? -1 : 1, 0.2), y: top - 10 - r() * 40, w: 2 + r() * 1.5, h: 12 + r() * 20, col: pick(NEON) });
+      if (r() < 0.22) screens.push({ ...faceOf(gx, gz, 0, d, 0, 0.2), y: top - 18 - r() * 30, w: Math.min(w * 0.5, 12), h: 5 + r() * 4 });
+      if (r() < 0.4) signs.push({ ...faceOf(gx, gz, w, d, r() < 0.5 ? -1 : 1, 0.2), y: top - 10 - r() * 40, w: 1 + r() * 0.8, h: 6 + r() * 10, col: pick(NEON), far: true });
     }
     const city = new THREE.Mesh(X.mergeGeometries(boxes), TOWER);
     scene.add(city);
@@ -330,7 +335,7 @@ function NeonCity3D(THREE, X, opts) {
         o.scale.set(s.w, s.h, 1);
         o.updateMatrix();
         m.setMatrixAt(i, o.matrix);
-        m.setColorAt(i, C(s.col, PIXEL ? 1.3 : 2.6));
+        m.setColorAt(i, C(s.col, (PIXEL ? 1.3 : 2.6) * (s.far ? 0.5 : 1)));
         s.mesh = m;
         s.i = i;
       });
@@ -339,7 +344,7 @@ function NeonCity3D(THREE, X, opts) {
     }
 
     const lamps = lampSpots;
-    const lampMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), glow("winWarm", PIXEL ? 1.3 : 3), lamps.length);
+    const lampMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), glow("winWarm", PIXEL ? 0.8 : 3), lamps.length);
     lamps.forEach(([x, z], i) => lampMesh.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, 2.2, z)));
     scene.add(lampMesh);
   }
@@ -376,9 +381,9 @@ function NeonCity3D(THREE, X, opts) {
           vec2 c = abs(fract(gw / ${CELL.toFixed(1)} + 0.5) - 0.5) * ${CELL.toFixed(1)}; // distance from the nearest street's centre line
           float dash = step(c.x, 0.07) * step(0.55, fract(gw.y * 0.35)) + step(c.y, 0.07) * step(0.55, fract(gw.x * 0.35));
           vec3 asphalt = mix(vec3(0.010, 0.010, 0.018), vec3(0.028, 0.026, 0.04), gn(w * 1.3));
-          vec2 ripple = vec2(gn(w * 0.55 + uTime * 0.5), gn(w * 0.55 - uTime * 0.4)) - 0.5;
+          vec2 ripple = vec2(gn(w * 0.4 + uTime * 0.22), gn(w * 0.4 - uTime * 0.18)) - 0.5;
           vec4 uv = vUv;
-          uv.xy += ripple * uv.w * mix(0.012, 0.003, wet);
+          uv.xy += ripple * uv.w * mix(0.007, 0.002, wet);
           vec2 b = vec2(0.0035, 0.0) * uv.w;
           vec3 refl = (texture2DProj(tDiffuse, uv).rgb * 2.0 + texture2DProj(tDiffuse, uv + vec4(b, 0.0, 0.0)).rgb + texture2DProj(tDiffuse, uv - vec4(b, 0.0, 0.0)).rgb + texture2DProj(tDiffuse, uv + vec4(b.yx, 0.0, 0.0)).rgb + texture2DProj(tDiffuse, uv - vec4(b.yx, 0.0, 0.0)).rgb) / 6.0;
           vec3 col = asphalt + refl * mix(0.22, 0.8, wet) + dash * vec3(0.16, 0.14, 0.1);
@@ -405,7 +410,7 @@ function NeonCity3D(THREE, X, opts) {
       c.filter = "none";
     }, true);
     under.repeat.set(4, 3);
-    const deep = mesh(new THREE.PlaneGeometry(1400, 900), new THREE.MeshBasicMaterial({ map: under, color: C("#ffffff", PIXEL ? 1.2 : 2.2), fog: false, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }), 0, -300, -420, scene);
+    const deep = mesh(new THREE.PlaneGeometry(1400 * Z, 900 * Z), new THREE.MeshBasicMaterial({ map: under, color: C("#ffffff", PIXEL ? 1.2 : 2.2), fog: false, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }), 0, -300 * Z, -420 * Z, scene);
     deep.rotation.x = -Math.PI / 2;
     // the smog in the gulf, lit from below: towers stand dark against it
     const rise = tex(4, 128, (c, w, h) => {
@@ -417,7 +422,7 @@ function NeonCity3D(THREE, X, opts) {
       c.fillStyle = grd;
       c.fillRect(0, 0, w, h);
     });
-    const smogGlow = mesh(new THREE.PlaneGeometry(2000, 520), new THREE.MeshBasicMaterial({ map: rise, color: C("#ffffff", PIXEL ? 0.8 : 1.1), fog: false, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), 0, -200, -430, scene);
+    const smogGlow = mesh(new THREE.PlaneGeometry(2000 * Z, 520 * Z), new THREE.MeshBasicMaterial({ map: rise, color: C("#ffffff", PIXEL ? 0.8 : 0.5), fog: false, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), 0, -200 * Z, -430 * Z, scene);
     smogGlow.rotation.x = -0.25;
     // the plate's far edge: a lip of girders with a strip of lights
     mesh(new THREE.BoxGeometry(w, 3, 2), M.dark, ground.position.x, -1.4, PLATE.z0 - 1, scene);
@@ -871,16 +876,17 @@ function NeonCity3D(THREE, X, opts) {
   function buildTraffic() {
     // x-lanes over the plate's back and between the megatowers; z-lanes along two avenues
     const defs = [
-      { axis: "x", c: -36, y: 19, dir: 1, n: 12, speed: 22 }, { axis: "x", c: -33, y: 21, dir: -1, n: 12, speed: 26 },
-      { axis: "x", c: -120, y: -26, dir: 1, n: 22, speed: 30 }, { axis: "x", c: -125, y: -30, dir: -1, n: 22, speed: 28 },
-      { axis: "x", c: -190, y: -62, dir: 1, n: 26, speed: 34 }, { axis: "x", c: -250, y: -92, dir: -1, n: 28, speed: 32 },
-      { axis: "z", c: -96, y: 16, dir: 1, n: 10, speed: 20 }, { axis: "z", c: 104, y: 17, dir: -1, n: 10, speed: 22 },
+      { axis: "x", c: -36 * Z, y: 19, dir: 1, n: 16, speed: 22 }, { axis: "x", c: -33 * Z, y: 21, dir: -1, n: 16, speed: 26 },
+      { axis: "x", c: 20 * Z, y: 24, dir: 1, n: 14, speed: 24 },
+      { axis: "x", c: -120 * Z, y: -26 * Z, dir: 1, n: 30, speed: 30 }, { axis: "x", c: -125 * Z, y: -30 * Z, dir: -1, n: 30, speed: 28 },
+      { axis: "x", c: -190 * Z, y: -62 * Z, dir: 1, n: 34, speed: 34 }, { axis: "x", c: -250 * Z, y: -92 * Z, dir: -1, n: 36, speed: 32 },
+      { axis: "z", c: -96 * Z, y: 16, dir: 1, n: 14, speed: 20 }, { axis: "z", c: 104 * Z, y: 17, dir: -1, n: 14, speed: 22 },
     ];
     let total = 0;
     for (const d of defs) {
       const cars = [];
       for (let i = 0; i < d.n; i++) cars.push({ o: i / d.n + rand() * 0.02, lane: rand() - 0.5 });
-      lanes.push({ ...d, cars, span: d.axis === "x" ? 420 + Math.max(0, -d.c) * 1.2 : 220 });
+      lanes.push({ ...d, cars, span: d.axis === "x" ? (420 + Math.max(0, -d.c / Z) * 1.2) * Z : 220 * Z });
       total += d.n;
     }
     traffic = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 0.55, 1), std("#1c1a2c", 0.35, 0.7), total);
@@ -902,7 +908,7 @@ function NeonCity3D(THREE, X, opts) {
       for (const car of L.cars) {
         const f = ((car.o + (t * L.speed * L.dir) / L.span) % 1 + 1) % 1;
         const along = (f - 0.5) * L.span;
-        const x = L.axis === "x" ? along : L.c + car.lane * 3, z = L.axis === "x" ? L.c + car.lane * 3 : along * 0.6 + 10;
+        const x = L.axis === "x" ? along : L.c + car.lane * 3, z = L.axis === "x" ? L.c + car.lane * 3 : along * 0.6 + 10 * Z;
         v3.set(x, L.y + car.lane * 1.5, z);
         traffic.setMatrixAt(i++, m4.compose(v3, q, s3));
         const fx = Math.cos(heading), fz = -Math.sin(heading);
@@ -916,10 +922,10 @@ function NeonCity3D(THREE, X, opts) {
 
   let rain = null;
   function buildRain() {
-    const n = PIXEL ? 1400 : 3200;
+    const n = PIXEL ? 1800 : 2600;
     const pos = new Float32Array(n * 6), seed = new Float32Array(n * 2);
     for (let i = 0; i < n; i++) {
-      const x = (rand() - 0.5) * 240, y = rand() * 90, z = lerp(-110, 95, rand());
+      const x = (rand() - 0.5) * 240 * Z, y = rand() * 90, z = lerp(-110, 95, rand()) * Z;
       pos.set([x, y, z, x, y, z], i * 6);
       seed[i * 2] = 0;
       seed[i * 2 + 1] = 1;
@@ -929,7 +935,7 @@ function NeonCity3D(THREE, X, opts) {
     geo.setAttribute("aEnd", new THREE.BufferAttribute(seed, 1));
     rain = new THREE.LineSegments(geo, new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      uniforms: { uTime: U.time, uCol: { value: C("#9ab8ff", PIXEL ? 0.22 : 0.16) } },
+      uniforms: { uTime: U.time, uCol: { value: C("#9ab8ff", PIXEL ? 0.3 : 0.11) } },
       vertexShader: /* glsl */ `
         attribute float aEnd; uniform float uTime; varying float vA;
         void main() {
@@ -957,11 +963,11 @@ function NeonCity3D(THREE, X, opts) {
       fragmentShader: /* glsl */ `uniform vec3 uCol; varying float vY; varying vec3 vN; varying vec3 vV;
         void main() { float side = pow(abs(dot(vN, vV)), 1.5); gl_FragColor = vec4(uCol * vY * vY * side, 1.0); }`,
     });
-    for (const [x, z, y, ph] of [[-120, -150, -70, 0], [40, -210, -100, 2.1], [150, -130, -60, 4]]) {
+    for (const [x, z, y, ph] of [[-120 * Z, -150 * Z, -70 * Z, 0], [40 * Z, -210 * Z, -100 * Z, 2.1], [150 * Z, -130 * Z, -60 * Z, 4]]) {
       const pivot = new THREE.Group();
       pivot.position.set(x, y, z);
       // apex at the lamp, opening upward
-      pivot.add(new THREE.Mesh(new THREE.ConeGeometry(16, 240, 32, 1, true).translate(0, -120, 0).rotateX(Math.PI), mat));
+      pivot.add(new THREE.Mesh(new THREE.ConeGeometry(16 * Z, 240 * Z, 32, 1, true).translate(0, -120 * Z, 0).rotateX(Math.PI), mat));
       scene.add(pivot);
       searchlights.push({ pivot, ph });
     }
@@ -996,7 +1002,7 @@ function NeonCity3D(THREE, X, opts) {
     adTex = new THREE.CanvasTexture(adCanvas);
     adTex.colorSpace = THREE.SRGBColorSpace;
     if (PIXEL) adTex.magFilter = adTex.minFilter = THREE.NearestFilter;
-    const adMat = new THREE.MeshBasicMaterial({ map: adTex, toneMapped: false, color: C("#ffffff", PIXEL ? 1.2 : 2.2) });
+    const adMat = new THREE.MeshBasicMaterial({ map: adTex, toneMapped: false, color: C("#ffffff", PIXEL ? 1.1 : 1.4) });
     for (const s of screens) mesh(new THREE.PlaneGeometry(s.w, s.h), adMat, s.x, s.y, s.z, scene).rotation.y = s.ry;
     blimp = new THREE.Group();
     const hull = mesh(new THREE.SphereGeometry(1, 32, 16), std("#3a3650", 0.5, 0.5), 0, 0, 0, blimp);
@@ -1034,6 +1040,7 @@ function NeonCity3D(THREE, X, opts) {
       mesh(new THREE.BoxGeometry(0.12, 0.2, 1.1), glow("#ffffff", PIXEL ? 1.3 : 4), 2.1, -0.15, 0, g);
       mesh(new THREE.BoxGeometry(0.12, 0.16, 1.2), glow("red", PIXEL ? 1.3 : 3), -2.1, -0.2, 0, g);
       g.visible = false;
+      g.userData.size = 1.3; // a little larger than life, so they read from this far out
       scene.add(g);
       cars[a.id] = { g, yaw: 0, last: null };
     }
@@ -1251,7 +1258,7 @@ function NeonCity3D(THREE, X, opts) {
     const palVec = pal.map((h) => new THREE.Vector3(...hexRGB(h).map((v) => v / 255)));
     while (palVec.length < 96) palVec.push(palVec[0]);
     pixelRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, depthTexture: new THREE.DepthTexture(4, 4) });
-    bloom = new X.UnrealBloomPass(new THREE.Vector2(128, 64), 0.3, 0.1, 0.95);
+    bloom = new X.UnrealBloomPass(new THREE.Vector2(128, 64), 0.18, 0.05, 0.95);
     pixelQuad = new X.FullScreenQuad(new THREE.ShaderMaterial({
       uniforms: { tColor: { value: pixelRT.texture }, tDepth: { value: pixelRT.depthTexture }, res: { value: new THREE.Vector2(4, 4) }, cn: { value: camera.near }, cf: { value: camera.far }, pal: { value: palVec }, npal: { value: Math.min(96, pal.length) } },
       vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
@@ -1268,7 +1275,7 @@ function NeonCity3D(THREE, X, opts) {
           float dn = min(min(lin(vUv + vec2(px.x, 0.0)), lin(vUv - vec2(px.x, 0.0))), min(lin(vUv + vec2(0.0, px.y)), lin(vUv - vec2(0.0, px.y))));
           // just behind a nearer edge: the ink outline of pixel art
           c *= mix(1.0, 0.3, step(0.8 + d * 0.012, d - dn));
-          vec3 s = srgb(aces(c * 1.1));
+          vec3 s = srgb(aces(c * 1.4));
           float best = 1e9;
           vec3 q = s;
           for (int i = 0; i < 96; i++) {
@@ -1283,20 +1290,20 @@ function NeonCity3D(THREE, X, opts) {
     }));
   }
   let size = { w: 0, h: 0 };
-  let quality = 1, slow = 0, quick = 0, lastFrame = 0;
+  // A device that can't keep up gets a lower resolution, stepping down only:
+  // stepping back up would make it hunt, and every step resizes the canvas.
+  // It runs before the frame is drawn, never after (a resize clears the canvas).
+  let quality = 1, lastFrame = 0;
+  const recent = [];
   function adapt() {
     const now = performance.now(), dt = now - lastFrame;
     lastFrame = now;
     if (PIXEL || dt > 250) return; // the pixel city is cheap; a long gap is a hidden tab
-    if (dt > 30) slow++;
-    else if (dt < 18) quick++;
-    if (slow > 40 && quality > 0.55) {
-      quality = Math.max(0.55, quality * 0.8);
-      slow = quick = 0;
-      resizeRender();
-    } else if (quick > 240 && quality < 1) {
-      quality = Math.min(1, quality * 1.15);
-      slow = quick = 0;
+    recent.push(dt > 34 ? 1 : 0);
+    if (recent.length > 90) recent.shift();
+    if (recent.length === 90 && recent.reduce((a, b) => a + b, 0) > 70 && quality > 0.6) {
+      quality = Math.max(0.6, quality * 0.8);
+      recent.length = 0;
       resizeRender();
     }
   }
@@ -1420,6 +1427,7 @@ function NeonCity3D(THREE, X, opts) {
     atlas: window.NEON_ATLAS,
     atlasFile: "assets/neon/atlas.js",
     stations: NEON_STORY.place(LAYOUT),
+    mapH: PIXEL ? 520 : undefined, // the pixel city from further out needs a finer grain
     agentLift: 0,
     beadDim: "#1a1430",
     agentIcon: (a) => (PIXEL ? `car.${a.id}.fly0` : `hifi.car.${a.id}`),
@@ -1477,10 +1485,10 @@ function NeonCity3D(THREE, X, opts) {
         sl.pivot.rotation.z = Math.sin(t * 0.21 + sl.ph) * 0.45;
         sl.pivot.rotation.x = Math.cos(t * 0.17 + sl.ph) * 0.3 - 0.15;
       }
-      const bx = ((t * 6 + 240) % 640) - 320;
-      blimp.position.set(bx, -34, -150);
+      const bx = (((t * 6 + 240) % 640) - 320) * Z;
+      blimp.position.set(bx, -34 * Z, -150 * Z);
       blimp.rotation.y = 0;
-      bigKoi.obj.position.set(Math.sin(t * 0.05) * 150, -70 + Math.sin(t * 0.3) * 4, -205 + Math.cos(t * 0.08) * 20);
+      bigKoi.obj.position.set(Math.sin(t * 0.05) * 150 * Z, (-70 + Math.sin(t * 0.3) * 4) * Z, (-205 + Math.cos(t * 0.08) * 20) * Z);
       bigKoi.obj.rotation.y = Math.cos(t * 0.05) > 0 ? 0 : Math.PI;
       bigKoi.swim(t * 2);
       if (t - lastUi > 0.25) {
@@ -1505,11 +1513,12 @@ function NeonCity3D(THREE, X, opts) {
         car.g.position.copy(P3);
         car.g.position.y += Math.sin(t * 2.2 + ag.slot) * 0.15;
         car.g.rotation.set(0, car.yaw, Math.sin(t * 1.7 + ag.slot) * 0.04);
+        car.g.scale.setScalar(car.g.userData.size);
       }
       for (const sp of places.repos.steam ?? []) if (Math.random() < 0.3) spawn("steam", sp, Q3.set((Math.random() - 0.5) * 0.6, 2 + Math.random(), (Math.random() - 0.5) * 0.6), "#8a86a8", 3);
       drawPoints(t);
-      draw();
       adapt();
+      draw();
     },
     seedAmbient() {},
     updateAmbient() {},
