@@ -21,6 +21,10 @@
 //   agentPort(ag)      where beams and specks leave an agent
 //   beamTarget(key)    where a working agent's beam points at a station
 //   layoutStation(s, meta)   extra per-station layout from the atlas meta
+//   placeStation(s)    instead of sprites: set s.prx, s.pry (the platform's
+//                      ellipse) and s.sx, s.sy, s.w, s.h (its box on the map)
+//                      from s.x, s.y; a 3D world may move s.x, s.y too
+//   onResize()         after the map is laid out and scaled (map.scale, map.ox, map.oy)
 //   buildStatic()      paint the unchanging world into `staticCanvas`, push
 //                      glow points into `emitters`
 //   render(t)          draw one frame into ctx and the glow layer
@@ -220,11 +224,16 @@ const paths = {};
 function layoutStations() {
   const { W: MW, H } = map;
   for (const s of Object.values(STATIONS)) {
-    const m = ATLAS.meta[s.key === "hub" ? "hub" : "station"];
-    s.prx = m.prx;
-    s.pry = m.pry;
     s.x = Math.round(MW * s.fx);
     s.y = Math.round(H * s.fy);
+    s.col = P[s.color];
+    if (W.placeStation) {
+      W.placeStation(s); // a world without station sprites sizes them itself
+      continue;
+    }
+    const m = ATLAS.meta[s.frame.split(".")[0]]; // "station.repos" → the meta of sprite "station"
+    s.prx = m.prx;
+    s.pry = m.pry;
     const c = spr(s.frame);
     s.sx = s.x - m.base[0];
     s.sy = s.y - m.base[1];
@@ -232,7 +241,6 @@ function layoutStations() {
     s.h = c.height;
     s.lamps = (s.key === "hub" ? m.lamps : m.lamps[s.key]).map(([x, y]) => [s.sx + x, s.sy + y]);
     s.parts = s.key === "hub" ? {} : m.fx?.[s.key] ?? {}; // where its moving parts go
-    s.col = P[s.color];
     W.layoutStation?.(s, m);
   }
   const hub = STATIONS.hub;
@@ -1548,6 +1556,7 @@ function resize() {
   map.scale = Math.min(r.width / map.W, r.height / map.H);
   map.ox = (r.width - map.W * map.scale) / 2;
   map.oy = (r.height - map.H * map.scale) / 2;
+  W.onResize?.();
   placeCards();
   if (selected) renderPop(true);
 }
