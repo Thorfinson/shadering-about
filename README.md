@@ -124,7 +124,8 @@ own words. neon-os.html uses the same file.
 | [neon-2d.html](neon-2d.html) | side-on, high fidelity | vectors at the screen's own resolution: gradients, soft light, smoke |
 | [neon-2d-pixel.html](neon-2d-pixel.html) | side-on, pixel | painted pixel by pixel, with the blocks as sprites |
 
-**3D** ([assets/neon/city3d.js](assets/neon/city3d.js)): a district plate seen from
+**3D** ([assets/neon/city3d.js](assets/neon/city3d.js), on the shared
+[assets/os/city3d.js](assets/os/city3d.js)): a district plate seen from
 high above and far off, with its street grid turned against the view. The blocks,
 buildings and cars keep their size while every distance in the layout grows, so a
 great deal of city fits between them. The pixel page renders on a finer map (520
@@ -162,6 +163,53 @@ the Testing Lab's tower out of the street. The pixel page draws the blocks from
 ![NEON//3D Pixel](screenshots/neon-3d-pixel.png)
 ![NEON//2D](screenshots/neon-2d.png)
 ![NEON//2D Pixel](screenshots/neon-2d-pixel.png)
+
+### NOIR//3D — the console in a city of rain, sodium light and pyramids
+
+[noir-3d.html](noir-3d.html) (high fidelity) and [noir-3d-pixel.html](noir-3d-pixel.html)
+(pixel) run the NEON story in another city, a homage to the look of Blade Runner. The
+pages use no film name or real brand. [assets/noir/story.js](assets/noir/story.js)
+changes only the city's own words; the runners, blocks, projects and cards are NEON's.
+The city is drawn in that look's scale: a few colossal things and a great many tiny
+ones.
+
+- **Colossal:** a stepped pyramid behind the orchestrator's landing pad, lit terrace by
+  terrace, with lifts climbing its faces and two searchlights sweeping from the summit.
+  Its larger twin rises out of the undercity past the plate's edge. Brutalist megablocks
+  at the sides leave the top of the frame, with giant screens on their flanks: a face,
+  an eye, and slogans for made-up brands. Flare stacks in the district and in the sprawl
+  burn off gas and now and then burst into fire.
+- **Tiny:** the small city is low, dense and dark on a narrow street grid. Sodium
+  lamps line the avenues and throw pools of light on the wet street. There are shop
+  boards, glyph signs, masts with red lights, steam from the vents, and a crowd of lit
+  umbrellas drifting along the pavements.
+- **In between:** spinners fly in lanes. Police spinners hover over the streets with
+  searchlights, and a blimp drifts with an ad screen and its lights in the haze. A
+  hologram of a woman's head rises from the sprawl, and rain falls on everything.
+
+The seven blocks:
+- a concrete archive with glowing racks and a mast;
+- a night market with stalls, a noodle counter, a notice board and holo pages;
+- the Eye Works, a round tower under a giant eye that looks about and blinks;
+- a foundry yard with containers, tanks and a burning stack;
+- a precinct under a scanning dome, with a spinner pad and a searchlight;
+- a memory dome with snow falling on a small tree;
+- an off-world port with a gantry, an upright shuttle and floodlights.
+
+The runners fly spinners with light bars, and ICE rises beside the precinct. The light
+is sodium amber, smog blue-grey, teal and fire. The high-fidelity page grades toward
+teal shadows under warm light. The pixel page reduces to a palette of its own: smog,
+sodium, fire, teal and a little neon.
+
+Both 3D cities stand on [assets/os/city3d.js](assets/os/city3d.js). It holds the
+fixed camera and the map ↔ world mapping, the renderer and its post (bloom and grade,
+or outline and palette), the lit-window shader, the runners' cars, the ICE, the routes
+as glowing points, the CCTV corner and the engine's hooks.
+[assets/neon/city3d.js](assets/neon/city3d.js) and
+[assets/noir/city3d.js](assets/noir/city3d.js) each build only their city.
+
+![NOIR//3D](screenshots/noir-3d.png)
+![NOIR//3D Pixel](screenshots/noir-3d-pixel.png)
 
 All three consoles share one engine, [assets/os/engine.js](assets/os/engine.js), and
 one stylesheet, [assets/os/os.css](assets/os/os.css). The engine owns the layout,
@@ -230,11 +278,11 @@ Open any `.html` file directly in a browser — everything is self-contained.
 
 `nautilus-agents.html` and `nautilus-os.html` load their sprite atlas from
 `assets/nautilus/atlas.js`, `hortus-os.html` from `assets/garden/atlas.js` and
-`neon-os.html` and its four variants from `assets/neon/atlas.js`. The consoles also
+`neon-os.html`, its four variants and the NOIR pair from `assets/neon/atlas.js`. The consoles also
 load `assets/os/engine.js` and `assets/os/os.css`. All of these are plain script and
-link tags, so the pages still work from `file://`. `neon-3d.html` and
-`neon-3d-pixel.html` also import three.js from cdn.jsdelivr.net, so they need a
-network connection. The one exception is
+link tags, so the pages still work from `file://`. The four 3D consoles
+(`neon-3d.html`, `neon-3d-pixel.html`, `noir-3d.html`, `noir-3d-pixel.html`) also
+import three.js from cdn.jsdelivr.net, so they need a network connection. The one exception is
 `cosmic-filament.html`, which imports an ES module and therefore needs to be served
 over HTTP:
 

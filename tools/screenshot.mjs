@@ -55,8 +55,8 @@ const STUDIES = [
     viewport: { width: 1700, height: 1000 },
     readySelector: 'body[data-ready="1"]',
   },
-  // the four NEON variants: side-on and 3D, each in high fidelity and in pixels
-  ...['neon-2d', 'neon-2d-pixel', 'neon-3d', 'neon-3d-pixel'].map((name) => ({
+  // the four NEON variants, side-on and 3D, and the NOIR pair; each in high fidelity and in pixels
+  ...['neon-2d', 'neon-2d-pixel', 'neon-3d', 'neon-3d-pixel', 'noir-3d', 'noir-3d-pixel'].map((name) => ({
     name,
     page: `${name}.html?at=40`,
     settle: name.includes('3d') ? 2500 : 900,
@@ -118,7 +118,7 @@ async function captureStudy(browser, baseUrl, study) {
     viewport: study.viewport ?? VIEWPORT,
     deviceScaleFactor: 1,
   });
-  // neon-3d*.html import three.js from the CDN: serve it from node_modules when installed
+  // neon-3d*.html and noir-3d*.html import three.js from the CDN: serve it from node_modules when installed
   await ctx.route(THREE_CDN, async (route) => {
     const rel = route.request().url().replace(THREE_CDN, '');
     try {

@@ -3,30 +3,30 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>NEON//3D</title>
-<!-- NEON//3D: the NEON orchestration console as a three.js city, high fidelity. See assets/neon/city3d.js. -->
+<title>NOIR//3D</title>
+<!-- NOIR//3D: the orchestration console in a three.js city of rain, sodium light and pyramids, high fidelity. See assets/noir/city3d.js and assets/os/city3d.js. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" />
 <link rel="stylesheet" href="assets/os/os.css" />
 <style>
-  /* high fidelity: smoked glass over the city, soft neon, smooth type */
+  /* NOIR//3D: smoked glass over a city of rain and sodium light — amber and teal */
   :root {
-    --bg: #05040b;
-    --bg-glow: #1d0c33;
-    --panel: rgba(16, 11, 34, 0.62);
-    --panel-hi: rgba(34, 22, 66, 0.52);
-    --line: rgba(170, 160, 255, 0.16);
-    --line-2: rgba(62, 240, 255, 0.4);
-    --accent: #ff3d8b;
-    --accent-hi: #ff8ac0;
-    --accent-lo: #7a1440;
-    --on-accent: #12020a;
-    --hub: #3ef0ff;
-    --cyan: #3ef0ff;
-    --ink: #f3f1ff;
-    --muted: rgba(243, 241, 255, 0.7);
-    --faint: rgba(243, 241, 255, 0.46);
+    --bg: #060607;
+    --bg-glow: #1f1409;
+    --panel: rgba(14, 13, 12, 0.62);
+    --panel-hi: rgba(40, 32, 24, 0.5);
+    --line: rgba(255, 200, 140, 0.16);
+    --line-2: rgba(95, 216, 224, 0.4);
+    --accent: #ffa640;
+    --accent-hi: #ffd08a;
+    --accent-lo: #6a3a0c;
+    --on-accent: #140a02;
+    --hub: #5fd8e0;
+    --cyan: #5fd8e0;
+    --ink: #f6eee2;
+    --muted: rgba(246, 238, 226, 0.7);
+    --faint: rgba(246, 238, 226, 0.46);
     --good: #39ff8a;
     --warn: #ffb000;
     --bad: #ff3355;
@@ -37,13 +37,13 @@
     --test: #4d9bff;
     --deploy: #b36bff;
     --remember: #f0e6ff;
-    --map-bg: #0c0618;
-    --card-bg: rgba(12, 8, 28, 0.66);
-    --card-head: linear-gradient(180deg, rgba(255, 61, 139, 0.16), rgba(62, 240, 255, 0.05));
-    --pop-bg: rgba(12, 8, 28, 0.9);
+    --map-bg: #08090b;
+    --card-bg: rgba(12, 11, 10, 0.66);
+    --card-head: linear-gradient(180deg, rgba(255, 166, 64, 0.16), rgba(95, 216, 224, 0.05));
+    --pop-bg: rgba(12, 11, 10, 0.9);
     --btn-bg: rgba(255, 255, 255, 0.05);
-    --option-bg: #150f2c;
-    --corner-bg: #05040a;
+    --option-bg: #171410;
+    --corner-bg: #050505;
     --radius: 14px;
     --display: "Orbitron", "Eurostile", sans-serif;
     --ui: "Exo 2", "Segoe UI", system-ui, sans-serif;
@@ -95,7 +95,7 @@
     <div class="panel brand">
       <canvas id="brand-mark" width="44" height="48" aria-hidden="true"></canvas>
       <div>
-        <h1>NEON//3D</h1>
+        <h1>NOIR//3D</h1>
         <small>Agent orchestration</small>
         <i>High fidelity · 3D</i>
       </div>
@@ -126,23 +126,23 @@
 
   <nav class="rail" aria-label="Blocks">
     <div class="panel nav" id="nav">
-      <p class="motto">“Every lit window is somebody still shipping.”<span>Graffiti · Sector 7</span></p>
+      <p class="motto">“Every lit window up there is somebody’s night shift.”<span>Graffiti · Level 4</span></p>
     </div>
     <div class="panel corner">
       <canvas id="corner-art" width="360" height="472" aria-hidden="true"></canvas>
-      <div class="plaque">SHIP TO THE GRID</div>
+      <div class="plaque">RAIN ON LEVEL 4</div>
     </div>
   </nav>
 
   <main class="map" id="map-frame">
     <div class="map-inner" id="map">
-      <canvas class="world" id="world" role="img" aria-label="A rainy megacity at night in three dimensions, seen from high above: the orchestrator’s arcology in the middle of a district plate, neon routes to seven blocks — a data archive, a holo kiosk, an AI lab, container stacks, a firewall, a memory pagoda and a skyport — hover-car agents flying between them, and megatowers falling away into the smog past the plate’s edge."></canvas>
+      <canvas class="world" id="world" role="img" aria-label="A city of rain and sodium light in three dimensions, seen from high above: a stepped pyramid over the district with the orchestrator’s landing pad at its foot, brutalist megablocks with giant screens leaving the top of the frame, routes to seven small blocks — a concrete archive, a night market, the Eye Works, a foundry yard, a precinct under a scanning dome, a memory dome and an off-world port — spinner agents flying between them, a crowd of lit umbrellas in the streets, and past the plate’s edge an industrial sprawl with flare stacks, a rising hologram, a blimp and searchlights in the smog."></canvas>
       <canvas class="glow" id="glow" aria-hidden="true"></canvas>
       <div class="overlay" id="overlay"></div>
       <div class="boot" id="boot">
         <div>
           <h2>Building the city</h2>
-          <div id="boot-what">three.js · assets/neon/city3d.js</div>
+          <div id="boot-what">three.js · assets/noir/city3d.js</div>
           <div class="bar"><i id="boot-bar"></i></div>
           <pre id="boot-log"></pre>
         </div>
@@ -184,7 +184,7 @@
           <li><i style="background:var(--warn)"></i>In progress</li>
           <li><i style="border:1px solid var(--muted)"></i>Planned</li>
         </ul>
-        <p>“Ship to the grid. Sleep at dawn.”</p>
+        <p>“The flares burn all night so the city can sleep.”</p>
       </div>
     </div>
   </section>
@@ -197,8 +197,9 @@
 <script src="assets/os/engine.js"></script>
 <script src="assets/os/hifi-icons.js"></script>
 <script src="assets/neon/story.js"></script>
+<script src="assets/noir/story.js"></script>
 <script src="assets/os/city3d.js"></script>
-<script src="assets/neon/city3d.js"></script>
+<script src="assets/noir/city3d.js"></script>
 <script type="module">
 // three.js comes from the CDN; the city is built once it has arrived.
 import * as THREE from "three";
@@ -210,10 +211,10 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import { Reflector } from "three/addons/objects/Reflector.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-window.NEON_3D_READY = true;
+window.CITY_3D_READY = true;
 try {
-  const world = NeonCity3D(THREE, { EffectComposer, RenderPass, UnrealBloomPass, OutputPass, ShaderPass, FullScreenQuad, Reflector, mergeGeometries }, { pixel: false });
-  startOS({ ...NEON_STORY, ...world });
+  const world = NoirCity3D(THREE, { EffectComposer, RenderPass, UnrealBloomPass, OutputPass, ShaderPass, FullScreenQuad, Reflector, mergeGeometries }, { pixel: false });
+  startOS({ ...NOIR_STORY, ...world });
 } catch (e) {
   document.getElementById("boot-what").innerHTML = `<span class="err">${esc(e.message)}</span>`;
   throw e;
@@ -222,7 +223,7 @@ try {
 <script>
 // Offline, the module above never runs: say so rather than wait forever.
 setTimeout(() => {
-  if (window.NEON_3D_READY) return;
+  if (window.CITY_3D_READY) return;
   document.getElementById("boot-what").innerHTML = '<span class="err">three.js did not arrive from cdn.jsdelivr.net.\nThis console needs a network connection.</span>';
 }, 15000);
 </script>
