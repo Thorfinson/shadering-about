@@ -1557,7 +1557,7 @@ function NeonCity3D(THREE, X, opts) {
       g.fillRect(0, 0, c.width, 38 * s);
       g.fillStyle = "rgba(0,0,0,0.22)";
       for (let y = 0; y < c.height; y += 3 * s) g.fillRect(0, y, c.width, s);
-      g.font = PIXEL ? `${Math.round(9 * s)}px 'Share Tech Mono', monospace` : `500 ${Math.round(8 * s)}px 'JetBrains Mono', monospace`;
+      g.font = PIXEL ? `${Math.round(7 * s)}px 'Share Tech Mono', monospace` : `500 ${Math.round(8 * s)}px 'JetBrains Mono', monospace`;
       // the timecode, centred where the panel's crop keeps it in view
       const cx = c.width * 0.45;
       g.textAlign = "center";
