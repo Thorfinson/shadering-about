@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Von der Geraden zur Attention</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>
+  .hub-head { display: grid; gap: 20px; padding-block: 12px 36px; }
+  .hub-head h1 { font-size: clamp(46px, 9vw, 104px); max-width: 12ch; }
+  .hub-head .lead { max-width: 40rem; }
+
+  .ladder { display: grid; gap: 18px; }
+  .ladder-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; }
+  .ladder-intro p { margin: 0; color: var(--fg-2); font-size: 16px; max-width: 46rem; }
+  .ladder-intro p .hl-new { font-weight: 600; }
+
+  ol.rungs { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+  .rung {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 10px 32px;
+    padding-block: 26px;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .rung .num {
+    font-family: var(--font-display);
+    font-size: 44px;
+    line-height: 0.9;
+    color: var(--muted);
+    font-variant-numeric: lining-nums;
+  }
+  .rung.ready .num { color: var(--accent); }
+  .rung .body { display: grid; gap: 8px; min-width: 0; }
+  .rung .top { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+  .rung h2 { font-size: clamp(26px, 3.2vw, 34px); line-height: 1.08; }
+  .rung h2 a { color: var(--fg); text-decoration: none; background-image: linear-gradient(var(--accent), var(--accent)); background-size: 0 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.25s; }
+  .rung h2 a:hover { background-size: 100% 1px; }
+  .rung .sub { font-size: 15px; color: var(--fg-2); }
+  .rung .new { font-size: 15px; color: var(--fg-2); margin: 0; line-height: 1.55; }
+  .rung .new b { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+  .rung details { font-size: 14px; color: var(--fg-2); }
+  .rung summary { cursor: pointer; color: var(--muted); width: fit-content; }
+  .rung summary:hover { color: var(--fg); }
+  .rung details ul { margin: 8px 0 0; padding-left: 1.2em; display: grid; gap: 4px; }
+  .rung .formula {
+    font-family: var(--font-math);
+    font-size: clamp(20px, 2.4vw, 27px);
+    line-height: 1.5;
+    color: var(--fg);
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    padding-block: 4px;
+    display: grid;
+    gap: 2px;
+    align-self: center;
+    min-width: 0;
+  }
+  .rung .formula i { font-style: italic; }
+  .rung .formula b { font-weight: 700; font-style: normal; }
+  .rung .formula sub, .rung .formula sup { font-size: 0.62em; line-height: 0; }
+  .rung .formula .small { font-size: 0.7em; color: var(--fg-2); }
+  .rung:not(.ready) .formula { color: var(--fg-2); }
+
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .chip.ready { background: var(--accent-wash); color: var(--accent); border-color: var(--accent-wash); }
+  .chip.planned { color: var(--muted); border: 1px dashed var(--axis); }
+  .open-link { font-size: 14px; color: var(--accent); text-decoration: none; width: fit-content; }
+  .open-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (max-width: 760px) {
+    .rung { grid-template-columns: 40px minmax(0, 1fr); gap: 8px 16px; }
+    .rung .num { font-size: 32px; }
+    .rung .formula { grid-column: 2; }
+  }
+
+  .threads { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px 28px; margin-top: 4px; }
+  .threads div { display: grid; gap: 6px; align-content: start; }
+  .threads h3 { font-size: 21px; }
+  .threads p { margin: 0; font-size: 15px; color: var(--fg-2); line-height: 1.55; }
+  .threads .m { font-size: 1.05em; }
+  .refs a { color: var(--fg); text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  .refs a:hover { text-decoration-color: var(--accent); }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col hub-head">
+    <div class="eyebrow">Interaktive Visualisierungen · 8 Kapitel</div>
+    <h1>Von der Geraden zur Attention</h1>
+    <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann.</p>
+  </header>
+
+  <section class="wide ladder" aria-labelledby="ladder-title">
+    <div class="ladder-intro">
+      <h2 id="ladder-title" class="eyebrow" style="font-family: var(--font-mono); font-size: 12px; font-weight: 400;">Die Formel wächst</h2>
+      <p>Jedes Kapitel fügt der Formel des vorigen genau eine Idee hinzu. <span class="hl-new">Violett</span> ist, was neu ist.</p>
+    </div>
+    <ol class="rungs">
+
+      <li class="rung ready">
+        <div class="num">1</div>
+        <div class="body">
+          <div class="top"><h2><a href="01-linear-regression.html">Die Gerade</a></h2><span class="chip ready">Erste Fassung</span></div>
+          <div class="sub">Lineare Regression, Verlust, Gradientenabstieg</div>
+          <p class="new"><b>Neue Idee</b>Einen Fehler mit einer Zahl messen und die Parameter bergab schieben, bis er nicht mehr kleiner wird.</p>
+          <details>
+            <summary>Abbildungen</summary>
+            <ul>
+              <li>Eine Gerade von Hand anpassen, mit den Fehlerquadraten als echten Quadraten</li>
+              <li>Die Verlustlandschaft in 2D und als Schüssel in 3D</li>
+              <li>Gradientenabstieg: Lernrate, Divergenz und warum Standardisieren hilft</li>
+              <li>Drei Wohnungen als ein Punkt in ℝ³: Anpassen heißt Projizieren</li>
+              <li>Die ganze Rechnung als Matrixprodukt</li>
+            </ul>
+          </details>
+          <a class="open-link" href="01-linear-regression.html">Kapitel öffnen →</a>
+        </div>
+        <div class="formula">
+          <span><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i></span>
+          <span class="small hl-new"><i>θ</i> ← <i>θ</i> − <i>η</i> ∇<i>L</i></span>
+        </div>
+      </li>
+
+      <li class="rung">
+        <div class="num">2</div>
+        <div class="body">
+          <div class="top"><h2>Die Grenze</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Logistische Regression, Wahrscheinlichkeit, Softmax</div>
+          <p class="new"><b>Neue Idee</b>Eine Nichtlinearität am Ausgang macht aus einer Zahl eine Wahrscheinlichkeit. Die Gerade wird zur Grenze zwischen zwei Klassen.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Die Sigmoidfläche über einer Entscheidungsgrenze in 2D</li>
+              <li>Kreuzentropie gegen quadratischen Fehler: zwei Landschaften</li>
+              <li>Softmax über drei Klassen auf dem Simplex</li>
+              <li>XOR: wo eine einzelne Grenze scheitert</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula"><span><i>p</i> = <span class="hl-new">σ(</span><i>w</i> · <i>x</i> + <i>b</i><span class="hl-new">)</span></span></div>
+      </li>
+
+      <li class="rung">
+        <div class="num">3</div>
+        <div class="body">
+          <div class="top"><h2>Den Raum falten</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Neuronale Netze und Backpropagation</div>
+          <p class="new"><b>Neue Idee</b>Nichtlinearitäten zwischen den Schichten lassen das Netz den Raum verbiegen, bis die Daten durch eine einzige Grenze trennbar sind.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Ein Gitter, das Schicht für Schicht verformt wird (nach Olah, 2014)</li>
+              <li>ReLU als Faltung des Raums</li>
+              <li>Zwei verschlungene Spiralen entwirren</li>
+              <li>Backpropagation als Fluss rückwärts durch den Rechengraphen</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula"><span><i>ŷ</i> = <b>W</b><sub>2</sub> <span class="hl-new">σ(<b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub>)</span> + <b>b</b><sub>2</sub></span></div>
+      </li>
+
+      <li class="rung">
+        <div class="num">4</div>
+        <div class="body">
+          <div class="top"><h2>Viele Dimensionen</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Geometrie in ℝ<sup>d</sup> und Superposition</div>
+          <p class="new"><b>Neue Idee</b>In vielen Dimensionen stehen fast alle Richtungen fast senkrecht aufeinander. Deshalb passen mehr Merkmale hinein, als es Dimensionen gibt.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Winkel zwischen Zufallsvektoren für d = 2 bis 1000</li>
+              <li>Wo das Volumen einer hochdimensionalen Kugel liegt</li>
+              <li>Superposition: fünf Merkmale in zwei Dimensionen (Toy Models, 2022)</li>
+              <li>Wie Projektionen auf zwei Dimensionen täuschen</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula">
+          <span><b>u</b> · <b>v</b> <span class="hl-new">≈ 0</span></span>
+          <span class="small">für zufällige <b>u</b>, <b>v</b> ∈ ℝ<sup><i>d</i></sup>, <i>d</i> groß</span>
+        </div>
+      </li>
+
+      <li class="rung">
+        <div class="num">5</div>
+        <div class="body">
+          <div class="top"><h2>Bedeutung als Richtung</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Embeddings</div>
+          <p class="new"><b>Neue Idee</b>Wörter werden zu Vektoren, und Bedeutung wird zu Geometrie: Ähnlichkeit ist ein Skalarprodukt, Beziehungen sind Richtungen.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Die Embedding-Tabelle als Nachschlagen</li>
+              <li>Ähnlichkeit als Skalarprodukt</li>
+              <li>Lineare Richtungen: König − Mann + Frau</li>
+              <li>Ein echter Embedding-Raum, auf zwei Dimensionen projiziert</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
+      </li>
+
+      <li class="rung">
+        <div class="num">6</div>
+        <div class="body">
+          <div class="top"><h2>Aufmerksamkeit</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Attention: Query, Key, Value</div>
+          <p class="new"><b>Neue Idee</b>Die Gewichte der Mischung werden aus den Daten selbst berechnet. Jedes Wort entscheidet, auf welche anderen Wörter es achtet.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Q, K und V als drei lineare Abbildungen</li>
+              <li>Die Attention-Matrix live an einem Satz</li>
+              <li>Warum durch √d geteilt wird</li>
+              <li>Mehrere Köpfe, mehrere Muster</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
+      </li>
+
+      <li class="rung">
+        <div class="num">7</div>
+        <div class="body">
+          <div class="top"><h2>Der Strom</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Transformer und Residual Stream</div>
+          <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Strom und addieren ihr Ergebnis zurück. Das Netz ist eine Folge kleiner Korrekturen.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Der Residual Stream als Band durch die Schichten</li>
+              <li>Positionskodierung</li>
+              <li>LayerNorm als Projektion auf eine Kugel</li>
+              <li>Die Vorhersage des nächsten Tokens</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula">
+          <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> Attn(<b>x</b>)</span>
+          <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> MLP(<b>x</b>)</span>
+        </div>
+      </li>
+
+      <li class="rung">
+        <div class="num">8</div>
+        <div class="body">
+          <div class="top"><h2>Schaltkreise</h2><span class="chip planned">Geplant</span></div>
+          <div class="sub">Circuits: ein trainiertes Netz lesen</div>
+          <p class="new"><b>Neue Idee</b>Merkmale sind Richtungen im Raum, Schaltkreise sind die Gewichte, die sie verbinden, und beides lässt sich lesen.</p>
+          <details>
+            <summary>Geplante Abbildungen</summary>
+            <ul>
+              <li>Features und Circuits in Bildnetzen (Zoom In, 2020)</li>
+              <li>QK- und OV-Schaltkreise eines Attention-Kopfs (2021)</li>
+              <li>Induction Heads: wie ein Modell Muster fortsetzt (2022)</li>
+              <li>Superposition, dünne Autoencoder und Attributionsgraphen</li>
+            </ul>
+          </details>
+        </div>
+        <div class="formula">
+          <span><b>W</b><sub>QK</sub> = <span class="hl-new"><b>W</b><sub>Q</sub><sup>⊤</sup><b>W</b><sub>K</sub></span></span>
+          <span><b>W</b><sub>OV</sub> = <span class="hl-new"><b>W</b><sub>O</sub><b>W</b><sub>V</sub></span></span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="col prose" style="margin-top: 40px">
+    <h2>Drei rote Fäden</h2>
+    <div class="threads">
+      <div>
+        <h3>Das Skalarprodukt</h3>
+        <p><span class="m"><i>w</i> · <i>x</i></span> in Kapitel 1, Ähnlichkeit zweier Wörter in Kapitel 5, <span class="m"><b>q</b> · <b>k</b></span> in Kapitel 6. Fast jede Rechnung in einem Transformer ist ein Skalarprodukt.</p>
+      </div>
+      <div>
+        <h3>Der Raum</h3>
+        <p>In Kapitel 1 wird ein ganzer Datensatz zu einem Punkt in <span class="m">ℝ<sup><i>n</i></sup></span>. Kapitel 4 zeigt, wie sich hohe Dimensionen verhalten, Kapitel 8 findet dort die Merkmale, die ein Netz gelernt hat.</p>
+      </div>
+      <div>
+        <h3>Bergab</h3>
+        <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Transformer in Kapitel 7.</p>
+      </div>
+    </div>
+
+    <h2>Arbeitsstand</h2>
+    <p>Kapitel 1 liegt in einer ersten Fassung vor. Die übrigen Kapitel sind geplant; die Abbildungslisten sind ein Vorschlag und werden sich beim Bauen ändern. Jede Abbildung läuft im Browser, ohne Bibliotheken und ohne Server.</p>
+
+    <h2>Quellen der Reihe</h2>
+    <ol class="refs">
+      <li>C. Olah (2014): <a href="https://colah.github.io/posts/2014-03-NN-Manifolds-Topology/"><i>Neural Networks, Manifolds, and Topology</i></a>.</li>
+      <li>A. Vaswani u. a. (2017): <a href="https://arxiv.org/abs/1706.03762"><i>Attention Is All You Need</i></a>.</li>
+      <li>C. Olah u. a. (2020): <a href="https://distill.pub/2020/circuits/zoom-in/"><i>Zoom In: An Introduction to Circuits</i></a>. Distill.</li>
+      <li>N. Elhage u. a. (2021): <a href="https://transformer-circuits.pub/2021/framework/index.html"><i>A Mathematical Framework for Transformer Circuits</i></a>.</li>
+      <li>C. Olsson u. a. (2022): <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html"><i>In-context Learning and Induction Heads</i></a>.</li>
+      <li>N. Elhage u. a. (2022): <a href="https://transformer-circuits.pub/2022/toy_model/index.html"><i>Toy Models of Superposition</i></a>.</li>
+      <li>T. Bricken u. a. (2023): <a href="https://transformer-circuits.pub/2023/monosemantic-features/index.html"><i>Towards Monosemanticity</i></a>.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

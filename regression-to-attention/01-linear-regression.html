@@ -1,0 +1,1484 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Die Gerade · Kapitel 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>
+  .chapter-head { display: grid; gap: 18px; padding-block: 8px 12px; }
+  .chapter-head .dates { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+
+  .side { display: grid; gap: 14px; align-content: start; }
+  .side p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-2); }
+  .status { font-size: 14px; color: var(--fg-2); min-height: 1.5em; }
+  .status b { color: var(--fg); font-weight: 600; }
+
+  /* matrix figure */
+  .mx-scroll { overflow-x: auto; padding-block: 4px; }
+  .mx {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: max-content;
+    margin-inline: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-2);
+  }
+  .mxg { display: grid; justify-items: center; gap: 6px; }
+  .mxh { font-family: var(--font-math); font-size: 18px; color: var(--fg); white-space: nowrap; }
+  .mxh i { font-style: italic; }
+  .mxh b { font-weight: 700; }
+  .mxh small { font-family: var(--font-body); font-size: 11px; color: var(--muted); }
+  .mxs { font-size: 11px; color: var(--muted); }
+  .mxb { display: grid; position: relative; padding: 3px 9px; }
+  .mxb::before, .mxb::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 7px;
+    border: 1.5px solid var(--fg-2);
+  }
+  .mxb::before { left: 0; border-right: 0; border-radius: 3px 0 0 3px; }
+  .mxb::after { right: 0; border-left: 0; border-radius: 0 3px 3px 0; }
+  .mxb > div { padding: 1px 8px; text-align: right; border-radius: 3px; }
+  .mxb > div.on { background: var(--accent-wash); color: var(--fg); }
+  .mxb.theta > div { color: var(--model); }
+  .mxop { font-family: var(--font-math); font-size: 22px; color: var(--fg-2); }
+  .mxgap { width: 14px; }
+  .mx-eq {
+    font-family: var(--font-math);
+    font-size: 19px;
+    text-align: center;
+    overflow-x: auto;
+    white-space: nowrap;
+    display: grid;
+    gap: 2px;
+  }
+  .mx-eq i { font-style: italic; }
+  .mx-eq .row { color: var(--accent); }
+
+  /* neuron diagram */
+  .neuron-wrap { overflow-x: auto; }
+  svg.neuron { display: block; width: 100%; max-width: 620px; min-width: 420px; height: auto; margin-inline: auto; }
+  svg.neuron .edge { stroke: var(--fg-2); stroke-width: 1.5; }
+  svg.neuron .edge-b { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  svg.neuron .n-in { fill: var(--surface); stroke: var(--fg-2); stroke-width: 1.5; }
+  svg.neuron .n-sum { fill: var(--model-wash); stroke: var(--model); stroke-width: 2; }
+  svg.neuron .out { stroke: var(--model); stroke-width: 2.5; }
+  svg.neuron .out-head { fill: var(--model); }
+  svg.neuron .tm { font-family: var(--font-math); font-style: italic; font-size: 19px; fill: var(--fg); }
+  svg.neuron .tm-up { font-family: var(--font-math); font-size: 19px; fill: var(--fg); }
+  svg.neuron .tw { font-family: var(--font-math); font-style: italic; font-size: 16px; fill: var(--model); }
+  svg.neuron .tl { font-family: var(--font-body); font-size: 13px; fill: var(--muted); }
+  svg.neuron .ts { font-family: var(--font-math); font-size: 30px; fill: var(--fg); }
+  svg.neuron .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 1 von 8</div>
+    <h1>Die Gerade</h1>
+    <p class="lead">Lineare Regression von Grund auf: wie aus vierzehn Wohnungen eine Formel wird, was ein Fehler genau ist und wie man ihn systematisch kleiner macht. Alles, was später ein Transformer lernt, lernt er mit genau diesem Verfahren.</p>
+    <div class="dates">Methode der kleinsten Quadrate: Legendre 1805, Gauß 1809 · Gradientenabstieg: Cauchy 1847</div>
+    <div class="idea">
+      <span class="eyebrow">Die neue Idee</span>
+      <p>Wir messen mit einer einzigen Zahl, wie falsch ein Modell ist, und schieben seine Parameter bergab, bis diese Zahl nicht mehr kleiner wird.</p>
+    </div>
+  </header>
+
+  <!-- 1 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="aufgabe">
+    <h2><span class="no">1</span>Die Aufgabe</h2>
+    <p>Vierzehn Wohnungen, jeweils mit Wohnfläche und Kaltmiete. Die Frage ist so alt wie die Statistik: Welche Miete erwarten wir für eine Wohnung mit <span class="m"><i>x</i></span> Quadratmetern?</p>
+    <p>Wir legen die Form der Antwort fest, eine Gerade:</p>
+    <span class="mblock"><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i></span>
+    <p>Dabei ist <span class="m"><i>x</i></span> die Eingabe (die Fläche), <span class="m"><i>ŷ</i></span> (sprich „y-Dach“) die Vorhersage und <span class="m"><i>y</i></span> der wahre Wert aus den Daten. Die beiden Zahlen <span class="m"><i>w</i></span> und <span class="m"><i>b</i></span> sind die <strong>Parameter</strong> des Modells: <span class="m"><i>w</i></span> ist die Steigung in Euro pro Quadratmeter, <span class="m"><i>b</i></span> der Achsenabschnitt, also die Miete, die eine Wohnung mit 0 m² hätte.</p>
+    <p>Ein Modell ist nichts anderes als eine Rechenvorschrift mit einstellbaren Zahlen. <strong>Lernen</strong> heißt, diese Zahlen so einzustellen, dass die Vorhersagen zu den Daten passen. Ein großes Sprachmodell unterscheidet sich davon in der Rechenvorschrift und in der Zahl der Parameter, nicht im Prinzip.</p>
+    <div class="aside">
+      <b>Beispieldaten.</b> Die vierzehn Wohnungen sind erfunden, aber realistisch gestreut. Die Wohnung mit 28 m² ist bewusst teuer: Kleine Wohnungen in guter Lage gibt es wirklich, und ein Ausreißer zeigt später, wie stark Quadrate große Fehler bestrafen.
+      <details class="data">
+        <summary>Tabelle anzeigen</summary>
+        <div class="table-wrap">
+          <table class="t" id="data-table">
+            <thead><tr><th>Wohnung</th><th>Fläche x (m²)</th><th>Miete y (€)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 2 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="fehler">
+    <h2><span class="no">2</span>Fehler messen</h2>
+    <p>Für jede Wohnung <span class="m"><i>i</i></span> vergleichen wir Wirklichkeit und Vorhersage. Die Differenz heißt <strong>Residuum</strong>:</p>
+    <span class="mblock"><i>e<sub>i</sub></i> = <i>y<sub>i</sub></i> − <i>ŷ<sub>i</sub></i></span>
+    <p>Liegt eine Wohnung über der Geraden, ist <span class="m"><i>e<sub>i</sub></i></span> positiv, liegt sie darunter, negativ. Um aus vierzehn Residuen eine einzige Zahl zu machen, quadrieren wir sie und bilden den Mittelwert. Das ist der <strong>mittlere quadratische Fehler</strong>, unser Verlust <span class="m"><i>L</i></span>:</p>
+    <span class="mblock"><i>L</i>(<i>w</i>, <i>b</i>) = <span class="frac"><span>1</span><span><i>n</i></span></span><span class="bigop"><small><i>n</i></small><span class="op">∑</span><small><i>i</i>=1</small></span> <i>e<sub>i</sub></i><sup>2</sup> = <span class="frac"><span>1</span><span><i>n</i></span></span><span class="bigop"><small><i>n</i></small><span class="op">∑</span><small><i>i</i>=1</small></span> (<i>y<sub>i</sub></i> − <span class="hl-model"><i>w x<sub>i</sub></i> − <i>b</i></span>)<sup>2</sup></span>
+    <p>Warum Quadrate? Erstens heben sich positive und negative Fehler nicht auf. Zweitens zählt ein doppelt so großer Fehler viermal so viel, Ausreißer werden also stark bestraft. Drittens ist das Quadrat glatt: Man kann es überall ableiten, und genau das brauchen wir in Abschnitt 4.</p>
+  </section>
+
+  <figure class="lab wide" id="fig1">
+    <div class="lab-head">
+      <span class="title">Eine Gerade von Hand anpassen</span>
+      <span class="hint">Ziehe die Gerade, ihre runden Griffe oder einzelne Wohnungen. Rechts: klicken oder ziehen.</span>
+    </div>
+    <div class="lab-grid">
+      <div class="pane">
+        <div class="pane-label"><span>Daten und Modell</span><span id="f1-r2lbl"></span></div>
+        <div class="plot r43" id="f1-scatter" role="img" aria-label="Streudiagramm: Wohnfläche gegen Kaltmiete, mit der aktuellen Geraden und den Fehlerquadraten jeder Wohnung."></div>
+        <div class="pane-label"><span>Alle Fehlerquadrate hintereinander (Länge = n · L)</span></div>
+        <div class="plot" style="height: 50px" id="f1-bar" role="img" aria-label="Balken aus den Fehlerquadraten aller Wohnungen, mit Marken für das Minimum und für die waagerechte Linie durch den Mittelwert."></div>
+      </div>
+      <div class="pane">
+        <div class="pane-label"><span>Verlustlandschaft L(w, b)</span></div>
+        <div class="plot r11" id="f1-land" role="img" aria-label="Verlustlandschaft: Farbe zeigt den Fehler jeder möglichen Geraden in der Ebene aus Steigung und Achsenabschnitt."></div>
+        <div class="pane-label"><span>Farbe: typischer Fehler √L</span></div>
+        <div class="plot" style="height: 30px" id="f1-cbar"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="ctl">
+        <label for="f1-w"><span>Steigung <span class="m"><i>w</i></span></span><output id="f1-wv" for="f1-w"></output></label>
+        <input type="range" id="f1-w" min="-2" max="20" step="0.01" />
+      </div>
+      <div class="ctl">
+        <label for="f1-b"><span>Achsenabschnitt <span class="m"><i>b</i></span></span><output id="f1-bv" for="f1-b"></output></label>
+        <input type="range" id="f1-b" min="-500" max="1100" step="1" />
+      </div>
+      <div class="btns">
+        <button class="btn primary" id="f1-best" type="button">Beste Gerade</button>
+        <button class="btn" id="f1-reset" type="button">Daten zurücksetzen</button>
+        <label class="check"><input type="checkbox" id="f1-sq" checked /> Fehlerquadrate</label>
+      </div>
+    </div>
+    <dl class="readout">
+      <div><dt>Verlust L (mittleres e²)</dt><dd id="f1-L"></dd></div>
+      <div><dt>Typischer Fehler √L</dt><dd id="f1-rmse"></dd></div>
+      <div><dt>Bestmöglich</dt><dd id="f1-Lmin"></dd></div>
+      <div style="grid-column: span 2"><dt>Beste Gerade</dt><dd id="f1-opt"></dd></div>
+    </dl>
+    <div class="legend">
+      <span style="color: var(--data)"><i class="key dot"></i><span style="color: var(--fg-2)">Wohnung (Daten)</span></span>
+      <span style="color: var(--model)"><i class="key"></i><span style="color: var(--fg-2)">Modell ŷ = w·x + b</span></span>
+      <span style="color: var(--error)"><i class="key sq"></i><span style="color: var(--fg-2)">Residuum e und Fehlerquadrat e²</span></span>
+      <span style="color: var(--muted)"><i class="key dash"></i><span style="color: var(--fg-2)">Mittelwert ȳ</span></span>
+    </div>
+    <figcaption><span class="fig">ABB. 1</span>Jeder Punkt der Landschaft rechts ist eine ganze Gerade links. Das Kreuz markiert die beste Gerade, den tiefsten Punkt der Landschaft.</figcaption>
+  </figure>
+
+  <section class="col prose">
+    <p>Die orangen Quadrate sind wörtlich gemeint: Ihre Fläche ist <span class="m"><i>e<sub>i</sub></i><sup>2</sup></span>, der Beitrag jeder Wohnung zum Verlust. Der Balken darunter legt alle Quadrate hintereinander, seine Länge ist <span class="m"><i>n</i> · <i>L</i></span>. Die Marke „ȳ-Linie“ zeigt den Fehler einer waagerechten Linie auf Höhe des Mittelwerts <span class="m"><i>ȳ</i></span>, also eines Modells, das die Fläche ignoriert. Den Anteil dieses Fehlers, den die Gerade wegerklärt, nennt man <span class="m"><i>R</i><sup>2</sup></span>.</p>
+    <p>Rechts siehst du dasselbe aus einer anderen Perspektive. Jede Gerade ist durch zwei Zahlen festgelegt, also ist jede Gerade ein Punkt in der Ebene der Parameter <span class="m">(<i>w</i>, <i>b</i>)</span>. Die Farbe zeigt, wie groß der Verlust für diese Gerade wäre. Ziehe den blauen Punkt rechts, und links dreht sich die Gerade mit.</p>
+  </section>
+
+  <!-- 3 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="landschaft">
+    <h2><span class="no">3</span>Die Landschaft der Fehler</h2>
+    <p>Weil <span class="m"><i>L</i></span> nur von zwei Zahlen abhängt, können wir ihn als Höhe über der <span class="m">(<i>w</i>, <i>b</i>)</span>-Ebene zeichnen. Für die lineare Regression ist diese Fläche immer eine Schüssel, genauer ein Paraboloid: <span class="m"><i>L</i></span> ist ein Polynom zweiten Grades in <span class="m"><i>w</i></span> und <span class="m"><i>b</i></span>. Deshalb gibt es genau einen tiefsten Punkt, und von überall führt ein Weg bergab dorthin.</p>
+  </section>
+
+  <figure class="lab wide" id="fig2">
+    <div class="lab-head">
+      <span class="title">Die Verlustfläche als Schüssel</span>
+      <span class="hint">Ziehen zum Drehen</span>
+    </div>
+    <div class="lab-grid wide-left">
+      <div class="pane">
+        <div class="plot r43" id="f2-bowl" role="img" aria-label="Dreidimensionale Verlustfläche über der Ebene der beiden Parameter, mit dem aktuellen Modell als blauem Punkt."></div>
+      </div>
+      <div class="side">
+        <div class="seg" role="radiogroup" aria-label="Koordinaten der Parameter">
+          <input type="radio" name="space-f2" id="f2-raw" value="raw" checked /><label for="f2-raw">Rohdaten</label>
+          <input type="radio" name="space-f2" id="f2-z" value="z" /><label for="f2-z">Standardisiert</label>
+        </div>
+        <p id="f2-note"></p>
+        <dl class="readout">
+          <div><dt id="f2-p1k">Steigung</dt><dd id="f2-p1"></dd></div>
+          <div><dt id="f2-p2k">Achsenabschnitt</dt><dd id="f2-p2"></dd></div>
+          <div><dt>Verlust L</dt><dd id="f2-L"></dd></div>
+          <div><dt>Länge : Breite der Schüssel</dt><dd id="f2-cond"></dd></div>
+        </dl>
+        <p>Der blaue Punkt ist die Gerade aus Abbildung 1. Beim Umschalten bleibt sie dieselbe, nur ihre Koordinaten ändern sich.</p>
+      </div>
+    </div>
+    <figcaption><span class="fig">ABB. 2</span>Höhe und Farbe zeigen den Verlust. Die Linien auf der Fläche sind Höhenlinien, dieselben Ellipsen wie in der Landschaft von Abbildung 1.</figcaption>
+  </figure>
+
+  <section class="col prose">
+    <p>In Rohdaten ist die Schüssel keine runde Schale, sondern eine lange, schmale Rinne. Der Grund: Steigung und Achsenabschnitt können sich gegenseitig ausgleichen. Macht man die Gerade steiler und setzt sie tiefer an, läuft sie trotzdem durch die Mitte der Punktwolke bei <span class="m"><i>x̄</i> ≈ 68 m²</span>. Alle diese fast gleich guten Geraden bilden den Boden der Rinne.</p>
+    <p>Schalte auf „Standardisiert“. Wir ersetzen die Fläche durch</p>
+    <span class="mblock"><i>x</i>′ = <span class="frac"><span><i>x</i> − <i>x̄</i></span><span><i>s</i></span></span></span>
+    <p>also: Um wie viele Standardabweichungen <span class="m"><i>s</i></span> liegt die Wohnung über oder unter dem Durchschnitt? Die Geraden sind dieselben, nur ihre Koordinaten ändern sich, und der Verlust jeder Geraden bleibt gleich. Aber die Schüssel wird rund. Warum das so ist, zeigt Abschnitt 5. Wofür es gut ist, zeigt der nächste.</p>
+  </section>
+
+  <!-- 4 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="bergab">
+    <h2><span class="no">4</span>Bergab</h2>
+    <p>Für zwei Parameter könnten wir die Landschaft einfach absuchen. Ein Sprachmodell hat Milliarden Parameter; da hilft nur eine lokale Regel: Schau, wo es an deiner Stelle bergab geht, und mach einen kleinen Schritt dorthin.</p>
+    <p>Die Richtung liefert die Ableitung. Der <strong>Gradient</strong> <span class="m">∇<i>L</i></span> fasst die partiellen Ableitungen nach allen Parametern zusammen und zeigt in die Richtung des steilsten Anstiegs. Für unseren Verlust (Kettenregel auf das Quadrat):</p>
+    <span class="mblock"><span class="frac"><span>∂<i>L</i></span><span>∂<i>w</i></span></span> = −<span class="frac"><span>2</span><span><i>n</i></span></span><span class="bigop"><small>&nbsp;</small><span class="op">∑</span><small><i>i</i></small></span> <span class="hl-error"><i>e<sub>i</sub></i></span> · <i>x<sub>i</sub></i>&emsp;&emsp;<span class="frac"><span>∂<i>L</i></span><span>∂<i>b</i></span></span> = −<span class="frac"><span>2</span><span><i>n</i></span></span><span class="bigop"><small>&nbsp;</small><span class="op">∑</span><small><i>i</i></small></span> <span class="hl-error"><i>e<sub>i</sub></i></span></span>
+    <p>Dann gehen wir ein Stück in die Gegenrichtung. Die Schrittweite <span class="m"><i>η</i></span> heißt <strong>Lernrate</strong>:</p>
+    <span class="mblock"><i>w</i> ← <i>w</i> − <i>η</i> <span class="frac"><span>∂<i>L</i></span><span>∂<i>w</i></span></span>&emsp;&emsp;<i>b</i> ← <i>b</i> − <i>η</i> <span class="frac"><span>∂<i>L</i></span><span>∂<i>b</i></span></span></span>
+    <p>Diese Formeln lassen sich wörtlich lesen: Jede Wohnung zieht an der Geraden, mit einer Kraft proportional zu ihrem Residuum <span class="m"><i>e<sub>i</sub></i></span>. Liegt sie über der Geraden, zieht sie nach oben, und an der Steigung zieht sie umso stärker, je größer ihre Fläche <span class="m"><i>x<sub>i</sub></i></span> ist. <strong>Fehler mal Eingabe</strong>: Diese Regel steckt in jedem Neuron jedes Netzes, das wir noch bauen.</p>
+  </section>
+
+  <figure class="lab wide" id="fig3">
+    <div class="lab-head">
+      <span class="title">Gradientenabstieg</span>
+      <span class="hint">Klicke in die Landschaft, um einen anderen Startpunkt zu wählen.</span>
+    </div>
+    <div class="lab-grid even">
+      <div class="pane">
+        <div class="pane-label"><span>Weg durch die Landschaft</span><span id="f3-spacelbl"></span></div>
+        <div class="plot r11" id="f3-land" role="img" aria-label="Verlustlandschaft mit dem Weg des Gradientenabstiegs vom Startpunkt zum Minimum."></div>
+      </div>
+      <div class="pane">
+        <div class="pane-label"><span>Verlust je Schritt (logarithmisch)</span></div>
+        <div class="plot r21" id="f3-curve" role="img" aria-label="Verlauf des Verlusts über die Schritte, auf logarithmischer Skala."></div>
+        <div class="pane-label"><span>Die Gerade zum aktuellen Schritt</span></div>
+        <div class="plot r21" id="f3-mini" role="img" aria-label="Die Daten mit der Geraden des aktuellen Schritts und gestrichelt der besten Geraden."></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="btns">
+        <button class="btn primary" id="f3-run" type="button">Starten</button>
+        <button class="btn" id="f3-step" type="button">1 Schritt</button>
+        <button class="btn" id="f3-reset" type="button">Zurücksetzen</button>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="Koordinaten der Parameter">
+        <input type="radio" name="space-f3" id="f3-raw" value="raw" checked /><label for="f3-raw">Rohdaten</label>
+        <input type="radio" name="space-f3" id="f3-z" value="z" /><label for="f3-z">Standardisiert</label>
+      </div>
+      <div class="ctl">
+        <label for="f3-eta"><span>Lernrate <span class="m"><i>η</i></span></span><output id="f3-etav" for="f3-eta"></output></label>
+        <div class="slider-wrap">
+          <input type="range" id="f3-eta" min="0" max="1000" step="1" />
+          <div class="slider-mark" id="f3-mark"><span>2/λ<sub>max</sub></span></div>
+        </div>
+      </div>
+    </div>
+    <p class="status" id="f3-status" aria-live="polite"></p>
+    <dl class="readout">
+      <div><dt>Schritt</dt><dd id="f3-t"></dd></div>
+      <div><dt>Verlust L</dt><dd id="f3-L"></dd></div>
+      <div><dt>Steigung w</dt><dd id="f3-w"></dd></div>
+      <div><dt>Achsenabschnitt b</dt><dd id="f3-b"></dd></div>
+      <div><dt id="f3-g1k">∂L/∂w</dt><dd id="f3-g1"></dd></div>
+      <div><dt id="f3-g2k">∂L/∂b</dt><dd id="f3-g2"></dd></div>
+    </dl>
+    <div class="legend">
+      <span style="color: var(--grad)"><i class="key"></i><span style="color: var(--fg-2)">Weg des Abstiegs, Pfeil: nächster Schritt −η∇L</span></span>
+      <span style="color: var(--model)"><i class="key dot"></i><span style="color: var(--fg-2)">aktuelles Modell</span></span>
+      <span style="color: var(--muted)"><i class="key dash"></i><span style="color: var(--fg-2)">letzter Lauf in den anderen Koordinaten</span></span>
+    </div>
+    <figcaption><span class="fig">ABB. 3</span>Beide Koordinatensysteme beschreiben dieselben Geraden und haben dasselbe Minimum. Sie unterscheiden sich nur darin, wie gut der Abstieg dorthin findet.</figcaption>
+  </figure>
+
+  <section class="col prose">
+    <p>Drei Dinge lassen sich hier beobachten:</p>
+    <ul>
+      <li><strong>Die Rinne bremst.</strong> In Rohdaten springt der Weg quer über die Rinne und bleibt dann fast stehen. Der Gradient zeigt fast nur quer zur Rinne; entlang ihres Bodens ist die Landschaft beinahe flach. Nach hunderten Schritten stimmt die Steigung ungefähr, der Achsenabschnitt noch lange nicht.</li>
+      <li><strong>Zu große Schritte divergieren.</strong> Schiebe die Lernrate über die rote Marke. Dann überspringt jeder Schritt das Tal und landet höher als vorher. Die Grenze liegt bei <span class="m"><i>η</i> = 2/<i>λ</i><sub>max</sub></span>, wobei <span class="m"><i>λ</i><sub>max</sub></span> die stärkste Krümmung der Schüssel ist.</li>
+      <li><strong>Rund ist schnell.</strong> Standardisiert führt der Weg fast gerade zum Ziel. Jede Richtung ist gleich steil, also passt eine einzige Lernrate für alle Parameter.</li>
+    </ul>
+    <p>Das ist kein Detail. Moderne Netze normalisieren ihre Eingaben und sogar die Zwischenergebnisse zwischen den Schichten, damit die Landschaft gutmütig bleibt. Im Transformer heißt das LayerNorm (Kapitel 7). Und wenn die Landschaft nicht mehr zwei, sondern eine Milliarde Richtungen hat, ist genau diese Frage der Krümmung der Grund für Optimierer wie Adam, die jedem Parameter seine eigene Schrittweite geben.</p>
+  </section>
+
+  <!-- 5 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="projektion">
+    <h2><span class="no">5</span>Die Lösung in einem Schritt</h2>
+    <p>Für die lineare Regression braucht man keinen Abstieg. Es gibt eine exakte Formel, und am schönsten sieht man sie, wenn man die Perspektive wechselt.</p>
+    <p>Bisher war jede Wohnung ein Punkt in der Ebene. Jetzt drehen wir es um: <strong>Jede Wohnung wird eine Achse.</strong> Die vierzehn Mieten bilden dann einen einzigen Vektor <span class="m"><b>y</b></span> in einem 14-dimensionalen Raum, die vierzehn Flächen einen Vektor <span class="m"><b>x</b></span>, und <span class="m"><b>1</b></span> ist der Vektor aus lauter Einsen. Jede Vorhersage des Modells für alle Wohnungen zugleich hat die Form</p>
+    <span class="mblock"><b class="hl-model">ŷ</b> = <i>w</i> · <b>x</b> + <i>b</i> · <b>1</b></span>
+    <p>Alle Vektoren dieser Form bilden eine Ebene durch den Ursprung, aufgespannt von <span class="m"><b>x</b></span> und <span class="m"><b>1</b></span>. Der Datenvektor <span class="m"><b>y</b></span> liegt fast nie in dieser Ebene. Die beste Gerade entspricht dem Punkt der Ebene, der <span class="m"><b>y</b></span> am nächsten liegt, und das ist der Fußpunkt des Lots, die <strong>orthogonale Projektion</strong>. Das Residuum <span class="m"><b>e</b> = <b>y</b> − <b>ŷ</b></span> steht senkrecht auf der Ebene, und seine quadrierte Länge ist genau die Summe der Fehlerquadrate.</p>
+    <p>Vierzehn Dimensionen kann niemand zeichnen, drei schon. Nehmen wir nur drei Wohnungen:</p>
+  </section>
+
+  <figure class="lab wide" id="fig4">
+    <div class="lab-head">
+      <span class="title">Drei Wohnungen, ein Punkt im Raum</span>
+      <span class="hint">Links ziehen zum Drehen · rechts die Wohnungen verschieben</span>
+    </div>
+    <div class="lab-grid wide-left">
+      <div class="pane">
+        <div class="pane-label"><span>Der Datenraum ℝ³: eine Achse pro Wohnung</span></div>
+        <div class="plot r43" id="f4-space" role="img" aria-label="Dreidimensionaler Raum mit einer Achse pro Wohnung. Der Mietvektor y wird senkrecht auf die Ebene projiziert, die von x und dem Einsvektor aufgespannt wird."></div>
+      </div>
+      <div class="side">
+        <div class="pane-label"><span>Dieselben drei Wohnungen, klassisch</span></div>
+        <div class="plot r43" id="f4-mini" role="img" aria-label="Streudiagramm der drei Wohnungen mit der besten Geraden und ihren Residuen."></div>
+        <div class="controls">
+          <div class="ctl"><label for="f4-y0"><span>Miete Wohnung 1</span><output id="f4-y0v" for="f4-y0"></output></label><input type="range" id="f4-y0" min="0" max="1.6" step="0.01" /></div>
+          <div class="ctl"><label for="f4-y1"><span>Miete Wohnung 2</span><output id="f4-y1v" for="f4-y1"></output></label><input type="range" id="f4-y1" min="0" max="1.6" step="0.01" /></div>
+          <div class="ctl"><label for="f4-y2"><span>Miete Wohnung 3</span><output id="f4-y2v" for="f4-y2"></output></label><input type="range" id="f4-y2" min="0" max="1.6" step="0.01" /></div>
+        </div>
+        <label class="check"><input type="checkbox" id="f4-center" /> <span><span class="m"><b>x</b></span> zentrieren: <span class="m"><b>x</b> − <i>x̄</i> <b>1</b></span></span></label>
+      </div>
+    </div>
+    <dl class="readout">
+      <div><dt>Steigung w</dt><dd id="f4-w"></dd></div>
+      <div><dt id="f4-bk">Achsenabschnitt b</dt><dd id="f4-b"></dd></div>
+      <div><dt>1 · e (Summe der Residuen)</dt><dd id="f4-1e"></dd></div>
+      <div><dt>x · e</dt><dd id="f4-xe"></dd></div>
+      <div><dt>Winkel zwischen 1 und x</dt><dd id="f4-ang"></dd></div>
+      <div><dt>|e|² = Σ e²</dt><dd id="f4-ee"></dd></div>
+    </dl>
+    <div class="legend">
+      <span style="color: var(--data)"><i class="key"></i><span style="color: var(--fg-2)">Daten y</span></span>
+      <span style="color: var(--model)"><i class="key"></i><span style="color: var(--fg-2)">Vorhersage ŷ und die Ebene aller möglichen Vorhersagen</span></span>
+      <span style="color: var(--error)"><i class="key"></i><span style="color: var(--fg-2)">Residuum e = y − ŷ</span></span>
+      <span style="color: var(--fg-2)"><i class="key"></i><span>Richtungen 1 und x</span></span>
+    </div>
+    <figcaption><span class="fig">ABB. 4</span>Einheiten im Raum: Flächen in 100 m², Mieten in 1000 €. Die gestrichelte Linie zerlegt ŷ in b·1 und w·x. Welche Mieten du auch einstellst, 1 · e und x · e bleiben null.</figcaption>
+  </figure>
+
+  <section class="col prose">
+    <p>„Senkrecht auf der Ebene“ heißt: senkrecht auf beiden Richtungen, die sie aufspannen. Das ergibt zwei Gleichungen, die <strong>Normalgleichungen</strong>:</p>
+    <span class="mblock"><b>1</b> · <b class="hl-error">e</b> = 0&emsp;und&emsp;<b>x</b> · <b class="hl-error">e</b> = 0</span>
+    <p>Die erste sagt: Die Residuen summieren sich zu null, die beste Gerade geht durch den Schwerpunkt der Daten. Die zweite sagt: Die Residuen hängen nicht mehr linear mit der Fläche zusammen; es bleibt nichts übrig, das eine Gerade noch erklären könnte. In Matrixschreibweise (nächster Abschnitt) wird daraus die geschlossene Lösung:</p>
+    <span class="mblock"><b>X</b><sup>⊤</sup>(<b>y</b> − <b>X</b><b>θ</b>) = <b>0</b>&emsp;⟹&emsp;<b>θ</b> = (<b>X</b><sup>⊤</sup><b>X</b>)<sup>−1</sup><b>X</b><sup>⊤</sup><b>y</b></span>
+    <p>Schalte „x zentrieren“ ein. Die Ebene bleibt dieselbe und damit auch <span class="m"><b>ŷ</b></span>, aber die beiden Richtungen, die sie aufspannen, stehen jetzt senkrecht aufeinander. Die Koordinaten <span class="m"><i>w</i></span> und <span class="m"><i>b</i></span> beeinflussen sich nicht mehr gegenseitig. Genau das hat in Abschnitt 3 die Schüssel rund gemacht.</p>
+    <div class="aside"><b>Der erste hochdimensionale Raum.</b> Hier begegnet er uns zum ersten Mal, und er ist nichts Exotisches: Es ist einfach der Raum, in dem ein ganzer Datensatz ein einziger Punkt ist. Längen, Winkel und Projektionen funktionieren dort genau wie in drei Dimensionen. In Kapitel 4 sehen wir, was sich trotzdem seltsam verhält.</div>
+  </section>
+
+  <!-- 6 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="matrix">
+    <h2><span class="no">6</span>Dasselbe in Matrixform</h2>
+    <p>Schreibt man alle Wohnungen untereinander, wird die ganze Rechnung ein einziges Matrixprodukt. Die Matrix <span class="m"><b>X</b></span> hat eine Zeile pro Wohnung und eine Spalte pro Merkmal, plus eine Spalte aus Einsen für den Achsenabschnitt. Die Parameter bilden den Vektor <span class="m"><b>θ</b> = (<i>w</i>, <i>b</i>)</span>.</p>
+  </section>
+
+  <figure class="lab wide" id="fig5">
+    <div class="lab-head">
+      <span class="title">Die ganze Rechnung als Matrixprodukt</span>
+      <span class="hint">Zeige auf eine Zeile</span>
+    </div>
+    <div class="mx-eq" id="f5-eq" aria-live="polite"></div>
+    <div class="mx-scroll"><div class="mx" id="f5-mx"></div></div>
+    <figcaption><span class="fig">ABB. 5</span>Die Zahlen folgen der Geraden aus Abbildung 1. Jede Zeile von ŷ ist ein Skalarprodukt: Zeile von X mal θ.</figcaption>
+  </figure>
+
+  <section class="col prose">
+    <p>Jede Vorhersage ist ein <strong>Skalarprodukt</strong>: Zeile mal Parametervektor, elementweise multiplizieren, aufsummieren. Merk dir diese Operation. Sie kehrt in jedem Kapitel wieder: als Neuron, als Ähnlichkeit zweier Wortvektoren und in der Attention als <span class="m"><b>q</b> · <b>k</b></span>.</p>
+    <p>Mehr Merkmale ändern nichts an der Form. Mit Fläche, Zimmerzahl und Baujahr hat <span class="m"><b>X</b></span> vier Spalten und <span class="m"><b>θ</b></span> vier Einträge, und aus der Geraden wird eine Hyperebene im Raum der Merkmale. Die Formate schreiben sich immer gleich: <span class="m">(<i>n</i> × <i>d</i>) · (<i>d</i> × 1) = (<i>n</i> × 1)</span>. In der Attention wird daraus <span class="m">(<i>n</i> × <i>d</i>) · (<i>d</i> × <i>n</i>)</span>: jedes Wort mit jedem.</p>
+  </section>
+
+  <!-- 7 ─────────────────────────────────────────────── -->
+  <section class="col prose" id="mitnehmen">
+    <h2><span class="no">7</span>Was wir mitnehmen</h2>
+    <ul>
+      <li>Ein <strong>Modell</strong> ist eine Formel mit Parametern. Hier: <span class="m"><i>ŷ</i> = <i>w x</i> + <i>b</i></span>.</li>
+      <li>Ein <strong>Verlust</strong> macht „gut“ messbar. Hier: der mittlere quadratische Fehler.</li>
+      <li>Der <strong>Gradient</strong> zeigt bergauf, wir gehen bergab. Jeder Datenpunkt zieht mit Residuum mal Eingabe.</li>
+      <li>Wie die Daten <strong>skaliert</strong> sind, bestimmt die Form der Landschaft und damit, wie gut der Abstieg funktioniert.</li>
+      <li>Ein ganzer Datensatz ist ein <strong>Punkt in ℝⁿ</strong>. Anpassen heißt projizieren.</li>
+    </ul>
+    <p>Zeichnet man die Rechnung als Diagramm, erhält man ein künstliches Neuron: Eingaben, Gewichte, eine Summe. Ein Neuron ohne Aktivierungsfunktion ist genau eine lineare Regression.</p>
+    <div class="neuron-wrap">
+      <svg class="neuron" viewBox="0 0 620 236" role="img" aria-label="Ein künstliches Neuron: Fläche, Zimmer und Baujahr sowie eine konstante Eins werden mit den Gewichten w1, w2, w3 und b multipliziert und in einem Summenknoten zu y-Dach addiert.">
+        <line class="edge" x1="176" y1="38" x2="364" y2="112" />
+        <line class="edge" x1="176" y1="94" x2="362" y2="116" />
+        <line class="edge" x1="176" y1="150" x2="362" y2="124" />
+        <line class="edge-b" x1="176" y1="206" x2="364" y2="128" />
+        <circle class="n-in" cx="160" cy="38" r="16" />
+        <circle class="n-in" cx="160" cy="94" r="16" />
+        <circle class="n-in" cx="160" cy="150" r="16" />
+        <circle class="n-in" cx="160" cy="206" r="16" />
+        <text class="tm" x="160" y="44" text-anchor="middle">x<tspan font-size="12" dy="4">1</tspan></text>
+        <text class="tm" x="160" y="100" text-anchor="middle">x<tspan font-size="12" dy="4">2</tspan></text>
+        <text class="tm" x="160" y="156" text-anchor="middle">x<tspan font-size="12" dy="4">3</tspan></text>
+        <text class="tm-up" x="160" y="212" text-anchor="middle">1</text>
+        <text class="tl" x="130" y="43" text-anchor="end">Fläche</text>
+        <text class="tl" x="130" y="99" text-anchor="end">Zimmer</text>
+        <text class="tl" x="130" y="155" text-anchor="end">Baujahr</text>
+        <text class="tl" x="130" y="211" text-anchor="end">konstant</text>
+        <text class="tw halo" x="262" y="66" text-anchor="middle">w<tspan font-size="11" dy="4">1</tspan></text>
+        <text class="tw halo" x="262" y="98" text-anchor="middle">w<tspan font-size="11" dy="4">2</tspan></text>
+        <text class="tw halo" x="262" y="146" text-anchor="middle">w<tspan font-size="11" dy="4">3</tspan></text>
+        <text class="tw halo" x="262" y="178" text-anchor="middle">b</text>
+        <circle class="n-sum" cx="392" cy="120" r="30" />
+        <text class="ts" x="392" y="131" text-anchor="middle">Σ</text>
+        <line class="out" x1="422" y1="120" x2="520" y2="120" />
+        <path class="out-head" d="M532 120 L516 112 L516 128 Z" />
+        <text class="tm" x="548" y="127">ŷ</text>
+        <text class="tl" x="392" y="176" text-anchor="middle">Summe der Produkte</text>
+      </svg>
+    </div>
+    <p>Im nächsten Kapitel ist die Antwort keine Zahl mehr, sondern ja oder nein. Dafür legen wir eine Funktion um die Gerade: <span class="m"><i>p</i> = <span class="hl-new">σ(</span><i>w x</i> + <i>b</i><span class="hl-new">)</span></span>. Aus der Geraden wird eine Grenze.</p>
+
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>A.-M. Legendre (1805): <i>Nouvelles méthodes pour la détermination des orbites des comètes</i>. Anhang „Sur la méthode des moindres quarrés“.</li>
+      <li>C. F. Gauß (1809): <i>Theoria motus corporum coelestium in sectionibus conicis solem ambientium</i>.</li>
+      <li>A.-L. Cauchy (1847): <i>Méthode générale pour la résolution des systèmes d’équations simultanées</i>. Comptes rendus de l’Académie des sciences 25, 536–538.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="index.html"><span class="dir">Zurück</span><span class="name">Übersicht</span></a>
+    <span class="soon next"><span class="dir">Kapitel 2 · in Arbeit</span><span class="name">Die Grenze</span></span>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, ticks, clamp } = S;
+
+  // ════════════════════════════════════════════════════════════════
+  //  Data & regression math
+  // ════════════════════════════════════════════════════════════════
+  const DATA0 = [[28, 675], [34, 550], [41, 555], [47, 675], [52, 710], [58, 835], [63, 770],
+                 [69, 795], [76, 840], [82, 1095], [90, 1145], [97, 1205], [105, 1175], [116, 1315]];
+  const XDOM = [20, 125], YDOM = [300, 1500];
+  // Parameter boxes. raw: (w in €/m², b in €); z: (w′, b′) for standardized area, both in €.
+  const BOX = { raw: { p1: [-2, 20], p2: [-500, 1100] }, z: { p1: [-750, 1250], p2: [-100, 1900] } };
+  const R_LO = 60, R_HI = 2000;                       // colour scale for √L in €
+  const LEVELS = [80, 100, 150, 200, 300, 500, 800, 1200, 2000];
+
+  let dataVersion = 0;
+  const store = S.store({ pts: DATA0.map((p) => p.slice()), w: 5.5, b: 420, space: 'raw' });
+  const setPts = (pts) => { dataVersion++; store.set({ pts }); };
+
+  function stats(pts) {
+    const n = pts.length;
+    let sx = 0, sy = 0;
+    for (const [x, y] of pts) { sx += x; sy += y; }
+    const xm = sx / n, ym = sy / n;
+    let vxx = 0, vxy = 0;
+    for (const [x, y] of pts) { vxx += (x - xm) ** 2; vxy += (x - xm) * (y - ym); }
+    vxx /= n; vxy /= n;
+    const w = vxy / vxx, b = ym - w * xm;
+    let ssr = 0, sst = 0;
+    for (const [x, y] of pts) { ssr += (y - w * x - b) ** 2; sst += (y - ym) ** 2; }
+    return { n, xm, ym, s: Math.sqrt(vxx), w, b, SSmin: ssr, SStot: sst, Lmin: ssr / n };
+  }
+
+  // L as a quadratic form in a parameter space: ŷ = p1·f(x) + p2 with f(x) = x (raw) or (x − x̄)/s (z).
+  // L(p) = E[y²] − 2 pᵀr + pᵀ A p, A = [[E f², E f], [E f, 1]], minimum at A p* = r.
+  function quad(pts, space) {
+    const st = stats(pts);
+    const f = space === 'z' ? (x) => (x - st.xm) / st.s : (x) => x;
+    let a11 = 0, a12 = 0, r1 = 0, r2 = 0, Ey2 = 0;
+    for (const [x, y] of pts) { const u = f(x); a11 += u * u; a12 += u; r1 += u * y; r2 += y; Ey2 += y * y; }
+    const n = pts.length;
+    a11 /= n; a12 /= n; r1 /= n; r2 /= n; Ey2 /= n;
+    const det = a11 - a12 * a12;
+    const ps = [(r1 - a12 * r2) / det, (a11 * r2 - a12 * r1) / det];
+    const L = (q1, q2) => Ey2 - 2 * (q1 * r1 + q2 * r2) + a11 * q1 * q1 + 2 * a12 * q1 * q2 + q2 * q2;
+    const grad = (q1, q2) => [2 * (a11 * q1 + a12 * q2 - r1), 2 * (a12 * q1 + q2 - r2)];
+    const tr = a11 + 1, disc = Math.sqrt(Math.max(0, (tr * tr) / 4 - det));
+    const l1 = tr / 2 + disc, l2 = Math.max(1e-12, tr / 2 - disc);
+    let v1 = Math.abs(a12) > 1e-12 ? [l1 - 1, a12] : a11 >= 1 ? [1, 0] : [0, 1];
+    const nv = Math.hypot(v1[0], v1[1]);
+    v1 = [v1[0] / nv, v1[1] / nv];
+    return { st, space, pstar: ps, Lstar: L(ps[0], ps[1]), L, grad, eig: { l1, l2, v1, v2: [-v1[1], v1[0]] } };
+  }
+  const toSpace = (w, b, space, st) => (space === 'z' ? [w * st.s, b + w * st.xm] : [w, b]);
+  const fromSpace = (p1, p2, space, st) => (space === 'z' ? [p1 / st.s, p2 - (p1 * st.xm) / st.s] : [p1, p2]);
+  const lossT = (L) => Math.log(Math.sqrt(Math.max(L, 1)) / R_LO) / Math.log(R_HI / R_LO);
+
+  function ellipse(Q, c, steps = 180) {
+    const { l1, l2, v1, v2 } = Q.eig;
+    const a = Math.sqrt(c / l1), b = Math.sqrt(c / l2);
+    const out = [];
+    for (let k = 0; k <= steps; k++) {
+      const t = (k / steps) * Math.PI * 2, ca = a * Math.cos(t), sb = b * Math.sin(t);
+      out.push([Q.pstar[0] + ca * v1[0] + sb * v2[0], Q.pstar[1] + ca * v1[1] + sb * v2[1]]);
+    }
+    return out;
+  }
+
+  const eur = (v, d = 0) => fmt(v, d) + ' €';
+  const spaceNames = { raw: 'Rohdaten', z: 'Standardisiert' };
+  const p1Name = (sp) => (sp === 'z' ? 'w′' : 'w');
+  const p2Name = (sp) => (sp === 'z' ? 'b′' : 'b');
+  const p1Fmt = (v, sp) => (sp === 'z' ? eur(v, 1) : fmt(v, 2) + ' €/m²');
+  const p2Fmt = (v, sp) => eur(v, 0);
+
+  // data table
+  (function () {
+    const tb = $('#data-table tbody');
+    DATA0.forEach(([x, y], i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${i + 1}</td><td>${x}</td><td>${fmt(y)}</td>`;
+      tb.appendChild(tr);
+    });
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  //  Shared: loss landscape (heatmap + exact elliptic contours)
+  // ════════════════════════════════════════════════════════════════
+  function renderHeat(off, Q, box, G) {
+    off.width = G; off.height = G;
+    const c = off.getContext('2d');
+    const img = c.createImageData(G, G);
+    for (let j = 0; j < G; j++) {
+      const p2 = box.p2[1] - ((j + 0.5) / G) * (box.p2[1] - box.p2[0]);
+      for (let i = 0; i < G; i++) {
+        const p1 = box.p1[0] + ((i + 0.5) / G) * (box.p1[1] - box.p1[0]);
+        const col = S.lossColor(lossT(Q.L(p1, p2)));
+        const k = (j * G + i) * 4;
+        img.data[k] = col[0]; img.data[k + 1] = col[1]; img.data[k + 2] = col[2]; img.data[k + 3] = 255;
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  function Landscape(el, cfg) {
+    const off = document.createElement('canvas');
+    let key = '';
+    const tip = S.tip(el);
+    const me = { fr: null, Q: null };
+    function frame(W, H) {
+      const m = { l: 54, r: 10, t: 8, b: 44 };
+      const side = Math.max(20, Math.min(W - m.l - m.r, H - m.t - m.b));
+      const box = BOX[cfg.space()];
+      return { m, side, box, X: lin(box.p1[0], box.p1[1], m.l, m.l + side), Y: lin(box.p2[0], box.p2[1], m.t + side, m.t) };
+    }
+    me.st = S.canvas(el, (ctx, W, H) => {
+      const sp = cfg.space();
+      const Q = quad(store.get().pts, sp);
+      const fr = frame(W, H);
+      me.fr = fr; me.Q = Q;
+      const G = Math.round(clamp(fr.side / 2.2, 60, 200));
+      const k = [sp, dataVersion, S.dark, G].join('|');
+      if (k !== key) { renderHeat(off, Q, fr.box, G); key = k; }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(off, fr.m.l, fr.m.t, fr.side, fr.side);
+
+      ctx.save();
+      ctx.beginPath(); ctx.rect(fr.m.l, fr.m.t, fr.side, fr.side); ctx.clip();
+      ctx.strokeStyle = S.alpha('fg', S.dark ? 0.2 : 0.2);
+      ctx.lineWidth = 1;
+      for (const r of LEVELS) {
+        const c = r * r - Q.Lstar;
+        if (c <= 0) continue;
+        ctx.beginPath();
+        ellipse(Q, c).forEach(([a, b], i) => (i ? ctx.lineTo(fr.X(a), fr.Y(b)) : ctx.moveTo(fr.X(a), fr.Y(b))));
+        ctx.stroke();
+      }
+      const mx = fr.X(Q.pstar[0]), my = fr.Y(Q.pstar[1]);
+      ctx.strokeStyle = S.c.fg; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(mx - 5, my - 5); ctx.lineTo(mx + 5, my + 5);
+      ctx.moveTo(mx + 5, my - 5); ctx.lineTo(mx - 5, my + 5);
+      ctx.stroke();
+      if (cfg.overlay) cfg.overlay(ctx, fr, Q);
+      const p = cfg.point();
+      S.dot(ctx, fr.X(p[0]), fr.Y(p[1]), 6, S.c.model, S.c.surface, 2.5);
+      S.label(ctx, 'Minimum', mx + 9, my + 12, S.c.fg, S.font(11.5, 'body'), 'left', 'middle');
+      ctx.restore();
+
+      S.axes(ctx, {
+        x: fr.X, y: fr.Y, grid: false,
+        xt: ticks(fr.box.p1[0], fr.box.p1[1], 4), yt: ticks(fr.box.p2[0], fr.box.p2[1], 4),
+        xfmt: (v) => fmt(v), yfmt: (v) => fmt(v),
+        xlabel: sp === 'z' ? 'Steigung w′ (€ je Standardabw.)' : 'Steigung w (€/m²)',
+        ylabel: sp === 'z' ? 'Achsenabschnitt b′ (€)' : 'Achsenabschnitt b (€)',
+      });
+    });
+    const inside = (q) => me.fr && q.x >= me.fr.m.l && q.x <= me.fr.m.l + me.fr.side && q.y >= me.fr.m.t && q.y <= me.fr.m.t + me.fr.side;
+    const toP = (q) => [clamp(me.fr.X.inv(q.x), ...me.fr.box.p1), clamp(me.fr.Y.inv(q.y), ...me.fr.box.p2)];
+    const near = (q) => { const p = cfg.point(); return Math.hypot(q.x - me.fr.X(p[0]), q.y - me.fr.Y(p[1])) < 26; };
+    S.pointer(me.st, {
+      pick(q) {
+        if (!inside(q) || (q.touch && !near(q))) return null;
+        if (q.probe) return true;
+        tip.hide();
+        cfg.set(toP(q));
+        return { move: (q2) => cfg.set(toP(q2)) };
+      },
+      tap(q) { if (inside(q)) cfg.set(toP(q)); },
+      hover(q) {
+        if (!q || !inside(q)) { tip.hide(); me.st.cv.style.cursor = ''; return; }
+        me.st.cv.style.cursor = 'crosshair';
+        const p = toP(q), sp = cfg.space();
+        const [w, b] = fromSpace(p[0], p[1], sp, me.Q.st);
+        const rows = [[p1Name(sp), p1Fmt(p[0], sp)], [p2Name(sp), p2Fmt(p[1], sp)]];
+        if (sp === 'z') rows.push(['entspricht w', fmt(w, 2) + ' €/m²'], ['und b', eur(b)]);
+        rows.push(['typischer Fehler √L', eur(Math.sqrt(me.Q.L(p[0], p[1])))]);
+        tip.show(q.x, q.y, S.tipRows('Diese Gerade', rows));
+      },
+      leave() { tip.hide(); },
+    });
+    return me;
+  }
+
+  function Colorbar(el) {
+    return S.canvas(el, (ctx, W) => {
+      const x0 = 8, x1 = W - 10, X = S.log(R_LO, R_HI, x0, x1);
+      for (let px = x0; px < x1; px++) {
+        ctx.fillStyle = S.rgb(S.lossColor((px - x0) / (x1 - x0)));
+        ctx.fillRect(px, 2, 1.5, 9);
+      }
+      ctx.fillStyle = S.c.muted;
+      ctx.font = S.font(10.5, 'mono');
+      ctx.textBaseline = 'top';
+      for (const v of W < 420 ? [100, 500, 2000] : [100, 200, 500, 1000, 2000]) {
+        ctx.textAlign = v === 2000 ? 'right' : 'center';
+        ctx.fillRect(X(v) - 0.5, 11, 1, 3);
+        ctx.fillText(fmt(v) + ' €', v === 2000 ? x1 + 2 : X(v), 16);
+      }
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. 1 — residual squares, the sum bar, the landscape
+  // ════════════════════════════════════════════════════════════════
+  const f1 = { hover: -1, showSq: true, fr: null, segs: [], anim: null };
+  const HX = [25, 120];
+
+  function scatterFrame(W, H, m) {
+    return { m, X: lin(XDOM[0], XDOM[1], m.l, W - m.r), Y: lin(YDOM[0], YDOM[1], H - m.b, m.t) };
+  }
+
+  const sc1 = S.canvas($('#f1-scatter'), (ctx, W, H) => {
+    const { pts, w, b } = store.get();
+    const st = stats(pts);
+    const fr = scatterFrame(W, H, { l: 56, r: 14, t: 10, b: 44 });
+    f1.fr = fr;
+    const { X, Y, m } = fr;
+    S.axes(ctx, {
+      x: X, y: Y, xt: [20, 40, 60, 80, 100, 120], yt: [400, 600, 800, 1000, 1200, 1400],
+      xfmt: (v) => v, yfmt: (v) => fmt(v), xlabel: 'Wohnfläche x (m²)', ylabel: 'Kaltmiete y (€)',
+    });
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    // mean line
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.muted; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(m.l, Y(st.ym)); ctx.lineTo(W - m.r, Y(st.ym)); ctx.stroke();
+    ctx.setLineDash([]);
+    // squares + residuals
+    pts.forEach(([x, y], i) => {
+      const py = Y(y), ph = Y(w * x + b), side = Math.abs(py - ph), px = X(x);
+      const dim = f1.hover >= 0 && f1.hover !== i;
+      if (f1.showSq && side > 0.5) {
+        const right = px + side <= W - m.r || px - side < m.l;
+        const x0 = right ? px : px - side;
+        ctx.globalAlpha = dim ? 0.3 : 1;
+        ctx.fillStyle = S.c['error-wash'];
+        ctx.fillRect(x0, Math.min(py, ph), side, side);
+        ctx.strokeStyle = S.alpha('error', 0.6); ctx.lineWidth = 1;
+        ctx.strokeRect(x0 + 0.5, Math.min(py, ph) + 0.5, Math.max(0, side - 1), Math.max(0, side - 1));
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = S.c.error; ctx.lineWidth = 1.75; ctx.globalAlpha = dim ? 0.45 : 1;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, ph); ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+    // model line
+    ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(X(XDOM[0]), Y(w * XDOM[0] + b)); ctx.lineTo(X(XDOM[1]), Y(w * XDOM[1] + b)); ctx.stroke();
+    for (const hx of HX) {
+      ctx.beginPath(); ctx.arc(X(hx), Y(w * hx + b), 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = S.c.surface; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = S.c.model; ctx.stroke();
+    }
+    pts.forEach(([x, y], i) => S.dot(ctx, X(x), Y(y), f1.hover === i ? 6.5 : 4.5, S.c.data, S.c.surface, 2));
+    ctx.restore();
+    S.label(ctx, 'ȳ', W - m.r - 4, Y(st.ym) - 10, S.c.muted, S.font(15, 'math', 'italic'), 'right');
+    const lx = 104, ly = Y(w * lx + b);
+    if (W > 480 && ly > m.t + 20 && ly < H - m.b - 4) S.label(ctx, 'ŷ = w·x + b', X(lx), ly - 18, S.c.model, S.font(16, 'math', 'italic'), 'right');
+  });
+  const tip1 = S.tip($('#f1-scatter'));
+
+  function hit1(q) {
+    const { pts, w, b } = store.get();
+    const fr = f1.fr;
+    if (!fr) return null;
+    const R = q.touch ? 22 : 11;
+    let best = null, bd = R;
+    pts.forEach(([x, y], i) => {
+      const d = Math.hypot(q.x - fr.X(x), q.y - fr.Y(y));
+      if (d < bd) { bd = d; best = { kind: 'pt', i }; }
+    });
+    if (best) return best;
+    for (let k = 0; k < 2; k++) {
+      if (Math.hypot(q.x - fr.X(HX[k]), q.y - fr.Y(w * HX[k] + b)) < R + 3) return { kind: 'handle', k };
+    }
+    const x1 = fr.X(XDOM[0]), y1 = fr.Y(w * XDOM[0] + b), x2 = fr.X(XDOM[1]), y2 = fr.Y(w * XDOM[1] + b);
+    const d = Math.abs((y2 - y1) * q.x - (x2 - x1) * q.y + x2 * y1 - y2 * x1) / Math.hypot(y2 - y1, x2 - x1);
+    if (d < (q.touch ? 16 : 7) && q.x > fr.m.l) return { kind: 'line' };
+    return null;
+  }
+
+  const clampW = (w) => clamp(w, -2, 20), clampB = (b) => clamp(b, -500, 1100);
+  S.pointer(sc1, {
+    pick(q) {
+      const h = hit1(q);
+      if (!h) return null;
+      if (q.probe) return true;
+      if (f1.anim) { f1.anim(); f1.anim = null; }
+      tip1.hide();
+      const fr = f1.fr;
+      if (h.kind === 'pt') {
+        f1.hover = h.i;
+        return {
+          move(q2) {
+            const pts = store.get().pts.map((p) => p.slice());
+            pts[h.i] = [clamp(Math.round(fr.X.inv(q2.x)), 22, 123), clamp(Math.round(fr.Y.inv(q2.y) / 5) * 5, 320, 1480)];
+            setPts(pts);
+          },
+          end() { f1.hover = -1; redraw1(); },
+        };
+      }
+      if (h.kind === 'handle') {
+        const s = store.get(), o = 1 - h.k, xo = HX[o], yo = s.w * xo + s.b;
+        return {
+          move(q2) {
+            const yk = fr.Y.inv(q2.y);
+            const w = clampW((yk - yo) / (HX[h.k] - xo));
+            store.set({ w, b: clampB(yo - w * xo) });
+          },
+        };
+      }
+      const y0 = fr.Y.inv(q.y), b0 = store.get().b;
+      return { move(q2) { store.set({ b: clampB(b0 + fr.Y.inv(q2.y) - y0) }); } };
+    },
+    hover(q) {
+      if (!q) { tip1.hide(); return; }
+      const h = hit1(q);
+      sc1.cv.style.cursor = h ? (h.kind === 'pt' ? 'move' : 'grab') : '';
+      const i = h && h.kind === 'pt' ? h.i : -1;
+      if (i !== f1.hover) { f1.hover = i; redraw1(); }
+      if (i >= 0) {
+        const { pts, w, b } = store.get();
+        const [x, y] = pts[i], yh = w * x + b, e = y - yh;
+        tip1.show(q.x, q.y, S.tipRows(`Wohnung ${i + 1}`, [
+          ['Fläche x', x + ' m²'], ['Miete y', eur(y)], ['Vorhersage ŷ', eur(yh)],
+          ['Residuum e', S.signed(e) + ' €'], ['Beitrag e²', fmt(e * e) + ' €²'],
+        ]));
+      } else tip1.hide();
+    },
+    leave() { tip1.hide(); if (f1.hover !== -1) { f1.hover = -1; redraw1(); } },
+  });
+
+  // the sum-of-squares bar
+  const bar1 = S.canvas($('#f1-bar'), (ctx, W) => {
+    const { pts, w, b } = store.get();
+    const st = stats(pts);
+    const x0 = 2, x1 = W - 14, Smax = st.SStot * 1.3, X = lin(0, Smax, x0, x1);
+    const y0 = 2, bh = 16;
+    ctx.fillStyle = S.c.grid;
+    ctx.fillRect(x0, y0, x1 - x0, bh);
+    let acc = 0;
+    f1.segs = [];
+    pts.forEach(([x, y], i) => {
+      const e = y - w * x - b, s = e * e;
+      const a = X(acc), z = X(Math.min(acc + s, Smax));
+      acc += s;
+      if (a >= x1) return;
+      const wpx = z - a;
+      ctx.globalAlpha = f1.hover < 0 || f1.hover === i ? 1 : 0.4;
+      ctx.fillStyle = S.c.error;
+      ctx.fillRect(a, y0, wpx > 4 ? wpx - 2 : Math.max(0.5, wpx), bh);
+      ctx.globalAlpha = 1;
+      f1.segs.push([a, z, i]);
+    });
+    if (acc > Smax) {
+      ctx.fillStyle = S.c.error;
+      ctx.beginPath(); ctx.moveTo(x1 + 2, y0); ctx.lineTo(x1 + 10, y0 + bh / 2); ctx.lineTo(x1 + 2, y0 + bh); ctx.fill();
+    }
+    const tick = (v, text, col, align) => {
+      const px = X(v);
+      ctx.fillStyle = col;
+      ctx.fillRect(px - 1, y0 - 2, 2, bh + 6);
+      ctx.font = S.font(11, 'body');
+      ctx.textAlign = align;
+      ctx.textBaseline = 'top';
+      ctx.fillText(text, align === 'right' ? px + 1 : align === 'left' ? px - 1 : px, y0 + bh + 7);
+    };
+    tick(st.SSmin, 'Minimum', S.c.fg, 'left');
+    tick(st.SStot, 'ȳ-Linie', S.c['fg-2'], 'right');
+  });
+  const tipBar = S.tip($('#f1-bar'));
+  S.pointer(bar1, {
+    hover(q) {
+      const seg = q && f1.segs.find(([a, z]) => q.x >= a && q.x <= z);
+      const i = seg ? seg[2] : -1;
+      if (i !== f1.hover) { f1.hover = i; redraw1(); }
+      if (i >= 0) {
+        const { pts, w, b } = store.get();
+        const e = pts[i][1] - w * pts[i][0] - b;
+        tipBar.show(q.x, 0, S.tipRows(`Wohnung ${i + 1}`, [['Residuum e', S.signed(e) + ' €'], ['e²', fmt(e * e) + ' €²']]));
+      } else tipBar.hide();
+    },
+    leave() { tipBar.hide(); if (f1.hover !== -1) { f1.hover = -1; redraw1(); } },
+  });
+
+  const land1 = Landscape($('#f1-land'), {
+    space: () => 'raw',
+    point: () => [store.get().w, store.get().b],
+    set: (p) => { if (f1.anim) { f1.anim(); f1.anim = null; } store.set({ w: p[0], b: p[1] }); },
+  });
+  Colorbar($('#f1-cbar'));
+
+  function redraw1() { sc1.redraw(); bar1.redraw(); }
+
+  const wEl = $('#f1-w'), bEl = $('#f1-b');
+  wEl.addEventListener('input', () => store.set({ w: +wEl.value }));
+  bEl.addEventListener('input', () => store.set({ b: +bEl.value }));
+  $('#f1-sq').addEventListener('change', (e) => { f1.showSq = e.target.checked; redraw1(); });
+  $('#f1-reset').addEventListener('click', () => setPts(DATA0.map((p) => p.slice())));
+  $('#f1-best').addEventListener('click', () => {
+    const s = store.get(), st = stats(s.pts), w0 = s.w, b0 = s.b;
+    if (f1.anim) f1.anim();
+    f1.anim = S.tween(800, (t) => store.set({ w: S.lerp(w0, st.w, t), b: S.lerp(b0, st.b, t) }), () => (f1.anim = null));
+  });
+
+  function update1() {
+    const { pts, w, b } = store.get();
+    const st = stats(pts);
+    let ss = 0;
+    for (const [x, y] of pts) ss += (y - w * x - b) ** 2;
+    const L = ss / pts.length;
+    wEl.value = w; bEl.value = b;
+    $('#f1-wv').textContent = fmt(w, 2) + ' €/m²';
+    $('#f1-bv').textContent = eur(b);
+    $('#f1-L').textContent = fmt(L) + ' €²';
+    $('#f1-rmse').textContent = eur(Math.sqrt(L));
+    $('#f1-Lmin').textContent = fmt(st.Lmin) + ' €²';
+    $('#f1-opt').textContent = `w = ${fmt(st.w, 2)} €/m² · b = ${eur(st.b)}`;
+    $('#f1-r2lbl').textContent = `R² = ${fmt(1 - ss / st.SStot, 2)} · bestmöglich ${fmt(1 - st.SSmin / st.SStot, 2)}`;
+    redraw1();
+    land1.st.redraw();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. 2 — the bowl in 3D, raw vs standardized
+  // ════════════════════════════════════════════════════════════════
+  const f2 = { t: 0, anim: null };
+  let LCAP = 1;
+  {
+    const Qr = quad(DATA0, 'raw'), Qz = quad(DATA0, 'z');
+    for (const [Q, bx] of [[Qr, BOX.raw], [Qz, BOX.z]])
+      for (const a of bx.p1) for (const c of bx.p2) LCAP = Math.max(LCAP, Q.L(a, c));
+  }
+  const N2 = 34, HZ = 1.0;
+  const boxAt = (box, u, v) => [box.p1[0] + ((u + 1) / 2) * (box.p1[1] - box.p1[0]), box.p2[0] + ((v + 1) / 2) * (box.p2[1] - box.p2[0])];
+  const boxUV = (box, p) => [(2 * (p[0] - box.p1[0])) / (box.p1[1] - box.p1[0]) - 1, (2 * (p[1] - box.p2[0])) / (box.p2[1] - box.p2[0]) - 1];
+  const hOf = (L) => Math.min(L / LCAP, 1.5) * HZ;
+  const LIGHT = (() => { const v = [-0.45, -0.55, 0.7], n = Math.hypot(...v); return v.map((x) => x / n); })();
+
+  const cam2 = S.orbit($('#f2-bowl'), {
+    yaw: -0.95, pitch: 0.58, zoom: 0.27, cz: 0.42, dist: 5.5,
+    draw(ctx, W, H, cam) {
+      const { pts, w, b } = store.get();
+      const Qr = quad(pts, 'raw'), Qz = quad(pts, 'z');
+      const t = f2.t;
+      const V = [];
+      for (let j = 0; j <= N2; j++) {
+        for (let i = 0; i <= N2; i++) {
+          const u = -1 + (2 * i) / N2, v = -1 + (2 * j) / N2;
+          const Lr = Qr.L(...boxAt(BOX.raw, u, v)), Lz = Qz.L(...boxAt(BOX.z, u, v));
+          const L = Lr + (Lz - Lr) * t;
+          const wp = [u, v, hOf(L)];
+          V.push({ wp, L, s: cam.P(wp) });
+        }
+      }
+      // floor frame + L axis
+      ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1;
+      ctx.beginPath();
+      [[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]].forEach(([u, v], k) => {
+        const s = cam.P([u, v, 0]);
+        k ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]);
+      });
+      ctx.stroke();
+
+      const quads = [];
+      for (let j = 0; j < N2; j++) {
+        for (let i = 0; i < N2; i++) {
+          const a = j * (N2 + 1) + i, idx = [a, a + 1, a + N2 + 2, a + N2 + 1];
+          const depth = (V[idx[0]].s[2] + V[idx[1]].s[2] + V[idx[2]].s[2] + V[idx[3]].s[2]) / 4;
+          quads.push({ idx, depth });
+        }
+      }
+      quads.sort((p, q) => q.depth - p.depth);
+      const levels = LEVELS.map((r) => r * r);
+      const lineCol = S.alpha('fg', S.dark ? 0.35 : 0.3);
+      for (const { idx } of quads) {
+        const A = V[idx[0]], B = V[idx[1]], D = V[idx[3]];
+        const e1 = [B.wp[0] - A.wp[0], B.wp[1] - A.wp[1], B.wp[2] - A.wp[2]];
+        const e2 = [D.wp[0] - A.wp[0], D.wp[1] - A.wp[1], D.wp[2] - A.wp[2]];
+        const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+        const nl = Math.hypot(...n) || 1;
+        const lam = Math.max(0, (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) / nl);
+        const k = (S.dark ? 0.62 : 0.8) + (S.dark ? 0.5 : 0.28) * lam;
+        const Lavg = (V[idx[0]].L + V[idx[1]].L + V[idx[2]].L + V[idx[3]].L) / 4;
+        const c = S.lossColor(lossT(Lavg));
+        ctx.fillStyle = `rgb(${Math.min(255, c[0] * k) | 0},${Math.min(255, c[1] * k) | 0},${Math.min(255, c[2] * k) | 0})`;
+        ctx.beginPath();
+        idx.forEach((q, m) => (m ? ctx.lineTo(V[q].s[0], V[q].s[1]) : ctx.moveTo(V[q].s[0], V[q].s[1])));
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = ctx.fillStyle;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        // contour segments inside this quad (marching squares, screen-space interpolation)
+        ctx.strokeStyle = lineCol; ctx.lineWidth = 1;
+        for (const lev of levels) {
+          const cross = [];
+          for (let m = 0; m < 4; m++) {
+            const P = V[idx[m]], R = V[idx[(m + 1) % 4]];
+            if ((P.L - lev) * (R.L - lev) < 0) {
+              const f = (lev - P.L) / (R.L - P.L);
+              cross.push([P.s[0] + (R.s[0] - P.s[0]) * f, P.s[1] + (R.s[1] - P.s[1]) * f]);
+            }
+          }
+          if (cross.length >= 2) {
+            ctx.beginPath();
+            ctx.moveTo(cross[0][0], cross[0][1]); ctx.lineTo(cross[1][0], cross[1][1]);
+            if (cross.length === 4) { ctx.moveTo(cross[2][0], cross[2][1]); ctx.lineTo(cross[3][0], cross[3][1]); }
+            ctx.stroke();
+          }
+        }
+      }
+      // axis labels on the floor
+      const sp = t < 0.5 ? 'raw' : 'z';
+      const lab = (p, text) => { const s = cam.P(p); S.label(ctx, text, s[0], s[1], S.c['fg-2'], S.font(15, 'math', 'italic'), 'center'); };
+      lab([0, -1.2, 0], p1Name(sp) + ' →');
+      lab([-1.2, 0, 0], p2Name(sp) + ' →');
+      const a0 = cam.P([-1, -1, 0]), a1 = cam.P([-1, -1, HZ * 1.05]);
+      ctx.strokeStyle = S.c.axis; ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke();
+      S.label(ctx, 'L', a1[0], a1[1] - 10, S.c['fg-2'], S.font(15, 'math', 'italic'), 'center');
+
+      // minimum and the current model
+      const lerpUV = (pr, pz) => { const a = boxUV(BOX.raw, pr), c = boxUV(BOX.z, pz); return [S.lerp(a[0], c[0], t), S.lerp(a[1], c[1], t)]; };
+      const mUV = lerpUV(Qr.pstar, Qz.pstar);
+      const ms = cam.P([mUV[0], mUV[1], hOf(Qr.Lstar)]);
+      ctx.strokeStyle = S.c.fg; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ms[0] - 5, ms[1] - 5); ctx.lineTo(ms[0] + 5, ms[1] + 5); ctx.moveTo(ms[0] + 5, ms[1] - 5); ctx.lineTo(ms[0] - 5, ms[1] + 5); ctx.stroke();
+
+      const cur = lerpUV([w, b], toSpace(w, b, 'z', Qr.st));
+      const inBox = Math.abs(cur[0]) <= 1 && Math.abs(cur[1]) <= 1;
+      const cu = [clamp(cur[0], -1, 1), clamp(cur[1], -1, 1)];
+      const Lc = Qr.L(w, b);
+      const top = cam.P([cu[0], cu[1], hOf(Lc)]), bot = cam.P([cu[0], cu[1], 0]);
+      ctx.setLineDash([3, 3]); ctx.strokeStyle = S.c.model; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(bot[0], bot[1]); ctx.lineTo(top[0], top[1]); ctx.stroke();
+      ctx.setLineDash([]);
+      S.dot(ctx, bot[0], bot[1], 2.5, S.c.model, S.c.surface, 1.5);
+      if (inBox) S.dot(ctx, top[0], top[1], 6, S.c.model, S.c.surface, 2.5);
+      else { ctx.beginPath(); ctx.arc(top[0], top[1], 6, 0, Math.PI * 2); ctx.strokeStyle = S.c.model; ctx.lineWidth = 2; ctx.stroke(); }
+    },
+  });
+
+  const spaceRadios = [...document.querySelectorAll('input[name="space-f2"], input[name="space-f3"]')];
+  spaceRadios.forEach((r) => r.addEventListener('change', () => { if (r.checked) store.set({ space: r.value }); }));
+
+  function update2() {
+    const { pts, w, b, space } = store.get();
+    const Q = quad(pts, space);
+    const p = toSpace(w, b, space, Q.st);
+    $('#f2-p1k').textContent = space === 'z' ? 'Steigung w′' : 'Steigung w';
+    $('#f2-p2k').textContent = space === 'z' ? 'Achsenabschnitt b′' : 'Achsenabschnitt b';
+    $('#f2-p1').textContent = p1Fmt(p[0], space);
+    $('#f2-p2').textContent = p2Fmt(p[1], space);
+    $('#f2-L').textContent = fmt(Q.L(p[0], p[1])) + ' €²';
+    $('#f2-cond').textContent = `${fmt(Math.sqrt(Q.eig.l1 / Q.eig.l2))} : 1`;
+    $('#f2-note').innerHTML = space === 'z'
+      ? `Standardisiert: <span class="m"><i>ŷ</i> = <i>w</i>′ <i>x</i>′ + <i>b</i>′</span>. Jetzt ist <span class="m"><i>w</i>′</span> der Aufpreis pro Standardabweichung Fläche (<span class="m"><i>s</i></span> = ${fmt(Q.st.s, 1)} m²) und <span class="m"><i>b</i>′</span> die Miete bei mittlerer Fläche (<span class="m"><i>x̄</i></span> = ${fmt(Q.st.xm, 1)} m²). Die Schüssel ist rund.`
+      : `Rohdaten: <span class="m"><i>w</i></span> in Euro pro m², <span class="m"><i>b</i></span> in Euro. Die Schüssel ist eine lange, schmale Rinne.`;
+    spaceRadios.forEach((r) => (r.checked = r.value === space));
+    cam2.redraw();
+  }
+
+  let lastSpace = store.get().space;
+  function morphSpace(space) {
+    if (f2.anim) f2.anim();
+    const t0 = f2.t, t1 = space === 'z' ? 1 : 0;
+    f2.anim = S.tween(900, (k) => { f2.t = S.lerp(t0, t1, k); cam2.redraw(); }, () => (f2.anim = null));
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. 3 — gradient descent
+  // ════════════════════════════════════════════════════════════════
+  const MAX_STEPS = 600;
+  const ETA_RANGE = { raw: [1e-6, 2.5e-4], z: [1e-3, 1.25] };
+  const gd = { start: [0, 0], p: [0, 0], path: [], losses: [], t: 0, running: false, status: 'ready', ghost: {}, eta: { raw: 1.2e-4, z: 0.1 }, Q: null, ver: -1, acc: 0, last: 0 };
+
+  function gdReset() {
+    const s = store.get();
+    gd.Q = quad(s.pts, s.space);
+    gd.ver = dataVersion;
+    gd.p = toSpace(gd.start[0], gd.start[1], s.space, gd.Q.st);
+    gd.path = [gd.p.slice()];
+    gd.losses = [gd.Q.L(gd.p[0], gd.p[1])];
+    gd.t = 0;
+    gd.running = false;
+    gd.status = 'ready';
+  }
+  function gdStep() {
+    const sp = store.get().space;
+    const g = gd.Q.grad(gd.p[0], gd.p[1]);
+    const eta = gd.eta[sp];
+    gd.p = [gd.p[0] - eta * g[0], gd.p[1] - eta * g[1]];
+    gd.t++;
+    const L = gd.Q.L(gd.p[0], gd.p[1]);
+    gd.path.push(gd.p.slice());
+    gd.losses.push(L);
+    if (!isFinite(L) || L > 1e11) { gd.running = false; gd.status = 'diverged'; }
+    else if (L - gd.Q.Lstar < 1e-6 * gd.Q.Lstar) { gd.running = false; gd.status = 'converged'; }
+    else if (gd.t >= MAX_STEPS) { gd.running = false; gd.status = 'maxed'; }
+  }
+  function gdLoop(ts) {
+    if (!gd.running) { render3(); return; }
+    const rate = gd.t < 12 ? 5 : gd.t < 50 ? 16 : 70;
+    gd.acc += (Math.min(100, ts - (gd.last || ts)) / 1000) * rate;
+    gd.last = ts;
+    let k = Math.floor(gd.acc);
+    gd.acc -= k;
+    while (k-- > 0 && gd.running) gdStep();
+    render3();
+    requestAnimationFrame(gdLoop);
+  }
+  function gdStart() {
+    if (gd.status === 'diverged' || gd.status === 'converged' || gd.status === 'maxed') gdReset();
+    gd.running = true; gd.status = 'running'; gd.acc = 1; gd.last = 0;
+    requestAnimationFrame(gdLoop);
+  }
+
+  const land3 = Landscape($('#f3-land'), {
+    space: () => store.get().space,
+    point: () => gd.p,
+    set: (p) => {
+      const sp = store.get().space;
+      gd.start = fromSpace(p[0], p[1], sp, gd.Q.st);
+      gdReset();
+      render3();
+    },
+    overlay(ctx, fr, Q) {
+      const sp = store.get().space;
+      // start marker
+      const s0 = gd.path[0];
+      ctx.beginPath(); ctx.arc(fr.X(s0[0]), fr.Y(s0[1]), 5, 0, Math.PI * 2);
+      ctx.strokeStyle = S.c.grad; ctx.lineWidth = 2; ctx.stroke();
+      // path
+      if (gd.path.length > 1) {
+        ctx.strokeStyle = S.c.grad; ctx.lineWidth = 1.75; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        gd.path.forEach(([a, b], i) => {
+          const x = clamp(fr.X(a), -1e4, 1e4), y = clamp(fr.Y(b), -1e4, 1e4);
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        });
+        ctx.stroke();
+        ctx.fillStyle = S.c.grad;
+        const lim = Math.min(gd.path.length, 160);
+        for (let i = 1; i < lim; i++) {
+          const [a, b] = gd.path[i];
+          ctx.beginPath(); ctx.arc(fr.X(a), fr.Y(b), 2.2, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      // the next step, −η∇L, as it will actually land on screen (clamped so it stays readable)
+      const g = Q.grad(gd.p[0], gd.p[1]), eta = gd.eta[sp];
+      const dx = -eta * g[0] * fr.X.k, dy = -eta * g[1] * fr.Y.k;
+      const len = Math.hypot(dx, dy);
+      if (len > 4 && gd.status !== 'converged' && gd.status !== 'diverged') {
+        const px = fr.X(gd.p[0]), py = fr.Y(gd.p[1]), L = Math.min(len, 80);
+        const ex = px + (dx / len) * L, ey = py + (dy / len) * L;
+        ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad;
+        S.arrow(ctx, px, py, ex, ey, 9, 2.25);
+        S.label(ctx, '−η∇L', ex + (dx / len) * 6, ey + (dy / len) * 6 - 10, S.c.grad, S.font(14, 'math', 'italic'), dx >= 0 ? 'left' : 'right');
+      }
+    },
+  });
+
+  const curve3 = S.canvas($('#f3-curve'), (ctx, W, H) => {
+    const sp = store.get().space, other = sp === 'z' ? 'raw' : 'z';
+    const m = { l: 48, r: 18, t: 10, b: 38 };
+    const ghost = gd.ghost[other];
+    const T = Math.max(40, gd.t, ghost ? ghost.length - 1 : 0);
+    const all = gd.losses.concat(ghost || []).filter((v) => isFinite(v));
+    const lo = gd.Q.Lstar * 0.7;
+    const hi = clamp(Math.max(...all) * 1.6, lo * 20, 1e9);
+    const X = lin(0, T, m.l, W - m.r), Y = S.log(lo, hi, H - m.b, m.t);
+    const yt = [];
+    for (let e = Math.ceil(Math.log10(lo)); e <= Math.floor(Math.log10(hi)); e++) yt.push(Math.pow(10, e));
+    const sup = (e) => String(e).split('').map((ch) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+ch]).join('');
+    S.axes(ctx, { x: X, y: Y, xt: ticks(0, T, 4), yt, xfmt: (v) => fmt(v), yfmt: (v) => '10' + sup(Math.round(Math.log10(v))), xlabel: 'Schritt' });
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(m.l, Y(gd.Q.Lstar)); ctx.lineTo(W - m.r, Y(gd.Q.Lstar)); ctx.stroke();
+    const line = (arr, col, dash, width) => {
+      ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = width; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      arr.forEach((v, i) => { const y = clamp(Y(Math.min(v, hi * 10)), -50, H + 50); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); });
+      ctx.stroke(); ctx.setLineDash([]);
+    };
+    if (ghost) line(ghost, S.c.muted, [5, 4], 1.5);
+    line(gd.losses, S.c.grad, [], 2);
+    ctx.restore();
+    S.label(ctx, 'Minimum', W - m.r, Y(gd.Q.Lstar) + 10, S.c['fg-2'], S.font(11, 'body'), 'right');
+    if (ghost) {
+      const gi = ghost.length - 1;
+      S.label(ctx, spaceNames[other], clamp(X(gi) - 4, m.l + 60, W - m.r), clamp(Y(ghost[gi]), m.t + 6, H - m.b - 8) - 12, S.c.muted, S.font(11, 'body'), 'right');
+    }
+    const li = gd.losses.length - 1, lv = gd.losses[li];
+    if (isFinite(lv)) S.dot(ctx, X(li), clamp(Y(lv), m.t, H - m.b), 3.5, S.c.grad, S.c.surface, 1.5);
+  });
+
+  const mini3 = S.canvas($('#f3-mini'), (ctx, W, H) => {
+    const { pts } = store.get();
+    const st = gd.Q.st;
+    const m = { l: 48, r: 18, t: 8, b: 30 };
+    const X = lin(XDOM[0], XDOM[1], m.l, W - m.r), Y = lin(YDOM[0], YDOM[1], H - m.b, m.t);
+    S.axes(ctx, { x: X, y: Y, xt: [40, 80, 120], yt: [500, 1000], xfmt: (v) => v + ' m²', yfmt: (v) => fmt(v) + ' €' });
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.25;
+    ctx.beginPath(); ctx.moveTo(X(XDOM[0]), Y(st.w * XDOM[0] + st.b)); ctx.lineTo(X(XDOM[1]), Y(st.w * XDOM[1] + st.b)); ctx.stroke();
+    ctx.setLineDash([]);
+    const [w, b] = fromSpace(gd.p[0], gd.p[1], store.get().space, st);
+    ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.25;
+    ctx.beginPath(); ctx.moveTo(X(XDOM[0]), Y(w * XDOM[0] + b)); ctx.lineTo(X(XDOM[1]), Y(w * XDOM[1] + b)); ctx.stroke();
+    pts.forEach(([x, y]) => S.dot(ctx, X(x), Y(y), 3, S.c.data, S.c.surface, 1.5));
+    ctx.restore();
+  });
+
+  const etaEl = $('#f3-eta'), markEl = $('#f3-mark');
+  const etaToSlider = (eta, sp) => { const [a, b] = ETA_RANGE[sp]; return (1000 * Math.log(eta / a)) / Math.log(b / a); };
+  const sliderToEta = (v, sp) => { const [a, b] = ETA_RANGE[sp]; return a * Math.pow(b / a, v / 1000); };
+  etaEl.addEventListener('input', () => {
+    const sp = store.get().space;
+    gd.eta[sp] = sliderToEta(+etaEl.value, sp);
+    if (gd.status === 'diverged' || gd.status === 'converged' || gd.status === 'maxed') gdReset();
+    render3();
+  });
+  $('#f3-run').addEventListener('click', () => {
+    if (gd.running) { gd.running = false; gd.status = 'paused'; render3(); }
+    else gdStart();
+  });
+  $('#f3-step').addEventListener('click', () => {
+    if (gd.status === 'diverged' || gd.status === 'converged' || gd.status === 'maxed') gdReset();
+    gd.running = false;
+    gdStep();
+    if (gd.status === 'ready' || gd.status === 'running') gd.status = 'paused';
+    render3();
+  });
+  $('#f3-reset').addEventListener('click', () => { gd.start = [0, 0]; gdReset(); render3(); });
+
+  function statusText() {
+    const sp = store.get().space;
+    const st = gd.Q.st;
+    const [w, b] = fromSpace(gd.p[0], gd.p[1], sp, st);
+    const [w0, b0] = gd.start;
+    switch (gd.status) {
+      case 'ready': return `Start bei <b>w = ${fmt(w0, 2)} €/m², b = ${eur(b0)}</b>. Drücke „Starten“.`;
+      case 'running': return `Läuft … Schritt ${gd.t}.`;
+      case 'paused': return `Angehalten nach ${gd.t} Schritten. Weiter mit „Starten“.`;
+      case 'converged': return `<b>Am Ziel nach ${gd.t} Schritten.</b> Der Verlust unterscheidet sich nicht mehr messbar vom Minimum.`;
+      case 'diverged': return `<b>Divergiert nach ${gd.t} Schritten.</b> Die Lernrate liegt über der Grenze 2/λ<sub>max</sub>: Jeder Schritt springt über das Tal und landet höher als vorher.`;
+      case 'maxed': return `<b>Nach ${gd.t} Schritten</b> liegt die Steigung ${fmt(Math.abs(w - st.w), 2)} €/m² neben dem Ziel, der Achsenabschnitt aber noch ${eur(Math.abs(b - st.b))}. Die Rinne ist zu flach, um schnell voranzukommen.`;
+    }
+    return '';
+  }
+
+  function render3() {
+    const sp = store.get().space;
+    const st = gd.Q.st;
+    const [w, b] = fromSpace(gd.p[0], gd.p[1], sp, st);
+    const g = gd.Q.grad(gd.p[0], gd.p[1]);
+    const L = gd.losses[gd.losses.length - 1];
+    $('#f3-t').textContent = gd.t;
+    $('#f3-L').textContent = isFinite(L) ? (L < 1e7 ? fmt(L) : S.sci(L, 2)) + ' €²' : '∞';
+    $('#f3-w').textContent = isFinite(w) && Math.abs(w) < 1e6 ? fmt(w, 2) + ' €/m²' : '–';
+    $('#f3-b').textContent = isFinite(b) && Math.abs(b) < 1e7 ? eur(b) : '–';
+    $('#f3-g1k').textContent = `∂L/∂${p1Name(sp)}`;
+    $('#f3-g2k').textContent = `∂L/∂${p2Name(sp)}`;
+    $('#f3-g1').textContent = S.sci(g[0], 3);
+    $('#f3-g2').textContent = S.sci(g[1], 3);
+    $('#f3-spacelbl').textContent = spaceNames[sp];
+    $('#f3-run').textContent = gd.running ? 'Anhalten' : 'Starten';
+    $('#f3-status').innerHTML = statusText();
+    etaEl.value = etaToSlider(gd.eta[sp], sp);
+    $('#f3-etav').textContent = S.sci(gd.eta[sp], 2);
+    const crit = 1 / gd.Q.eig.l1; // η_crit = 2/λmax(H), H = 2A
+    const pct = clamp(etaToSlider(crit, sp) / 1000, 0, 1);
+    markEl.style.left = `calc(8px + ${pct} * (100% - 16px) - 1px)`;
+    markEl.hidden = pct >= 1;
+    land3.st.redraw(); curve3.redraw(); mini3.redraw();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. 4 — three flats: projection in ℝ³
+  // ════════════════════════════════════════════════════════════════
+  const P3 = { x: [0.4, 0.65, 1.0], y: [0.85, 0.5, 1.2], ct: 0, anim: null, hover: -1 };
+  const SC = 0.62;
+  const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const mul3 = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+  const norm3 = (a) => mul3(a, 1 / (Math.hypot(...a) || 1));
+  const ONE = [1, 1, 1];
+
+  function fit3() {
+    const xm = (P3.x[0] + P3.x[1] + P3.x[2]) / 3;
+    const xv = P3.x.map((v) => v - P3.ct * xm);
+    const y = P3.y;
+    const sx = xv[0] + xv[1] + xv[2], sxx = dot3(xv, xv), sy = y[0] + y[1] + y[2], sxy = dot3(xv, y);
+    const w = (3 * sxy - sx * sy) / (3 * sxx - sx * sx);
+    const b = (sy - w * sx) / 3;
+    const yh = add3(mul3(ONE, b), mul3(xv, w));
+    const e = sub3(y, yh);
+    const bRaw = sy / 3 - (w * (P3.x[0] + P3.x[1] + P3.x[2])) / 3;
+    return { xm, xv, y, w, b, bRaw, yh, e };
+  }
+
+  const cam4 = S.orbit($('#f4-space'), {
+    yaw: 1.95, pitch: 0.42, zoom: 0.42, cz: 0.3, dist: 6,
+    draw(ctx, W, H, cam) {
+      const F = fit3();
+      const P = (v) => cam.P([v[0] * SC, v[1] * SC, v[2] * SC]);
+      const seg = (a, b) => { const s = P(a), t = P(b); ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(t[0], t[1]); ctx.stroke(); };
+      const vec = (from, to, col, width, head = 9) => { const s = P(from), t = P(to); ctx.strokeStyle = col; ctx.fillStyle = col; S.arrow(ctx, s[0], s[1], t[0], t[1], head, width); };
+      const labelAt = (v, text, col, dx = 8, dy = -8, style = 'bold') => { const s = P(v); S.label(ctx, text, s[0] + dx, s[1] + dy, col, S.font(17, 'math', style), 'left'); };
+
+      // axes (one per flat)
+      ctx.lineWidth = 1;
+      for (let k = 0; k < 3; k++) {
+        const e = [0, 0, 0]; e[k] = 1.7;
+        ctx.strokeStyle = P3.hover === k ? S.c.accent : S.c.axis;
+        ctx.lineWidth = P3.hover === k ? 2 : 1;
+        seg([0, 0, 0], e);
+        for (const tv of [0.5, 1, 1.5]) {
+          const a = [0, 0, 0]; a[k] = tv;
+          const s = P(a);
+          ctx.fillStyle = S.c.axis; ctx.fillRect(s[0] - 1.5, s[1] - 1.5, 3, 3);
+        }
+        const tip = [0, 0, 0]; tip[k] = 1.85;
+        const s = P(tip);
+        S.label(ctx, `Wohnung ${k + 1}`, s[0], s[1], P3.hover === k ? S.c.accent : S.c.muted, S.font(11.5, 'body'), 'center');
+      }
+
+      // plane patch spanned by 1 and x (same plane whether or not x is centred)
+      const u = norm3(ONE);
+      const x0 = P3.x;
+      const v = norm3(sub3(x0, mul3(u, dot3(x0, u))));
+      const keys = [[0, 0, 0], ONE, F.xv, F.yh, mul3(ONE, F.b)];
+      const cs = keys.map((p) => dot3(p, u)), ct = keys.map((p) => dot3(p, v));
+      const s0 = Math.min(...cs) - 0.3, s1 = Math.max(...cs) + 0.3, t0 = Math.min(...ct) - 0.35, t1 = Math.max(...ct) + 0.35;
+      const at = (s, t) => add3(mul3(u, s), mul3(v, t));
+      ctx.fillStyle = S.c['model-wash'];
+      ctx.beginPath();
+      [[s0, t0], [s1, t0], [s1, t1], [s0, t1]].forEach(([s, t], i) => { const p = P(at(s, t)); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = S.alpha('model', 0.45); ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = S.alpha('model', 0.16);
+      const step = 0.25;
+      for (let s = Math.ceil(s0 / step) * step; s < s1; s += step) seg(at(s, t0), at(s, t1));
+      for (let t = Math.ceil(t0 / step) * step; t < t1; t += step) seg(at(s0, t), at(s1, t));
+
+      // decomposition ŷ = b·1 + w·x
+      const b1 = mul3(ONE, F.b);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.model; ctx.lineWidth = 1.25;
+      seg([0, 0, 0], b1); seg(b1, F.yh);
+      ctx.setLineDash([]);
+
+      // basis directions
+      vec([0, 0, 0], ONE, S.c['fg-2'], 1.75, 8);
+      vec([0, 0, 0], F.xv, S.c['fg-2'], 1.75, 8);
+      // prediction, data, residual
+      vec([0, 0, 0], F.yh, S.c.model, 2.5);
+      vec([0, 0, 0], F.y, S.c.data, 2.5);
+      if (Math.hypot(...F.e) > 0.02) vec(F.yh, F.y, S.c.error, 2.25, 8);
+      // right-angle marker at ŷ
+      const eh = norm3(F.e);
+      const dIn = norm3(sub3(mul3(ONE, 0), F.yh));
+      const a = 0.09;
+      if (Math.hypot(...F.e) > 0.12) {
+        ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.25;
+        const p1 = add3(F.yh, mul3(dIn, a)), p2 = add3(p1, mul3(eh, a)), p3 = add3(F.yh, mul3(eh, a));
+        const q1 = P(p1), q2 = P(p2), q3 = P(p3);
+        ctx.beginPath(); ctx.moveTo(q1[0], q1[1]); ctx.lineTo(q2[0], q2[1]); ctx.lineTo(q3[0], q3[1]); ctx.stroke();
+      }
+      // labels
+      labelAt(ONE, '1', S.c['fg-2'], 6, -10);
+      labelAt(F.xv, P3.ct > 0.5 ? 'x − x̄1' : 'x', S.c['fg-2'], 6, 12);
+      labelAt(F.y, 'y', S.c.fg, 8, -10);
+      labelAt(F.yh, 'ŷ', S.c.model, 8, 14);
+      const mid = mul3(add3(F.y, F.yh), 0.5);
+      if (Math.hypot(...F.e) > 0.08) labelAt(mid, 'e', S.c.error, 8, 0);
+      const bm = mul3(b1, 0.55);
+      if (Math.abs(F.b) > 0.08) { const s = P(bm); S.label(ctx, 'b·1', s[0] - 8, s[1] + 12, S.c.model, S.font(14, 'math', 'italic'), 'right'); }
+    },
+  });
+
+  const mini4 = S.canvas($('#f4-mini'), (ctx, W, H) => {
+    const F = fit3();
+    const m = { l: 50, r: 12, t: 8, b: 40 };
+    const X = lin(30, 110, m.l, W - m.r), Y = lin(0, 1600, H - m.b, m.t);
+    P3.fr = { X, Y, m };
+    S.axes(ctx, { x: X, y: Y, xt: [40, 60, 80, 100], yt: [0, 400, 800, 1200, 1600], xfmt: (v) => v, yfmt: (v) => fmt(v), xlabel: 'Fläche (m²)' });
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    const line = (xm2) => 1000 * (F.bRaw + F.w * (xm2 / 100));
+    for (let k = 0; k < 3; k++) {
+      const px = X(P3.x[k] * 100);
+      ctx.strokeStyle = S.c.error; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px, Y(P3.y[k] * 1000)); ctx.lineTo(px, Y(line(P3.x[k] * 100))); ctx.stroke();
+    }
+    ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.25;
+    ctx.beginPath(); ctx.moveTo(X(30), Y(line(30))); ctx.lineTo(X(110), Y(line(110))); ctx.stroke();
+    for (let k = 0; k < 3; k++) S.dot(ctx, X(P3.x[k] * 100), Y(P3.y[k] * 1000), P3.hover === k ? 6.5 : 5, S.c.data, S.c.surface, 2);
+    ctx.restore();
+    for (let k = 0; k < 3; k++) S.label(ctx, String(k + 1), X(P3.x[k] * 100) - 9, Y(P3.y[k] * 1000) - 11, S.c['fg-2'], S.font(11, 'mono'), 'right');
+  });
+  const tip4 = S.tip($('#f4-mini'));
+  const hit4 = (q) => {
+    if (!P3.fr) return -1;
+    const R = q.touch ? 22 : 12;
+    for (let k = 0; k < 3; k++) if (Math.hypot(q.x - P3.fr.X(P3.x[k] * 100), q.y - P3.fr.Y(P3.y[k] * 1000)) < R) return k;
+    return -1;
+  };
+  S.pointer(mini4, {
+    pick(q) {
+      const k = hit4(q);
+      if (k < 0) return null;
+      if (q.probe) return true;
+      tip4.hide();
+      P3.hover = k;
+      return {
+        move(q2) { P3.y[k] = clamp(Math.round(P3.fr.Y.inv(q2.y) / 10) / 100, 0, 1.6); update4(); },
+        end() { P3.hover = -1; update4(); },
+      };
+    },
+    hover(q) {
+      const k = q ? hit4(q) : -1;
+      mini4.cv.style.cursor = k >= 0 ? 'ns-resize' : '';
+      if (k !== P3.hover) { P3.hover = k; mini4.redraw(); cam4.redraw(); }
+      if (k >= 0) {
+        const F = fit3();
+        tip4.show(q.x, q.y, S.tipRows(`Wohnung ${k + 1} = Achse ${k + 1}`, [['Fläche', fmt(P3.x[k] * 100) + ' m²'], ['Miete y', eur(P3.y[k] * 1000)], ['Residuum e', S.signed(F.e[k] * 1000) + ' €']]));
+      } else tip4.hide();
+    },
+    leave() { tip4.hide(); if (P3.hover !== -1) { P3.hover = -1; mini4.redraw(); cam4.redraw(); } },
+  });
+
+  const ySl = [0, 1, 2].map((k) => $('#f4-y' + k));
+  ySl.forEach((el, k) => el.addEventListener('input', () => { P3.y[k] = +el.value; update4(); }));
+  $('#f4-center').addEventListener('change', (e) => {
+    if (P3.anim) P3.anim();
+    const c0 = P3.ct, c1 = e.target.checked ? 1 : 0;
+    P3.anim = S.tween(800, (t) => { P3.ct = S.lerp(c0, c1, t); update4(); }, () => (P3.anim = null));
+  });
+
+  function update4() {
+    const F = fit3();
+    ySl.forEach((el, k) => { el.value = P3.y[k]; $('#f4-y' + k + 'v').textContent = eur(P3.y[k] * 1000); });
+    $('#f4-w').textContent = fmt(F.w * 10, 2) + ' €/m²';
+    $('#f4-bk').textContent = P3.ct > 0.5 ? 'Koeffizient von 1 (= ȳ)' : 'Achsenabschnitt b';
+    $('#f4-b').textContent = eur(F.b * 1000);
+    $('#f4-1e').textContent = fmt(F.e[0] + F.e[1] + F.e[2], 3);
+    $('#f4-xe').textContent = fmt(dot3(F.xv, F.e), 3);
+    const ang = (Math.acos(clamp(dot3(ONE, F.xv) / (Math.sqrt(3) * Math.hypot(...F.xv)), -1, 1)) * 180) / Math.PI;
+    $('#f4-ang').textContent = fmt(ang, 1) + '°';
+    $('#f4-ee').textContent = fmt(dot3(F.e, F.e) * 1e6) + ' €²';
+    cam4.redraw(); mini4.redraw();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Fig. 5 — the matrix product
+  // ════════════════════════════════════════════════════════════════
+  const f5 = { row: 6, cells: [] };
+  function buildMatrix() {
+    const host = $('#f5-mx');
+    host.innerHTML = '';
+    const n = store.get().pts.length;
+    const mk = (cls, html) => { const d = document.createElement('div'); d.className = cls; if (html != null) d.innerHTML = html; return d; };
+    const group = (head, cols, shape, extra = '') => {
+      const g = mk('mxg');
+      g.append(mk('mxh', head));
+      const b = mk('mxb ' + extra);
+      b.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+      g.append(b);
+      g.append(mk('mxs', shape));
+      host.append(g);
+      return b;
+    };
+    const op = (t) => host.append(mk('mxop', t));
+    const bX = group('<b>X</b> <small>Fläche · 1</small>', 2, `${n} × 2`);
+    op('·');
+    const bT = group('<b>θ</b>', 1, '2 × 1', 'theta');
+    op('=');
+    const bY = group('<b class="hl-model">ŷ</b>', 1, `${n} × 1`);
+    host.append(mk('mxgap'));
+    const bD = group('<b>y</b>', 1, `${n} × 1`);
+    host.append(mk('mxgap'));
+    const bE = group('<b class="hl-error">e</b> <small>= y − ŷ</small>', 1, `${n} × 1`);
+    f5.cells = [];
+    for (let i = 0; i < n; i++) {
+      const row = [mk(''), mk(''), mk(''), mk(''), mk('')];
+      bX.append(row[0], row[1]); bY.append(row[2]); bD.append(row[3]); bE.append(row[4]);
+      row.forEach((c) => { c.dataset.row = i; });
+      row[2].tabIndex = 0;
+      row[2].setAttribute('aria-label', `Zeile ${i + 1}`);
+      f5.cells.push(row);
+    }
+    f5.theta = [mk(''), mk('')];
+    bT.append(f5.theta[0], f5.theta[1]);
+    const pick = (e) => { const r = e.target.closest('[data-row]'); if (r) { f5.row = +r.dataset.row; update5(); } };
+    host.addEventListener('pointerover', pick);
+    host.addEventListener('focusin', pick);
+    host.addEventListener('click', pick);
+  }
+  function update5() {
+    const { pts, w, b } = store.get();
+    pts.forEach(([x, y], i) => {
+      const c = f5.cells[i], yh = w * x + b;
+      c[0].textContent = x; c[1].textContent = '1';
+      c[2].textContent = fmt(yh, 1); c[3].textContent = fmt(y); c[4].textContent = S.signed(y - yh, 1);
+      c.forEach((el) => el.classList.toggle('on', i === f5.row));
+    });
+    f5.theta[0].textContent = fmt(w, 2);
+    f5.theta[1].textContent = fmt(b, 0);
+    const i = f5.row, [x, y] = pts[i], yh = w * x + b, k = i + 1;
+    $('#f5-eq').innerHTML =
+      `<div><i>ŷ</i><sub class="row">${k}</sub> = ${x} · <span class="hl-model">${fmt(w, 2)}</span> + 1 · <span class="hl-model">${fmt(b)}</span> = ${fmt(yh, 1)} €</div>` +
+      `<div style="font-size: 16px; color: var(--fg-2)"><i>e</i><sub class="row">${k}</sub> = <i>y</i><sub class="row">${k}</sub> − <i>ŷ</i><sub class="row">${k}</sub> = ${fmt(y)} − ${fmt(yh, 1)} = <span class="hl-error">${S.signed(y - yh, 1)} €</span></div>`;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Wiring
+  // ════════════════════════════════════════════════════════════════
+  let seenVersion = dataVersion;
+  store.on((s) => {
+    update1();
+    update2();
+    if (s.space !== lastSpace) {
+      if (gd.t > 0) gd.ghost[lastSpace] = gd.losses.slice();
+      lastSpace = s.space;
+      morphSpace(s.space);
+      gdReset();
+      render3();
+    }
+    if (dataVersion !== seenVersion) {
+      seenVersion = dataVersion;
+      gd.ghost = {};
+      gdReset();
+      render3();
+    }
+    update5();
+  });
+
+  gdReset();
+  for (let i = 0; i < 40; i++) gdStep();
+  gd.status = 'paused';
+  buildMatrix();
+  update1(); update2(); render3(); update4(); update5();
+})();
+</script>
+</body>
+</html>

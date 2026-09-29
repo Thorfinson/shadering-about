@@ -6,6 +6,18 @@ in a browser and it runs.
 
 ![Reef — procedural underwater isometric islands](screenshots/reef-islands.png)
 
+## Series: Von der Geraden zur Attention ([regression-to-attention/](regression-to-attention/index.html))
+
+An interactive series (in German) that goes from linear regression to the Transformer
+and Olah's circuits work. Each chapter adds exactly one idea to the previous chapter's
+formula. Chapter 1, *Die Gerade*, is done: residuals drawn as real squares, the loss
+landscape in 2D and as a 3D bowl, gradient descent with learning rate and
+standardization, least squares as an orthogonal projection in ℝ³, and the matrix form.
+Chapters 2–8 are planned; the hub page lists the figures proposed for each.
+
+Unlike the studies below, the chapters share `series.css` and `series.js`. Both are
+loaded as plain (non-module) files, so the pages still open straight from `file://`.
+
 ## Studies
 
 ### Reef — procedural underwater islands ([reef-islands.html](reef-islands.html))
