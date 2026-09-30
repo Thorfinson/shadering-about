@@ -9,31 +9,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
 <link rel="stylesheet" href="series.css" />
 <style>
-  .chapter-head { display: grid; gap: 18px; padding-block: 8px 12px; }
-  .chapter-head .dates { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
-
-  .side { display: grid; gap: 14px; align-content: start; min-width: 0; }
-  .side p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-2); }
-  .status { font-size: 14px; color: var(--fg-2); min-height: 1.5em; margin: 0; }
-  .status b { color: var(--fg); font-weight: 600; }
-  .score { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-  .score .num { font-size: 14px; }
-
-  /* neuron diagram */
-  .neuron-wrap { overflow-x: auto; }
-  svg.neuron { display: block; width: 100%; max-width: 620px; min-width: 420px; height: auto; margin-inline: auto; }
-  svg.neuron .edge { stroke: var(--fg-2); stroke-width: 1.5; }
-  svg.neuron .edge-b { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; }
-  svg.neuron .n-in { fill: var(--bg); stroke: var(--fg-2); stroke-width: 1.5; }
-  svg.neuron .n-sum { fill: var(--model-wash); stroke: var(--model); stroke-width: 2; }
-  svg.neuron .out { stroke: var(--model); stroke-width: 2.5; }
-  svg.neuron .out-head { fill: var(--model); }
-  svg.neuron .tm { font-family: var(--font-math); font-style: italic; font-size: 19px; fill: var(--fg); }
-  svg.neuron .tm-up { font-family: var(--font-math); font-size: 19px; fill: var(--fg); }
-  svg.neuron .tw { font-family: var(--font-math); font-style: italic; font-size: 16px; fill: var(--model); }
-  svg.neuron .tl { font-family: var(--font-body); font-size: 13px; fill: var(--muted); }
-  svg.neuron .ts { font-family: var(--font-math); font-size: 30px; fill: var(--fg); }
-  svg.neuron .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }
+  .chapter-head .dates { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -42,262 +19,143 @@
   <header class="col chapter-head">
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 1 von 9</div>
     <h1>Die Gerade</h1>
-    <p class="lead">Lineare Regression zum Anfassen: vierzehn Wohnungen, eine Gerade und die Frage, was „am besten passen“ eigentlich heißt.</p>
+    <p class="lead">Wie eine Maschine aus Beispielen eine Regel lernt, am einfachsten Fall: zwei Zahlen, eine Gerade. Scrolle einfach weiter; jeder Schritt spielt seine Animation selbst ab.</p>
     <div class="dates">Methode der kleinsten Quadrate: Legendre 1805, Gauß 1809 · Gradientenabstieg: Cauchy 1847</div>
-    <div class="idea">
-      <span class="eyebrow">Die neue Idee</span>
-      <p>Wir messen mit einer Zahl, wie falsch ein Modell ist, und schieben seine Parameter bergab, bis diese Zahl nicht mehr kleiner wird.</p>
-    </div>
   </header>
 
-  <!-- 1 ─────────────────────────────────────────────── -->
-  <section class="col prose" id="federn">
-    <h2><span class="no">1</span>Die Gerade an Federn</h2>
-    <p>Vierzehn Wohnungen, Fläche gegen Kaltmiete. Gesucht ist die Gerade <span class="m"><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i></span>, die am besten passt: <span class="m"><i>w</i></span> ist der Preis pro Quadratmeter, <span class="m"><i>b</i></span> ein Grundbetrag.</p>
-  </section>
-
-  <figure class="lab wide" id="fig1">
-    <div class="lab-head">
-      <span class="title">Finde die beste Gerade</span>
-      <span class="hint">Erst selbst probieren: Gerade, runde Griffe oder Wohnungen ziehen. Dann auf „Federn“ schalten.</span>
-    </div>
-    <div class="lab-grid">
-      <div class="pane">
-        <div class="pane-label"><span>Wohnfläche und Miete</span><span class="score" id="f1-score"></span></div>
-        <div class="plot r43" id="f1-scatter" role="img" aria-label="Streudiagramm: Wohnfläche gegen Kaltmiete, mit der Geraden und den Fehlerquadraten oder Federn jeder Wohnung."></div>
-        <div class="pane-label"><span>Alle Fehlerquadrate hintereinander</span></div>
-        <div class="plot" style="height: 50px" id="f1-bar" role="img" aria-label="Balken aus den Fehlerquadraten aller Wohnungen, mit Marken für das Minimum und für eine waagerechte Linie durch den Mittelwert."></div>
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="scatter"><div class="vlabel">Daten und Gerade</div><div class="plot" id="v-scatter" role="img" aria-label="Streudiagramm der Daten mit der aktuellen Geraden."></div></div>
+        <div class="view" data-view="land"><div class="vlabel">Jede Gerade ist ein Punkt (w, b) · Farbe = Verlust</div><div class="plot" id="v-land" role="img" aria-label="Verlustlandschaft über Steigung und Grundbetrag."></div></div>
+        <div class="view" data-view="bowl"><div class="vlabel">Die Verlustfläche (ziehen zum Drehen)</div><div class="plot" id="v-bowl" role="img" aria-label="Dreidimensionale Verlustfläche mit einer rollenden Kugel."></div></div>
+        <div class="view split" data-view="gdside">
+          <div class="vlabel">Von oben</div><div class="plot" id="v-gdmap" role="img" aria-label="Die Landschaft von oben mit dem Weg der Kugel."></div>
+          <div class="vlabel">Verlust je Schritt (logarithmisch)</div><div class="plot" id="v-curve" role="img" aria-label="Verlust über die Schritte."></div>
+        </div>
+        <div class="view" data-view="neuron"><div class="vlabel">Dieselbe Rechnung als Neuron</div><div class="plot" id="v-neuron" role="img" aria-label="Ein künstliches Neuron: Eingaben mal Gewichte, aufsummiert."></div></div>
       </div>
-      <div class="pane">
-        <div class="pane-label"><span>Jede Gerade ist ein Punkt (w, b)</span></div>
-        <div class="plot r11" id="f1-land" role="img" aria-label="Verlustlandschaft: Farbe zeigt den Fehler jeder möglichen Geraden in der Ebene aus Steigung und Achsenabschnitt."></div>
-        <div class="pane-label"><span>Farbe: typischer Fehler √L</span></div>
-        <div class="plot" style="height: 30px" id="f1-cbar"></div>
-      </div>
-    </div>
-    <div class="controls">
-      <div class="seg" role="radiogroup" aria-label="Darstellung der Fehler">
-        <input type="radio" name="mode-f1" id="f1-sq" value="squares" checked /><label for="f1-sq">Quadrate</label>
-        <input type="radio" name="mode-f1" id="f1-sp" value="spring" /><label for="f1-sp">Federn</label>
-      </div>
-      <div class="ctl">
-        <label for="f1-w"><span>Steigung <span class="m"><i>w</i></span></span><output id="f1-wv" for="f1-w"></output></label>
-        <input type="range" id="f1-w" min="-2" max="20" step="0.01" />
-      </div>
-      <div class="ctl">
-        <label for="f1-b"><span>Grundbetrag <span class="m"><i>b</i></span></span><output id="f1-bv" for="f1-b"></output></label>
-        <input type="range" id="f1-b" min="-500" max="1100" step="1" />
-      </div>
-      <div class="btns"><button class="btn" id="f1-reset" type="button">Daten zurücksetzen</button></div>
-    </div>
-    <div class="legend">
-      <span style="color: var(--data)"><i class="key dot"></i><span style="color: var(--fg-2)">Wohnung</span></span>
-      <span style="color: var(--model)"><i class="key"></i><span style="color: var(--fg-2)">Gerade ŷ = w·x + b</span></span>
-      <span style="color: var(--error)"><i class="key sq"></i><span style="color: var(--fg-2)">Fehler e als Quadrat oder Feder</span></span>
-      <span style="color: var(--muted)"><i class="key dash"></i><span style="color: var(--fg-2)">Mittelwert ȳ</span></span>
-      <span style="color: var(--fg)"><span>× beste Gerade</span></span>
-    </div>
-  </figure>
-
-  <section class="col prose">
-    <div class="note">
-      <span class="eyebrow">Dahinter steckt</span>
-      <p>Jede Feder zieht mit einer Kraft proportional zu ihrem Fehler <span class="m"><i>e<sub>i</sub></i> = <i>y<sub>i</sub></i> − <i>ŷ<sub>i</sub></i></span> und speichert die Energie <span class="m"><i>e<sub>i</sub></i><sup>2</sup></span>: genau die Fläche ihres Quadrats. Die Gerade kommt dort zur Ruhe, wo alle Quadrate zusammen am kleinsten sind. Diese Zahl ist unser <strong>Verlust</strong>:</p>
-      <span class="mblock"><i>L</i> = <span class="frac"><span>1</span><span><i>n</i></span></span><span class="bigop"><small>&nbsp;</small><span class="op">∑</span><small><i>i</i></small></span> <span class="hl-error"><i>e<sub>i</sub></i></span><sup>2</sup></span>
-      <p>Rechts ist jede mögliche Gerade ein Punkt, ihre Farbe ihr Verlust. Beim Loslassen rollt der Punkt wie eine Kugel in die Mulde.</p>
-    </div>
-  </section>
-
-  <!-- 2 ─────────────────────────────────────────────── -->
-  <section class="col prose" id="quadrate">
-    <h2><span class="no">2</span>Warum Quadrate?</h2>
-  </section>
-
-  <figure class="lab wide" id="fig2">
-    <div class="lab-head">
-      <span class="title">Quadrat gegen Betrag</span>
-      <span class="hint">Zieh den Ausreißer oben links zurück in die Wolke, oder eine andere Wohnung weit weg.</span>
-    </div>
-    <div class="pane">
-      <div class="pane-label"><span>Beste Gerade, wenn man Fehler quadriert oder nur ihren Betrag nimmt</span><span id="f2-lbl"></span></div>
-      <div class="plot r52" id="f2-plot" role="img" aria-label="Streudiagramm mit zwei besten Geraden: eine für quadrierte Fehler, eine für Fehlerbeträge."></div>
-    </div>
-    <div class="controls">
-      <div class="legend" style="flex: 1 1 300px">
-        <span style="color: var(--model)"><i class="key"></i><span style="color: var(--fg-2)">minimiert Σ e² (Quadrat)</span></span>
-        <span style="color: var(--fg-2)"><i class="key dash"></i><span>minimiert Σ |e| (Betrag)</span></span>
-      </div>
-      <div class="btns"><button class="btn" id="f2-reset" type="button">Zurücksetzen</button></div>
-    </div>
-  </figure>
-
-  <section class="col prose">
-    <div class="note">
-      <span class="eyebrow">Dahinter steckt</span>
-      <p>Beim Quadrat zählt ein doppelt so großer Fehler viermal so viel. Ein einzelner Ausreißer zerrt deshalb kräftig an der blauen Geraden; die gestrichelte bleibt gelassen. Trotzdem nimmt man meist das Quadrat: Es ist überall glatt. Nur dann zeigt die Ableitung überall sauber bergab, und genau das braucht der nächste Abschnitt.</p>
-    </div>
-  </section>
-
-  <!-- 3 ─────────────────────────────────────────────── -->
-  <section class="col prose" id="bergab">
-    <h2><span class="no">3</span>Bergab rollen</h2>
-    <p>Machen wir aus der Landschaft ein Gelände: Höhe ist Verlust. Für die lineare Regression ist es immer eine Schüssel mit genau einem tiefsten Punkt. Ein Netz mit Milliarden Parametern kann die Schüssel nicht überblicken; es kann nur lokal fühlen, wo es bergab geht, und einen Schritt machen.</p>
-  </section>
-
-  <figure class="lab wide" id="fig3">
-    <div class="lab-head">
-      <span class="title">Eine Kugel rollt bergab</span>
-      <span class="hint">Starten. Dann auf „Standardisiert“ umschalten und noch einmal starten.</span>
-    </div>
-    <div class="lab-grid wide-left">
-      <div class="pane">
-        <div class="pane-label"><span>Die Verlustfläche (ziehen zum Drehen)</span><span id="f3-spacelbl"></span></div>
-        <div class="plot r43" id="f3-bowl" role="img" aria-label="Dreidimensionale Verlustfläche mit einer Kugel, die per Gradientenabstieg bergab rollt, und ihrer Spur."></div>
-      </div>
-      <div class="side">
-        <div class="pane-label"><span>Von oben (klicken: neuer Start)</span></div>
-        <div class="plot r11" id="f3-land" role="img" aria-label="Verlustlandschaft von oben mit dem Weg des Gradientenabstiegs."></div>
-        <div class="pane-label"><span>Verlust je Schritt (logarithmisch)</span></div>
-        <div class="plot r21" id="f3-curve" role="img" aria-label="Verlauf des Verlusts über die Schritte, auf logarithmischer Skala."></div>
-      </div>
-    </div>
-    <div class="controls">
-      <div class="btns">
-        <button class="btn primary" id="f3-run" type="button">Starten</button>
-        <button class="btn" id="f3-step" type="button">1 Schritt</button>
-        <button class="btn" id="f3-reset" type="button">Zurücksetzen</button>
-      </div>
-      <div class="seg" role="radiogroup" aria-label="Koordinaten der Parameter">
-        <input type="radio" name="space-f3" id="f3-raw" value="raw" checked /><label for="f3-raw">Rohdaten</label>
-        <input type="radio" name="space-f3" id="f3-z" value="z" /><label for="f3-z">Standardisiert</label>
-      </div>
-      <div class="ctl">
-        <label for="f3-eta"><span>Schrittweite <span class="m"><i>η</i></span></span><output id="f3-etav" for="f3-eta"></output></label>
-        <div class="slider-wrap">
-          <input type="range" id="f3-eta" min="0" max="1000" step="1" />
-          <div class="slider-mark" id="f3-mark"><span>zu groß</span></div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
         </div>
       </div>
     </div>
-    <p class="status" id="f3-status" aria-live="polite"></p>
-    <dl class="readout">
-      <div><dt>Schritt</dt><dd id="f3-t"></dd></div>
-      <div><dt>Verlust L</dt><dd id="f3-L"></dd></div>
-      <div><dt>Steigung w</dt><dd id="f3-w"></dd></div>
-      <div><dt>Grundbetrag b</dt><dd id="f3-b"></dd></div>
-      <div><dt>Schüssel lang : breit</dt><dd id="f3-cond"></dd></div>
-    </dl>
-    <div class="legend">
-      <span style="color: var(--model)"><i class="key dot"></i><span style="color: var(--fg-2)">Kugel = aktuelle Gerade</span></span>
-      <span style="color: var(--grad)"><i class="key"></i><span style="color: var(--fg-2)">Spur und nächster Schritt</span></span>
-      <span style="color: var(--muted)"><i class="key dash"></i><span style="color: var(--fg-2)">letzter Lauf in den anderen Koordinaten</span></span>
-    </div>
-  </figure>
 
-  <section class="col prose">
-    <div class="note">
-      <span class="eyebrow">Dahinter steckt</span>
-      <ul>
-        <li><strong>Jeder Schritt geht bergab.</strong> Der Gradient <span class="m">∇<i>L</i></span> zeigt in die steilste Richtung bergauf; die Kugel geht ein Stück <span class="m"><i>η</i></span> in die Gegenrichtung: <span class="m"><i>θ</i> ← <i>θ</i> − <i>η</i> ∇<i>L</i></span>. Dabei zieht jede Wohnung mit „Fehler mal Eingabe“ an den Parametern, wie die Federn oben.</li>
-        <li><strong>In Rohdaten ist das Tal eine Rinne.</strong> Steigung und Grundbetrag gleichen sich gegenseitig aus: steiler und tiefer angesetzt passt fast genauso gut. Quer zur Rinne ist es steil, längs fast flach, also springt die Kugel hin und her und kriecht dann.</li>
-        <li><strong>Standardisiert wird die Schüssel rund.</strong> Misst man die Fläche in Standardabweichungen um den Mittelwert, rollt die Kugel direkt ins Ziel. Deshalb normalisieren moderne Netze ihre Daten, der Transformer sogar zwischen allen Schichten (Kapitel 8).</li>
-        <li><strong>Zu große Schritte schaukeln sich auf.</strong> Über der roten Marke springt jeder Schritt über das Tal hinaus und landet höher als vorher.</li>
-      </ul>
+    <div class="steps">
+      <article class="step" data-step="daten"><div class="card">
+        <span class="kicker">Die Frage</span>
+        <h3>Vierzehn Wohnungen</h3>
+        <p>Jeder Punkt ist eine Wohnung: nach rechts ihre Fläche, nach oben ihre Kaltmiete. Größere Wohnungen kosten meist mehr, aber nicht genau nach Regel.</p>
+        <p>Wir wollen eine <strong>Regel</strong>, die aus der Fläche eine Miete macht, auch für Wohnungen, die wir noch nie gesehen haben.</p>
+      </div></article>
+
+      <article class="step" data-step="gerade"><div class="card">
+        <span class="kicker">Das Modell</span>
+        <h3>Eine Gerade mit zwei Knöpfen</h3>
+        <p>Die einfachste Regel ist eine Gerade. Sie hat genau zwei Zahlen, an denen man drehen kann: <strong>w</strong> macht sie steiler oder flacher, <strong>b</strong> schiebt sie hoch oder runter.</p>
+        <p>Diese beiden Zahlen heißen <strong>Parameter</strong>. „Lernen“ bedeutet nichts anderes, als sie gut einzustellen.</p>
+      </div></article>
+
+      <article class="step" data-step="lesen"><div class="card">
+        <span class="kicker">Formel lesen</span>
+        <h3>Was die Formel tut</h3>
+        <p>Die Formel ist eine Rechenanweisung: Nimm die Fläche, rechne sie mal den Preis pro Quadratmeter, leg einen Grundbetrag drauf.</p>
+        <div class="ex"><b>So rechnet man auch</b>Taxi: Preis pro Kilometer mal Strecke plus Grundgebühr. Handyvertrag: Preis pro Gigabyte mal Verbrauch plus Grundgebühr. Immer dieselbe Form <strong>w · x + b</strong>.</div>
+      </div></article>
+
+      <article class="step" data-step="fehler"><div class="card">
+        <span class="kicker">Wie falsch?</span>
+        <h3>Der Fehler jeder Wohnung</h3>
+        <p>Für jede Wohnung vergleichen wir: Was sagt die Gerade, was ist die echte Miete? Die Differenz ist ihr <strong>Fehler e</strong>. Liegt die Wohnung über der Geraden, ist er positiv, darunter negativ.</p>
+      </div></article>
+
+      <article class="step" data-step="quadrate"><div class="card">
+        <span class="kicker">Eine Zahl für alles</span>
+        <h3>Fehler werden Flächen</h3>
+        <p>Wir quadrieren jeden Fehler: Aus dem Strich wird ein Quadrat. Der Mittelwert aller Quadratflächen ist der <strong>Verlust L</strong>, eine einzige Zahl dafür, wie schlecht die Gerade ist.</p>
+        <p>Quadrate haben zwei Vorteile: Plus und Minus heben sich nicht auf, und große Fehler zählen überproportional.</p>
+      </div></article>
+
+      <article class="step" data-step="landschaft"><div class="card">
+        <span class="kicker">Die Suche</span>
+        <h3>Jede Gerade ist ein Punkt</h3>
+        <p>Eine Gerade ist durch w und b festgelegt, also ist sie ein Punkt in einer Ebene. Färbt man jeden Punkt nach seinem Verlust, entsteht eine <strong>Landschaft</strong>.</p>
+        <p>Die beste Gerade ist ihr tiefster Punkt, das Kreuz. Lernen heißt: diesen Punkt finden.</p>
+      </div></article>
+
+      <article class="step" data-step="federn"><div class="card">
+        <span class="kicker">Intuition</span>
+        <h3>Die Gerade an Federn</h3>
+        <p>Stell dir vor, jede Wohnung hängt mit einer Feder an der Geraden. Eine Feder zieht umso stärker, je länger sie ist, und speichert eine Energie, die mit dem <strong>Quadrat</strong> ihrer Länge wächst.</p>
+        <p>Lässt man los, kommt die Gerade genau dort zur Ruhe, wo die Summe der Quadrate am kleinsten ist.</p>
+      </div></article>
+
+      <article class="step" data-step="ausreisser"><div class="card">
+        <span class="kicker">Nebenwirkung</span>
+        <h3>Quadrate hören auf Ausreißer</h3>
+        <p>Weil große Fehler viermal, neunmal, hundertmal zählen, zerrt eine einzige sehr teure Wohnung kräftig an der Geraden. Mit Beträgen statt Quadraten (gestrichelt) wäre die Gerade gelassener.</p>
+        <p>Trotzdem nimmt man meist Quadrate: Sie sind überall glatt, und das braucht der nächste Schritt.</p>
+      </div></article>
+
+      <article class="step" data-step="schuessel"><div class="card">
+        <span class="kicker">Lernen</span>
+        <h3>Bergab rollen</h3>
+        <p>Ein großes Netz hat Milliarden Parameter; seine Landschaft kann niemand absuchen. Man kann nur an der eigenen Stelle fühlen, wo es bergab geht, und einen kleinen Schritt machen. Das heißt <strong>Gradientenabstieg</strong>.</p>
+        <p>Der Gradient kommt direkt von den Federn: Jede Wohnung zieht mit „Fehler mal Fläche“ an w und mit „Fehler“ an b.</p>
+      </div></article>
+
+      <article class="step" data-step="rund"><div class="card">
+        <span class="kicker">Die Daten zählen</span>
+        <h3>Rund ist schnell</h3>
+        <p>In der Rinne kommt die Kugel kaum voran. Die Lösung liegt nicht beim Rollen, sondern bei den Daten: Wir messen die Fläche in <strong>Standardabweichungen um den Mittelwert</strong>. Dieselben Geraden, andere Koordinaten, und die Rinne wird zur runden Schüssel.</p>
+        <div class="ex"><b>Überall im Einsatz</b>Moderne Netze normalisieren ihre Daten vor dem Training, und der Transformer tut es sogar zwischen allen Schichten (Kapitel 8). Warum „runde Koordinaten“ so helfen, sehen wir in Kapitel 2 genauer.</div>
+      </div></article>
+
+      <article class="step" data-step="zugross"><div class="card">
+        <span class="kicker">Vorsicht</span>
+        <h3>Zu große Schritte</h3>
+        <p>Die Schrittweite <strong>η</strong> ist der wichtigste Regler beim Training. Zu klein, und es dauert ewig. Zu groß, und jeder Schritt springt über das Tal hinaus und landet höher als vorher.</p>
+      </div></article>
+
+      <article class="step" data-step="eis"><div class="card">
+        <span class="kicker">Andere Beispiele</span>
+        <h3>Die Eisdiele</h3>
+        <p>Dieselbe Formel, andere Welt: Temperatur gegen verkaufte Kugeln Eis. Jetzt bedeutet <strong>w</strong> „Kugeln mehr pro Grad“.</p>
+        <p>Und <strong>b</strong> wird negativ: Bei 0 °C würde die Gerade negative Kugeln vorhersagen. Unsinn, denn die Daten reichen nur von 12 bis 32 °C. Eine gelernte Regel gilt nur dort, wo es Beispiele gab.</p>
+      </div></article>
+
+      <article class="step" data-step="hubble"><div class="card">
+        <span class="kicker">Andere Beispiele</span>
+        <h3>Das Universum dehnt sich aus</h3>
+        <p>Edwin Hubble trug 1929 die Entfernung von Galaxien gegen ihre Fluchtgeschwindigkeit auf. Die Gerade geht fast durch den Ursprung, und ihre Steigung <strong>w</strong> ist die berühmte Hubble-Konstante.</p>
+        <div class="ex"><b>Nachgestellt</b>Die Punkte sind Hubbles Daten nachempfunden. Er kam auf etwa 500 km/s pro Megaparsec; heute weiß man, dass es rund 70 sind, weil seine Entfernungen zu klein gemessen waren. Die Methode war dieselbe wie hier.</div>
+      </div></article>
+
+      <article class="step" data-step="neuron"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>Ein Neuron</h3>
+        <p>Zeichnet man die Rechnung als Fluss, heißt sie <strong>Neuron</strong>: Eingaben mal Gewichte, aufsummiert. Mehr Merkmale bedeuten nur mehr Pfeile.</p>
+        <p>Viele Neuronen nebeneinander rechnen mit einer ganzen Tabelle von Gewichten, einer <strong>Matrix</strong>. Was eine Matrix mit Daten macht, zeigt Kapitel 2.</p>
+      </div></article>
     </div>
   </section>
 
-  <!-- 4 ─────────────────────────────────────────────── -->
-  <section class="col prose" id="projektion">
-    <h2><span class="no">4</span>Ein Datensatz ist ein Punkt</h2>
-    <p>Jetzt drehen wir die Sicht um: Jede Wohnung wird eine Achse. Alle Mieten zusammen sind dann ein einziger Punkt <span class="m"><b>y</b></span>. Mit drei Wohnungen können wir das zeichnen.</p>
-  </section>
-
-  <figure class="lab wide" id="fig4">
-    <div class="lab-head">
-      <span class="title">Drei Wohnungen, ein Punkt im Raum</span>
-      <span class="hint">Links ziehen zum Drehen, rechts die Mieten verschieben.</span>
-    </div>
-    <div class="lab-grid wide-left">
-      <div class="pane">
-        <div class="pane-label"><span>Der Datenraum: eine Achse pro Wohnung</span></div>
-        <div class="plot r43" id="f4-space" role="img" aria-label="Dreidimensionaler Raum mit einer Achse pro Wohnung. Der Mietvektor y wird senkrecht auf die Ebene projiziert, die von x und dem Einsvektor aufgespannt wird."></div>
-      </div>
-      <div class="side">
-        <div class="pane-label"><span>Dieselben drei Wohnungen, klassisch</span></div>
-        <div class="plot r43" id="f4-mini" role="img" aria-label="Streudiagramm der drei Wohnungen mit der besten Geraden und ihren Fehlern."></div>
-        <div class="controls">
-          <div class="ctl"><label for="f4-y0"><span>Miete Wohnung 1</span><output id="f4-y0v" for="f4-y0"></output></label><input type="range" id="f4-y0" min="0" max="1.6" step="0.01" /></div>
-          <div class="ctl"><label for="f4-y1"><span>Miete Wohnung 2</span><output id="f4-y1v" for="f4-y1"></output></label><input type="range" id="f4-y1" min="0" max="1.6" step="0.01" /></div>
-          <div class="ctl"><label for="f4-y2"><span>Miete Wohnung 3</span><output id="f4-y2v" for="f4-y2"></output></label><input type="range" id="f4-y2" min="0" max="1.6" step="0.01" /></div>
-        </div>
-        <label class="check"><input type="checkbox" id="f4-center" /> <span><span class="m"><b>x</b></span> zentrieren</span></label>
-      </div>
-    </div>
-    <dl class="readout">
-      <div><dt>Steigung w</dt><dd id="f4-w"></dd></div>
-      <div><dt id="f4-bk">Grundbetrag b</dt><dd id="f4-b"></dd></div>
-      <div><dt>Winkel e zu 1</dt><dd id="f4-1e"></dd></div>
-      <div><dt>Winkel e zu x</dt><dd id="f4-xe"></dd></div>
-      <div><dt>Winkel 1 zu x</dt><dd id="f4-ang"></dd></div>
-    </dl>
-    <div class="legend">
-      <span style="color: var(--data)"><i class="key"></i><span style="color: var(--fg-2)">Mieten y</span></span>
-      <span style="color: var(--model)"><i class="key"></i><span style="color: var(--fg-2)">Vorhersage ŷ und die Ebene aller möglichen Vorhersagen</span></span>
-      <span style="color: var(--error)"><i class="key"></i><span style="color: var(--fg-2)">Fehler e = y − ŷ</span></span>
-      <span style="color: var(--fg-2)"><i class="key"></i><span>Richtungen 1 (lauter Einsen) und x (Flächen)</span></span>
-    </div>
-  </figure>
-
-  <section class="col prose">
-    <div class="note">
-      <span class="eyebrow">Dahinter steckt</span>
-      <p>Jede Gerade liefert eine Vorhersage <span class="m"><b>ŷ</b> = <i>w</i> · <b>x</b> + <i>b</i> · <b>1</b></span>, und alle zusammen bilden eine Ebene. Die beste Gerade ist der Punkt dieser Ebene, der <span class="m"><b>y</b></span> am nächsten liegt: der Fußpunkt des Lots. Deshalb steht der Fehler immer im rechten Winkel auf <span class="m"><b>1</b></span> und <span class="m"><b>x</b></span>, egal welche Mieten du einstellst. Aus diesen zwei rechten Winkeln folgt die exakte Lösung, ganz ohne Abstieg: <span class="m"><b>θ</b> = (<b>X</b><sup>⊤</sup><b>X</b>)<sup>−1</sup><b>X</b><sup>⊤</sup><b>y</b></span>.</p>
-      <p>„<span class="m"><b>x</b></span> zentrieren“ zeigt, warum Standardisieren die Schüssel rund macht: Die Ebene bleibt dieselbe, aber ihre beiden Richtungen stehen jetzt senkrecht aufeinander, und <span class="m"><i>w</i></span> und <span class="m"><i>b</i></span> stören sich nicht mehr. Mit 14 Wohnungen passiert dasselbe in 14 Dimensionen.</p>
-    </div>
-  </section>
-
-  <!-- 5 ─────────────────────────────────────────────── -->
-  <section class="col prose" id="neuron">
-    <h2><span class="no">5</span>Ein Neuron</h2>
-    <p>Als Diagramm gezeichnet ist die Gerade ein künstliches Neuron: Eingaben mal Gewichte, aufsummiert. Mehr Merkmale bedeuten nur mehr Pfeile.</p>
-    <div class="neuron-wrap">
-      <svg class="neuron" viewBox="0 0 620 236" role="img" aria-label="Ein künstliches Neuron: Fläche, Zimmer und Baujahr sowie eine konstante Eins werden mit den Gewichten w1, w2, w3 und b multipliziert und in einem Summenknoten zu y-Dach addiert.">
-        <line class="edge" x1="176" y1="38" x2="364" y2="112" />
-        <line class="edge" x1="176" y1="94" x2="362" y2="116" />
-        <line class="edge" x1="176" y1="150" x2="362" y2="124" />
-        <line class="edge-b" x1="176" y1="206" x2="364" y2="128" />
-        <circle class="n-in" cx="160" cy="38" r="16" />
-        <circle class="n-in" cx="160" cy="94" r="16" />
-        <circle class="n-in" cx="160" cy="150" r="16" />
-        <circle class="n-in" cx="160" cy="206" r="16" />
-        <text class="tm" x="160" y="44" text-anchor="middle">x<tspan font-size="12" dy="4">1</tspan></text>
-        <text class="tm" x="160" y="100" text-anchor="middle">x<tspan font-size="12" dy="4">2</tspan></text>
-        <text class="tm" x="160" y="156" text-anchor="middle">x<tspan font-size="12" dy="4">3</tspan></text>
-        <text class="tm-up" x="160" y="212" text-anchor="middle">1</text>
-        <text class="tl" x="130" y="43" text-anchor="end">Fläche</text>
-        <text class="tl" x="130" y="99" text-anchor="end">Zimmer</text>
-        <text class="tl" x="130" y="155" text-anchor="end">Baujahr</text>
-        <text class="tl" x="130" y="211" text-anchor="end">konstant</text>
-        <text class="tw halo" x="262" y="66" text-anchor="middle">w<tspan font-size="11" dy="4">1</tspan></text>
-        <text class="tw halo" x="262" y="98" text-anchor="middle">w<tspan font-size="11" dy="4">2</tspan></text>
-        <text class="tw halo" x="262" y="146" text-anchor="middle">w<tspan font-size="11" dy="4">3</tspan></text>
-        <text class="tw halo" x="262" y="178" text-anchor="middle">b</text>
-        <circle class="n-sum" cx="392" cy="120" r="30" />
-        <text class="ts" x="392" y="131" text-anchor="middle">Σ</text>
-        <line class="out" x1="422" y1="120" x2="520" y2="120" />
-        <path class="out-head" d="M532 120 L516 112 L516 128 Z" />
-        <text class="tm" x="548" y="127">ŷ</text>
-        <text class="tl" x="392" y="176" text-anchor="middle">Summe der Produkte</text>
-      </svg>
-    </div>
-    <p>Was passiert, wenn wir nicht eine, sondern viele solcher Summen gleichzeitig bilden? Dann wird aus den Gewichten ein ganzes Raster, eine <strong>Matrix</strong>, und die verformt den Raum. Das ist Kapitel 2.</p>
-
+  <section class="col prose" style="margin-top: 24px">
     <h3>Quellen</h3>
     <ol class="refs">
       <li>A.-M. Legendre (1805): <i>Nouvelles méthodes pour la détermination des orbites des comètes</i>. Anhang „Sur la méthode des moindres quarrés“.</li>
       <li>C. F. Gauß (1809): <i>Theoria motus corporum coelestium in sectionibus conicis solem ambientium</i>.</li>
-      <li>A.-L. Cauchy (1847): <i>Méthode générale pour la résolution des systèmes d’équations simultanées</i>. Comptes rendus de l’Académie des sciences 25, 536–538.</li>
+      <li>A.-L. Cauchy (1847): <i>Méthode générale pour la résolution des systèmes d’équations simultanées</i>. Comptes rendus 25, 536–538.</li>
+      <li>E. Hubble (1929): <i>A relation between distance and radial velocity among extra-galactic nebulae</i>. PNAS 15 (3), 168–173.</li>
     </ol>
+    <p style="font-size: 14px; color: var(--muted)">Alle Datensätze sind erfunden oder nachgestellt.</p>
   </section>
 
   <nav class="col chapnav" aria-label="Kapitel">
@@ -311,21 +169,27 @@
 (() => {
   'use strict';
   const { $, fmt, lin, ticks, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const FRAC = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+  const SUM = `<span class="bigop"><small>&nbsp;</small><span class="op">∑</span><small><i>i</i></small></span>`;
 
   // ════════════════════════════════════════════════════════════════
-  //  Data & regression math
+  //  Data
   // ════════════════════════════════════════════════════════════════
-  const DATA0 = [[28, 675], [34, 550], [41, 555], [47, 675], [52, 710], [58, 835], [63, 770],
+  function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  const FLATS = [[28, 675], [34, 550], [41, 555], [47, 675], [52, 710], [58, 835], [63, 770],
                  [69, 795], [76, 840], [82, 1095], [90, 1145], [97, 1205], [105, 1175], [116, 1315]];
-  const XDOM = [20, 125], YDOM = [300, 1500];
-  // Parameter boxes. raw: (w in €/m², b in €); z: (w′, b′) for standardized area, both in €.
+  const ICE = (() => { const r = rng(11); return [12, 14, 15, 17, 18, 20, 21, 23, 24, 26, 27, 29, 30, 32].map((x) => [x, Math.round(-110 + 21 * x + gauss(r) * 38)]); })();
+  const HUB = (() => { const r = rng(9); return [0.03, 0.2, 0.26, 0.28, 0.45, 0.5, 0.63, 0.8, 0.9, 0.95, 1.0, 1.1, 1.7, 2.0].map((d) => [d, Math.round((500 * d + gauss(r) * 150) / 10) * 10]); })();
+  const DS = [
+    { pts: FLATS, xdom: [20, 125], ydom: [300, 1500], xt: [20, 40, 60, 80, 100, 120], yt: [400, 600, 800, 1000, 1200, 1400], xf: (v) => v, xl: 'Wohnfläche x (m²)', yl: 'Kaltmiete y (€)', wu: ' €/m²', bu: ' €', yu: ' €', wd: 2 },
+    { pts: ICE, xdom: [8, 36], ydom: [0, 800], xt: [10, 15, 20, 25, 30, 35], yt: [0, 200, 400, 600, 800], xf: (v) => v, xl: 'Temperatur x (°C)', yl: 'Eiskugeln pro Tag y', wu: ' Kugeln/°C', bu: ' Kugeln', yu: ' Kugeln', wd: 1 },
+    { pts: HUB, xdom: [0, 2.2], ydom: [-400, 1400], xt: [0, 0.5, 1, 1.5, 2], yt: [-400, 0, 400, 800, 1200], xf: (v) => fmt(v, 1), xl: 'Entfernung x (Megaparsec)', yl: 'Fluchtgeschw. y (km/s)', wu: ' km/s pro Mpc', bu: ' km/s', yu: ' km/s', wd: 0 },
+  ];
   const BOX = { raw: { p1: [-2, 20], p2: [-500, 1100] }, z: { p1: [-750, 1250], p2: [-100, 1900] } };
-  const R_LO = 60, R_HI = 2000;                       // colour scale for √L in €
+  const R_LO = 60, R_HI = 2000;
   const LEVELS = [80, 100, 150, 200, 300, 500, 800, 1200, 2000];
-
-  let dataVersion = 0;
-  const store = S.store({ pts: DATA0.map((p) => p.slice()), w: 5.5, b: 420, mode: 'squares', space: 'raw' });
-  const setPts = (pts) => { dataVersion++; store.set({ pts }); };
 
   function stats(pts) {
     const n = pts.length;
@@ -336,13 +200,21 @@
     for (const [x, y] of pts) { vxx += (x - xm) ** 2; vxy += (x - xm) * (y - ym); }
     vxx /= n; vxy /= n;
     const w = vxy / vxx, b = ym - w * xm;
-    let ssr = 0, sst = 0;
-    for (const [x, y] of pts) { ssr += (y - w * x - b) ** 2; sst += (y - ym) ** 2; }
-    return { n, xm, ym, s: Math.sqrt(vxx), w, b, SSmin: ssr, SStot: sst, Lmin: ssr / n };
+    let ssr = 0;
+    for (const [x, y] of pts) ssr += (y - w * x - b) ** 2;
+    return { n, xm, ym, s: Math.sqrt(vxx), w, b, Lmin: ssr / n };
   }
-
-  // L as a quadratic form in a parameter space: ŷ = p1·f(x) + p2 with f(x) = x (raw) or (x − x̄)/s (z).
-  // L(p) = E[y²] − 2 pᵀr + pᵀ A p, A = [[E f², E f], [E f, 1]], minimum at A p* = r.
+  function fitL1(pts) {
+    let { w, b } = stats(pts);
+    for (let it = 0; it < 120; it++) {
+      let sw = 0, swx = 0, swy = 0, swxx = 0, swxy = 0;
+      for (const [x, y] of pts) { const k = 1 / Math.max(Math.abs(y - w * x - b), 0.05); sw += k; swx += k * x; swy += k * y; swxx += k * x * x; swxy += k * x * y; }
+      w = (sw * swxy - swx * swy) / (sw * swxx - swx * swx);
+      b = (swy - w * swx) / sw;
+    }
+    return { w, b };
+  }
+  // L as a quadratic form in raw (w, b) or in standardized coordinates z: ŷ = w′·(x − x̄)/s + b′
   function quad(pts, space) {
     const st = stats(pts);
     const f = space === 'z' ? (x) => (x - st.xm) / st.s : (x) => x;
@@ -356,963 +228,625 @@
     const grad = (q1, q2) => [2 * (a11 * q1 + a12 * q2 - r1), 2 * (a12 * q1 + q2 - r2)];
     const tr = a11 + 1, disc = Math.sqrt(Math.max(0, (tr * tr) / 4 - det));
     const l1 = tr / 2 + disc, l2 = Math.max(1e-12, tr / 2 - disc);
-    let v1 = Math.abs(a12) > 1e-12 ? [l1 - 1, a12] : a11 >= 1 ? [1, 0] : [0, 1];
+    let v1 = Math.abs(a12) > 1e-12 ? [l1 - 1, a12] : [1, 0];
     const nv = Math.hypot(v1[0], v1[1]);
     v1 = [v1[0] / nv, v1[1] / nv];
-    return { st, space, pstar: ps, Lstar: L(ps[0], ps[1]), L, grad, eig: { l1, l2, v1, v2: [-v1[1], v1[0]] } };
+    return { st, pstar: ps, Lstar: L(ps[0], ps[1]), L, grad, eig: { l1, l2, v1, v2: [-v1[1], v1[0]] } };
   }
-  const toSpace = (w, b, space, st) => (space === 'z' ? [w * st.s, b + w * st.xm] : [w, b]);
-  const fromSpace = (p1, p2, space, st) => (space === 'z' ? [p1 / st.s, p2 - (p1 * st.xm) / st.s] : [p1, p2]);
+  const toZ = (w, b, st) => [w * st.s, b + w * st.xm];
+  const fromZ = (p1, p2, st) => [p1 / st.s, p2 - (p1 * st.xm) / st.s];
   const lossT = (L) => Math.log(Math.sqrt(Math.max(L, 1)) / R_LO) / Math.log(R_HI / R_LO);
-  const lossOf = (pts, w, b) => { let s = 0; for (const [x, y] of pts) s += (y - w * x - b) ** 2; return s / pts.length; };
-
-  function ellipse(Q, c, steps = 180) {
-    const { l1, l2, v1, v2 } = Q.eig;
-    const a = Math.sqrt(c / l1), b = Math.sqrt(c / l2);
-    const out = [];
-    for (let k = 0; k <= steps; k++) {
-      const t = (k / steps) * Math.PI * 2, ca = a * Math.cos(t), sb = b * Math.sin(t);
-      out.push([Q.pstar[0] + ca * v1[0] + sb * v2[0], Q.pstar[1] + ca * v1[1] + sb * v2[1]]);
-    }
+  const lossOf = (pts, w, b) => pts.reduce((s, [x, y]) => s + (y - w * x - b) ** 2, 0) / pts.length;
+  function ellipse(Q, c) {
+    const { l1, l2, v1, v2 } = Q.eig, a = Math.sqrt(c / l1), b = Math.sqrt(c / l2), out = [];
+    for (let k = 0; k <= 180; k++) { const t = (k / 180) * Math.PI * 2, ca = a * Math.cos(t), sb = b * Math.sin(t); out.push([Q.pstar[0] + ca * v1[0] + sb * v2[0], Q.pstar[1] + ca * v1[1] + sb * v2[1]]); }
     return out;
   }
 
-  const eur = (v, d = 0) => fmt(v, d) + ' €';
-  const spaceNames = { raw: 'Rohdaten', z: 'Standardisiert' };
-  const p1Name = (sp) => (sp === 'z' ? 'w′' : 'w');
-  const p2Name = (sp) => (sp === 'z' ? 'b′' : 'b');
-  const p1Fmt = (v, sp) => (sp === 'z' ? eur(v, 1) : fmt(v, 2) + ' €/m²');
-  const p2Fmt = (v) => eur(v, 0);
+  // ════════════════════════════════════════════════════════════════
+  //  One state for the whole chapter; every view draws from it
+  // ════════════════════════════════════════════════════════════════
+  const st = {
+    ds: 0, pts: FLATS.map((p) => p.slice()), ptsA: 0, lineA: 0, w: 6, b: 450, fit: false,
+    resA: 0, sqA: 0, springA: 0, hlPt: -1, probeX: 63, probeT: 0, l1A: 0, trail: [],
+    zT: 0, space: 'raw', eta: 1.2e-4, gd: { path: [], losses: [], p: [0, 0], Q: null }, ghost: null, ballA: 0,
+    flowT: 0, extraA: 0,
+  };
+  const line = () => (st.fit ? stats(st.pts) : { w: st.w, b: st.b });
+  const D = () => DS[st.ds];
+  let story = null;
+  const interrupt = () => story && story.interrupt();
+  const redraw = () => story && story.redraw();
 
-  // ════════════════════════════════════════════════════════════════
-  //  Shared: loss landscape (heatmap + exact elliptic contours)
-  // ════════════════════════════════════════════════════════════════
+  // ── scatter ─────────────────────────────────────────────────────
+  const scatter = { fr: null };
+  scatter.c = S.canvas($('#v-scatter'), (ctx, W, H) => {
+    const d = D();
+    const m = { l: 58, r: 16, t: 8, b: 40 };
+    const X = lin(d.xdom[0], d.xdom[1], m.l, W - m.r), Y = lin(d.ydom[0], d.ydom[1], H - m.b, m.t);
+    scatter.fr = { X, Y, m };
+    S.axes(ctx, { x: X, y: Y, xt: d.xt, yt: d.yt, xfmt: d.xf, yfmt: (v) => fmt(v), xlabel: d.xl, ylabel: d.yl });
+    const { w, b } = line();
+    const n = st.pts.length;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    const appear = (i) => S.ease(clamp(st.ptsA - i, 0, 1));
+    if (st.lineA > 0) st.pts.forEach(([x, y], i) => {
+      if (appear(i) < 1) return;
+      const px = X(x), py = Y(y), ph = Y(w * x + b), len = Math.abs(py - ph);
+      const dim = st.hlPt >= 0 && st.hlPt !== i ? 0.3 : 1;
+      ctx.globalAlpha = dim;
+      const sq = clamp(st.sqA * n - i, 0, 1);
+      if (sq > 0 && len > 0.5) {
+        const side = len * sq, x0 = px + len <= W - m.r ? px : px - side;
+        ctx.fillStyle = S.c['error-wash'];
+        ctx.fillRect(x0, Math.min(py, ph), side, len);
+        ctx.strokeStyle = S.alpha('error', 0.6); ctx.lineWidth = 1;
+        ctx.strokeRect(x0 + 0.5, Math.min(py, ph) + 0.5, Math.max(0, side - 1), Math.max(0, len - 1));
+      }
+      const r = clamp(st.resA * n - i, 0, 1);
+      if (r > 0 && st.springA < 1) {
+        ctx.globalAlpha = dim * (1 - st.springA);
+        ctx.strokeStyle = S.c.error; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(px, ph); ctx.lineTo(px, ph + (py - ph) * r); ctx.stroke();
+      }
+      if (st.springA > 0) {
+        ctx.globalAlpha = dim * st.springA;
+        ctx.strokeStyle = S.c.error; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+        S.spring(ctx, px, py, px, ph, 7, clamp(7 - len / 40, 2.5, 6));
+        ctx.fillStyle = S.c.error; ctx.fillRect(px - 3, ph - 1.5, 6, 3);
+      }
+      ctx.globalAlpha = 1;
+    });
+    if (st.l1A > 0) {
+      const a = fitL1(st.pts);
+      ctx.globalAlpha = st.l1A; ctx.setLineDash([7, 5]); ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(d.xdom[0]), Y(a.w * d.xdom[0] + a.b)); ctx.lineTo(X(d.xdom[1]), Y(a.w * d.xdom[1] + a.b)); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
+    if (st.lineA > 0) {
+      ctx.globalAlpha = st.lineA; ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.75; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(X(d.xdom[0]), Y(w * d.xdom[0] + b)); ctx.lineTo(X(d.xdom[1]), Y(w * d.xdom[1] + b)); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (st.probeT > 0) {
+      const x0 = st.probeX, yh = w * x0 + b, px = X(x0), p1 = clamp(st.probeT / 0.45, 0, 1), p2 = clamp((st.probeT - 0.6) / 0.4, 0, 1);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(px, H - m.b); ctx.lineTo(px, H - m.b + (Y(yh) - (H - m.b)) * p1); ctx.stroke();
+      if (p2 > 0) { ctx.strokeStyle = S.c.model; ctx.beginPath(); ctx.moveTo(px, Y(yh)); ctx.lineTo(px + (m.l - px) * p2, Y(yh)); ctx.stroke(); }
+      ctx.setLineDash([]);
+      if (p1 >= 1) S.dot(ctx, px, Y(yh), 5, S.c.model, S.c.surface, 2);
+    }
+    st.pts.forEach(([x, y], i) => {
+      const a = appear(i);
+      if (a <= 0) return;
+      ctx.globalAlpha = a;
+      S.dot(ctx, X(x), S.lerp(H - m.b + 10, Y(y), a), st.hlPt === i ? 6.5 : 4.5, S.c.data, S.c.surface, 2);
+      ctx.globalAlpha = 1;
+    });
+    ctx.restore();
+    if (st.probeT > 0.6) {
+      const yh = w * st.probeX + b;
+      S.label(ctx, `${fmt(yh)}${d.yu}`, m.l + 6, Y(yh) - 11, S.c.model, S.font(12, 'mono', '500'), 'left');
+      S.label(ctx, `${st.probeX} m²`, X(st.probeX) + 6, H - m.b - 10, S.c.fg, S.font(12, 'mono', '500'), 'left');
+    }
+    if (st.hlPt >= 0 && st.resA > 0 && st.lineA > 0) {
+      const [x, y] = st.pts[st.hlPt], e = y - (w * x + b);
+      S.label(ctx, `e = ${S.signed(e)}${d.yu}`, X(x) + 10, (Y(y) + Y(w * x + b)) / 2, S.c.error, S.font(12.5, 'mono', '500'), 'left');
+    }
+    if (st.l1A > 0.5) {
+      const a = fitL1(st.pts), yq = Y(w * d.xdom[1] + b), ya = Y(a.w * d.xdom[1] + a.b), up = yq <= ya;
+      S.label(ctx, 'Quadrate', W - m.r - 4, clamp(yq + (up ? -12 : 12), m.t + 8, H - m.b - 8), S.c.model, S.font(12, 'body', '600'), 'right');
+      S.label(ctx, 'Beträge', W - m.r - 4, clamp(ya + (up ? 12 : -12), m.t + 8, H - m.b - 8), S.c['fg-2'], S.font(12, 'body', '600'), 'right');
+    }
+  });
+  function hitScatter(q) {
+    const fr = scatter.fr; if (!fr) return null;
+    const R = q.touch ? 22 : 11;
+    for (let i = 0; i < st.pts.length; i++) if (Math.hypot(q.x - fr.X(st.pts[i][0]), q.y - fr.Y(st.pts[i][1])) < R) return { kind: 'pt', i };
+    if (st.lineA < 0.5) return null;
+    const { w, b } = line(), d = D();
+    const x1 = fr.X(d.xdom[0]), y1 = fr.Y(w * d.xdom[0] + b), x2 = fr.X(d.xdom[1]), y2 = fr.Y(w * d.xdom[1] + b);
+    const dist = Math.abs((y2 - y1) * q.x - (x2 - x1) * q.y + x2 * y1 - y2 * x1) / Math.hypot(y2 - y1, x2 - x1);
+    return dist < (q.touch ? 16 : 8) ? { kind: 'line' } : null;
+  }
+  S.pointer(scatter.c, {
+    pick(q) {
+      const h = hitScatter(q);
+      if (!h) return null;
+      if (q.probe) return true;
+      interrupt();
+      const fr = scatter.fr;
+      if (h.kind === 'pt') return { move(q2) { st.pts[h.i] = [fr.X.inv(q2.x), fr.Y.inv(q2.y)]; redraw(); } };
+      const cur = line(); st.fit = false; st.w = cur.w; st.b = cur.b;
+      const y0 = fr.Y.inv(q.y), b0 = st.b;
+      return { move(q2) { st.b = b0 + fr.Y.inv(q2.y) - y0; redraw(); } };
+    },
+    hover(q) { scatter.c.cv.style.cursor = q && hitScatter(q) ? 'grab' : ''; },
+  });
+
+  // ── top-down loss maps ──────────────────────────────────────────
   function renderHeat(off, Q, box, G) {
     off.width = G; off.height = G;
-    const c = off.getContext('2d');
-    const img = c.createImageData(G, G);
+    const c = off.getContext('2d'), img = c.createImageData(G, G);
     for (let j = 0; j < G; j++) {
       const p2 = box.p2[1] - ((j + 0.5) / G) * (box.p2[1] - box.p2[0]);
       for (let i = 0; i < G; i++) {
-        const p1 = box.p1[0] + ((i + 0.5) / G) * (box.p1[1] - box.p1[0]);
-        const col = S.lossColor(lossT(Q.L(p1, p2)));
+        const col = S.lossColor(lossT(Q.L(box.p1[0] + ((i + 0.5) / G) * (box.p1[1] - box.p1[0]), p2)));
         const k = (j * G + i) * 4;
         img.data[k] = col[0]; img.data[k + 1] = col[1]; img.data[k + 2] = col[2]; img.data[k + 3] = 255;
       }
     }
     c.putImageData(img, 0, 0);
   }
-
-  function Landscape(el, cfg) {
+  function LossMap(el, cfg) {
     const off = document.createElement('canvas');
     let key = '';
-    const tip = S.tip(el);
-    const me = { fr: null, Q: null };
-    function frame(W, H) {
-      const m = { l: 54, r: 10, t: 8, b: 44 };
-      const side = Math.max(20, Math.min(W - m.l - m.r, H - m.t - m.b));
-      const box = BOX[cfg.space()];
-      return { m, side, box, X: lin(box.p1[0], box.p1[1], m.l, m.l + side), Y: lin(box.p2[0], box.p2[1], m.t + side, m.t) };
-    }
-    me.st = S.canvas(el, (ctx, W, H) => {
-      const sp = cfg.space();
-      const Q = quad(store.get().pts, sp);
-      const fr = frame(W, H);
-      me.fr = fr; me.Q = Q;
-      const G = Math.round(clamp(fr.side / 2.2, 60, 200));
-      const k = [sp, dataVersion, S.dark, G].join('|');
-      if (k !== key) { renderHeat(off, Q, fr.box, G); key = k; }
+    const me = { fr: null };
+    me.c = S.canvas(el, (ctx, W, H) => {
+      const sp = cfg.space(), Q = quad(st.pts, sp), box = BOX[sp];
+      const side = Math.max(20, Math.min(W - 64, H - 46)), l = 54 + Math.max(0, (W - 64 - side) / 2), t = 4;
+      const X = lin(box.p1[0], box.p1[1], l, l + side), Y = lin(box.p2[0], box.p2[1], t + side, t);
+      me.fr = { X, Y, l, t, side };
+      const G = Math.round(clamp(side / 2.2, 50, 180)), k = [sp, JSON.stringify(st.pts), S.dark, G].join('|');
+      if (k !== key) { renderHeat(off, Q, box, G); key = k; }
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(off, fr.m.l, fr.m.t, fr.side, fr.side);
-
+      ctx.drawImage(off, l, t, side, side);
       ctx.save();
-      ctx.beginPath(); ctx.rect(fr.m.l, fr.m.t, fr.side, fr.side); ctx.clip();
-      ctx.strokeStyle = S.alpha('fg', 0.2);
-      ctx.lineWidth = 1;
-      for (const r of LEVELS) {
-        const c = r * r - Q.Lstar;
-        if (c <= 0) continue;
-        ctx.beginPath();
-        ellipse(Q, c).forEach(([a, b], i) => (i ? ctx.lineTo(fr.X(a), fr.Y(b)) : ctx.moveTo(fr.X(a), fr.Y(b))));
-        ctx.stroke();
-      }
-      const mx = fr.X(Q.pstar[0]), my = fr.Y(Q.pstar[1]);
+      ctx.beginPath(); ctx.rect(l, t, side, side); ctx.clip();
+      ctx.strokeStyle = S.alpha('fg', 0.2); ctx.lineWidth = 1;
+      for (const r of LEVELS) { const c = r * r - Q.Lstar; if (c <= 0) continue; ctx.beginPath(); ellipse(Q, c).forEach(([a, b], i) => (i ? ctx.lineTo(X(a), Y(b)) : ctx.moveTo(X(a), Y(b)))); ctx.stroke(); }
+      const mx = X(Q.pstar[0]), my = Y(Q.pstar[1]);
       ctx.strokeStyle = S.c.fg; ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(mx - 5, my - 5); ctx.lineTo(mx + 5, my + 5);
-      ctx.moveTo(mx + 5, my - 5); ctx.lineTo(mx - 5, my + 5);
-      ctx.stroke();
-      if (cfg.overlay) cfg.overlay(ctx, fr, Q);
-      const p = cfg.point();
-      S.dot(ctx, fr.X(p[0]), fr.Y(p[1]), 6, S.c.model, S.c.surface, 2.5);
+      ctx.beginPath(); ctx.moveTo(mx - 5, my - 5); ctx.lineTo(mx + 5, my + 5); ctx.moveTo(mx + 5, my - 5); ctx.lineTo(mx - 5, my + 5); ctx.stroke();
+      cfg.overlay(ctx, me.fr);
       ctx.restore();
-
-      S.axes(ctx, {
-        x: fr.X, y: fr.Y, grid: false,
-        xt: ticks(fr.box.p1[0], fr.box.p1[1], 4), yt: ticks(fr.box.p2[0], fr.box.p2[1], 4),
-        xfmt: (v) => fmt(v), yfmt: (v) => fmt(v),
-        xlabel: sp === 'z' ? 'Steigung w′ (€ je Standardabw.)' : 'Steigung w (€/m²)',
-        ylabel: sp === 'z' ? 'Grundbetrag b′ (€)' : 'Grundbetrag b (€)',
-      });
-    });
-    const inside = (q) => me.fr && q.x >= me.fr.m.l && q.x <= me.fr.m.l + me.fr.side && q.y >= me.fr.m.t && q.y <= me.fr.m.t + me.fr.side;
-    const toP = (q) => [clamp(me.fr.X.inv(q.x), ...me.fr.box.p1), clamp(me.fr.Y.inv(q.y), ...me.fr.box.p2)];
-    const near = (q) => { const p = cfg.point(); return Math.hypot(q.x - me.fr.X(p[0]), q.y - me.fr.Y(p[1])) < 26; };
-    S.pointer(me.st, {
-      pick(q) {
-        if (!inside(q) || (q.touch && !near(q))) return null;
-        if (q.probe) return true;
-        tip.hide();
-        cfg.set(toP(q));
-        return { move: (q2) => cfg.set(toP(q2)), end: () => cfg.end && cfg.end() };
-      },
-      tap(q) { if (inside(q)) { cfg.set(toP(q)); if (cfg.end) cfg.end(); } },
-      hover(q) {
-        if (!q || !inside(q)) { tip.hide(); me.st.cv.style.cursor = ''; return; }
-        me.st.cv.style.cursor = 'crosshair';
-        const p = toP(q), sp = cfg.space();
-        const [w, b] = fromSpace(p[0], p[1], sp, me.Q.st);
-        const rows = [[p1Name(sp), p1Fmt(p[0], sp)], [p2Name(sp), p2Fmt(p[1])]];
-        if (sp === 'z') rows.push(['entspricht w', fmt(w, 2) + ' €/m²'], ['und b', eur(b)]);
-        rows.push(['typischer Fehler √L', eur(Math.sqrt(me.Q.L(p[0], p[1])))]);
-        tip.show(q.x, q.y, S.tipRows('Diese Gerade', rows));
-      },
-      leave() { tip.hide(); },
+      S.axes(ctx, { x: X, y: Y, grid: false, xt: ticks(box.p1[0], box.p1[1], 4), yt: ticks(box.p2[0], box.p2[1], 4), xfmt: (v) => fmt(v), yfmt: (v) => fmt(v),
+        xlabel: sp === 'z' ? 'w′ (€ je Standardabw.)' : 'Steigung w (€/m²)', ylabel: sp === 'z' ? 'b′ (€)' : 'Grundbetrag b (€)' });
     });
     return me;
   }
-
-  function Colorbar(el) {
-    return S.canvas(el, (ctx, W) => {
-      const x0 = 8, x1 = W - 10, X = S.log(R_LO, R_HI, x0, x1);
-      for (let px = x0; px < x1; px++) {
-        ctx.fillStyle = S.rgb(S.lossColor((px - x0) / (x1 - x0)));
-        ctx.fillRect(px, 2, 1.5, 9);
-      }
-      ctx.fillStyle = S.c.muted;
-      ctx.font = S.font(10.5, 'mono');
-      ctx.textBaseline = 'top';
-      for (const v of W < 420 ? [100, 500, 2000] : [100, 200, 500, 1000, 2000]) {
-        ctx.textAlign = v === 2000 ? 'right' : 'center';
-        ctx.fillRect(X(v) - 0.5, 11, 1, 3);
-        ctx.fillText(fmt(v) + ' €', v === 2000 ? x1 + 2 : X(v), 16);
-      }
-    });
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  Fig. 1 — squares or springs, the sum bar, the landscape
-  // ════════════════════════════════════════════════════════════════
-  const f1 = { hover: -1, fr: null, segs: [], dragPt: false };
-  const HX = [25, 120];
-
-  // spring physics: a damped oscillator in standardized coordinates, where the bowl is round
-  const phys = { on: false, v: [0, 0], last: 0 };
-  function release() {
-    if (store.get().mode !== 'spring') return;
-    if (S.reduced) { const st = stats(store.get().pts); store.set({ w: st.w, b: st.b }); return; }
-    if (phys.on) return;
-    phys.on = true; phys.last = 0;
-    requestAnimationFrame(physStep);
-  }
-  function hold() { phys.on = false; phys.v = [0, 0]; }
-  function physStep(ts) {
-    if (!phys.on) return;
-    const dt = phys.last ? Math.min(0.033, (ts - phys.last) / 1000) : 1 / 60;
-    phys.last = ts;
-    const s = store.get(), Q = quad(s.pts, 'z');
-    let p = toSpace(s.w, s.b, 'z', Q.st);
-    const g = Q.grad(p[0], p[1]);                 // = 2 (p − p*): the sum of all spring forces
-    const w0 = 2 * Math.PI * 0.7, k = (w0 * w0) / 2, c = 2 * 0.34 * w0;
-    phys.v = [phys.v[0] + (-k * g[0] - c * phys.v[0]) * dt, phys.v[1] + (-k * g[1] - c * phys.v[1]) * dt];
-    p = [p[0] + phys.v[0] * dt, p[1] + phys.v[1] * dt];
-    const d = Math.hypot(p[0] - Q.pstar[0], p[1] - Q.pstar[1]), sp = Math.hypot(phys.v[0], phys.v[1]);
-    if (d < 1.5 && sp < 4 && !f1.dragPt) {
-      phys.on = false; phys.v = [0, 0];
-      store.set({ w: Q.st.w, b: Q.st.b });
-      return;
-    }
-    const [w, b] = fromSpace(p[0], p[1], 'z', Q.st);
-    store.set({ w, b });
-    requestAnimationFrame(physStep);
-  }
-
-  function scatterFrame(W, H, m, ydom = YDOM) {
-    return { m, X: lin(XDOM[0], XDOM[1], m.l, W - m.r), Y: lin(ydom[0], ydom[1], H - m.b, m.t) };
-  }
-
-  const sc1 = S.canvas($('#f1-scatter'), (ctx, W, H) => {
-    const { pts, w, b, mode } = store.get();
-    const st = stats(pts);
-    const fr = scatterFrame(W, H, { l: 56, r: 14, t: 10, b: 44 });
-    f1.fr = fr;
-    const { X, Y, m } = fr;
-    S.axes(ctx, {
-      x: X, y: Y, xt: [20, 40, 60, 80, 100, 120], yt: [400, 600, 800, 1000, 1200, 1400],
-      xfmt: (v) => v, yfmt: (v) => fmt(v), xlabel: 'Wohnfläche x (m²)', ylabel: 'Kaltmiete y (€)',
-    });
-    ctx.save();
-    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
-    ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.muted; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(m.l, Y(st.ym)); ctx.lineTo(W - m.r, Y(st.ym)); ctx.stroke();
-    ctx.setLineDash([]);
-    pts.forEach(([x, y], i) => {
-      const py = Y(y), ph = Y(w * x + b), side = Math.abs(py - ph), px = X(x);
-      ctx.globalAlpha = f1.hover >= 0 && f1.hover !== i ? 0.35 : 1;
-      if (mode === 'squares') {
-        if (side > 0.5) {
-          const right = px + side <= W - m.r || px - side < m.l;
-          const x0 = right ? px : px - side;
-          ctx.fillStyle = S.c['error-wash'];
-          ctx.fillRect(x0, Math.min(py, ph), side, side);
-          ctx.strokeStyle = S.alpha('error', 0.6); ctx.lineWidth = 1;
-          ctx.strokeRect(x0 + 0.5, Math.min(py, ph) + 0.5, Math.max(0, side - 1), Math.max(0, side - 1));
-        }
-        ctx.strokeStyle = S.c.error; ctx.lineWidth = 1.75;
-        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, ph); ctx.stroke();
-      } else {
-        // a stretched spring gets thinner coils
-        ctx.strokeStyle = S.c.error; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
-        S.spring(ctx, px, py, px, ph, 7, clamp(7 - side / 40, 2.5, 6));
-        ctx.fillStyle = S.c.error;
-        ctx.fillRect(px - 3, ph - 1.5, 6, 3);
-      }
-      ctx.globalAlpha = 1;
-    });
-    ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(X(XDOM[0]), Y(w * XDOM[0] + b)); ctx.lineTo(X(XDOM[1]), Y(w * XDOM[1] + b)); ctx.stroke();
-    for (const hx of HX) {
-      ctx.beginPath(); ctx.arc(X(hx), Y(w * hx + b), 6.5, 0, Math.PI * 2);
-      ctx.fillStyle = S.c.surface; ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = S.c.model; ctx.stroke();
-    }
-    pts.forEach(([x, y], i) => S.dot(ctx, X(x), Y(y), f1.hover === i ? 6.5 : 4.5, S.c.data, S.c.surface, 2));
-    ctx.restore();
-    S.label(ctx, 'ȳ', W - m.r - 4, Y(st.ym) - 10, S.c.muted, S.font(15, 'math', 'italic'), 'right');
-  });
-  const tip1 = S.tip($('#f1-scatter'));
-
-  function hit1(q) {
-    const { pts, w, b } = store.get();
-    const fr = f1.fr;
-    if (!fr) return null;
-    const R = q.touch ? 22 : 11;
-    let best = null, bd = R;
-    pts.forEach(([x, y], i) => {
-      const d = Math.hypot(q.x - fr.X(x), q.y - fr.Y(y));
-      if (d < bd) { bd = d; best = { kind: 'pt', i }; }
-    });
-    if (best) return best;
-    for (let k = 0; k < 2; k++) {
-      if (Math.hypot(q.x - fr.X(HX[k]), q.y - fr.Y(w * HX[k] + b)) < R + 3) return { kind: 'handle', k };
-    }
-    const x1 = fr.X(XDOM[0]), y1 = fr.Y(w * XDOM[0] + b), x2 = fr.X(XDOM[1]), y2 = fr.Y(w * XDOM[1] + b);
-    const d = Math.abs((y2 - y1) * q.x - (x2 - x1) * q.y + x2 * y1 - y2 * x1) / Math.hypot(y2 - y1, x2 - x1);
-    if (d < (q.touch ? 16 : 7) && q.x > fr.m.l) return { kind: 'line' };
-    return null;
-  }
-
-  S.pointer(sc1, {
-    pick(q) {
-      const h = hit1(q);
-      if (!h) return null;
-      if (q.probe) return true;
-      tip1.hide();
-      const fr = f1.fr;
-      if (h.kind === 'pt') {
-        f1.hover = h.i;
-        f1.dragPt = true;
-        release();
-        return {
-          move(q2) {
-            const pts = store.get().pts.map((p) => p.slice());
-            pts[h.i] = [clamp(Math.round(fr.X.inv(q2.x)), 22, 123), clamp(Math.round(fr.Y.inv(q2.y) / 5) * 5, 320, 1480)];
-            setPts(pts);
-          },
-          end() { f1.hover = -1; f1.dragPt = false; redraw1(); },
-        };
-      }
-      hold();
-      if (h.kind === 'handle') {
-        const s = store.get(), o = 1 - h.k, xo = HX[o], yo = s.w * xo + s.b;
-        return {
-          move(q2) {
-            const w = (fr.Y.inv(q2.y) - yo) / (HX[h.k] - xo);
-            store.set({ w, b: yo - w * xo });
-          },
-          end: release,
-        };
-      }
-      const y0 = fr.Y.inv(q.y), b0 = store.get().b;
-      return { move(q2) { store.set({ b: b0 + fr.Y.inv(q2.y) - y0 }); }, end: release };
-    },
-    hover(q) {
-      if (!q) { tip1.hide(); return; }
-      const h = hit1(q);
-      sc1.cv.style.cursor = h ? (h.kind === 'pt' ? 'move' : 'grab') : '';
-      const i = h && h.kind === 'pt' ? h.i : -1;
-      if (i !== f1.hover) { f1.hover = i; redraw1(); }
-      if (i >= 0) {
-        const { pts, w, b } = store.get();
-        const [x, y] = pts[i], yh = w * x + b, e = y - yh;
-        tip1.show(q.x, q.y, S.tipRows(`Wohnung ${i + 1}`, [
-          ['Fläche', x + ' m²'], ['Miete', eur(y)], ['Gerade sagt', eur(yh)], ['Fehler e', S.signed(e) + ' €'],
-        ]));
-      } else tip1.hide();
-    },
-    leave() { tip1.hide(); if (f1.hover !== -1) { f1.hover = -1; redraw1(); } },
-  });
-
-  // the sum-of-squares bar
-  const bar1 = S.canvas($('#f1-bar'), (ctx, W) => {
-    const { pts, w, b } = store.get();
-    const st = stats(pts);
-    const x0 = 2, x1 = W - 14, Smax = st.SStot * 1.3, X = lin(0, Smax, x0, x1);
-    const y0 = 2, bh = 16;
-    ctx.fillStyle = S.c.grid;
-    ctx.fillRect(x0, y0, x1 - x0, bh);
-    let acc = 0;
-    f1.segs = [];
-    pts.forEach(([x, y], i) => {
-      const e = y - w * x - b, s = e * e;
-      const a = X(acc), z = X(Math.min(acc + s, Smax));
-      acc += s;
-      if (a >= x1) return;
-      const wpx = z - a;
-      ctx.globalAlpha = f1.hover < 0 || f1.hover === i ? 1 : 0.4;
-      ctx.fillStyle = S.c.error;
-      ctx.fillRect(a, y0, wpx > 4 ? wpx - 2 : Math.max(0.5, wpx), bh);
-      ctx.globalAlpha = 1;
-      f1.segs.push([a, z, i]);
-    });
-    if (acc > Smax) {
-      ctx.fillStyle = S.c.error;
-      ctx.beginPath(); ctx.moveTo(x1 + 2, y0); ctx.lineTo(x1 + 10, y0 + bh / 2); ctx.lineTo(x1 + 2, y0 + bh); ctx.fill();
-    }
-    const tick = (v, text, col, align) => {
-      const px = X(v);
-      ctx.fillStyle = col;
-      ctx.fillRect(px - 1, y0 - 2, 2, bh + 6);
-      ctx.font = S.font(11, 'body');
-      ctx.textAlign = align;
-      ctx.textBaseline = 'top';
-      ctx.fillText(text, align === 'right' ? px + 1 : px - 1, y0 + bh + 7);
-    };
-    tick(st.SSmin, 'bestmöglich', S.c.fg, 'left');
-    tick(st.SStot, 'waagerechte Linie bei ȳ', S.c['fg-2'], 'right');
-  });
-  const tipBar = S.tip($('#f1-bar'));
-  S.pointer(bar1, {
-    hover(q) {
-      const seg = q && f1.segs.find(([a, z]) => q.x >= a && q.x <= z);
-      const i = seg ? seg[2] : -1;
-      if (i !== f1.hover) { f1.hover = i; redraw1(); }
-      if (i >= 0) {
-        const { pts, w, b } = store.get();
-        const e = pts[i][1] - w * pts[i][0] - b;
-        tipBar.show(q.x, 0, S.tipRows(`Wohnung ${i + 1}`, [['Fehler e', S.signed(e) + ' €'], ['e²', fmt(e * e) + ' €²']]));
-      } else tipBar.hide();
-    },
-    leave() { tipBar.hide(); if (f1.hover !== -1) { f1.hover = -1; redraw1(); } },
-  });
-
-  const land1 = Landscape($('#f1-land'), {
+  const land = LossMap($('#v-land'), {
     space: () => 'raw',
-    point: () => [store.get().w, store.get().b],
-    set: (p) => { hold(); store.set({ w: p[0], b: p[1] }); },
-    end: release,
-  });
-  Colorbar($('#f1-cbar'));
-
-  function redraw1() { sc1.redraw(); bar1.redraw(); }
-
-  const wEl = $('#f1-w'), bEl = $('#f1-b');
-  wEl.addEventListener('input', () => { hold(); store.set({ w: +wEl.value }); });
-  bEl.addEventListener('input', () => { hold(); store.set({ b: +bEl.value }); });
-  wEl.addEventListener('change', release);
-  bEl.addEventListener('change', release);
-  document.querySelectorAll('input[name="mode-f1"]').forEach((r) =>
-    r.addEventListener('change', () => { if (r.checked) { store.set({ mode: r.value }); if (r.value === 'spring') release(); else hold(); } }));
-  $('#f1-reset').addEventListener('click', () => { setPts(DATA0.map((p) => p.slice())); release(); });
-
-  function update1() {
-    const { pts, w, b } = store.get();
-    const st = stats(pts);
-    const L = lossOf(pts, w, b);
-    wEl.value = clamp(w, -2, 20); bEl.value = clamp(b, -500, 1100);
-    $('#f1-wv').textContent = fmt(w, 2) + ' €/m²';
-    $('#f1-bv').textContent = eur(b);
-    const hit = Math.sqrt(L) <= Math.sqrt(st.Lmin) * 1.01;
-    $('#f1-score').innerHTML =
-      `<span>Dein Fehler √L <span class="num">${eur(Math.sqrt(L))}</span></span>` +
-      `<span>bestmöglich <span class="num">${eur(Math.sqrt(st.Lmin), 1)}</span></span>` +
-      (hit ? '<span class="chip ok">getroffen</span>' : '');
-    redraw1();
-    land1.st.redraw();
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  Fig. 2 — squares vs. absolute values (outlier sensitivity)
-  // ════════════════════════════════════════════════════════════════
-  const YDOM2 = [100, 2100];
-  // start with one outlier so the difference is visible at rest: a tiny, very expensive flat
-  const F2_INIT = DATA0.map((p, i) => (i === 0 ? [30, 1750] : p.slice()));
-  const f2 = { pts: F2_INIT.map((p) => p.slice()), hover: -1, fr: null };
-  function fitL1(pts) {
-    // least absolute deviations by iteratively reweighted least squares
-    let { w, b } = stats(pts);
-    for (let it = 0; it < 120; it++) {
-      let sw = 0, swx = 0, swy = 0, swxx = 0, swxy = 0;
-      for (const [x, y] of pts) {
-        const wt = 1 / Math.max(Math.abs(y - w * x - b), 0.05);
-        sw += wt; swx += wt * x; swy += wt * y; swxx += wt * x * x; swxy += wt * x * y;
+    overlay(ctx, fr) {
+      if (st.trail.length > 1) {
+        ctx.strokeStyle = S.alpha('model', 0.75); ctx.lineWidth = 2; ctx.lineJoin = 'round';
+        ctx.beginPath(); st.trail.forEach(([w, b], i) => (i ? ctx.lineTo(fr.X(w), fr.Y(b)) : ctx.moveTo(fr.X(w), fr.Y(b)))); ctx.stroke();
       }
-      const det = sw * swxx - swx * swx;
-      w = (sw * swxy - swx * swy) / det;
-      b = (swy - w * swx) / sw;
-    }
-    return { w, b };
-  }
-  const sc2 = S.canvas($('#f2-plot'), (ctx, W, H) => {
-    const pts = f2.pts;
-    const fr = scatterFrame(W, H, { l: 56, r: 44, t: 10, b: 44 }, YDOM2);
-    f2.fr = fr;
-    const { X, Y, m } = fr;
-    S.axes(ctx, { x: X, y: Y, xt: [20, 40, 60, 80, 100, 120], yt: [500, 1000, 1500, 2000], xfmt: (v) => v, yfmt: (v) => fmt(v), xlabel: 'Wohnfläche (m²)', ylabel: 'Miete (€)' });
-    const q = stats(pts), a = fitL1(pts);
-    ctx.save();
-    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
-    ctx.setLineDash([7, 5]); ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(X(XDOM[0]), Y(a.w * XDOM[0] + a.b)); ctx.lineTo(X(XDOM[1]), Y(a.w * XDOM[1] + a.b)); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(X(XDOM[0]), Y(q.w * XDOM[0] + q.b)); ctx.lineTo(X(XDOM[1]), Y(q.w * XDOM[1] + q.b)); ctx.stroke();
-    pts.forEach(([x, y], i) => S.dot(ctx, X(x), Y(y), f2.hover === i ? 6.5 : 4.5, S.c.data, S.c.surface, 2));
-    ctx.restore();
-    const yq = Y(q.w * XDOM[1] + q.b), ya = Y(a.w * XDOM[1] + a.b);
-    const up = yq <= ya;
-    S.label(ctx, 'e²', W - m.r + 6, clamp(yq + (up ? -6 : 6), m.t + 8, H - m.b - 8), S.c.model, S.font(16, 'math', 'italic'), 'left');
-    S.label(ctx, '|e|', W - m.r + 6, clamp(ya + (up ? 8 : -8), m.t + 8, H - m.b - 8), S.c['fg-2'], S.font(16, 'math', 'italic'), 'left');
-    $('#f2-lbl').textContent = `Steigung ${fmt(q.w, 2)} gegen ${fmt(a.w, 2)} €/m²`;
+      const { w, b } = line();
+      S.dot(ctx, fr.X(w), fr.Y(b), 6.5, S.c.model, S.c.surface, 2.5);
+    },
   });
-  const tip2 = S.tip($('#f2-plot'));
-  const hit2 = (q) => {
-    if (!f2.fr) return -1;
-    const R = q.touch ? 22 : 11;
-    let best = -1, bd = R;
-    f2.pts.forEach(([x, y], i) => { const d = Math.hypot(q.x - f2.fr.X(x), q.y - f2.fr.Y(y)); if (d < bd) { bd = d; best = i; } });
-    return best;
-  };
-  S.pointer(sc2, {
+  S.pointer(land.c, {
     pick(q) {
-      const i = hit2(q);
-      if (i < 0) return null;
+      const fr = land.fr; if (!fr) return null;
+      if (!(q.x >= fr.l && q.x <= fr.l + fr.side && q.y >= fr.t && q.y <= fr.t + fr.side)) return null;
+      if (q.touch && Math.hypot(q.x - fr.X(st.w), q.y - fr.Y(st.b)) > 26) return null;
       if (q.probe) return true;
-      tip2.hide();
-      f2.hover = i;
-      return {
-        move(q2) {
-          f2.pts[i] = [clamp(Math.round(f2.fr.X.inv(q2.x)), 22, 123), clamp(Math.round(f2.fr.Y.inv(q2.y) / 5) * 5, YDOM2[0] + 20, YDOM2[1] - 20)];
-          sc2.redraw();
-        },
-        end() { f2.hover = -1; sc2.redraw(); },
-      };
+      interrupt(); st.fit = false;
+      const set = (p) => { st.w = fr.X.inv(p.x); st.b = fr.Y.inv(p.y); st.trail.push([st.w, st.b]); redraw(); };
+      set(q);
+      return { move: set };
     },
-    hover(q) {
-      if (!q) { tip2.hide(); return; }
-      const i = hit2(q);
-      sc2.cv.style.cursor = i >= 0 ? 'move' : '';
-      if (i !== f2.hover) { f2.hover = i; sc2.redraw(); }
-      if (i >= 0) tip2.show(q.x, q.y, S.tipRows(`Wohnung ${i + 1}`, [['Fläche', f2.pts[i][0] + ' m²'], ['Miete', eur(f2.pts[i][1])]]));
-      else tip2.hide();
-    },
-    leave() { tip2.hide(); if (f2.hover !== -1) { f2.hover = -1; sc2.redraw(); } },
   });
-  $('#f2-reset').addEventListener('click', () => { f2.pts = F2_INIT.map((p) => p.slice()); sc2.redraw(); });
 
-  // ════════════════════════════════════════════════════════════════
-  //  Fig. 3 — a ball rolling down: gradient descent on the bowl
-  // ════════════════════════════════════════════════════════════════
-  const MAX_STEPS = 600;
-  const ETA_RANGE = { raw: [1e-6, 2.5e-4], z: [1e-3, 1.25] };
-  const gd = { start: [0, 0], p: [0, 0], path: [], losses: [], t: 0, running: false, status: 'ready', ghost: {}, eta: { raw: 1.2e-4, z: 0.08 }, Q: null, acc: 0, last: 0 };
-  const f3 = { t: 0, anim: null };
-
-  function gdReset() {
-    const s = store.get();
-    gd.Q = quad(s.pts, s.space);
-    gd.p = toSpace(gd.start[0], gd.start[1], s.space, gd.Q.st);
-    gd.path = [gd.p.slice()];
-    gd.losses = [gd.Q.L(gd.p[0], gd.p[1])];
-    gd.t = 0;
-    gd.running = false;
-    gd.status = 'ready';
+  // ── gradient descent: the ball ──────────────────────────────────
+  const GD = st.gd;
+  function gdReset(space, startRaw) {
+    st.space = space;
+    GD.Q = quad(st.pts, space);
+    GD.p = space === 'z' ? toZ(startRaw[0], startRaw[1], GD.Q.st) : startRaw.slice();
+    GD.path = [GD.p.slice()];
+    GD.losses = [GD.Q.L(GD.p[0], GD.p[1])];
   }
   function gdStep() {
-    const sp = store.get().space;
-    const g = gd.Q.grad(gd.p[0], gd.p[1]);
-    const eta = gd.eta[sp];
-    gd.p = [gd.p[0] - eta * g[0], gd.p[1] - eta * g[1]];
-    gd.t++;
-    const L = gd.Q.L(gd.p[0], gd.p[1]);
-    gd.path.push(gd.p.slice());
-    gd.losses.push(L);
-    if (!isFinite(L) || L > 1e11) { gd.running = false; gd.status = 'diverged'; }
-    else if (L - gd.Q.Lstar < 1e-6 * gd.Q.Lstar) { gd.running = false; gd.status = 'converged'; }
-    else if (gd.t >= MAX_STEPS) { gd.running = false; gd.status = 'maxed'; }
+    const g = GD.Q.grad(GD.p[0], GD.p[1]);
+    GD.p = [GD.p[0] - st.eta * g[0], GD.p[1] - st.eta * g[1]];
+    GD.path.push(GD.p.slice());
+    const L = GD.Q.L(GD.p[0], GD.p[1]);
+    GD.losses.push(L);
+    return L;
   }
-  function gdLoop(ts) {
-    if (!gd.running) { render3(); return; }
-    const rate = gd.t < 12 ? 5 : gd.t < 50 ? 16 : 70;
-    gd.acc += (Math.min(100, ts - (gd.last || ts)) / 1000) * rate;
-    gd.last = ts;
-    let k = Math.floor(gd.acc);
-    gd.acc -= k;
-    while (k-- > 0 && gd.running) gdStep();
-    render3();
-    requestAnimationFrame(gdLoop);
-  }
-  const finished = () => gd.status === 'diverged' || gd.status === 'converged' || gd.status === 'maxed';
-  function gdStart() {
-    if (finished()) gdReset();
-    gd.running = true; gd.status = 'running'; gd.acc = 1; gd.last = 0;
-    requestAnimationFrame(gdLoop);
-  }
+  const gdRaw = () => (st.space === 'z' ? fromZ(GD.p[0], GD.p[1], GD.Q.st) : GD.p);
 
-  // the 3D bowl
   let LCAP = 1;
-  {
-    const Qr = quad(DATA0, 'raw'), Qz = quad(DATA0, 'z');
-    for (const [Q, bx] of [[Qr, BOX.raw], [Qz, BOX.z]])
-      for (const a of bx.p1) for (const c of bx.p2) LCAP = Math.max(LCAP, Q.L(a, c));
-  }
-  const N3 = 34, HZ = 1.0;
+  { const Qr = quad(FLATS, 'raw'), Qz = quad(FLATS, 'z');
+    for (const [Q, bx] of [[Qr, BOX.raw], [Qz, BOX.z]]) for (const a of bx.p1) for (const c of bx.p2) LCAP = Math.max(LCAP, Q.L(a, c)); }
+  const N3 = 32;
   const boxAt = (box, u, v) => [box.p1[0] + ((u + 1) / 2) * (box.p1[1] - box.p1[0]), box.p2[0] + ((v + 1) / 2) * (box.p2[1] - box.p2[0])];
   const boxUV = (box, p) => [(2 * (p[0] - box.p1[0])) / (box.p1[1] - box.p1[0]) - 1, (2 * (p[1] - box.p2[0])) / (box.p2[1] - box.p2[0]) - 1];
-  const hOf = (L) => Math.min(L / LCAP, 1.5) * HZ;
+  const hOf = (L) => Math.min(L / LCAP, 1.5);
   const LIGHT = S.v3.norm([-0.45, -0.55, 0.7]);
-
-  const cam3 = S.orbit($('#f3-bowl'), {
-    yaw: -0.95, pitch: 0.58, zoom: 0.27, cz: 0.42, dist: 5.5,
+  const bowl = S.orbit($('#v-bowl'), {
+    yaw: -0.95, pitch: 0.58, zoom: 0.3, cz: 0.42, dist: 5.5,
     draw(ctx, W, H, cam) {
-      const { pts, space } = store.get();
-      const Qr = quad(pts, 'raw'), Qz = quad(pts, 'z');
-      const t = f3.t;
-      const V = [];
-      for (let j = 0; j <= N3; j++) {
-        for (let i = 0; i <= N3; i++) {
-          const u = -1 + (2 * i) / N3, v = -1 + (2 * j) / N3;
-          const Lr = Qr.L(...boxAt(BOX.raw, u, v)), Lz = Qz.L(...boxAt(BOX.z, u, v));
-          const L = Lr + (Lz - Lr) * t;
-          const wp = [u, v, hOf(L)];
-          V.push({ wp, L, s: cam.P(wp) });
-        }
+      const Qr = quad(st.pts, 'raw'), Qz = quad(st.pts, 'z'), t = st.zT;
+      const Vx = [];
+      for (let j = 0; j <= N3; j++) for (let i = 0; i <= N3; i++) {
+        const u = -1 + (2 * i) / N3, v = -1 + (2 * j) / N3;
+        const L = S.lerp(Qr.L(...boxAt(BOX.raw, u, v)), Qz.L(...boxAt(BOX.z, u, v)), t);
+        const wp = [u, v, hOf(L)];
+        Vx.push({ wp, L, s: cam.P(wp) });
       }
-      ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1;
-      ctx.beginPath();
-      [[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]].forEach(([u, v], k) => { const s = cam.P([u, v, 0]); k ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); });
-      ctx.stroke();
-
       const quads = [];
-      for (let j = 0; j < N3; j++) {
-        for (let i = 0; i < N3; i++) {
-          const a = j * (N3 + 1) + i, idx = [a, a + 1, a + N3 + 2, a + N3 + 1];
-          quads.push({ idx, depth: (V[idx[0]].s[2] + V[idx[1]].s[2] + V[idx[2]].s[2] + V[idx[3]].s[2]) / 4 });
-        }
+      for (let j = 0; j < N3; j++) for (let i = 0; i < N3; i++) {
+        const a = j * (N3 + 1) + i, idx = [a, a + 1, a + N3 + 2, a + N3 + 1];
+        quads.push({ idx, depth: (Vx[idx[0]].s[2] + Vx[idx[1]].s[2] + Vx[idx[2]].s[2] + Vx[idx[3]].s[2]) / 4 });
       }
       quads.sort((p, q) => q.depth - p.depth);
-      const levels = LEVELS.map((r) => r * r);
-      const lineCol = S.alpha('fg', S.dark ? 0.35 : 0.3);
+      const lv = LEVELS.map((r) => r * r), lineCol = S.alpha('fg', S.dark ? 0.35 : 0.3);
       for (const { idx } of quads) {
-        const A = V[idx[0]], B = V[idx[1]], D = V[idx[3]];
-        const n = S.v3.cross(S.v3.sub(B.wp, A.wp), S.v3.sub(D.wp, A.wp));
+        const A = Vx[idx[0]], B = Vx[idx[1]], Dd = Vx[idx[3]];
+        const n = S.v3.cross(S.v3.sub(B.wp, A.wp), S.v3.sub(Dd.wp, A.wp));
         const lam = Math.max(0, S.v3.dot(n, LIGHT) / (S.v3.len(n) || 1));
         const k = (S.dark ? 0.62 : 0.8) + (S.dark ? 0.5 : 0.28) * lam;
-        const c = S.lossColor(lossT((V[idx[0]].L + V[idx[1]].L + V[idx[2]].L + V[idx[3]].L) / 4));
+        const c = S.lossColor(lossT((Vx[idx[0]].L + Vx[idx[1]].L + Vx[idx[2]].L + Vx[idx[3]].L) / 4));
         ctx.fillStyle = `rgb(${Math.min(255, c[0] * k) | 0},${Math.min(255, c[1] * k) | 0},${Math.min(255, c[2] * k) | 0})`;
-        ctx.beginPath();
-        idx.forEach((q, m) => (m ? ctx.lineTo(V[q].s[0], V[q].s[1]) : ctx.moveTo(V[q].s[0], V[q].s[1])));
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.6; ctx.stroke();
+        ctx.beginPath(); idx.forEach((q, m) => (m ? ctx.lineTo(Vx[q].s[0], Vx[q].s[1]) : ctx.moveTo(Vx[q].s[0], Vx[q].s[1]))); ctx.closePath();
+        ctx.fill(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.6; ctx.stroke();
         ctx.strokeStyle = lineCol; ctx.lineWidth = 1;
-        for (const lev of levels) {
-          const cross = [];
-          for (let m = 0; m < 4; m++) {
-            const P = V[idx[m]], R = V[idx[(m + 1) % 4]];
-            if ((P.L - lev) * (R.L - lev) < 0) {
-              const f = (lev - P.L) / (R.L - P.L);
-              cross.push([P.s[0] + (R.s[0] - P.s[0]) * f, P.s[1] + (R.s[1] - P.s[1]) * f]);
-            }
-          }
-          if (cross.length >= 2) {
-            ctx.beginPath();
-            ctx.moveTo(cross[0][0], cross[0][1]); ctx.lineTo(cross[1][0], cross[1][1]);
-            if (cross.length === 4) { ctx.moveTo(cross[2][0], cross[2][1]); ctx.lineTo(cross[3][0], cross[3][1]); }
-            ctx.stroke();
-          }
+        for (const lev of lv) {
+          const cr = [];
+          for (let m = 0; m < 4; m++) { const P = Vx[idx[m]], R = Vx[idx[(m + 1) % 4]]; if ((P.L - lev) * (R.L - lev) < 0) { const f = (lev - P.L) / (R.L - P.L); cr.push([P.s[0] + (R.s[0] - P.s[0]) * f, P.s[1] + (R.s[1] - P.s[1]) * f]); } }
+          if (cr.length >= 2) { ctx.beginPath(); ctx.moveTo(cr[0][0], cr[0][1]); ctx.lineTo(cr[1][0], cr[1][1]); ctx.stroke(); }
         }
       }
       const sp = t < 0.5 ? 'raw' : 'z';
       const lab = (p, text) => { const s = cam.P(p); S.label(ctx, text, s[0], s[1], S.c['fg-2'], S.font(15, 'math', 'italic'), 'center'); };
-      lab([0, -1.2, 0], p1Name(sp) + ' →');
-      lab([-1.2, 0, 0], p2Name(sp) + ' →');
-      const a0 = cam.P([-1, -1, 0]), a1 = cam.P([-1, -1, HZ * 1.05]);
-      ctx.strokeStyle = S.c.axis; ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke();
-      S.label(ctx, 'L', a1[0], a1[1] - 10, S.c['fg-2'], S.font(15, 'math', 'italic'), 'center');
-
-      // positions: interpolate between the two coordinate systems while morphing
-      const uvOf = (pSpace) => {
-        const [w, b] = fromSpace(pSpace[0], pSpace[1], space, Qr.st);
-        const a = boxUV(BOX.raw, [w, b]), c = boxUV(BOX.z, toSpace(w, b, 'z', Qr.st));
-        return [S.lerp(a[0], c[0], t), S.lerp(a[1], c[1], t)];
-      };
-      const mr = boxUV(BOX.raw, Qr.pstar), mz = boxUV(BOX.z, Qz.pstar);
-      const ms = cam.P([S.lerp(mr[0], mz[0], t), S.lerp(mr[1], mz[1], t), hOf(Qr.Lstar)]);
+      lab([0, -1.2, 0], (sp === 'z' ? 'w′' : 'w') + ' →');
+      lab([-1.2, 0, 0], (sp === 'z' ? 'b′' : 'b') + ' →');
+      const uvOf = (w, b) => { const a = boxUV(BOX.raw, [w, b]), c = boxUV(BOX.z, toZ(w, b, Qr.st)); return [S.lerp(a[0], c[0], t), S.lerp(a[1], c[1], t)]; };
+      const mu = uvOf(Qr.st.w, Qr.st.b), ms = cam.P([mu[0], mu[1], hOf(Qr.Lstar)]);
       ctx.strokeStyle = S.c.fg; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(ms[0] - 5, ms[1] - 5); ctx.lineTo(ms[0] + 5, ms[1] + 5); ctx.moveTo(ms[0] + 5, ms[1] - 5); ctx.lineTo(ms[0] - 5, ms[1] + 5); ctx.stroke();
-
-      // trail on the surface
-      const lift = 0.012;
-      if (gd.path.length > 1) {
+      if (st.ballA <= 0 || !GD.Q) return;
+      const rawPt = (p) => (st.space === 'z' ? fromZ(p[0], p[1], GD.Q.st) : p);
+      if (GD.path.length > 1) {
         ctx.strokeStyle = S.c.grad; ctx.lineWidth = 2; ctx.lineJoin = 'round';
         ctx.beginPath();
-        gd.path.forEach((p, i) => {
-          const uv = uvOf(p);
-          const s = cam.P([clamp(uv[0], -1.15, 1.15), clamp(uv[1], -1.15, 1.15), Math.min(hOf(gd.losses[i]), 1.6) + lift]);
-          i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]);
-        });
+        GD.path.forEach((p, i) => { const r = rawPt(p), uv = uvOf(r[0], r[1]); const s = cam.P([clamp(uv[0], -1.15, 1.15), clamp(uv[1], -1.15, 1.15), Math.min(hOf(GD.losses[i]), 1.6) + 0.012]); i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); });
         ctx.stroke();
       }
-      // the ball
-      const uv = uvOf(gd.p);
+      const r = rawPt(GD.p), uv = uvOf(r[0], r[1]);
       const inBox = Math.abs(uv[0]) <= 1.05 && Math.abs(uv[1]) <= 1.05;
-      const Lb = gd.losses[gd.losses.length - 1];
-      const bs = cam.P([clamp(uv[0], -1.1, 1.1), clamp(uv[1], -1.1, 1.1), Math.min(hOf(Lb), 1.6) + 0.035]);
-      const r = 8;
+      const bs = cam.P([clamp(uv[0], -1.1, 1.1), clamp(uv[1], -1.1, 1.1), Math.min(hOf(GD.losses[GD.losses.length - 1]), 1.6) + 0.035]);
+      ctx.globalAlpha = st.ballA;
       if (inBox) {
-        const gr = ctx.createRadialGradient(bs[0] - r * 0.35, bs[1] - r * 0.4, 1, bs[0], bs[1], r);
-        gr.addColorStop(0, 'rgba(255,255,255,0.95)');
-        gr.addColorStop(0.35, S.c.model);
-        gr.addColorStop(1, S.alpha('model', 0.95));
-        ctx.beginPath(); ctx.arc(bs[0], bs[1], r + 1.5, 0, Math.PI * 2); ctx.fillStyle = S.c.surface; ctx.fill();
-        ctx.beginPath(); ctx.arc(bs[0], bs[1], r, 0, Math.PI * 2); ctx.fillStyle = gr; ctx.fill();
-      } else {
-        ctx.beginPath(); ctx.arc(bs[0], bs[1], r, 0, Math.PI * 2); ctx.strokeStyle = S.c.model; ctx.lineWidth = 2; ctx.stroke();
-      }
+        const gr = ctx.createRadialGradient(bs[0] - 3, bs[1] - 3.5, 1, bs[0], bs[1], 9);
+        gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.35, S.c.model); gr.addColorStop(1, S.alpha('model', 0.95));
+        ctx.beginPath(); ctx.arc(bs[0], bs[1], 10.5, 0, Math.PI * 2); ctx.fillStyle = S.c.surface; ctx.fill();
+        ctx.beginPath(); ctx.arc(bs[0], bs[1], 9, 0, Math.PI * 2); ctx.fillStyle = gr; ctx.fill();
+      } else { ctx.beginPath(); ctx.arc(bs[0], bs[1], 9, 0, Math.PI * 2); ctx.strokeStyle = S.c.model; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.globalAlpha = 1;
     },
   });
 
-  const land3 = Landscape($('#f3-land'), {
-    space: () => store.get().space,
-    point: () => gd.p,
-    set: (p) => {
-      const sp = store.get().space;
-      gd.start = fromSpace(p[0], p[1], sp, gd.Q.st);
-      gdReset();
-      render3();
-    },
-    overlay(ctx, fr, Q) {
-      const sp = store.get().space;
-      const s0 = gd.path[0];
-      ctx.beginPath(); ctx.arc(fr.X(s0[0]), fr.Y(s0[1]), 5, 0, Math.PI * 2);
-      ctx.strokeStyle = S.c.grad; ctx.lineWidth = 2; ctx.stroke();
-      if (gd.path.length > 1) {
-        ctx.strokeStyle = S.c.grad; ctx.lineWidth = 1.75; ctx.lineJoin = 'round';
-        ctx.beginPath();
-        gd.path.forEach(([a, b], i) => {
-          const x = clamp(fr.X(a), -1e4, 1e4), y = clamp(fr.Y(b), -1e4, 1e4);
-          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        });
-        ctx.stroke();
-        ctx.fillStyle = S.c.grad;
-        for (let i = 1; i < Math.min(gd.path.length, 160); i++) {
-          const [a, b] = gd.path[i];
-          ctx.beginPath(); ctx.arc(fr.X(a), fr.Y(b), 2.2, 0, Math.PI * 2); ctx.fill();
-        }
-      }
-      // the next step, −η∇L, as it will land on screen (clamped so it stays readable)
-      const g = Q.grad(gd.p[0], gd.p[1]), eta = gd.eta[sp];
-      const dx = -eta * g[0] * fr.X.k, dy = -eta * g[1] * fr.Y.k;
-      const len = Math.hypot(dx, dy);
-      if (len > 4 && !finished()) {
-        const px = fr.X(gd.p[0]), py = fr.Y(gd.p[1]), L = Math.min(len, 80);
-        ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad;
-        S.arrow(ctx, px, py, px + (dx / len) * L, py + (dy / len) * L, 9, 2.25);
-      }
+  const gdmap = LossMap($('#v-gdmap'), {
+    space: () => st.space,
+    overlay(ctx, fr) {
+      if (st.ballA <= 0 || !GD.path.length) return;
+      ctx.strokeStyle = S.c.grad; ctx.lineWidth = 1.75; ctx.lineJoin = 'round';
+      ctx.beginPath(); GD.path.forEach(([a, b], i) => { const x = clamp(fr.X(a), -1e4, 1e4), y = clamp(fr.Y(b), -1e4, 1e4); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+      ctx.fillStyle = S.c.grad;
+      for (let i = 1; i < Math.min(GD.path.length, 120); i++) { ctx.beginPath(); ctx.arc(fr.X(GD.path[i][0]), fr.Y(GD.path[i][1]), 2, 0, Math.PI * 2); ctx.fill(); }
+      S.dot(ctx, fr.X(GD.p[0]), fr.Y(GD.p[1]), 6, S.c.model, S.c.surface, 2.5);
     },
   });
-
-  const curve3 = S.canvas($('#f3-curve'), (ctx, W, H) => {
-    const sp = store.get().space, other = sp === 'z' ? 'raw' : 'z';
-    const m = { l: 48, r: 18, t: 10, b: 38 };
-    const ghost = gd.ghost[other];
-    const T = Math.max(40, gd.t, ghost ? ghost.length - 1 : 0);
-    const all = gd.losses.concat(ghost || []).filter((v) => isFinite(v));
-    const lo = gd.Q.Lstar * 0.7;
-    const hi = clamp(Math.max(...all) * 1.6, lo * 20, 1e9);
-    const X = lin(0, T, m.l, W - m.r), Y = S.log(lo, hi, H - m.b, m.t);
-    const yt = [];
-    for (let e = Math.ceil(Math.log10(lo)); e <= Math.floor(Math.log10(hi)); e++) yt.push(Math.pow(10, e));
+  const curve = S.canvas($('#v-curve'), (ctx, W, H) => {
+    if (!GD.Q) return;
+    const m = { l: 44, r: 12, t: 6, b: 24 };
+    const T2 = Math.max(40, GD.losses.length - 1, st.ghost ? st.ghost.length - 1 : 0);
+    const all = GD.losses.concat(st.ghost || []).filter(isFinite);
+    const lo = GD.Q.Lstar * 0.7, hi = clamp(Math.max(...all) * 1.6, lo * 20, 1e9);
+    const X = lin(0, T2, m.l, W - m.r), Y = S.log(lo, hi, H - m.b, m.t);
+    const yt = []; for (let e = Math.ceil(Math.log10(lo)); e <= Math.floor(Math.log10(hi)); e++) yt.push(10 ** e);
     const sup = (e) => String(e).split('').map((ch) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+ch]).join('');
-    S.axes(ctx, { x: X, y: Y, xt: ticks(0, T, 4), yt, xfmt: (v) => fmt(v), yfmt: (v) => '10' + sup(Math.round(Math.log10(v))), xlabel: 'Schritt' });
-    ctx.save();
-    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    S.axes(ctx, { x: X, y: Y, xt: ticks(0, T2, 4), yt, xfmt: (v) => fmt(v), yfmt: (v) => '10' + sup(Math.round(Math.log10(v))) });
+    ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
     ctx.setLineDash([3, 4]); ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(m.l, Y(gd.Q.Lstar)); ctx.lineTo(W - m.r, Y(gd.Q.Lstar)); ctx.stroke();
-    const line = (arr, col, dash, width) => {
-      ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = width; ctx.lineJoin = 'round';
-      ctx.beginPath();
-      arr.forEach((v, i) => { const y = clamp(Y(Math.min(v, hi * 10)), -50, H + 50); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); });
-      ctx.stroke(); ctx.setLineDash([]);
-    };
-    if (ghost) line(ghost, S.c.muted, [5, 4], 1.5);
-    line(gd.losses, S.c.grad, [], 2);
+    ctx.beginPath(); ctx.moveTo(m.l, Y(GD.Q.Lstar)); ctx.lineTo(W - m.r, Y(GD.Q.Lstar)); ctx.stroke();
+    const draw = (arr, col, dash, lw) => { ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); arr.forEach((v, i) => { const y = clamp(Y(Math.min(v, hi * 10)), -50, H + 50); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); }); ctx.stroke(); ctx.setLineDash([]); };
+    if (st.ghost) draw(st.ghost, S.c.muted, [5, 4], 1.5);
+    if (st.ballA > 0) draw(GD.losses, S.c.grad, [], 2);
     ctx.restore();
-    S.label(ctx, 'Minimum', W - m.r, Y(gd.Q.Lstar) + 10, S.c['fg-2'], S.font(11, 'body'), 'right');
-    if (ghost) {
-      const gi = ghost.length - 1;
-      S.label(ctx, spaceNames[other], clamp(X(gi) - 4, m.l + 60, W - m.r), clamp(Y(ghost[gi]), m.t + 6, H - m.b - 8) - 12, S.c.muted, S.font(11, 'body'), 'right');
-    }
-    const li = gd.losses.length - 1, lv = gd.losses[li];
-    if (isFinite(lv)) S.dot(ctx, X(li), clamp(Y(lv), m.t, H - m.b), 3.5, S.c.grad, S.c.surface, 1.5);
+    S.label(ctx, 'Minimum', W - m.r, Y(GD.Q.Lstar) + 9, S.c['fg-2'], S.font(11, 'body'), 'right');
+    if (st.ghost) S.label(ctx, 'Rohdaten', W - m.r, clamp(Y(st.ghost[st.ghost.length - 1]), m.t + 8, H - m.b) - 10, S.c.muted, S.font(11, 'body'), 'right');
   });
 
-  const etaEl = $('#f3-eta'), markEl = $('#f3-mark');
-  const etaToSlider = (eta, sp) => { const [a, b] = ETA_RANGE[sp]; return (1000 * Math.log(eta / a)) / Math.log(b / a); };
-  const sliderToEta = (v, sp) => { const [a, b] = ETA_RANGE[sp]; return a * Math.pow(b / a, v / 1000); };
-  etaEl.addEventListener('input', () => {
-    const sp = store.get().space;
-    gd.eta[sp] = sliderToEta(+etaEl.value, sp);
-    if (finished()) gdReset();
-    render3();
-  });
-  $('#f3-run').addEventListener('click', () => {
-    if (gd.running) { gd.running = false; gd.status = 'paused'; render3(); }
-    else gdStart();
-  });
-  $('#f3-step').addEventListener('click', () => {
-    if (finished()) gdReset();
-    gd.running = false;
-    gdStep();
-    if (gd.status === 'ready' || gd.status === 'running') gd.status = 'paused';
-    render3();
-  });
-  $('#f3-reset').addEventListener('click', () => { gd.start = [0, 0]; gdReset(); render3(); });
-  document.querySelectorAll('input[name="space-f3"]').forEach((r) => r.addEventListener('change', () => { if (r.checked) store.set({ space: r.value }); }));
-
-  function statusText() {
-    const sp = store.get().space;
-    const st = gd.Q.st;
-    const [w, b] = fromSpace(gd.p[0], gd.p[1], sp, st);
-    switch (gd.status) {
-      case 'ready': return `Start bei <b>w = ${fmt(gd.start[0], 2)} €/m², b = ${eur(gd.start[1])}</b>.`;
-      case 'running': return `Rollt … Schritt ${gd.t}.`;
-      case 'paused': return `Angehalten nach ${gd.t} Schritten.`;
-      case 'converged': return `<b>Am Ziel nach ${gd.t} Schritten.</b>`;
-      case 'diverged': return `<b>Aus der Schüssel geflogen nach ${gd.t} Schritten.</b> Die Schritte sind zu groß: Jeder springt über das Tal hinaus und landet höher.`;
-      case 'maxed': return `<b>Nach ${gd.t} Schritten</b> stimmt die Steigung bis auf ${fmt(Math.abs(w - st.w), 2)} €/m², der Grundbetrag liegt aber noch ${eur(Math.abs(b - st.b))} daneben. Die Rinne ist zu flach.`;
-    }
-    return '';
-  }
-
-  function render3() {
-    const sp = store.get().space;
-    const st = gd.Q.st;
-    const [w, b] = fromSpace(gd.p[0], gd.p[1], sp, st);
-    const L = gd.losses[gd.losses.length - 1];
-    $('#f3-t').textContent = gd.t;
-    $('#f3-L').textContent = isFinite(L) ? (L < 1e7 ? fmt(L) : S.sci(L, 2)) + ' €²' : '∞';
-    $('#f3-w').textContent = isFinite(w) && Math.abs(w) < 1e6 ? fmt(w, 2) + ' €/m²' : '–';
-    $('#f3-b').textContent = isFinite(b) && Math.abs(b) < 1e7 ? eur(b) : '–';
-    $('#f3-cond').textContent = `${fmt(Math.sqrt(gd.Q.eig.l1 / gd.Q.eig.l2))} : 1`;
-    $('#f3-spacelbl').textContent = spaceNames[sp];
-    $('#f3-run').textContent = gd.running ? 'Anhalten' : 'Starten';
-    $('#f3-status').innerHTML = statusText();
-    etaEl.value = etaToSlider(gd.eta[sp], sp);
-    $('#f3-etav').textContent = S.sci(gd.eta[sp], 2);
-    const crit = 1 / gd.Q.eig.l1; // η_crit = 2/λmax(H), H = 2A
-    const pct = clamp(etaToSlider(crit, sp) / 1000, 0, 1);
-    markEl.style.left = `calc(8px + ${pct} * (100% - 16px) - 1px)`;
-    markEl.hidden = pct >= 1;
-    document.querySelectorAll('input[name="space-f3"]').forEach((r) => (r.checked = r.value === sp));
-    land3.st.redraw(); curve3.redraw(); cam3.redraw();
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  Fig. 4 — three flats: projection in ℝ³
-  // ════════════════════════════════════════════════════════════════
-  const P3 = { x: [0.4, 0.65, 1.0], y: [0.85, 0.5, 1.2], ct: 0, anim: null, hover: -1 };
-  const SC = 0.62;
-  const { add, sub, mul, dot, norm } = S.v3;
-  const ONE = [1, 1, 1];
-  const angle = (a, b) => (Math.acos(clamp(dot(a, b) / ((Math.hypot(...a) * Math.hypot(...b)) || 1), -1, 1)) * 180) / Math.PI;
-
-  function fit3() {
-    const xm = (P3.x[0] + P3.x[1] + P3.x[2]) / 3;
-    const xv = P3.x.map((v) => v - P3.ct * xm);
-    const y = P3.y;
-    const sx = xv[0] + xv[1] + xv[2], sxx = dot(xv, xv), sy = y[0] + y[1] + y[2], sxy = dot(xv, y);
-    const w = (3 * sxy - sx * sy) / (3 * sxx - sx * sx);
-    const b = (sy - w * sx) / 3;
-    const yh = add(mul(ONE, b), mul(xv, w));
-    const e = sub(y, yh);
-    const bRaw = sy / 3 - (w * (P3.x[0] + P3.x[1] + P3.x[2])) / 3;
-    return { xm, xv, y, w, b, bRaw, yh, e };
-  }
-
-  const cam4 = S.orbit($('#f4-space'), {
-    yaw: 1.95, pitch: 0.42, zoom: 0.42, cz: 0.3, dist: 6,
-    draw(ctx, W, H, cam) {
-      const F = fit3();
-      const P = (v) => cam.P([v[0] * SC, v[1] * SC, v[2] * SC]);
-      const labelAt = (v, text, col, dx = 8, dy = -8, style = 'bold') => { const s = P(v); S.label(ctx, text, s[0] + dx, s[1] + dy, col, S.font(17, 'math', style), 'left'); };
-
-      S.axes3(ctx, P, 1.7, ['Wohnung 1', 'Wohnung 2', 'Wohnung 3'], P3.hover);
-
-      // plane patch spanned by 1 and x (the same plane whether or not x is centred)
-      const u = norm(ONE);
-      const v = norm(sub(P3.x, mul(u, dot(P3.x, u))));
-      const keys = [[0, 0, 0], ONE, F.xv, F.yh, mul(ONE, F.b)];
-      const cs = keys.map((p) => dot(p, u)), ct = keys.map((p) => dot(p, v));
-      const s0 = Math.min(...cs) - 0.3, s1 = Math.max(...cs) + 0.3, t0 = Math.min(...ct) - 0.35, t1 = Math.max(...ct) + 0.35;
-      const at = (s, t) => add(mul(u, s), mul(v, t));
-      ctx.fillStyle = S.c['model-wash'];
-      ctx.beginPath();
-      [[s0, t0], [s1, t0], [s1, t1], [s0, t1]].forEach(([s, t], i) => { const p = P(at(s, t)); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
-      ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = S.alpha('model', 0.45); ctx.lineWidth = 1; ctx.stroke();
-      ctx.strokeStyle = S.alpha('model', 0.16);
-      for (let s = Math.ceil(s0 / 0.25) * 0.25; s < s1; s += 0.25) S.seg3(ctx, P, at(s, t0), at(s, t1));
-      for (let t = Math.ceil(t0 / 0.25) * 0.25; t < t1; t += 0.25) S.seg3(ctx, P, at(s0, t), at(s1, t));
-
-      const b1 = mul(ONE, F.b);
-      ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.model; ctx.lineWidth = 1.25;
-      S.seg3(ctx, P, [0, 0, 0], b1); S.seg3(ctx, P, b1, F.yh);
-      ctx.setLineDash([]);
-
-      S.arrow3(ctx, P, [0, 0, 0], ONE, S.c['fg-2'], 1.75, 8);
-      S.arrow3(ctx, P, [0, 0, 0], F.xv, S.c['fg-2'], 1.75, 8);
-      S.arrow3(ctx, P, [0, 0, 0], F.yh, S.c.model, 2.5);
-      S.arrow3(ctx, P, [0, 0, 0], F.y, S.c.data, 2.5);
-      if (Math.hypot(...F.e) > 0.02) S.arrow3(ctx, P, F.yh, F.y, S.c.error, 2.25, 8);
-      // right-angle marker at ŷ
-      if (Math.hypot(...F.e) > 0.12) {
-        const eh = norm(F.e), dIn = norm(mul(F.yh, -1)), a = 0.09;
-        const p1 = add(F.yh, mul(dIn, a)), p2 = add(p1, mul(eh, a)), p3 = add(F.yh, mul(eh, a));
-        const q1 = P(p1), q2 = P(p2), q3 = P(p3);
-        ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.25;
-        ctx.beginPath(); ctx.moveTo(q1[0], q1[1]); ctx.lineTo(q2[0], q2[1]); ctx.lineTo(q3[0], q3[1]); ctx.stroke();
+  // ── the neuron ──────────────────────────────────────────────────
+  const neuron = S.canvas($('#v-neuron'), (ctx, W, H) => {
+    const { w, b } = stats(FLATS), x0 = 63, yh = w * x0 + b;
+    const R = Math.min(W, H) * 0.075, sx = W * 0.6, sy = H * 0.5, ox = W * 0.92, ix = W * 0.22;
+    const ins = [
+      { y: 0.2, name: 'Fläche', val: `${x0}`, wt: `× ${fmt(w, 2)}`, prod: w * x0, a: 1 },
+      { y: 0.4, name: 'Zimmer', val: '2', wt: '× w₂', a: st.extraA },
+      { y: 0.6, name: 'Baujahr', val: '1975', wt: '× w₃', a: st.extraA },
+      { y: 0.8, name: 'konstant', val: '1', wt: `× ${fmt(b)}`, prod: b, a: 1 },
+    ];
+    const fA = clamp(st.flowT / 0.5, 0, 1), fB = clamp((st.flowT - 0.5) / 0.25, 0, 1), fC = clamp((st.flowT - 0.75) / 0.25, 0, 1);
+    for (const n of ins) {
+      if (n.a <= 0) continue;
+      ctx.globalAlpha = n.a;
+      const iy = H * n.y;
+      ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.5; ctx.setLineDash(n.prod == null ? [5, 5] : []);
+      ctx.beginPath(); ctx.moveTo(ix + 18, iy); ctx.lineTo(sx - R, sy); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(ix, iy, 17, 0, Math.PI * 2); ctx.fillStyle = S.c.surface; ctx.fill(); ctx.strokeStyle = S.c['fg-2']; ctx.stroke();
+      S.label(ctx, n.val, ix, iy, S.c.fg, S.font(12, 'mono', '500'), 'center');
+      S.label(ctx, n.name, ix - 24, iy, S.c.muted, S.font(12.5, 'body'), 'right');
+      const mx = S.lerp(ix + 18, sx - R, 0.5), my = S.lerp(iy, sy, 0.5);
+      S.label(ctx, n.wt, mx, my - 12, S.c.model, S.font(13, 'mono', '500'), 'center');
+      if (n.prod != null && fA > 0) {
+        S.dot(ctx, S.lerp(ix + 18, sx - R, fA), S.lerp(iy, sy, fA), 5, S.c.probe, S.c.surface, 1.5);
+        if (fA >= 1 && fB < 1) S.label(ctx, `= ${fmt(n.prod)}`, mx, my + 12, S.c.probe, S.font(12.5, 'mono', '500'), 'center');
       }
-      labelAt(ONE, '1', S.c['fg-2'], 6, -10);
-      labelAt(F.xv, P3.ct > 0.5 ? 'x − x̄1' : 'x', S.c['fg-2'], 6, 12);
-      labelAt(F.y, 'y', S.c.fg, 8, -10);
-      labelAt(F.yh, 'ŷ', S.c.model, 8, 14);
-      if (Math.hypot(...F.e) > 0.08) labelAt(mul(add(F.y, F.yh), 0.5), 'e', S.c.error, 8, 0);
-    },
+      ctx.globalAlpha = 1;
+    }
+    ctx.beginPath(); ctx.arc(sx, sy, R * (1 + 0.12 * Math.sin(fB * Math.PI)), 0, Math.PI * 2);
+    ctx.fillStyle = S.c['model-wash']; ctx.fill(); ctx.strokeStyle = S.c.model; ctx.lineWidth = 2; ctx.stroke();
+    S.label(ctx, 'Σ', sx, sy + 1, S.c.fg, S.font(Math.round(R * 0.9), 'math'), 'center');
+    ctx.strokeStyle = S.c.model; ctx.fillStyle = S.c.model;
+    S.arrow(ctx, sx + R, sy, ox - 20, sy, 10, 2.5);
+    if (fB >= 1) S.label(ctx, `${fmt(w * x0)} + ${fmt(b)}`, sx, sy + R + 16, S.c.fg, S.font(12.5, 'mono', '500'), 'center');
+    if (fC > 0) {
+      S.dot(ctx, S.lerp(sx + R, ox - 20, fC), sy, 5, S.c.probe, S.c.surface, 1.5);
+      if (fC >= 1) S.label(ctx, `ŷ = ${fmt(yh)} €`, ox - 8, sy - 20, S.c.model, S.font(15, 'math', 'italic'), 'right');
+    }
   });
 
-  const mini4 = S.canvas($('#f4-mini'), (ctx, W, H) => {
-    const F = fit3();
-    const m = { l: 50, r: 12, t: 8, b: 40 };
-    const X = lin(30, 110, m.l, W - m.r), Y = lin(0, 1600, H - m.b, m.t);
-    P3.fr = { X, Y, m };
-    S.axes(ctx, { x: X, y: Y, xt: [40, 60, 80, 100], yt: [0, 400, 800, 1200, 1600], xfmt: (v) => v, yfmt: (v) => fmt(v), xlabel: 'Fläche (m²)' });
-    ctx.save();
-    ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
-    const line = (xm2) => 1000 * (F.bRaw + F.w * (xm2 / 100));
-    for (let k = 0; k < 3; k++) {
-      const px = X(P3.x[k] * 100);
-      ctx.strokeStyle = S.c.error; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(px, Y(P3.y[k] * 1000)); ctx.lineTo(px, Y(line(P3.x[k] * 100))); ctx.stroke();
-    }
-    ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.25;
-    ctx.beginPath(); ctx.moveTo(X(30), Y(line(30))); ctx.lineTo(X(110), Y(line(110))); ctx.stroke();
-    for (let k = 0; k < 3; k++) S.dot(ctx, X(P3.x[k] * 100), Y(P3.y[k] * 1000), P3.hover === k ? 6.5 : 5, S.c.data, S.c.surface, 2);
-    ctx.restore();
-    for (let k = 0; k < 3; k++) S.label(ctx, String(k + 1), X(P3.x[k] * 100) - 9, Y(P3.y[k] * 1000) - 11, S.c['fg-2'], S.font(11, 'mono'), 'right');
-  });
-  const tip4 = S.tip($('#f4-mini'));
-  const hit4 = (q) => {
-    if (!P3.fr) return -1;
-    const R = q.touch ? 22 : 12;
-    for (let k = 0; k < 3; k++) if (Math.hypot(q.x - P3.fr.X(P3.x[k] * 100), q.y - P3.fr.Y(P3.y[k] * 1000)) < R) return k;
-    return -1;
+  // ════════════════════════════════════════════════════════════════
+  //  Motions reused by several steps
+  // ════════════════════════════════════════════════════════════════
+  /** springs pull the line into the least-squares fit (damped oscillator in standardized coordinates) */
+  async function springRelease(a, trail) {
+    let v = [0, 0], n = 0;
+    await a.loop(() => {
+      const Q = quad(st.pts, 'z');
+      let p = toZ(st.w, st.b, Q.st);
+      const g = Q.grad(p[0], p[1]), dt = 1 / 60, w0 = 2 * Math.PI * 0.7, k = (w0 * w0) / 2, c = 2 * 0.34 * w0;
+      v = [v[0] + (-k * g[0] - c * v[0]) * dt, v[1] + (-k * g[1] - c * v[1]) * dt];
+      p = [p[0] + v[0] * dt, p[1] + v[1] * dt];
+      [st.w, st.b] = fromZ(p[0], p[1], Q.st);
+      if (trail) st.trail.push([st.w, st.b]);
+      const scale = Math.max(Math.abs(Q.pstar[0]), Math.abs(Q.pstar[1]), 1);
+      if ((Math.hypot(p[0] - Q.pstar[0], p[1] - Q.pstar[1]) < scale * 0.002 && Math.hypot(v[0], v[1]) < scale * 0.01) || ++n > 480) {
+        st.w = Q.st.w; st.b = Q.st.b; return false;
+      }
+    }, 60);
+  }
+  function freshScatter(ds = 0) {
+    Object.assign(st, { ds, pts: DS[ds].pts.map((p) => p.slice()), ptsA: 14, lineA: 1, fit: false, resA: 0, sqA: 0, springA: 0, hlPt: -1, probeT: 0, l1A: 0, trail: [], ballA: 0 });
+  }
+  async function showDataset(a, ds) {
+    await a.to(st, { ptsA: 0, lineA: 0, springA: 0 }, 700);
+    Object.assign(st, { ds, pts: DS[ds].pts.map((p) => p.slice()) });
+    await a.to(st, { ptsA: 14 }, 1600, { ease: (t) => t });
+    const f = stats(st.pts);
+    st.w = f.w * 0.35; st.b = f.b + f.w * 0.65 * f.xm;
+    await a.to(st, { lineA: 1, springA: 1, resA: 1 }, 500);
+    await springRelease(a);
+    await a.to(st, { springA: 0, resA: 0 }, 500);
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  The steps
+  // ════════════════════════════════════════════════════════════════
+  const eqLine = () => `${T('yh', '<i>ŷ</i>', 'c-model', 'Vorhersage: was die Gerade für diese Eingabe sagt')} = ${T('w', '<i>w</i>', 'c-model', 'Steigung: wie viel mehr pro Einheit x. Dreht die Gerade.')} · ${T('x', '<i>x</i>', 'c-data', 'Eingabe')} + ${T('b', '<i>b</i>', 'c-model', 'Grundbetrag: schiebt die Gerade hoch oder runter')}`;
+  const steps = {
+    daten: {
+      views: ['scatter'],
+      formula: `Daten: (${T('x', '<i>x<sub>i</sub></i>', 'c-data', 'Eingabe: die Fläche von Wohnung i')}, ${T('y', '<i>y<sub>i</sub></i>', 'c-data', 'Ausgabe: ihre tatsächliche Kaltmiete')})<span class="sep">für</span><i>i</i> = 1 … 14`,
+      setup() { freshScatter(0); st.ptsA = 0; st.lineA = 0; },
+      async play(a) {
+        a.say('Vierzehn Wohnungen erscheinen, sortiert nach Fläche.');
+        await a.to(st, { ptsA: 14 }, 2400, { ease: (t) => t });
+        a.hl('x'); a.say('Nach rechts: die Fläche <i>x</i>.'); await a.wait(1400);
+        a.hl('y'); a.say('Nach oben: die Miete <i>y</i>. Der Trend ist klar, die Streuung auch.'); await a.wait(1600);
+        a.hl();
+      },
+    },
+    gerade: {
+      views: ['scatter'],
+      formula: () => `${eqLine()}<span class="sep">=</span>${V('w')} · <i>x</i> + ${V('b')}`,
+      setup() { freshScatter(0); st.lineA = 0; st.w = 6; st.b = 450; },
+      async play(a) {
+        a.say('Eine Gerade erscheint.');
+        await a.to(st, { lineA: 1 }, 600);
+        a.hl('w'); a.say('Dreht man an <i>w</i>, wird die Gerade steiler …');
+        await a.to(st, { w: 13, b: 50 }, 1400);
+        a.say('… oder flacher.');
+        await a.to(st, { w: 3, b: 620 }, 1500);
+        await a.to(st, { w: 8, b: 350 }, 900);
+        a.hl('b'); a.say('<i>b</i> schiebt sie hoch und runter, ohne sie zu drehen.');
+        await a.to(st, { b: 600 }, 1000); await a.to(st, { b: 150 }, 1300); await a.to(st, { b: 350 }, 900);
+        a.hl(); a.say('Zwei Zahlen legen die Gerade fest. Welche passen am besten?');
+      },
+    },
+    lesen: {
+      views: ['scatter'],
+      formula: () => `${eqLine()}<span class="sep">=</span>${V('pw')} · ${V('px')} + ${V('pb')} = ${V('py')}`,
+      setup() { freshScatter(0); st.w = 8; st.b = 350; st.probeX = 63; st.probeT = 0; },
+      async play(a) {
+        a.hl('x'); a.say('Nimm eine Wohnung mit 63 m².'); st.hlPt = 6;
+        await a.to(st, { probeT: 0.45 }, 1200);
+        a.hl('w'); a.say('Mal Preis pro m²: 8 · 63 = 504 €.'); await a.wait(1600);
+        a.hl('b'); a.say('Plus Grundbetrag: 504 + 350 = 854 €.'); await a.wait(1600);
+        a.hl('yh'); a.say('Das ist die Vorhersage <i>ŷ</i>. Die echte Miete dieser Wohnung liegt bei 770 €.');
+        await a.to(st, { probeT: 1 }, 1100);
+      },
+    },
+    fehler: {
+      views: ['scatter'],
+      formula: () => `${T('e', '<i>e<sub>i</sub></i>', 'c-err', 'Fehler: wie weit Wohnung i neben der Geraden liegt')} = ${T('y', '<i>y<sub>i</sub></i>', 'c-data', 'echte Miete')} − ${T('yh', '<i>ŷ<sub>i</sub></i>', 'c-model', 'Vorhersage der Geraden')}`,
+      setup() { freshScatter(0); st.w = 8; st.b = 350; },
+      async play(a) {
+        a.hl('e'); a.say('Von jeder Wohnung ein Strich zur Geraden: ihr Fehler.');
+        await a.to(st, { resA: 1 }, 2400, { ease: (t) => t });
+        a.set(st, { hlPt: 0 }); a.say('Wohnung 1 liegt weit über der Geraden: großer positiver Fehler.'); await a.wait(2200);
+        a.set(st, { hlPt: 8 }); a.say('Wohnung 9 liegt darunter: negativer Fehler.'); await a.wait(2200);
+        a.set(st, { hlPt: -1 }); a.hl();
+      },
+    },
+    quadrate: {
+      views: ['scatter'],
+      formula: () => `${T('L', '<i>L</i>', 'c-err', 'Verlust: eine einzige Zahl für die ganze Gerade')} = ${T('mean', FRAC('1', '<i>n</i>') + SUM, '', 'Mittelwert über alle n Wohnungen')} ${T('e2', '<i>e<sub>i</sub></i><sup>2</sup>', 'c-err', 'jeder Fehler quadriert: die Fläche seines Quadrats')}<span class="sep">=</span>${V('L')}`,
+      setup() { freshScatter(0); st.w = 8; st.b = 350; st.resA = 1; },
+      async play(a) {
+        a.hl('e2'); a.say('Jeder Fehler wird zu einem Quadrat. Doppelter Fehler, vierfache Fläche.');
+        await a.to(st, { sqA: 1 }, 2600, { ease: (t) => t });
+        a.hl('L', 'mean'); a.say('Der Verlust ist die mittlere Fläche aller Quadrate.'); await a.wait(1800);
+        a.say('Eine schlechtere Gerade: Die Quadrate wachsen, <i>L</i> steigt.');
+        await a.to(st, { w: 12, b: 60 }, 1600); await a.wait(800);
+        a.say('Die beste Gerade: Die Quadrate zusammen sind so klein wie möglich.');
+        const f = stats(st.pts); await a.to(st, { w: f.w, b: f.b }, 1800);
+        a.hl('L');
+      },
+    },
+    landschaft: {
+      views: ['scatter', 'land'],
+      formula: () => `${T('L', '<i>L</i>', 'c-err', 'Farbe der Landschaft: dunkel = kleiner Verlust')}(${T('w', '<i>w</i>', 'c-model', 'Position nach rechts')}, ${T('b', '<i>b</i>', 'c-model', 'Position nach oben')})<span class="sep">=</span>${V('L')}`,
+      setup() { freshScatter(0); st.w = 3; st.b = 700; st.sqA = 1; st.resA = 1; st.trail = [[3, 700]]; },
+      async play(a) {
+        a.hl('w', 'b'); a.say('Links dreht sich die Gerade, rechts wandert ihr Punkt durch die Landschaft.');
+        const rec = { update: () => st.trail.push([st.w, st.b]) };
+        for (const [w, b] of [[15, -300], [12, 50], [5, 550], [10.5, 150]]) await a.to(st, { w, b }, 1500, rec);
+        a.hl('L'); a.say('Dunkel heißt kleiner Verlust. Die beste Gerade sitzt im tiefsten Punkt, am Kreuz.');
+        const f = stats(st.pts); await a.to(st, { w: f.w, b: f.b }, 1600, rec);
+      },
+    },
+    federn: {
+      views: ['scatter', 'land'],
+      formula: `${T('F', 'Kraft', 'c-err', 'jede Feder zieht die Gerade zu ihrer Wohnung, proportional zum Fehler')} ∝ <i>e<sub>i</sub></i><span class="sep">·</span>${T('E', 'Energie', 'c-err', 'in jeder Feder gespeichert: genau das Fehlerquadrat, die Fläche von vorhin')} ∝ <i>e<sub>i</sub></i><sup>2</sup>`,
+      setup() { freshScatter(0); st.w = 14; st.b = -150; st.springA = 1; st.trail = [[14, -150]]; },
+      async play(a) {
+        a.hl('F'); a.say('Jede Wohnung hängt mit einer Feder an der Geraden. Gleich lassen wir los …');
+        await a.wait(1600);
+        a.say('Die Federn ziehen, die Gerade schwingt …');
+        await springRelease(a, true);
+        a.hl('E'); a.say('… und kommt genau dort zur Ruhe, wo die Summe der Quadrate am kleinsten ist. Rechts: Der Punkt ist in die Mulde gerollt.');
+      },
+    },
+    ausreisser: {
+      views: ['scatter'],
+      formula: `${T('sq', '∑ <i>e<sub>i</sub></i><sup>2</sup>', 'c-model', 'Quadrate: große Fehler zählen überproportional')}<span class="sep">gegen</span>${T('abs', '∑ |<i>e<sub>i</sub></i>|', '', 'Beträge: jeder Euro Fehler zählt gleich viel')}`,
+      setup() { freshScatter(0); st.fit = true; },
+      async play(a) {
+        a.say('Zwei beste Geraden: eine für Quadrate, eine für Beträge. Fast gleich.');
+        await a.to(st, { l1A: 1 }, 700); await a.wait(1200);
+        a.set(st, { hlPt: 0 }); a.say('Jetzt wird Wohnung 1 sehr teuer …');
+        await a.to(st, { pts: FLATS.map((p, i) => (i === 0 ? [30, 1460] : p.slice())) }, 2000);
+        a.hl('sq'); a.say('Die Quadrat-Gerade wird kräftig mitgezogen …'); await a.wait(1800);
+        a.hl('abs'); a.say('… die Betrags-Gerade bleibt fast liegen.'); await a.wait(2000);
+        a.hl(); a.say('Zurück zu den echten Daten.');
+        await a.to(st, { pts: FLATS.map((p) => p.slice()) }, 1400);
+        a.set(st, { hlPt: -1 });
+      },
+    },
+    schuessel: {
+      views: ['bowl', 'gdside'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
+      formula: () => `${T('th', '(<i>w</i>, <i>b</i>)', 'c-model', 'die Parameter: die Position der Kugel')} ← (<i>w</i>, <i>b</i>) − ${T('eta', '<i>η</i>', 'c-grad', 'Schrittweite: wie weit jeder Schritt geht')} · ${T('grad', '∇<i>L</i>', 'c-grad', 'Gradient: zeigt bergauf. Jede Wohnung trägt „Fehler × Fläche“ (für w) und „Fehler“ (für b) bei.')}<span class="sep">η =</span>${V('eta')}`,
+      setup() { freshScatter(0); st.zT = 0; st.eta = 1.2e-4; st.ghost = null; st.ballA = 1; gdReset('raw', [0, 0]); },
+      async play(a) {
+        a.say('Die Landschaft als Gelände: Höhe ist Verlust. Die Kugel startet bei <i>w</i> = 0, <i>b</i> = 0.');
+        await a.wait(1800);
+        a.hl('grad'); a.say('Sie fühlt nur, wo es an ihrer Stelle bergab geht, und springt quer über die Rinne …');
+        await a.loop((i) => { gdStep(); return i < 30; }, 4);
+        a.hl('eta'); a.say('… dann kriecht sie den flachen Boden der Rinne entlang.');
+        await a.loop((i) => { gdStep(); return i < 370; }, (i) => 20 + i);
+        const [, b] = gdRaw(), f = stats(st.pts);
+        a.hl(); a.say(`Nach 400 Schritten stimmt die Steigung fast, der Grundbetrag liegt noch ${fmt(Math.abs(b - f.b))} € daneben.`);
+      },
+    },
+    rund: {
+      views: ['bowl', 'gdside'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
+      formula: () => `${T('xz', '<i>x</i>′', 'c-new', 'neue Eingabe: Abstand vom Durchschnitt, gemessen in Standardabweichungen')} = ${FRAC(`<i>x</i> − ${T('xm', '<i>x̄</i>', '', 'Mittelwert der Flächen: 68 m²')}`, T('s', '<i>s</i>', '', 'Standardabweichung der Flächen: 26 m²'))}`,
+      setup() {
+        freshScatter(0); st.zT = 0; st.ballA = 1;
+        st.eta = 1.2e-4; gdReset('raw', [0, 0]); for (let i = 0; i < 400; i++) gdStep();
+        st.ghost = GD.losses.slice();
+      },
+      async play(a) {
+        a.hl('xm', 's'); a.say('Wir messen die Fläche anders: Wie viele Standardabweichungen liegt sie über oder unter dem Durchschnitt?');
+        await a.wait(2000);
+        a.hl('xz'); a.say('Dieselben Geraden, neue Koordinaten: Die Rinne wird zur runden Schüssel.');
+        await a.to(st, { zT: 1 }, 1800);
+        st.eta = 0.08; gdReset('z', [0, 0]);
+        a.hl(); a.say('Neuer Start, wieder bei <i>w</i> = 0, <i>b</i> = 0 …');
+        await a.wait(800);
+        let done = 0;
+        await a.loop((i) => { const L = gdStep(); done = i + 1; return !(L - GD.Q.Lstar < 1e-6 * GD.Q.Lstar) && i < 300; }, (i) => (i < 12 ? 5 : 16));
+        a.say(`Am Ziel nach ${done} Schritten. Rechts unten gestrichelt: der Lauf in Rohdaten, der nach 400 Schritten noch nicht da war.`);
+      },
+    },
+    zugross: {
+      views: ['bowl', 'gdside'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
+      formula: () => `(<i>w</i>, <i>b</i>) ← (<i>w</i>, <i>b</i>) − ${T('eta', '<i>η</i>', 'c-grad', 'Schrittweite, jetzt zu groß')} · ∇<i>L</i><span class="sep">η =</span>${V('eta')}`,
+      setup() {
+        freshScatter(0); st.zT = 1; st.ghost = null; st.ballA = 1; st.eta = 1.1;
+        const Q = quad(st.pts, 'z'); gdReset('z', fromZ(Q.pstar[0] - 160, Q.pstar[1] - 120, Q.st));
+      },
+      async play(a) {
+        a.hl('eta'); a.say('Dieselbe runde Schüssel, aber die Schritte sind etwas zu groß.');
+        await a.wait(1400);
+        await a.loop((i) => { gdStep(); return i < 13; }, 2.5);
+        a.say('Jeder Schritt springt über das Tal hinaus und landet höher als vorher. Die Kugel fliegt aus der Schüssel.');
+      },
+    },
+    eis: {
+      views: ['scatter'],
+      formula: () => `${eqLine()}<span class="sep">=</span>${V('w')} · <i>x</i> + ${V('b')}`,
+      setup() { freshScatter(0); const f = stats(FLATS); st.w = f.w; st.b = f.b; },
+      async play(a) {
+        a.say('Neue Daten: Temperatur und verkaufte Eiskugeln an 14 Tagen.');
+        await showDataset(a, 1);
+        const f = stats(st.pts);
+        a.hl('w'); a.say(`<i>w</i> ≈ ${fmt(f.w)}: Jedes Grad wärmer bringt etwa ${fmt(f.w)} Kugeln mehr.`); await a.wait(2400);
+        a.hl('b'); a.say(`<i>b</i> ≈ ${fmt(f.b)}: bei 0 °C „negative Kugeln“. Die Gerade gilt nur zwischen 12 und 32 °C.`);
+      },
+    },
+    hubble: {
+      views: ['scatter'],
+      formula: () => `${eqLine()}<span class="sep">=</span>${V('w')} · <i>x</i> + ${V('b')}`,
+      setup() { freshScatter(1); const f = stats(ICE); st.w = f.w; st.b = f.b; },
+      async play(a) {
+        a.say('Galaxien: Entfernung gegen Fluchtgeschwindigkeit.');
+        await showDataset(a, 2);
+        const f = stats(st.pts);
+        a.hl('w'); a.say(`<i>w</i> ≈ ${fmt(f.w)} km/s pro Megaparsec: Je weiter weg, desto schneller entfernt sich eine Galaxie. Das ist die Hubble-Konstante.`); await a.wait(2600);
+        a.hl('b'); a.say('<i>b</i> ist nahe null: Die Gerade geht fast durch den Ursprung. Das Universum dehnt sich überall gleichmäßig aus.');
+      },
+    },
+    neuron: {
+      views: ['neuron'],
+      formula: `${T('yh', '<i>ŷ</i>', 'c-model', 'Ausgabe des Neurons')} = ${T('w', '<i>w</i>', 'c-model', 'Gewicht auf der Kante')} · ${T('x', '<i>x</i>', 'c-data', 'Eingabe im Kreis links')} + ${T('b', '<i>b</i>', 'c-model', 'Gewicht der konstanten Eins')} · 1`,
+      setup() { st.flowT = 0; st.extraA = 0; },
+      async play(a) {
+        a.hl('x'); a.say('Die Eingaben fließen über gewichtete Kanten …');
+        await a.to(st, { flowT: 0.5 }, 1800, { ease: (t) => t });
+        a.hl('w', 'b'); a.say('… werden mit ihren Gewichten multipliziert und im Knoten Σ addiert …');
+        await a.to(st, { flowT: 0.75 }, 1100);
+        a.hl('yh'); a.say('… und heraus kommt die Vorhersage. Genau unsere Geradenrechnung.');
+        await a.to(st, { flowT: 1 }, 900, { ease: (t) => t });
+        await a.wait(1400);
+        a.hl(); a.say('Mehr Merkmale bedeuten nur mehr Pfeile. Viele Neuronen nebeneinander: eine Matrix, Kapitel 2.');
+        await a.to(st, { extraA: 1 }, 1000);
+      },
+    },
   };
-  S.pointer(mini4, {
-    pick(q) {
-      const k = hit4(q);
-      if (k < 0) return null;
-      if (q.probe) return true;
-      tip4.hide();
-      P3.hover = k;
+
+  story = S.story($('#story'), {
+    views: { scatter: scatter.c, land: land.c, bowl: { redraw: bowl.redraw }, gdside: { redraw() { gdmap.c.redraw(); curve.redraw(); } }, neuron },
+    steps,
+    values() {
+      const d = D(), { w, b } = line();
       return {
-        move(q2) { P3.y[k] = clamp(Math.round(P3.fr.Y.inv(q2.y) / 10) / 100, 0, 1.6); update4(); },
-        end() { P3.hover = -1; update4(); },
+        w: fmt(w, d.wd) + d.wu, b: fmt(b) + d.bu,
+        L: fmt(lossOf(st.pts, w, b)) + ' €²',
+        pw: fmt(w, 0), px: String(st.probeX), pb: fmt(b), py: fmt(w * st.probeX + b) + ' €',
+        eta: S.sci(st.eta, 2),
       };
     },
-    hover(q) {
-      if (!q) { tip4.hide(); return; }
-      const k = hit4(q);
-      mini4.cv.style.cursor = k >= 0 ? 'ns-resize' : '';
-      if (k !== P3.hover) { P3.hover = k; mini4.redraw(); cam4.redraw(); }
-      if (k >= 0) {
-        const F = fit3();
-        tip4.show(q.x, q.y, S.tipRows(`Wohnung ${k + 1} = Achse ${k + 1}`, [['Fläche', fmt(P3.x[k] * 100) + ' m²'], ['Miete', eur(P3.y[k] * 1000)], ['Fehler e', S.signed(F.e[k] * 1000) + ' €']]));
-      } else tip4.hide();
-    },
-    leave() { tip4.hide(); if (P3.hover !== -1) { P3.hover = -1; mini4.redraw(); cam4.redraw(); } },
   });
-
-  const ySl = [0, 1, 2].map((k) => $('#f4-y' + k));
-  ySl.forEach((el, k) => el.addEventListener('input', () => { P3.y[k] = +el.value; update4(); }));
-  $('#f4-center').addEventListener('change', (e) => {
-    if (P3.anim) P3.anim();
-    const c0 = P3.ct, c1 = e.target.checked ? 1 : 0;
-    P3.anim = S.tween(800, (t) => { P3.ct = S.lerp(c0, c1, t); update4(); }, () => (P3.anim = null));
-  });
-
-  function update4() {
-    const F = fit3();
-    ySl.forEach((el, k) => { el.value = P3.y[k]; $('#f4-y' + k + 'v').textContent = eur(P3.y[k] * 1000); });
-    $('#f4-w').textContent = fmt(F.w * 10, 2) + ' €/m²';
-    $('#f4-bk').textContent = P3.ct > 0.5 ? 'Anteil von 1 (= Mittelwert ȳ)' : 'Grundbetrag b';
-    $('#f4-b').textContent = eur(F.b * 1000);
-    const small = Math.hypot(...F.e) < 1e-6;
-    $('#f4-1e').textContent = small ? '–' : fmt(angle(F.e, ONE), 1) + '°';
-    $('#f4-xe').textContent = small ? '–' : fmt(angle(F.e, F.xv), 1) + '°';
-    $('#f4-ang').textContent = fmt(angle(ONE, F.xv), 1) + '°';
-    cam4.redraw(); mini4.redraw();
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  Wiring
-  // ════════════════════════════════════════════════════════════════
-  let lastSpace = store.get().space, seenVersion = dataVersion;
-  store.on((s) => {
-    update1();
-    if (s.space !== lastSpace) {
-      if (gd.t > 0) gd.ghost[lastSpace] = gd.losses.slice();
-      lastSpace = s.space;
-      if (f3.anim) f3.anim();
-      const t0 = f3.t, t1 = s.space === 'z' ? 1 : 0;
-      f3.anim = S.tween(900, (k) => { f3.t = S.lerp(t0, t1, k); cam3.redraw(); }, () => (f3.anim = null));
-      gdReset();
-      render3();
-    }
-    if (dataVersion !== seenVersion) {
-      seenVersion = dataVersion;
-      gd.ghost = {};
-      gdReset();
-      render3();
-    }
-  });
-
-  gdReset();
-  for (let i = 0; i < 40; i++) gdStep();
-  gd.status = 'paused';
-  update1(); render3(); update4();
+  bowl.st.el.addEventListener('pointerdown', interrupt);
 })();
 </script>
 </body>

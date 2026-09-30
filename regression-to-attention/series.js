@@ -556,5 +556,174 @@
     return () => cancelAnimationFrame(raf);
   };
 
+
+  // ---------- story: one sticky stage, scrolling steps; every step plays its own animation ----------
+  /*  HTML contract (see series.css):
+        <section class="story">
+          <div class="stage">
+            <div class="formula-box"><div class="formula"></div><div class="formula-x"></div></div>
+            <div class="views"> <div class="view" data-view="name"><div class="vlabel"></div><div class="plot"></div></div> … </div>
+            <div class="stage-bar"><p class="caption"></p><div class="stage-ctl"> buttons [data-act=prev|replay|pause|next], <span class="prog"></span></div></div>
+          </div>
+          <div class="steps"> <article class="step" data-step="id"><div class="card">…</div></article> … </div>
+        </section>
+      cfg = { views: {name: {redraw()}}, steps: {id: {views: [...], cols, formula, setup(), play: async (a) => {}}}, values() }  */
+  class Cancel extends Error {}
+  S.formulaTerm = (key, html, cls = '', explain = '') =>
+    `<span class="t ${cls}" data-t="${key}" data-x="${explain.replace(/"/g, '&quot;')}">${html}</span>`;
+  S.formulaValue = (key) => `<span class="v" data-v="${key}"></span>`;
+
+  S.story = (root, cfg) => {
+    const stage = root.querySelector('.stage');
+    const q = (sel) => stage.querySelector(sel);
+    const viewsEl = q('.views'), formulaEl = q('.formula'), explainEl = q('.formula-x'), captionEl = q('.caption'), progEl = q('.prog');
+    const btn = (act) => q(`[data-act="${act}"]`);
+    const stepEls = Array.from(root.querySelectorAll('.step'));
+    const viewEls = {};
+    root.querySelectorAll('.view').forEach((el) => (viewEls[el.dataset.view] = el));
+    let cur = -1, token = 0, paused = false, queued = false, started = false;
+
+    function redraw() {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        for (const [name, v] of Object.entries(cfg.views)) if (viewEls[name] && !viewEls[name].hidden && v.redraw) v.redraw();
+        values();
+      });
+    }
+    function values() {
+      if (!cfg.values) return;
+      const vals = cfg.values();
+      formulaEl.querySelectorAll('[data-v]').forEach((el) => {
+        const v = vals[el.dataset.v];
+        if (v != null && el.innerHTML !== String(v)) el.innerHTML = v;
+      });
+    }
+    const frame = () => new Promise((res) => requestAnimationFrame(res));
+    const mix = (a, b, e) => (Array.isArray(b) ? b.map((v, i) => mix(a[i], v, e)) : typeof b === 'number' ? a + (b - a) * e : e < 1 ? a : b);
+    const clone = (v) => (Array.isArray(v) ? v.map(clone) : v);
+    function highlight(keys) {
+      formulaEl.querySelectorAll('[data-t]').forEach((el) => el.classList.toggle('on', keys.includes(el.dataset.t)));
+      const first = keys.length ? formulaEl.querySelector(`[data-t="${keys[0]}"]`) : null;
+      explainEl.innerHTML = first && first.dataset.x ? first.dataset.x : '&nbsp;';
+    }
+    function makeApi(my) {
+      const alive = () => my === token;
+      const check = () => { if (!alive()) throw new Cancel(); };
+      async function tick(last) { const now = await frame(); check(); return [now, paused ? 0 : now - last]; }
+      return {
+        alive,
+        async wait(ms) {
+          if (S.reduced) ms = Math.min(ms, 400);
+          let t = 0, last = performance.now();
+          while (t < ms) { const [now, dt] = await tick(last); t += dt; last = now; }
+        },
+        async to(obj, props, dur = 800, opt = {}) {
+          check();
+          const ease = opt.ease || S.ease, from = {};
+          for (const k in props) from[k] = clone(obj[k]);
+          if (S.reduced) dur = 0;
+          let t = 0, last = performance.now();
+          for (;;) {
+            const k = dur ? Math.min(1, t / dur) : 1, e = ease(k);
+            for (const p in props) obj[p] = mix(from[p], props[p], e);
+            if (opt.update) opt.update(e);
+            redraw();
+            if (k >= 1) break;
+            const [now, dt] = await tick(last); t += dt; last = now;
+          }
+        },
+        /** calls fn(i) `rate` times per second until it returns false */
+        async loop(fn, rate = 30) {
+          let acc = 1, last = performance.now(), i = 0;
+          for (;;) {
+            while (acc >= 1) { acc -= 1; if (fn(i++) === false) { redraw(); return; } }
+            redraw();
+            const [now, dt] = await tick(last);
+            acc += (dt / 1000) * (typeof rate === 'function' ? rate(i) : rate);
+            last = now;
+          }
+        },
+        say(html) { check(); captionEl.innerHTML = html; },
+        hl(...keys) { check(); highlight(keys); },
+        set(obj, props) { check(); Object.assign(obj, props); redraw(); },
+      };
+    }
+    function show(def) {
+      const names = def.views || [];
+      for (const [name, el] of Object.entries(viewEls)) el.hidden = !names.includes(name);
+      viewsEl.style.setProperty('--cols', def.cols || `repeat(${Math.max(1, names.length)}, minmax(0, 1fr))`);
+      viewsEl.dataset.n = names.length;
+    }
+    function prepare(i) {
+      const def = cfg.steps[stepEls[i].dataset.step] || {};
+      stepEls.forEach((el, k) => el.classList.toggle('on', k === i));
+      show(def);
+      formulaEl.innerHTML = typeof def.formula === 'function' ? def.formula() : def.formula || '';
+      highlight([]);
+      captionEl.innerHTML = '&nbsp;';
+      progEl.textContent = `${i + 1} / ${stepEls.length}`;
+      if (def.setup) def.setup();
+      redraw();
+      return def;
+    }
+    function activate(i, force) {
+      if (i === cur && !force) return;
+      cur = i;
+      const my = ++token;
+      const def = prepare(i);
+      setPaused(false);
+      stage.classList.add('playing');
+      Promise.resolve()
+        .then(() => def.play && def.play(makeApi(my)))
+        .then(() => { if (my === token) stage.classList.remove('playing'); })
+        .catch((e) => { if (!(e instanceof Cancel)) console.error(e); });
+    }
+    function setPaused(v) {
+      paused = v;
+      const b = btn('pause');
+      if (b) { b.textContent = v ? 'Weiter' : 'Pause'; b.setAttribute('aria-pressed', String(v)); }
+    }
+    const mobile = () => matchMedia('(max-width: 900px)').matches;
+    function scrollToStep(i) {
+      i = S.clamp(i, 0, stepEls.length - 1);
+      const r = stepEls[i].getBoundingClientRect();
+      const top = mobile() ? scrollY + r.top - innerHeight * 0.6 : scrollY + r.top + r.height / 2 - innerHeight / 2;
+      scrollTo({ top, behavior: S.reduced ? 'auto' : 'smooth' });
+    }
+    function pick() {
+      const r = root.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight * 0.7) return;
+      const line = innerHeight * (mobile() ? 0.8 : 0.52);
+      let idx = 0;
+      stepEls.forEach((el, k) => { if (el.getBoundingClientRect().top < line) idx = k; });
+      started = true;
+      activate(idx);
+    }
+    let sq = false;
+    addEventListener('scroll', () => { if (!sq) { sq = true; requestAnimationFrame(() => { sq = false; pick(); }); } }, { passive: true });
+    addEventListener('resize', () => { redraw(); pick(); });
+    btn('replay')?.addEventListener('click', () => (cur >= 0 ? activate(cur, true) : activate(0)));
+    btn('pause')?.addEventListener('click', () => setPaused(!paused));
+    btn('prev')?.addEventListener('click', () => scrollToStep(cur - 1));
+    btn('next')?.addEventListener('click', () => scrollToStep(cur + 1));
+    S.onTheme(redraw);
+
+    prepare(0); // a complete first frame before anything plays
+    requestAnimationFrame(pick);
+    return {
+      redraw,
+      /** the reader grabbed something: stop the animation, keep the state */
+      interrupt() {
+        token++;
+        stage.classList.remove('playing');
+        captionEl.innerHTML = 'Du steuerst selbst. „Nochmal“ spielt den Schritt wieder ab.';
+      },
+      get step() { return cur; },
+      get started() { return started; },
+    };
+  };
+
   readTokens();
 })();

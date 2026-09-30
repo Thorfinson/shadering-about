@@ -12,14 +12,17 @@ An interactive series (in German) that goes from linear regression to the Transf
 and Olah's circuits work. Each chapter adds exactly one idea to the previous chapter's
 formula, and each idea is something to drag, drop and watch rather than read.
 
-- **Chapter 1, *Die Gerade*:** a line hung on springs that snaps into the
-  least-squares fit, squared vs. absolute error with a draggable outlier, a ball rolling
-  down the 3D loss bowl (raw vs. standardized), and least squares as an orthogonal
-  projection in ℝ³.
-- **Chapter 2, *Die Matrix*:** drag a 2×2 matrix's columns and watch the plane, a letter
-  F and the data deform; the SVD as rotate–stretch–rotate; AB vs. BA; a 3×2 matrix
-  lifting the plane into space (column space); a 2×3 matrix as a camera (kernel); the
-  regression as a matrix product.
+Each chapter is a scroll-driven story: one sticky stage, and every step plays its own
+animation as it scrolls into view while the formula on top highlights the term that
+is currently doing the work. The engine lives in `series.js` (`S.story`).
+
+- **Chapter 1, *Die Gerade*** (scalar only): data, a line with two knobs, reading the
+  formula, errors as squares, the loss landscape, the line on springs, outliers, a ball
+  rolling down the 3D loss bowl (raw vs. standardized, too-large steps), the same
+  formula on ice-cream sales and Hubble's law, the neuron.
+- **Chapter 2, *Die Matrix***: vectors, then matrices as transformations from simple to
+  general (stretch, reflect, rotate, shear, flatten, compose, SVD, 2D→3D, 3D→2D), and
+  only then the regression as a matrix product and as an orthogonal projection.
 - Chapters 3–9 are planned; the hub page lists the figures proposed for each. The
   circuits chapter will read a small transformer we train ourselves.
 
