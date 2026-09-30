@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Die Grenze · Kapitel 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 3 von 9</div>
+    <h1>Die Grenze</h1>
+    <p class="lead">Wenn die Antwort keine Zahl ist, sondern ja oder nein. Aus der Geraden wird eine Wahrscheinlichkeit, aus der Wahrscheinlichkeit eine Grenze, und aus der Grenze die Art, wie ein Sprachmodell sein nächstes Wort wählt.</p>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="line1d"><div class="vlabel" id="l-line1d">Lernstunden und Ergebnis</div><div class="plot" id="v-line1d" role="img" aria-label="Lernstunden gegen Ergebnis der Prüfung, mit dem Modell als Kurve."></div></div>
+        <div class="view" data-view="plane2d"><div class="vlabel" id="l-plane2d">Zwei Merkmale</div><div class="plot" id="v-plane2d" role="img" aria-label="Daten mit zwei Merkmalen, eingefärbt nach der Wahrscheinlichkeit des Modells, mit der Entscheidungsgrenze."></div></div>
+        <div class="view" data-view="sheet3d"><div class="vlabel">Die Wahrscheinlichkeit als Rampe (ziehen zum Drehen)</div><div class="plot" id="v-sheet3d" role="img" aria-label="Die Wahrscheinlichkeit des Modells als Fläche über der Ebene der Merkmale."></div></div>
+        <div class="view" data-view="bars"><div class="vlabel" id="l-bars">Wahrscheinlichkeiten</div><div class="plot" id="v-bars" role="img" aria-label="Balken mit Punktzahlen oder Wahrscheinlichkeiten."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="frage"><div class="card">
+        <span class="kicker">Die neue Frage</span>
+        <h3>Bestanden oder nicht?</h3>
+        <p>22 Studierende, jeweils ihre Lernstunden und das Ergebnis einer Prüfung. Die Antwort ist diesmal keine Miete, sondern <strong>ja oder nein</strong>: 1 für bestanden, 0 für durchgefallen.</p>
+        <p>Gesucht ist wieder eine Regel: Wie wahrscheinlich besteht jemand mit x Lernstunden?</p>
+      </div></article>
+
+      <article class="step" data-step="gerade"><div class="card">
+        <span class="kicker">Erster Versuch</span>
+        <h3>Die Gerade passt nicht</h3>
+        <p>Nehmen wir einfach die Gerade aus Kapitel 1. Sie sagt Werte über 1 und unter 0 vorher, und das sind keine Wahrscheinlichkeiten.</p>
+        <p>Schlimmer: Kommen ein paar sehr fleißige Studierende dazu, kippt die Gerade, und ihre 50-Prozent-Marke wandert nach rechts. Plötzlich gelten Leute als durchgefallen, die bestanden haben.</p>
+      </div></article>
+
+      <article class="step" data-step="sigmoid"><div class="card">
+        <span class="kicker">Die neue Idee</span>
+        <h3>Die Gerade wird gebogen</h3>
+        <p>Wir behalten die Rechnung <strong>w·x + b</strong>, lesen das Ergebnis aber als Punktzahl <strong>z</strong>: Wie sehr spricht alles für bestanden? Dann quetscht die <strong>Sigmoidfunktion σ</strong> jede Punktzahl zwischen 0 und 1.</p>
+        <p>Sehr viele Punkte: fast 1. Sehr wenige: fast 0. Genau null Punkte: 50 %.</p>
+      </div></article>
+
+      <article class="step" data-step="knoepfe"><div class="card">
+        <span class="kicker">Formel lesen</span>
+        <h3>Was w und b jetzt tun</h3>
+        <p><strong>w</strong> bestimmt, wie steil die Kurve ist, also wie sicher sich das Modell wird. <strong>b</strong> verschiebt die Stelle, an der es genau 50 % sagt.</p>
+        <p>Diese Stelle ist die <strong>Grenze</strong>: Links davon sagt das Modell „durchgefallen“, rechts „bestanden“. Sie liegt dort, wo die Punktzahl null ist.</p>
+      </div></article>
+
+      <article class="step" data-step="ueberraschung"><div class="card">
+        <span class="kicker">Der Verlust</span>
+        <h3>Wie überrascht ist das Modell?</h3>
+        <p>Quadrate passen hier schlecht. Stattdessen fragen wir: Wie viel Wahrscheinlichkeit hat das Modell dem gegeben, was wirklich passiert ist? War es wenig, ist das Modell <strong>überrascht</strong>, und das kostet.</p>
+        <p>Die Überraschung ist −log p. Bei p = 1 ist sie null, bei p nahe 0 wird sie riesig. Ihr Mittelwert heißt <strong>Kreuzentropie</strong>.</p>
+        <div class="ex"><b>Anderes Beispiel</b>Der Wetterbericht sagt 95 % Sonne, und es regnet: große Überraschung. Er sagt 50 %: Man war auf beides gefasst.</div>
+      </div></article>
+
+      <article class="step" data-step="lernen"><div class="card">
+        <span class="kicker">Lernen</span>
+        <h3>Bergab, wie gehabt</h3>
+        <p>Gelernt wird wie in Kapitel 1: Gradientenabstieg auf dem Verlust. Und der Gradient sieht wieder gleich aus: <strong>Fehler mal Eingabe</strong>, nur dass der Fehler jetzt p − y ist, der Abstand zwischen vorhergesagter Wahrscheinlichkeit und Wahrheit.</p>
+      </div></article>
+
+      <article class="step" data-step="zwei"><div class="card">
+        <span class="kicker">Zwei Merkmale</span>
+        <h3>Die Grenze ist eine Linie</h3>
+        <p>Mit Lernstunden und Schlaf hat jeder Studierende zwei Zahlen, einen Vektor <strong>x</strong>. Die Punktzahl ist das Skalarprodukt <strong>w · x + b</strong> aus Kapitel 2.</p>
+        <p>Die Grenze (Punktzahl null) ist eine Gerade, und <strong>w</strong> steht senkrecht auf ihr: Es zeigt in die Richtung, in der die Punktzahl am schnellsten wächst.</p>
+      </div></article>
+
+      <article class="step" data-step="rampe"><div class="card">
+        <span class="kicker">Dieselbe Idee in 3D</span>
+        <h3>Eine Rampe über der Ebene</h3>
+        <p>Die Punktzahl z ist eine schräge Ebene über den Daten. σ biegt sie zu einer Rampe, die von 0 auf 1 steigt. Die Grenze ist die Höhenlinie bei 50 %.</p>
+        <p>Die Daten sitzen auf Höhe 0 oder 1; die Rampe versucht, möglichst viele davon zu treffen.</p>
+      </div></article>
+
+      <article class="step" data-step="lernen2"><div class="card">
+        <span class="kicker">Lernen in 2D</span>
+        <h3>Die Grenze sucht ihren Platz</h3>
+        <p>Beim Training dreht und verschiebt sich die Grenze, bis die Überraschung insgesamt am kleinsten ist. Ein paar Punkte liegen trotzdem auf der falschen Seite: Nicht jeder, der viel lernt und gut schläft, besteht.</p>
+      </div></article>
+
+      <article class="step" data-step="drei"><div class="card">
+        <span class="kicker">Mehr Klassen</span>
+        <h3>Drei Pinguinarten</h3>
+        <p>Schnabellänge und Flossenlänge von drei Pinguinarten. Jetzt bekommt <strong>jede Klasse ihre eigene Punktzahl</strong>, also ihre eigene Zeile w·x + b.</p>
+        <p>Drei Zeilen untereinander sind eine Matrix <strong>W</strong> (Kapitel 2): drei Neuronen, eines pro Art. Die Punktzahlen werden dann zu drei Wahrscheinlichkeiten.</p>
+        <div class="ex"><b>Daten</b>Nachempfunden dem Palmer-Penguins-Datensatz (Adelie, Zügelpinguin, Eselspinguin).</div>
+      </div></article>
+
+      <article class="step" data-step="softmax"><div class="card">
+        <span class="kicker">Formel lesen</span>
+        <h3>Softmax</h3>
+        <p>Wie macht man aus drei beliebigen Punktzahlen drei Wahrscheinlichkeiten? Zwei Schritte: <strong>e hoch</strong> macht alles positiv und verstärkt Unterschiede. <strong>Durch die Summe teilen</strong> sorgt dafür, dass alles zusammen 1 ergibt.</p>
+        <p>Das ist die Softmax. Bei zwei Klassen ist sie genau die Sigmoidfunktion von vorhin.</p>
+      </div></article>
+
+      <article class="step" data-step="temperatur"><div class="card">
+        <span class="kicker">Anderes Beispiel</span>
+        <h3>So wählt ein Sprachmodell das nächste Wort</h3>
+        <p>Ein Sprachmodell macht am Ende genau das: eine Punktzahl für jedes Wort seines Wortschatzes, dann eine Softmax. Aus „Der Hund …“ wird eine Wahrscheinlichkeit für jedes mögliche nächste Wort.</p>
+        <p>Teilt man die Punktzahlen vorher durch eine <strong>Temperatur T</strong>, wird die Verteilung spitzer (T klein: immer das wahrscheinlichste Wort) oder flacher (T groß: mehr Überraschungen).</p>
+        <div class="ex"><b>Erfundene Zahlen</b>Die Punktzahlen sind zur Anschauung gewählt. Ein echtes Modell verteilt sie auf zehntausende Wörter.</div>
+      </div></article>
+
+      <article class="step" data-step="xor"><div class="card">
+        <span class="kicker">Die Grenze der Grenze</span>
+        <h3>Wo eine Gerade nicht reicht</h3>
+        <p>Blau oben links und unten rechts, orange in den anderen beiden Ecken. Keine einzelne Gerade trennt das, egal wie lange man trainiert: Das Modell bleibt bei etwa 50 % Treffern hängen.</p>
+        <p>Dieses Muster heißt <strong>XOR</strong>. An ihm scheiterten 1969 die frühen Neuronen-Modelle, und es führt direkt zu Kapitel 4: Man muss den Raum falten.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>D. R. Cox (1958): <i>The regression analysis of binary sequences</i>. Journal of the Royal Statistical Society B 20 (2), 215–242.</li>
+      <li>M. Minsky, S. Papert (1969): <i>Perceptrons</i>. MIT Press.</li>
+      <li>A. M. Horst, A. P. Hill, K. B. Gorman (2020): <i>palmerpenguins</i>. Datensatz, nach Gorman u. a. (2014).</li>
+    </ol>
+    <p style="font-size: 14px; color: var(--muted)">Alle Datensätze sind erfunden oder nachgestellt.</p>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="02-matrix.html"><span class="dir">Zurück · Kapitel 2</span><span class="name">Die Matrix</span></a>
+    <a href="04-folding.html" class="next"><span class="dir">Weiter · Kapitel 4</span><span class="name">Den Raum falten</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const FRAC = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+  const sig = (z) => 1 / (1 + Math.exp(-z));
+  function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Data
+  // ════════════════════════════════════════════════════════════════
+  const STUD = (() => { const r = rng(21); return Array.from({ length: 22 }, (_, i) => { const x = 0.4 + i * 0.44 + (r() - 0.5) * 0.3; return [x, r() < sig(1.5 * (x - 4.8)) ? 1 : 0]; }); })();
+  const EXTRA = [[14, 1], [15.5, 1], [17, 1], [18.5, 1], [19.6, 1]];
+  const STUD2 = (() => { const r = rng(8); return Array.from({ length: 70 }, () => { const h = r() * 10, s = 4 + r() * 5; return [h, s, r() < sig(1.1 * (h - 5) + 1.3 * (s - 6.5)) ? 1 : 0]; }); })();
+  const PENG = (() => {
+    const r = rng(3), sp = [[38.8, 190, 2.6, 6.5], [48.8, 196, 3.2, 7], [47.5, 217, 3, 6.3]], out = [];
+    sp.forEach(([mb, mf, sb, sf], k) => { for (let i = 0; i < 26; i++) out.push([mb + gauss(r) * sb, mf + gauss(r) * sf, k]); });
+    return out;
+  })();
+  const XOR = (() => { const r = rng(5), out = []; [[-1, 1, 0], [1, -1, 0], [1, 1, 1], [-1, -1, 1]].forEach(([cx, cy, k]) => { for (let i = 0; i < 18; i++) out.push([cx + gauss(r) * 0.35, cy + gauss(r) * 0.35, k]); }); return out; })();
+  const PENG_NAMES = ['Adelie', 'Zügelpinguin', 'Eselspinguin'];
+  const WORDS = [['bellt', 3.1], ['schläft', 2.2], ['läuft', 1.8], ['frisst', 1.5], ['spielt', 1.2], ['knurrt', 0.9], ['ist', 0.7], ['Auto', -1.6]];
+
+  // standardizing helper: models are trained in z-coordinates and shown in raw units
+  function scaler(pts, dims) {
+    const n = pts.length, m = [], s = [];
+    for (let d = 0; d < dims; d++) { m[d] = pts.reduce((a, p) => a + p[d], 0) / n; s[d] = Math.sqrt(pts.reduce((a, p) => a + (p[d] - m[d]) ** 2, 0) / n); }
+    return { m, s, z: (p) => p.slice(0, dims).map((v, d) => (v - m[d]) / s[d]) };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  State
+  // ════════════════════════════════════════════════════════════════
+  const st = {
+    // 1D
+    ptsA: 0, extraA: 0, xmax: 11, lineA: 0, sigT: 0, curveA: 0, w: 1.5, b: -7, gridA: 0, surpriseA: 0, hl: -1,
+    // 2D
+    ds2: 'bin', w2: [1, 1], b2: 0, heatA: 0, boundA: 0, arrowA: 0, pts2A: 0, trained: false,
+    // softmax
+    Ws: [[0, 0], [0, 0], [0, 0]], bs: [0, 0, 0], probe: [45, 205], probeA: 0,
+    bars: 'none', stageT: 0, temp: 1,
+    loss: NaN, acc: NaN, steps: 0,
+  };
+  let story = null;
+  const interrupt = () => story && story.interrupt();
+  const redraw = () => story && story.redraw();
+  const cls = (k) => [S.c.col2, S.c.col1, S.c.probe][k]; // 0 = durchgefallen (orange), 1 = bestanden (blue)
+  const pcls = (k) => [S.c.col1, S.c.col2, S.c.probe][k];
+
+  // ── 1D model ────────────────────────────────────────────────────
+  const pts1 = () => (st.extraA > 0.5 ? STUD.concat(EXTRA) : STUD);
+  function lsLine(pts) {
+    const n = pts.length; let sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (const [x, y] of pts) { sx += x; sy += y; sxx += x * x; sxy += x * y; }
+    const w = (n * sxy - sx * sy) / (n * sxx - sx * sx); return { w, b: (sy - w * sx) / n };
+  }
+  const p1 = (x) => sig(st.w * x + st.b);
+  const surprise = (pts, f) => pts.reduce((s, [x, y]) => s - Math.log(Math.max(1e-6, y ? f(x) : 1 - f(x))), 0) / pts.length;
+
+  const line1d = { fr: null };
+  line1d.c = S.canvas($('#v-line1d'), (ctx, W, H) => {
+    const m = { l: 62, r: 16, t: 14, b: 42 };
+    const X = lin(0, st.xmax, m.l, W - m.r), Y = lin(-0.25, 1.25, H - m.b, m.t);
+    line1d.fr = { X, Y };
+    S.axes(ctx, { x: X, y: Y, xt: S.ticks(0, st.xmax, 6), yt: [0, 0.5, 1], xfmt: (v) => fmt(v), yfmt: (v) => (v === 0.5 ? '50 %' : String(v)), xlabel: 'Lernstunden x', ylabel: 'bestanden?' });
+    ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    // shaded "no probability" zones
+    ctx.fillStyle = S.alpha('error', 0.06); ctx.fillRect(m.l, Y(1.25), W, Y(1) - Y(1.25)); ctx.fillRect(m.l, Y(0), W, Y(-0.25) - Y(0));
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1;
+    for (const v of [0, 1]) { ctx.beginPath(); ctx.moveTo(m.l, Y(v)); ctx.lineTo(W - m.r, Y(v)); ctx.stroke(); }
+    ctx.setLineDash([]);
+    const pts = STUD.concat(EXTRA.map((p) => [...p, 'extra']));
+    // least-squares line (step 2)
+    if (st.lineA > 0) {
+      const L = lsLine(pts1());
+      ctx.globalAlpha = st.lineA; ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 2.25;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(L.b)); ctx.lineTo(X(st.xmax), Y(L.w * st.xmax + L.b)); ctx.stroke();
+      const x5 = (0.5 - L.b) / L.w;
+      ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(x5), Y(-0.25)); ctx.lineTo(X(x5), Y(1.25)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+    // the model: a line in z morphing into σ(z)
+    if (st.curveA > 0) {
+      ctx.globalAlpha = st.curveA; ctx.strokeStyle = S.c.model; ctx.lineWidth = 2.75; ctx.beginPath();
+      for (let i = 0; i <= 240; i++) { const x = (i / 240) * st.xmax, z = st.w * x + st.b; const y = S.lerp(0.5 + z / 8, sig(z), st.sigT); i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y)); }
+      ctx.stroke();
+      const xb = -st.b / st.w;
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = S.c.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(xb), Y(-0.25)); ctx.lineTo(X(xb), Y(1.25)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+    // surprise bars: −log p(true label)
+    if (st.surpriseA > 0) {
+      ctx.globalAlpha = st.surpriseA;
+      pts1().forEach(([x, y]) => {
+        const p = y ? p1(x) : 1 - p1(x), s = Math.min(-Math.log(Math.max(p, 1e-6)), 4);
+        const h = s * 0.12, y0 = y ? 1 : 0;
+        ctx.fillStyle = S.alpha('error', 0.75);
+        ctx.fillRect(X(x) - 4, Y(y0), 8, (y ? 1 : -1) * (Y(0) - Y(h)));
+      });
+      ctx.globalAlpha = 1;
+    }
+    pts.forEach(([x, y, extra], i) => {
+      const a = extra ? st.extraA : clamp(st.ptsA - i, 0, 1);
+      if (a <= 0) return;
+      ctx.globalAlpha = a;
+      const col = cls(y);
+      const wrong = st.lineA > 0.5 && (() => { const L = lsLine(pts1()); return (L.w * x + L.b >= 0.5 ? 1 : 0) !== y; })();
+      S.dot(ctx, X(x), S.lerp(Y(0.5), Y(y), S.ease(a)), wrong || st.hl === i ? 6.5 : 5, col, S.c.surface, 2);
+      if (wrong) { ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(x), Y(y), 10, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    });
+    ctx.restore();
+    if (st.curveA > 0.5) { const xb = -st.b / st.w; if (xb > 0 && xb < st.xmax) S.label(ctx, 'Grenze', X(xb) + 6, m.t + 10, S.c.accent, S.font(12, 'body', '600'), 'left'); }
+    if (st.lineA > 0.5) { const L = lsLine(pts1()), x5 = (0.5 - L.b) / L.w; S.label(ctx, 'Gerade = 0,5', X(x5) + 6, H - m.b - 12, S.c['fg-2'], S.font(12, 'body'), 'left'); }
+    S.label(ctx, '1 bestanden', W - m.r - 4, Y(1) - 10, S.c.col1, S.font(12, 'body', '600'), 'right');
+    S.label(ctx, '0 durchgefallen', W - m.r - 4, Y(0) + 12, S.c.col2, S.font(12, 'body', '600'), 'right');
+  });
+
+  // ── 2D: binary logistic, softmax, xor ───────────────────────────
+  const DS2 = {
+    bin: { pts: STUD2, dom: [[0, 10], [3.5, 9.5]], lab: ['Lernstunden x₁', 'Schlaf x₂ (Stunden)'] },
+    peng: { pts: PENG, dom: [[32, 60], [170, 235]], lab: ['Schnabellänge (mm)', 'Flossenlänge (mm)'] },
+    xor: { pts: XOR, dom: [[-2.2, 2.2], [-2.2, 2.2]], lab: ['x₁', 'x₂'] },
+  };
+  const SC2 = { bin: scaler(STUD2, 2), peng: scaler(PENG, 2), xor: scaler(XOR, 2) };
+  // binary model in z-coordinates: z = w·x̃ + b; softmax model: z_k = W_k·x̃ + b_k
+  const zBin = (p) => { const q = SC2[st.ds2].z(p); return st.w2[0] * q[0] + st.w2[1] * q[1] + st.b2; };
+  const softP = (p) => {
+    const q = SC2.peng.z(p), z = st.Ws.map((w, k) => w[0] * q[0] + w[1] * q[1] + st.bs[k]);
+    const mx = Math.max(...z), e = z.map((v) => Math.exp(v - mx)), s = e.reduce((a, b) => a + b, 0);
+    return { z, p: e.map((v) => v / s) };
+  };
+  const plane = { fr: null };
+  const off = document.createElement('canvas');
+  plane.c = S.canvas($('#v-plane2d'), (ctx, W, H) => {
+    const d = DS2[st.ds2], m = { l: 58, r: 14, t: 8, b: 42 };
+    const X = lin(d.dom[0][0], d.dom[0][1], m.l, W - m.r), Y = lin(d.dom[1][0], d.dom[1][1], H - m.b, m.t);
+    plane.fr = { X, Y, m };
+    // probability wash
+    if (st.heatA > 0) {
+      const G = 90; off.width = G; off.height = G;
+      const c = off.getContext('2d'), img = c.createImageData(G, G), bg = S.parse(S.c.surface);
+      const cols = [S.parse(S.c.col1), S.parse(S.c.col2), S.parse(S.c.probe)];
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const p = [X.inv(m.l + ((i + 0.5) / G) * (W - m.l - m.r)), Y.inv(m.t + ((j + 0.5) / G) * (H - m.t - m.b))];
+        let rgb, a;
+        if (st.ds2 === 'peng') {
+          const pr = softP(p).p; rgb = [0, 1, 2].map((ch) => pr.reduce((s, v, k) => s + v * cols[k][ch], 0)); a = (Math.max(...pr) - 1 / 3) * 1.5;
+        } else { const q = sig(zBin(p)); rgb = q > 0.5 ? cols[0] : cols[1]; a = Math.abs(q - 0.5) * 2; }
+        a = clamp(a, 0, 1) * 0.42 * st.heatA;
+        const k = (j * G + i) * 4;
+        for (let ch = 0; ch < 3; ch++) img.data[k + ch] = bg[ch] + (rgb[ch] - bg[ch]) * a;
+        img.data[k + 3] = 255;
+      }
+      c.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(off, m.l, m.t, W - m.l - m.r, H - m.t - m.b);
+    }
+    S.axes(ctx, { x: X, y: Y, xt: S.ticks(...d.dom[0], 5), yt: S.ticks(...d.dom[1], 5), xfmt: (v) => fmt(v), yfmt: (v) => fmt(v), xlabel: d.lab[0], ylabel: d.lab[1], grid: st.heatA < 0.5 });
+    ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+    // decision boundary z = 0 and w (drawn in screen space, where it is perpendicular to the boundary)
+    if (st.ds2 !== 'peng' && st.boundA > 0) {
+      const sc = SC2[st.ds2];
+      const wr = [st.w2[0] / sc.s[0], st.w2[1] / sc.s[1]], br = st.b2 - wr[0] * sc.m[0] - wr[1] * sc.m[1];
+      const [x0, x1] = d.dom[0], [y0, y1] = d.dom[1];
+      ctx.globalAlpha = st.boundA; ctx.strokeStyle = S.c.fg; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      if (Math.abs(wr[1]) > Math.abs(wr[0]) * 1e-3) { ctx.moveTo(X(x0), Y(-(br + wr[0] * x0) / wr[1])); ctx.lineTo(X(x1), Y(-(br + wr[0] * x1) / wr[1])); }
+      else { const xx = -br / wr[0]; ctx.moveTo(X(xx), Y(y0)); ctx.lineTo(X(xx), Y(y1)); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+      if (st.arrowA > 0) {
+        // foot: projection of the data centre onto the boundary
+        const cx = sc.m[0], cy = sc.m[1], zc = wr[0] * cx + wr[1] * cy + br, nn = wr[0] * wr[0] + wr[1] * wr[1];
+        const fx = cx - (zc * wr[0]) / nn, fy = cy - (zc * wr[1]) / nn;
+        const gx = wr[0] / X.k, gy = wr[1] / Y.k; // gradient of z in screen pixels: perpendicular to the boundary on screen
+        const g = Math.hypot(gx, gy) || 1, L = 70;
+        ctx.globalAlpha = st.arrowA; ctx.strokeStyle = S.c.accent; ctx.fillStyle = S.c.accent;
+        const sx = X(fx), sy = Y(fy);
+        S.arrow(ctx, sx, sy, sx + (gx / g) * L, sy + (gy / g) * L, 12, 3);
+        S.label(ctx, 'w', sx + (gx / g) * (L + 14), sy + (gy / g) * (L + 14), S.c.accent, S.font(18, 'math', 'bold'), 'center');
+        ctx.globalAlpha = 1;
+      }
+    }
+    const pts = d.pts;
+    pts.forEach((p, i) => {
+      const a = clamp(st.pts2A * pts.length - i, 0, 1);
+      if (a <= 0) return;
+      ctx.globalAlpha = a;
+      S.dot(ctx, X(p[0]), Y(p[1]), 4.5, st.ds2 === 'peng' ? pcls(p[2]) : cls(p[2]), S.c.surface, 1.5);
+      ctx.globalAlpha = 1;
+    });
+    if (st.ds2 === 'peng' && st.probeA > 0) {
+      ctx.globalAlpha = st.probeA;
+      ctx.beginPath(); ctx.arc(X(st.probe[0]), Y(st.probe[1]), 9, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = S.c.fg; ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+    if (st.ds2 === 'bin' && st.pts2A > 0.9) {
+      S.label(ctx, '● bestanden', W - m.r - 4, m.t + 12, S.c.col1, S.font(12, 'body', '600'), 'right');
+      S.label(ctx, '● durchgefallen', W - m.r - 4, m.t + 30, S.c.col2, S.font(12, 'body', '600'), 'right');
+    }
+    if (st.ds2 === 'peng' && st.pts2A > 0.9) PENG_NAMES.forEach((nm, k) => S.label(ctx, '● ' + nm, W - m.r - 4, m.t + 12 + k * 18, pcls(k), S.font(12, 'body', '600'), 'right'));
+  });
+  S.pointer(plane.c, {
+    pick(q) {
+      if (st.ds2 !== 'peng' || !plane.fr) return null;
+      if (q.probe && Math.hypot(q.x - plane.fr.X(st.probe[0]), q.y - plane.fr.Y(st.probe[1])) > 26) return null;
+      if (q.probe) return true;
+      interrupt();
+      const set = (p) => { st.probe = [plane.fr.X.inv(p.x), plane.fr.Y.inv(p.y)]; st.probeA = 1; redraw(); };
+      set(q); return { move: set };
+    },
+  });
+
+  // ── 3D ramp ─────────────────────────────────────────────────────
+  const sheet = S.orbit($('#v-sheet3d'), {
+    yaw: -0.6, pitch: 0.5, zoom: 0.26, cz: 0.5, dist: 6,
+    draw(ctx, W, H, cam) {
+      const N = 26, R = 2.2, V = [], bg = S.parse(S.c.surface), c1 = S.parse(S.c.col1), c2 = S.parse(S.c.col2);
+      for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+        const u = -R + (2 * R * i) / N, v = -R + (2 * R * j) / N, p = sig(st.w2[0] * u + st.w2[1] * v + st.b2);
+        const wp = [u / R, v / R, p]; V.push({ wp, p, s: cam.P(wp) });
+      }
+      ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1; ctx.beginPath();
+      [[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]].forEach(([u, v], k) => { const s = cam.P([u, v, 0]); k ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); }); ctx.stroke();
+      const quads = [];
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i, idx = [a, a + 1, a + N + 2, a + N + 1]; quads.push({ idx, d: idx.reduce((s, q) => s + V[q].s[2], 0) / 4 }); }
+      quads.sort((a, b) => b.d - a.d);
+      for (const { idx } of quads) {
+        const p = idx.reduce((s, q) => s + V[q].p, 0) / 4, a1 = 0.2 + 0.7 * Math.max(0, (p - 0.5) * 2), a2 = 0.2 + 0.7 * Math.max(0, (0.5 - p) * 2);
+        ctx.fillStyle = `rgb(${[0, 1, 2].map((k) => Math.round(bg[k] + (c1[k] - bg[k]) * a1 * p + (c2[k] - bg[k]) * a2 * (1 - p))).join(',')})`;
+        ctx.beginPath(); idx.forEach((q, m) => (m ? ctx.lineTo(V[q].s[0], V[q].s[1]) : ctx.moveTo(V[q].s[0], V[q].s[1]))); ctx.closePath();
+        ctx.fill(); ctx.strokeStyle = S.alpha('fg', 0.12); ctx.lineWidth = 0.6; ctx.stroke();
+      }
+      // boundary on the 50 % level
+      ctx.strokeStyle = S.c.fg; ctx.lineWidth = 2.5; ctx.beginPath();
+      let started = false;
+      for (let i = 0; i <= 60; i++) {
+        const u = -R + (2 * R * i) / 60;
+        if (Math.abs(st.w2[1]) < 1e-6) break;
+        const v = -(st.b2 + st.w2[0] * u) / st.w2[1];
+        if (Math.abs(v) > R) { started = false; continue; }
+        const s = cam.P([u / R, v / R, 0.5]); started ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); started = true;
+      }
+      ctx.stroke();
+      // data sitting at height 0 or 1
+      STUD2.forEach((p) => { const q = SC2.bin.z(p); if (Math.abs(q[0]) > R || Math.abs(q[1]) > R) return; const s = cam.P([q[0] / R, q[1] / R, p[2]]); S.dot(ctx, s[0], s[1], 3.2, cls(p[2]), S.c.surface, 1.2); });
+      const lab = (p, t) => { const s = cam.P(p); S.label(ctx, t, s[0], s[1], S.c['fg-2'], S.font(13, 'body'), 'center'); };
+      lab([0, -1.25, 0], 'Lernstunden →'); lab([-1.3, 0, 0], 'Schlaf →');
+    },
+  });
+
+  // ── bars ────────────────────────────────────────────────────────
+  const bars = S.canvas($('#v-bars'), (ctx, W, H) => {
+    let items = [];
+    if (st.bars === 'peng') {
+      const { p } = softP(st.probe);
+      items = PENG_NAMES.map((nm, k) => ({ name: nm, v: p[k], col: pcls(k) }));
+    } else if (st.bars === 'peng-stages') {
+      const { z } = softP(st.probe);
+      const t = st.stageT, e = z.map((v) => Math.exp(v)), se = e.reduce((a, b) => a + b, 0);
+      items = PENG_NAMES.map((nm, k) => ({ name: nm, v: t <= 1 ? S.lerp(z[k], e[k], t) : S.lerp(e[k], e[k] / se, t - 1), col: pcls(k) }));
+    } else if (st.bars === 'words') {
+      const z = WORDS.map((w) => w[1] / st.temp), mx = Math.max(...z), e = z.map((v) => Math.exp(v - mx)), s = e.reduce((a, b) => a + b, 0);
+      items = WORDS.map((w, k) => ({ name: w[0], v: e[k] / s, col: S.c.model }));
+    }
+    if (!items.length) return;
+    const m = { l: 108, r: 60, t: 10, b: 10 };
+    const lo = Math.min(0, ...items.map((i) => i.v)), hi = Math.max(1e-9, ...items.map((i) => i.v)) * 1.05;
+    const X = lin(lo, hi, m.l, W - m.r), bh = Math.min(34, (H - m.t - m.b) / items.length - 8);
+    ctx.strokeStyle = S.c.axis; ctx.beginPath(); ctx.moveTo(X(0), m.t); ctx.lineTo(X(0), H - m.b); ctx.stroke();
+    items.forEach((it, k) => {
+      const y = m.t + k * (bh + 8), x0 = X(Math.min(0, it.v)), x1 = X(Math.max(0, it.v));
+      ctx.fillStyle = it.col; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y, Math.max(1, x1 - x0), bh, 4) : ctx.rect(x0, y, Math.max(1, x1 - x0), bh); ctx.fill();
+      S.label(ctx, it.name, m.l - 10, y + bh / 2, S.c.fg, S.font(13, 'body'), 'right');
+      const pct = st.bars === 'words' || (st.bars !== 'peng-stages' || st.stageT >= 2) ? fmt(it.v * 100, 0) + ' %' : fmt(it.v, 2);
+      S.label(ctx, pct, x1 + 6, y + bh / 2, S.c['fg-2'], S.font(12, 'mono'), 'left');
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Training
+  // ════════════════════════════════════════════════════════════════
+  function train1dStep(lr = 0.5) {
+    const pts = pts1(), sc = scaler(pts, 1);
+    let a = st.w * sc.s[0], c = st.b + st.w * sc.m[0], ga = 0, gc = 0;
+    for (const [x, y] of pts) { const u = (x - sc.m[0]) / sc.s[0], p = sig(a * u + c); ga += (p - y) * u; gc += p - y; }
+    a -= (lr * ga) / pts.length; c -= (lr * gc) / pts.length;
+    st.w = a / sc.s[0]; st.b = c - (a * sc.m[0]) / sc.s[0];
+    st.loss = surprise(pts, p1);
+  }
+  function train2dStep(lr = 0.5) {
+    const d = DS2[st.ds2], sc = SC2[st.ds2];
+    let g0 = 0, g1 = 0, gb = 0, L = 0, acc = 0;
+    for (const p of d.pts) { const q = sc.z(p), pr = sig(st.w2[0] * q[0] + st.w2[1] * q[1] + st.b2), y = p[2]; g0 += (pr - y) * q[0]; g1 += (pr - y) * q[1]; gb += pr - y; L -= Math.log(Math.max(1e-9, y ? pr : 1 - pr)); acc += (pr > 0.5) === !!y; }
+    const n = d.pts.length;
+    st.w2 = [st.w2[0] - (lr * g0) / n, st.w2[1] - (lr * g1) / n]; st.b2 -= (lr * gb) / n;
+    st.loss = L / n; st.acc = acc / n; st.steps++;
+  }
+  function trainSoftStep(lr = 0.6) {
+    const gW = [[0, 0], [0, 0], [0, 0]], gb = [0, 0, 0]; let L = 0, acc = 0;
+    for (const p of PENG) {
+      const q = SC2.peng.z(p), { p: pr } = softP(p);
+      pr.forEach((v, k) => { const d = v - (p[2] === k ? 1 : 0); gW[k][0] += d * q[0]; gW[k][1] += d * q[1]; gb[k] += d; });
+      L -= Math.log(Math.max(1e-9, pr[p[2]])); acc += pr.indexOf(Math.max(...pr)) === p[2];
+    }
+    const n = PENG.length;
+    st.Ws = st.Ws.map((w, k) => [w[0] - (lr * gW[k][0]) / n, w[1] - (lr * gW[k][1]) / n]); st.bs = st.bs.map((b, k) => b - (lr * gb[k]) / n);
+    st.loss = L / n; st.acc = acc / n; st.steps++;
+  }
+  const trainedSoft = () => { st.Ws = [[0, 0], [0, 0], [0, 0]]; st.bs = [0, 0, 0]; for (let i = 0; i < 400; i++) trainSoftStep(); };
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const fit1 = () => { st.w = 0; st.b = 0; for (let i = 0; i < 1500; i++) train1dStep(); };
+  const base1 = (o = {}) => Object.assign(st, { ptsA: 22, extraA: 0, xmax: 11, lineA: 0, sigT: 1, curveA: 0, surpriseA: 0, hl: -1 }, o);
+  const base2 = (ds, o = {}) => Object.assign(st, { ds2: ds, heatA: 0, boundA: 0, arrowA: 0, pts2A: 1, probeA: 0, bars: 'none', stageT: 0, steps: 0 }, o);
+  const zForm = () => `${T('p', '<i>p</i>', 'c-model', 'Wahrscheinlichkeit für bestanden')} = ${T('sig', 'σ', 'c-new', 'Sigmoid: quetscht jede Zahl zwischen 0 und 1')}(${T('z', '<i>w</i> · <i>x</i> + <i>b</i>', '', 'Punktzahl z: wie sehr alles für bestanden spricht')})`;
+  const steps = {
+    frage: {
+      views: ['line1d'],
+      formula: `${T('y', '<i>y</i>', 'c-data', 'Ausgabe: 1 bestanden, 0 durchgefallen. Keine Zahl dazwischen.')} ∈ {0, 1}<span class="sep">·</span>${T('x', '<i>x</i>', 'c-data', 'Eingabe: Lernstunden')} = Lernstunden`,
+      setup() { base1({ ptsA: 0 }); },
+      async play(a) {
+        a.say('22 Studierende. Jeder fällt auf eine von zwei Linien.');
+        await a.to(st, { ptsA: 22 }, 2600, { ease: (t) => t });
+        a.hl('y'); a.say('Oben: bestanden (1). Unten: durchgefallen (0).'); await a.wait(1600);
+        a.hl('x'); a.say('Wer mehr lernt, besteht öfter, aber nicht immer. Dazwischen gibt es eine unscharfe Zone.');
+      },
+    },
+    gerade: {
+      views: ['line1d'],
+      formula: `${T('yh', '<i>ŷ</i>', 'c-model', 'die Gerade aus Kapitel 1')} = <i>w</i> · <i>x</i> + <i>b</i><span class="sep">·</span>${T('half', 'Grenze bei <i>ŷ</i> = 0,5', '', 'ab hier sagt die Gerade: eher bestanden')}`,
+      setup() { base1(); },
+      async play(a) {
+        a.hl('yh'); a.say('Die beste Gerade durch die Nullen und Einsen …');
+        await a.to(st, { lineA: 1 }, 800);
+        a.say('… sagt links negative Werte und rechts Werte über 1 vorher: keine Wahrscheinlichkeiten (rot getönt).'); await a.wait(2400);
+        a.hl('half'); a.say('Jetzt kommen fünf sehr fleißige Studierende dazu, alle bestanden …');
+        await a.to(st, { xmax: 21 }, 1200);
+        await a.to(st, { extraA: 1 }, 1200);
+        a.say('Die Gerade kippt, ihre 0,5-Marke rutscht nach rechts. Eingekreist: Leute, die bestanden haben, aber jetzt als durchgefallen gelten.');
+      },
+    },
+    sigmoid: {
+      views: ['line1d'],
+      formula: () => `${zForm()}<span class="sep">σ(z) =</span>${FRAC('1', '1 + <i>e</i><sup>−<i>z</i></sup>')}`,
+      setup() { base1({ curveA: 1, sigT: 0 }); fit1(); st.sigT = 0; },
+      async play(a) {
+        a.hl('z'); a.say('Die Rechnung bleibt <i>w</i>·<i>x</i> + <i>b</i>. Ihr Ergebnis ist eine Punktzahl, hier als Gerade.'); await a.wait(2200);
+        a.hl('sig'); a.say('σ biegt die Gerade: Große Punktzahlen werden fast 1, kleine fast 0.');
+        await a.to(st, { sigT: 1 }, 2600);
+        a.hl('p'); a.say('Jetzt ist die Kurve überall eine echte Wahrscheinlichkeit.'); await a.wait(1400);
+        a.say('Und die Fleißigen stören nicht mehr: Die Kurve ist rechts schon bei fast 1.');
+        await a.to(st, { xmax: 21 }, 1000); await a.to(st, { extraA: 1 }, 900);
+        await a.loop((i) => { train1dStep(); return i < 200; }, 80);
+      },
+    },
+    knoepfe: {
+      views: ['line1d'],
+      formula: () => `<i>p</i> = σ(${T('w', '<i>w</i>', 'c-model', 'Steilheit: wie sicher das Modell wird')} · <i>x</i> + ${T('b', '<i>b</i>', 'c-model', 'verschiebt die 50-%-Stelle')})<span class="sep">·</span>${T('g', 'Grenze: <i>w</i>·<i>x</i> + <i>b</i> = 0', 'c-new', 'dort ist die Punktzahl null und p genau 50 %')} → <i>x</i> = ${V('xb')}`,
+      setup() { base1({ curveA: 1 }); fit1(); },
+      async play(a) {
+        const w0 = st.w, b0 = st.b, xb = -b0 / w0;
+        a.hl('w'); a.say('Größeres <i>w</i>: Die Kurve wird steil, das Modell wird sehr sicher.');
+        await a.to(st, { w: w0 * 3, b: -xb * w0 * 3 }, 1500); await a.wait(600);
+        a.say('Kleineres <i>w</i>: flach, das Modell ist sich nie ganz sicher.');
+        await a.to(st, { w: w0 * 0.35, b: -xb * w0 * 0.35 }, 1700); await a.to(st, { w: w0, b: b0 }, 1000);
+        a.hl('b'); a.say('<i>b</i> verschiebt die ganze Kurve nach links oder rechts.');
+        await a.to(st, { b: b0 + 2.5 }, 1200); await a.to(st, { b: b0 - 2.5 }, 1600); await a.to(st, { b: b0 }, 1000);
+        a.hl('g'); a.say('Die violette Linie ist die Grenze. Hier ist die Punktzahl null, p = 50 %.');
+      },
+    },
+    ueberraschung: {
+      views: ['line1d'],
+      formula: () => `${T('L', '<i>L</i>', 'c-err', 'Kreuzentropie: mittlere Überraschung')} = −${FRAC('1', '<i>n</i>')} ∑ ${T('log', 'log <i>p</i>(richtige Antwort)', 'c-err', 'Überraschung einer Person: klein, wenn das Modell ihr Ergebnis erwartet hat')}<span class="sep">=</span>${V('L1')}`,
+      setup() { base1({ curveA: 1 }); fit1(); },
+      async play(a) {
+        a.hl('log'); a.say('Jeder Balken ist die Überraschung für eine Person. Je unerwarteter ihr Ergebnis, desto länger.');
+        await a.to(st, { surpriseA: 1 }, 1000); await a.wait(2000);
+        a.hl('L'); a.say('Ein schlechtes Modell, das Faulen das Bestehen zutraut: riesige Überraschungen.');
+        const w0 = st.w, b0 = st.b;
+        await a.to(st, { w: -w0 * 0.8, b: -b0 * 0.8 }, 2000); await a.wait(1600);
+        a.say('Ein übervorsichtiges Modell, überall 50 %: überall mittlere Überraschung.');
+        await a.to(st, { w: 0.0001, b: 0 }, 1600); await a.wait(1500);
+        a.say('Das gute Modell: kleine Balken, außer bei den echten Ausnahmen.');
+        await a.to(st, { w: w0, b: b0 }, 1600);
+      },
+    },
+    lernen: {
+      views: ['line1d'],
+      formula: () => `${FRAC('∂<i>L</i>', '∂<i>w</i>')} = ${FRAC('1', '<i>n</i>')} ∑ ${T('err', '(<i>p</i> − <i>y</i>)', 'c-err', 'Fehler: Wahrscheinlichkeit minus Wahrheit')} · ${T('x', '<i>x</i>', 'c-data', 'Eingabe')}<span class="sep">L =</span>${V('L1')}`,
+      setup() { base1({ curveA: 1, surpriseA: 1 }); st.w = 0.0001; st.b = 0; },
+      async play(a) {
+        a.hl('err', 'x'); a.say('Start: überall 50 %. Jeder Schritt schiebt mit „Fehler mal Eingabe“, wie bei der Geraden in Kapitel 1.');
+        await a.wait(1600);
+        await a.loop((i) => { train1dStep(0.4); return i < 160; }, (i) => (i < 20 ? 8 : 40));
+        a.hl(); a.say('Die Kurve hat sich zwischen die beiden Gruppen gelegt; die Überraschungen sind klein.');
+      },
+    },
+    zwei: {
+      views: ['plane2d'],
+      formula: () => `${T('z', '<i>z</i>', '', 'Punktzahl')} = ${T('w', '<b>w</b>', 'c-new', 'Gewichtsvektor: steht senkrecht auf der Grenze')} · ${T('x', '<b>x</b>', 'c-data', '(Lernstunden, Schlaf)')} + <i>b</i> = <i>w</i><sub>1</sub><i>x</i><sub>1</sub> + <i>w</i><sub>2</sub><i>x</i><sub>2</sub> + <i>b</i><span class="sep">·</span>${T('g', 'Grenze: <i>z</i> = 0', '', 'eine Gerade in der Ebene')}`,
+      setup() { base2('bin', { pts2A: 0 }); st.w2 = [1.2, 1.4]; st.b2 = 0.1; },
+      async play(a) {
+        a.hl('x'); a.say('Jetzt zwei Merkmale: Lernstunden und Schlaf.');
+        await a.to(st, { pts2A: 1 }, 2000);
+        a.hl('z'); a.say('Die Punktzahl färbt die Ebene: blau heißt eher bestanden, orange eher durchgefallen.');
+        await a.to(st, { heatA: 1 }, 1200);
+        a.hl('g'); a.say('Die Grenze ist eine Gerade.'); await a.to(st, { boundA: 1 }, 800); await a.wait(800);
+        a.hl('w'); a.say('Der Vektor <b>w</b> steht senkrecht auf ihr und zeigt Richtung „bestanden“.'); await a.to(st, { arrowA: 1 }, 800); await a.wait(1200);
+        a.say('Dreht man <b>w</b>, dreht sich die Grenze mit, immer senkrecht dazu.');
+        const r = Math.hypot(...st.w2), a0 = Math.atan2(st.w2[1], st.w2[0]), o = { t: 0 };
+        await a.to(o, { t: 1 }, 4000, { ease: (t) => t, update: () => { const ang = a0 + Math.sin(o.t * Math.PI * 2) * 1.1; st.w2 = [r * Math.cos(ang), r * Math.sin(ang)]; } });
+      },
+    },
+    rampe: {
+      views: ['sheet3d'],
+      formula: () => `<i>p</i> = σ(<b>w</b> · <b>x</b> + <i>b</i>)<span class="sep">·</span>${T('g', 'Grenze = Höhenlinie bei 50 %', 'c-new', 'die dunkle Linie auf der Rampe')}`,
+      setup() { base2('bin'); st.w2 = [1.2, 1.4]; st.b2 = 0.1; },
+      async play(a) {
+        a.say('Dieselbe Wahrscheinlichkeit als Höhe: eine Rampe von 0 auf 1.'); await a.wait(2200);
+        a.hl('g'); a.say('Die schwarze Linie ist die Grenze. Die Punkte sitzen auf Höhe 0 oder 1.'); await a.wait(1800);
+        a.say('Größeres <b>w</b> macht die Rampe steiler, fast zu einer Stufe.');
+        await a.to(st, { w2: [3.6, 4.2] }, 2000); await a.wait(900);
+        await a.to(st, { w2: [1.2, 1.4] }, 1600);
+      },
+    },
+    lernen2: {
+      views: ['plane2d'],
+      formula: () => `Training<span class="sep">Schritt</span>${V('steps')}<span class="sep">Treffer</span>${V('acc')}<span class="sep">L =</span>${V('L2')}`,
+      setup() { base2('bin', { heatA: 1, boundA: 1, arrowA: 1 }); st.w2 = [-0.2, 0.05]; st.b2 = -0.6; },
+      async play(a) {
+        a.say('Start mit einer falschen Grenze. Dann Gradientenabstieg …'); await a.wait(1200);
+        await a.loop((i) => { train2dStep(0.35); return i < 220; }, (i) => (i < 20 ? 6 : 30));
+        a.say(`Nach ${st.steps} Schritten liegen ${fmt(st.acc * 100, 0)} % der Punkte auf der richtigen Seite. Die übrigen sind echte Ausnahmen.`);
+      },
+    },
+    drei: {
+      views: ['plane2d', 'bars'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
+      formula: () => `${T('z', '<b>z</b>', '', 'drei Punktzahlen, eine pro Art')} = ${T('W', '<b>W</b>', 'c-new', 'eine Zeile pro Art: drei Neuronen, eine Matrix')} <b>x</b> + <b>b</b><span class="sep">→</span>${T('sm', 'softmax', 'c-new', 'macht aus den Punktzahlen Wahrscheinlichkeiten')}<span class="sep">Treffer</span>${V('acc')}`,
+      setup() { base2('peng', { pts2A: 0, bars: 'peng', probe: [45, 205] }); st.Ws = [[0, 0], [0, 0], [0, 0]]; st.bs = [0, 0, 0]; },
+      async play(a) {
+        a.say('Drei Pinguinarten, gemessen an Schnabel und Flosse.');
+        await a.to(st, { pts2A: 1 }, 2000);
+        a.hl('W'); a.say('Jede Art bekommt eine eigene Punktzahl-Zeile. Anfangs sind alle gleich: je ein Drittel.');
+        await a.to(st, { heatA: 1, probeA: 1 }, 900);
+        a.hl('sm'); a.say('Training: Jede Zeile lernt, ihre Art zu erkennen. Rechts die Wahrscheinlichkeiten am schwarzen Ring.');
+        await a.loop((i) => { trainSoftStep(); return i < 260; }, (i) => (i < 20 ? 6 : 40));
+        a.hl(); a.say('Der Ring wandert durch die Gebiete; die Balken folgen.');
+        const path = [[40, 188], [49, 196], [47, 218], [44, 205]];
+        for (const p of path) await a.to(st, { probe: p }, 1500);
+      },
+    },
+    softmax: {
+      views: ['bars', 'plane2d'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
+      formula: `${T('p', '<i>p<sub>k</sub></i>', 'c-model', 'Wahrscheinlichkeit für Klasse k')} = ${FRAC(T('e', '<i>e</i><sup><i>z<sub>k</sub></i></sup>', 'c-new', 'e hoch: alles wird positiv, große Werte werden noch größer'), T('sum', '∑<sub><i>j</i></sub> <i>e</i><sup><i>z<sub>j</sub></i></sup>', '', 'durch die Summe teilen: zusammen ergibt es 1'))}`,
+      setup() { base2('peng', { heatA: 1, probeA: 1, bars: 'peng-stages', probe: [44, 203] }); trainedSoft(); },
+      async play(a) {
+        a.say('Die rohen Punktzahlen am Ring: beliebige Zahlen, auch negative.'); await a.wait(2400);
+        a.hl('e'); a.say('Schritt 1: e hoch. Alles wird positiv, und der Abstand zwischen groß und klein wächst.');
+        await a.to(st, { stageT: 1 }, 2000); await a.wait(1400);
+        a.hl('sum'); a.say('Schritt 2: durch die Summe teilen. Jetzt ergibt alles zusammen 100 %.');
+        await a.to(st, { stageT: 2 }, 2000); await a.wait(1000);
+        a.hl(); a.say('Das ist die Softmax. Mit nur zwei Klassen ist sie genau die Sigmoidfunktion.');
+      },
+    },
+    temperatur: {
+      views: ['bars'],
+      formula: () => `<i>p</i>(Wort) = softmax(${FRAC('<i>z</i>', T('T', '<i>T</i>', 'c-new', 'Temperatur: klein = entschlossen, groß = experimentierfreudig'))})<span class="sep">T =</span>${V('temp')}`,
+      setup() { Object.assign(st, { bars: 'words', temp: 1 }); },
+      async play(a) {
+        a.say('„Der Hund …“ – die Wahrscheinlichkeiten eines Sprachmodells für das nächste Wort.'); await a.wait(2400);
+        a.hl('T'); a.say('Temperatur runter: Die Verteilung wird spitz, fast immer „bellt“.');
+        await a.to(st, { temp: 0.3 }, 2400); await a.wait(1400);
+        a.say('Temperatur rauf: flach. Jetzt kommen auch „knurrt“ oder „ist“ öfter dran.');
+        await a.to(st, { temp: 3 }, 3000); await a.wait(1400);
+        await a.to(st, { temp: 1 }, 1500);
+        a.hl(); a.say('Genau diese Softmax steht am Ende jedes Sprachmodells, und in Kapitel 7 steckt sie auch mitten in der Attention.');
+      },
+    },
+    xor: {
+      views: ['plane2d'],
+      formula: () => `<i>p</i> = σ(<b>w</b> · <b>x</b> + <i>b</i>)<span class="sep">Treffer</span>${V('acc')}<span class="sep">Schritt</span>${V('steps')}`,
+      setup() { base2('xor', { heatA: 1, boundA: 1, arrowA: 1 }); st.w2 = [0.8, -0.3]; st.b2 = 0.1; },
+      async play(a) {
+        a.say('Blau in zwei gegenüberliegenden Ecken, orange in den anderen beiden.'); await a.wait(1800);
+        a.say('Training …');
+        await a.loop((i) => { train2dStep(0.8); return i < 200; }, (i) => (i < 20 ? 8 : 30));
+        a.say(`Nach ${st.steps} Schritten: ${fmt(st.acc * 100, 0)} % Treffer. Eine Gerade kann hier nicht mehr als raten.`); await a.wait(2400);
+        a.say('Probieren wir einfach ein paar Geraden durch: Jede lässt die Hälfte falsch.');
+        for (const w of [[1.5, 0], [0, 1.5], [1.1, 1.1], [1.1, -1.1]]) await a.to(st, { w2: w, b2: 0 }, 1300);
+      },
+    },
+  };
+
+  story = S.story($('#story'), {
+    views: { line1d: line1d.c, plane2d: plane.c, sheet3d: { redraw: sheet.redraw }, bars },
+    steps,
+    values() {
+      return {
+        xb: fmt(-st.b / st.w, 1) + ' h',
+        L1: fmt(surprise(pts1(), p1), 3),
+        L2: fmt(st.loss, 3), acc: isFinite(st.acc) ? fmt(st.acc * 100, 0) + ' %' : '–', steps: String(st.steps),
+        temp: fmt(st.temp, 2),
+      };
+    },
+  });
+  sheet.st.el.addEventListener('pointerdown', interrupt);
+})();
+</script>
+</body>
+</html>

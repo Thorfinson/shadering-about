@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Viele Dimensionen · Kapitel 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 5 von 9</div>
+    <h1>Viele Dimensionen</h1>
+    <p class="lead">Die verborgenen Räume echter Netze haben Hunderte oder Tausende Dimensionen. Dort gelten dieselben Regeln wie in drei, und trotzdem verhält sich der Raum überraschend. Netze nutzen das aus, um mehr Merkmale zu speichern, als sie Dimensionen haben.</p>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="hist"><div class="vlabel" id="l-hist">Winkel zwischen zufälligen Richtungen</div><div class="plot" id="v-hist" role="img" aria-label="Histogramm der Winkel zwischen zufälligen Vektorpaaren."></div></div>
+        <div class="view" data-view="shell"><div class="vlabel">Anteil des Volumens in der äußeren Schale (10 % des Radius)</div><div class="plot" id="v-shell" role="img" aria-label="Balken: Anteil des Kugelvolumens in der äußeren Schale je Dimension."></div></div>
+        <div class="view" data-view="gram"><div class="vlabel" id="l-gram">Wie ähnlich sind 40 zufällige Richtungen?</div><div class="plot" id="v-gram" role="img" aria-label="Matrix der Kosinus-Ähnlichkeiten zwischen 40 zufälligen Richtungen."></div></div>
+        <div class="view" data-view="toy"><div class="vlabel">Fünf Merkmale, zwei Dimensionen</div><div class="plot" id="v-toy" role="img" aria-label="Merkmalsrichtungen in einer Ebene und die Rekonstruktion der Merkmale."></div></div>
+        <div class="view" data-view="proj"><div class="vlabel" id="l-proj">Drei Gruppen in 50 Dimensionen, als Schatten</div><div class="plot" id="v-proj" role="img" aria-label="Zweidimensionale Projektion von drei Gruppen aus einem 50-dimensionalen Raum."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="ebene"><div class="card">
+        <span class="kicker">Ausgangspunkt</span>
+        <h3>Zwei zufällige Richtungen</h3>
+        <p>Wir ziehen immer wieder zwei zufällige Pfeile und messen den Winkel dazwischen. In der Ebene kommt jeder Winkel gleich oft vor: spitz, stumpf, rechtwinklig.</p>
+        <p>Der Winkel kommt aus dem Skalarprodukt (Kapitel 2): Der Kosinus ist das Skalarprodukt der beiden Pfeile, geteilt durch ihre Längen.</p>
+      </div></article>
+
+      <article class="step" data-step="winkel"><div class="card">
+        <span class="kicker">Mehr Dimensionen</span>
+        <h3>Fast alles steht senkrecht</h3>
+        <p>Jetzt dasselbe in 3, 10, 100 und 1000 Dimensionen. Die Winkel ballen sich immer enger um 90°.</p>
+        <p>Der Grund: Das Skalarprodukt ist eine Summe aus d Produkten, die zufällig mal positiv, mal negativ sind. Bei vielen Summanden heben sie sich fast auf. Die Abweichung schrumpft wie 1/√d.</p>
+      </div></article>
+
+      <article class="step" data-step="schale"><div class="card">
+        <span class="kicker">Seltsam, aber wahr</span>
+        <h3>Eine Orange ist fast nur Schale</h3>
+        <p>Wie viel vom Volumen einer Kugel liegt in der äußersten Schicht, die ein Zehntel des Radius dick ist? In 3 Dimensionen etwa 27 %. In 100 Dimensionen 99,997 %.</p>
+        <p>In hohen Dimensionen ist fast nichts „in der Mitte“. Zufällige Punkte liegen fast alle gleich weit vom Zentrum entfernt.</p>
+      </div></article>
+
+      <article class="step" data-step="viele"><div class="card">
+        <span class="kicker">Die Folge</span>
+        <h3>Platz für viel mehr Richtungen</h3>
+        <p>40 zufällige Richtungen, alle mit allen verglichen: Hell heißt ähnlich, dunkel heißt senkrecht. In 2 oder 3 Dimensionen ähneln sich viele Paare. In 1000 Dimensionen ist jede Richtung fast senkrecht auf allen anderen.</p>
+        <p>Exakt senkrecht passen nur d Richtungen in d Dimensionen. <strong>Fast</strong> senkrecht passen exponentiell viele.</p>
+      </div></article>
+
+      <article class="step" data-step="merkmal"><div class="card">
+        <span class="kicker">Was Netze speichern</span>
+        <h3>Merkmale sind Richtungen</h3>
+        <p>Die Zahlen in einer verborgenen Schicht kodieren Merkmale: „ist ein Hund“, „steht am Satzanfang“, „ist Code“. Eine verbreitete Beobachtung: Jedes Merkmal ist eine <strong>Richtung</strong>, und wie stark es vorhanden ist, liest man mit einem Skalarprodukt ab.</p>
+        <p>Mit zwei Dimensionen passen so genau zwei Merkmale sauber senkrecht hinein. Was ist mit fünf?</p>
+      </div></article>
+
+      <article class="step" data-step="superposition"><div class="card">
+        <span class="kicker">Superposition</span>
+        <h3>Fünf Merkmale in zwei Dimensionen</h3>
+        <p>Ein winziges Netz soll fünf Merkmale durch einen Flaschenhals aus zwei Zahlen schicken und wieder herausholen. Wenn Merkmale <strong>selten</strong> sind, also fast nie zwei gleichzeitig vorkommen, lernt es ein Fünfeck.</p>
+        <p>Die Merkmale teilen sich den Raum und stören sich ein wenig. Ein negativer Schwellwert mit ReLU (Kapitel 4) schneidet diese Störung weg, solange nur eines aktiv ist.</p>
+        <div class="ex"><b>Nachgebaut</b>Dieses Experiment stammt aus „Toy Models of Superposition“ (Elhage u. a., 2022). Das Netz trainiert hier live im Browser.</div>
+      </div></article>
+
+      <article class="step" data-step="dicht"><div class="card">
+        <span class="kicker">Wann es sich lohnt</span>
+        <h3>Häufige Merkmale bekommen eigene Achsen</h3>
+        <p>Kommen die Merkmale dagegen oft gleichzeitig vor, würden sie sich ständig stören. Dann behält das Netz nur die zwei wichtigsten, sauber senkrecht, und gibt die anderen auf.</p>
+        <p>Dazwischen gibt es Stufen, etwa vier Merkmale als zwei Gegensatzpaare. In großen Netzen mit Tausenden Dimensionen und Millionen seltener Merkmale ist Superposition der Normalfall, und genau das macht sie schwer zu lesen (Kapitel 9).</p>
+      </div></article>
+
+      <article class="step" data-step="projektion"><div class="card">
+        <span class="kicker">Vorsicht beim Hinschauen</span>
+        <h3>Jedes Bild ist ein Schatten</h3>
+        <p>Um hohe Dimensionen anzusehen, projizieren wir sie auf zwei (Kapitel 2, Kamera). Drei klar getrennte Gruppen in 50 Dimensionen sehen in den meisten zufälligen Schatten wie ein einziger Haufen aus.</p>
+        <p>Die <strong>Hauptkomponentenanalyse</strong> wählt die Blickrichtung, in der die Daten am stärksten streuen, und zeigt die Gruppen sofort.</p>
+      </div></article>
+
+      <article class="step" data-step="ausblick"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>Bedeutung als Richtung</h3>
+        <p>Was wir hier mit abstrakten Merkmalen gesehen haben, passiert in Sprachmodellen mit Wörtern: Jedes Wort wird ein Punkt in einem hochdimensionalen Raum, und Richtungen tragen Bedeutung. Das ist Kapitel 6.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>N. Elhage u. a. (2022): <a href="https://transformer-circuits.pub/2022/toy_model/index.html"><i>Toy Models of Superposition</i></a>. Transformer Circuits Thread.</li>
+      <li>W. B. Johnson, J. Lindenstrauss (1984): <i>Extensions of Lipschitz mappings into a Hilbert space</i>. Contemporary Mathematics 26, 189–206.</li>
+      <li>K. Pearson (1901): <i>On lines and planes of closest fit to systems of points in space</i>. Philosophical Magazine 2 (11), 559–572.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="04-folding.html"><span class="dir">Zurück · Kapitel 4</span><span class="name">Den Raum falten</span></a>
+    <span class="soon next"><span class="dir">Kapitel 6 · geplant</span><span class="name">Bedeutung als Richtung</span></span>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const FRAC = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+  function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  const randVec = (d, r) => { const v = Array.from({ length: d }, () => gauss(r)); const n = Math.hypot(...v); return v.map((x) => x / n); };
+  const dotN = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+
+  // dimensions are animated as a continuous index into this list; views blend neighbours
+  const DL = [2, 3, 5, 10, 30, 100, 300, 1000];
+  const dOf = (i) => DL[Math.round(clamp(i, 0, DL.length - 1))];
+  const st = { d: 0, dMark: 0, shellA: 0, shellK: 0, gramD: 2, xin: [0, 0, 0, 0, 0], toyInA: 0, spars: 0.9, proj: 0, pcaT: 0, toySteps: 0, dRound: 2 };
+  let story = null;
+
+  // ── angle histograms, cached per dimension ──────────────────────
+  const angCache = {};
+  function angles(d) {
+    if (angCache[d]) return angCache[d];
+    const r = rng(1000 + d), out = [];
+    for (let i = 0; i < 1500; i++) out.push((Math.acos(clamp(dotN(randVec(d, r), randVec(d, r)), -1, 1)) * 180) / Math.PI);
+    return (angCache[d] = out);
+  }
+  const hist = S.canvas($('#v-hist'), (ctx, W, H) => {
+    const i0 = Math.floor(clamp(st.d, 0, DL.length - 1)), i1 = Math.min(DL.length - 1, i0 + 1), f = clamp(st.d, 0, DL.length - 1) - i0;
+    const d = dOf(st.d), m = { l: 48, r: 16, t: 14, b: 40 };
+    const bins = 60, cnt = Array(bins).fill(0);
+    angles(DL[i0]).forEach((x) => (cnt[Math.min(bins - 1, Math.floor((x / 180) * bins))] += 1 - f));
+    angles(DL[i1]).forEach((x) => (cnt[Math.min(bins - 1, Math.floor((x / 180) * bins))] += f));
+    const X = lin(0, 180, m.l, W - m.r), Y = lin(0, Math.max(...cnt) * 1.1, H - m.b, m.t);
+    S.axes(ctx, { x: X, y: Y, xt: [0, 30, 60, 90, 120, 150, 180], yt: [], xfmt: (v) => v + '°', xlabel: 'Winkel zwischen zwei zufälligen Richtungen' });
+    ctx.fillStyle = S.c.model;
+    cnt.forEach((c, i) => { const x0 = X((i * 180) / bins), x1 = X(((i + 1) * 180) / bins); ctx.fillRect(x0 + 0.5, Y(c), Math.max(1, x1 - x0 - 1.5), Y(0) - Y(c)); });
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(90), m.t); ctx.lineTo(X(90), H - m.b); ctx.stroke(); ctx.setLineDash([]);
+    S.label(ctx, `d = ${d}`, W - m.r - 6, m.t + 14, S.c.fg, S.font(20, 'math', 'italic'), 'right');
+    S.label(ctx, 'senkrecht', X(90) + 6, m.t + 10, S.c.accent, S.font(12, 'body', '600'), 'left');
+  });
+
+  // ── the shell ───────────────────────────────────────────────────
+  const DIMS = [1, 2, 3, 10, 30, 100, 1000];
+  const shell = S.canvas($('#v-shell'), (ctx, W, H) => {
+    const m = { l: 70, r: 70, t: 14, b: 14 }, n = DIMS.length, bh = Math.min(34, (H - m.t - m.b) / n - 10);
+    const X = lin(0, 1, m.l, W - m.r);
+    DIMS.forEach((d, i) => {
+      const f = 1 - Math.pow(0.9, d), a = clamp(st.shellK - i, 0, 1), y = m.t + i * (bh + 10);
+      ctx.fillStyle = S.c.grid; ctx.fillRect(X(0), y, X(1) - X(0), bh);
+      ctx.fillStyle = S.c.error; ctx.fillRect(X(0), y, (X(f) - X(0)) * a, bh);
+      S.label(ctx, `d = ${d}`, m.l - 10, y + bh / 2, S.c.fg, S.font(14, 'math', 'italic'), 'right');
+      if (a > 0.95) S.label(ctx, f > 0.9999 ? '≈ 100 %' : fmt(f * 100, f > 0.99 ? 3 : 0) + ' %', X(f * a) + 6 > W - m.r ? W - m.r + 6 : X(f * a) + 6, y + bh / 2, S.c['fg-2'], S.font(12, 'mono'), 'left');
+    });
+  });
+
+  // ── Gram matrix of random directions ────────────────────────────
+  const gramCache = {};
+  function gram(d) {
+    if (gramCache[d]) return gramCache[d];
+    const r = rng(77 + d), vs = Array.from({ length: 40 }, () => randVec(d, r));
+    return (gramCache[d] = vs.map((a) => vs.map((b) => dotN(a, b))));
+  }
+  const gramV = S.canvas($('#v-gram'), (ctx, W, H) => {
+    const i0 = Math.floor(clamp(st.gramD, 0, DL.length - 1)), i1 = Math.min(DL.length - 1, i0 + 1), f = clamp(st.gramD, 0, DL.length - 1) - i0;
+    const d = dOf(st.gramD), GA = gram(DL[i0]), GB = gram(DL[i1]), G = GA.map((row, i) => row.map((v, j) => S.lerp(Math.abs(v), Math.abs(GB[i][j]), f))), n = G.length, side = Math.min(W - 20, H - 30), cell = side / n, x0 = (W - side) / 2, y0 = 4;
+    const bg = S.parse(S.c.surface), fg = S.parse(S.c.model);
+    G.forEach((row, i) => row.forEach((v, j) => { const a = Math.abs(v); ctx.fillStyle = `rgb(${[0, 1, 2].map((k) => Math.round(bg[k] + (fg[k] - bg[k]) * a)).join(',')})`; ctx.fillRect(x0 + j * cell, y0 + i * cell, cell + 0.5, cell + 0.5); }));
+    let off = 0, c = 0; G.forEach((row, i) => row.forEach((v, j) => { if (i !== j) { off += Math.abs(v); c++; } }));
+    S.label(ctx, `d = ${d} · mittlere |Ähnlichkeit| abseits der Diagonale: ${fmt(off / c, 2)}`, W / 2, y0 + side + 14, S.c.fg, S.font(13, 'body'), 'center');
+  });
+
+  // ── the toy model of superposition ──────────────────────────────
+  const NF = 5, IMP = [1, 0.9, 0.8, 0.7, 0.6];
+  const toy = { W: null, b: null, mW: null, vW: null, mb: null, vb: null, t: 0, r: rng(1) };
+  function toyInit(seed) {
+    const r = rng(seed);
+    toy.W = [0, 1].map(() => Array.from({ length: NF }, () => (r() - 0.5) * 0.6)); toy.b = Array(NF).fill(0);
+    toy.mW = toy.W.map((x) => x.map(() => 0)); toy.vW = toy.W.map((x) => x.map(() => 0)); toy.mb = Array(NF).fill(0); toy.vb = Array(NF).fill(0); toy.t = 0; toy.r = rng(seed + 9);
+  }
+  const toyOut = (x) => { const h = [0, 1].map((i) => toy.W[i].reduce((s, w, j) => s + w * x[j], 0)); return Array.from({ length: NF }, (_, j) => Math.max(0, toy.W[0][j] * h[0] + toy.W[1][j] * h[1] + toy.b[j])); };
+  function toyStep(Sp) {
+    const gW = toy.W.map((x) => x.map(() => 0)), gb = Array(NF).fill(0), B = 96, r = toy.r;
+    for (let k = 0; k < B; k++) {
+      const x = Array.from({ length: NF }, () => (r() < Sp ? 0 : r()));
+      const h = [0, 1].map((i) => toy.W[i].reduce((s, w, j) => s + w * x[j], 0));
+      const z = Array.from({ length: NF }, (_, j) => toy.W[0][j] * h[0] + toy.W[1][j] * h[1] + toy.b[j]);
+      const dz = z.map((v, j) => (v > 0 ? (2 * IMP[j] * (v - x[j])) / B : 0));
+      const dh = [0, 1].map((i) => dz.reduce((s, dd, j) => s + dd * toy.W[i][j], 0));
+      for (let i = 0; i < 2; i++) for (let j = 0; j < NF; j++) gW[i][j] += dz[j] * h[i] + dh[i] * x[j];
+      dz.forEach((dd, j) => (gb[j] += dd));
+    }
+    toy.t++;
+    const lr = 0.05, c1 = 1 - 0.9 ** toy.t, c2 = 1 - 0.999 ** toy.t;
+    for (let i = 0; i < 2; i++) for (let j = 0; j < NF; j++) { toy.mW[i][j] = 0.9 * toy.mW[i][j] + 0.1 * gW[i][j]; toy.vW[i][j] = 0.999 * toy.vW[i][j] + 0.001 * gW[i][j] ** 2; toy.W[i][j] -= (lr * toy.mW[i][j] / c1) / (Math.sqrt(toy.vW[i][j] / c2) + 1e-8); }
+    for (let j = 0; j < NF; j++) { toy.mb[j] = 0.9 * toy.mb[j] + 0.1 * gb[j]; toy.vb[j] = 0.999 * toy.vb[j] + 0.001 * gb[j] ** 2; toy.b[j] -= (lr * toy.mb[j] / c1) / (Math.sqrt(toy.vb[j] / c2) + 1e-8); }
+    st.toySteps = toy.t;
+  }
+  const toyV = S.canvas($('#v-toy'), (ctx, W, H) => {
+    if (!toy.W) return;
+    const wide = W > H * 1.3, pw = wide ? W * 0.55 : W, ph = wide ? H : H * 0.58;
+    const cx = pw / 2, cy = ph / 2, k = Math.min(pw, ph) * 0.36;
+    ctx.strokeStyle = S.alpha('fg', 0.1); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, k, 0, Math.PI * 2); ctx.moveTo(cx - k * 1.2, cy); ctx.lineTo(cx + k * 1.2, cy); ctx.moveTo(cx, cy - k * 1.2); ctx.lineTo(cx, cy + k * 1.2); ctx.stroke();
+    for (let j = 0; j < NF; j++) {
+      const v = [toy.W[0][j], toy.W[1][j]], col = S.rgb(S.seqColor(1 - j / (NF + 1)));
+      ctx.strokeStyle = col; ctx.fillStyle = col;
+      const ex = cx + v[0] * k, ey = cy - v[1] * k;
+      S.arrow(ctx, cx, cy, ex, ey, 11, st.xin[j] > 0 ? 4.5 : 2.75);
+      if (Math.hypot(v[0], v[1]) > 0.15) S.label(ctx, `${j + 1}`, cx + v[0] * k * 1.15, cy - v[1] * k * 1.15, S.c.fg, S.font(14, 'mono', '600'), 'center');
+    }
+    S.label(ctx, `Sparsity ${fmt(st.spars * 100, 0)} % · Schritt ${st.toySteps}`, 8, 14, S.c['fg-2'], S.font(12, 'body'), 'left');
+    // bars: input vs reconstruction
+    if (st.toyInA > 0) {
+      const out = toyOut(st.xin), bx = wide ? pw + 10 : 20, by = wide ? H * 0.2 : ph + 10, bw = (wide ? W - pw - 30 : W - 40) / NF, bhh = wide ? H * 0.55 : H - ph - 40;
+      ctx.globalAlpha = st.toyInA;
+      for (let j = 0; j < NF; j++) {
+        const x0 = bx + j * bw, base = by + bhh;
+        ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.5; ctx.strokeRect(x0 + bw * 0.15, base - st.xin[j] * bhh, bw * 0.3, st.xin[j] * bhh);
+        const o = Math.min(out[j], 1.3); ctx.fillStyle = S.rgb(S.seqColor(1 - j / (NF + 1))); ctx.fillRect(x0 + bw * 0.5, base - o * bhh, bw * 0.3, o * bhh);
+        S.label(ctx, `${j + 1}`, x0 + bw * 0.5, base + 12, S.c.fg, S.font(12, 'mono'), 'center');
+      }
+      S.label(ctx, 'Rahmen: Eingabe · gefüllt: was herauskommt', bx, by - 12, S.c['fg-2'], S.font(12, 'body'), 'left');
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── projections of 50-dimensional clusters ──────────────────────
+  const PD = 50;
+  const CL = (() => {
+    const r = rng(12), cs = [0, 1, 2].map(() => Array.from({ length: PD }, () => gauss(r) * 0.9)), pts = [];
+    cs.forEach((c, k) => { for (let i = 0; i < 45; i++) pts.push({ v: c.map((x) => x + gauss(r)), k }); });
+    return pts;
+  })();
+  const RP = (() => { const r = rng(31); const basis = () => { const a = randVec(PD, r); let b = randVec(PD, r); const d = dotN(a, b); b = b.map((x, i) => x - d * a[i]); const n = Math.hypot(...b); return [a, b.map((x) => x / n)]; }; return [basis(), basis()]; })();
+  const PCA = (() => {
+    const mean = Array(PD).fill(0); CL.forEach((p) => p.v.forEach((x, i) => (mean[i] += x / CL.length)));
+    const X = CL.map((p) => p.v.map((x, i) => x - mean[i]));
+    const comps = [];
+    for (let c = 0; c < 2; c++) {
+      let v = randVec(PD, rng(5 + c));
+      for (let it = 0; it < 80; it++) {
+        let w = Array(PD).fill(0);
+        X.forEach((x) => { const s = dotN(x, v); x.forEach((xi, i) => (w[i] += s * xi)); });
+        comps.forEach((u) => { const d = dotN(w, u); w = w.map((x, i) => x - d * u[i]); });
+        const n = Math.hypot(...w); v = w.map((x) => x / n);
+      }
+      comps.push(v);
+    }
+    return { mean, comps };
+  })();
+  const projV = S.canvas($('#v-proj'), (ctx, W, H) => {
+    const t = st.proj, ca = Math.cos(t), sa = Math.sin(t);
+    const A = RP[0].map((row, i) => row.map((x, j) => ca * x + sa * RP[1][i][j]));
+    const pts = CL.map((p) => {
+      const rnd = [dotN(A[0], p.v), dotN(A[1], p.v)];
+      const c = p.v.map((x, i) => x - PCA.mean[i]), pc = [dotN(PCA.comps[0], c), dotN(PCA.comps[1], c)];
+      return { q: [S.lerp(rnd[0], pc[0], st.pcaT), S.lerp(rnd[1], pc[1], st.pcaT)], k: p.k };
+    });
+    const R = Math.max(...pts.map((p) => Math.max(Math.abs(p.q[0]), Math.abs(p.q[1])))) * 1.1, k = Math.min(W, H) / (2 * R), cx = W / 2, cy = H / 2;
+    ctx.strokeStyle = S.alpha('fg', 0.08); ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+    pts.forEach((p) => S.dot(ctx, cx + p.q[0] * k, cy - p.q[1] * k, 4, [S.c.col1, S.c.col2, S.c.probe][p.k], S.c.surface, 1.3));
+    S.label(ctx, st.pcaT > 0.5 ? 'Hauptkomponenten' : 'zufällige Blickrichtung', 8, 14, S.c['fg-2'], S.font(12, 'body'), 'left');
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const cosF = `${T('cos', 'cos ∠(<b>u</b>, <b>v</b>)', '', 'Kosinus des Winkels: 1 = gleiche Richtung, 0 = senkrecht')} = ${FRAC(T('dot', '<b>u</b> · <b>v</b>', 'c-new', 'Skalarprodukt: Summe aus d Produkten u_i · v_i'), '|<b>u</b>| |<b>v</b>|')}`;
+  const toyF = `${T('h', '<b>h</b>', '', 'der Flaschenhals: nur zwei Zahlen')} = ${T('W', '<b>W</b>', 'c-new', 'Matrix 2×5: jede Spalte ist die Richtung eines Merkmals')} <b>x</b><span class="sep">→</span>${T('out', '<b>x</b>′ = ReLU(<b>W</b><sup>⊤</sup><b>h</b> + <b>b</b>)', '', 'zurücklesen: Skalarprodukt mit jeder Merkmalsrichtung, dann Knick')}`;
+  const steps = {
+    ebene: {
+      views: ['hist'],
+      formula: cosF,
+      setup() { st.d = 0; },
+      async play(a) {
+        a.say('Viele Paare zufälliger Richtungen in der Ebene: Jeder Winkel kommt etwa gleich oft vor.'); await a.wait(1600);
+        a.hl('dot'); a.say('Der Winkel folgt aus dem Skalarprodukt: Einträge multiplizieren, aufsummieren, durch die Längen teilen.');
+      },
+    },
+    winkel: {
+      views: ['hist'],
+      formula: () => `${cosF}<span class="sep">Streuung ≈</span>${FRAC('1', '√<i>d</i>')}<span class="sep">d =</span>${V('d')}`,
+      setup() { st.d = 0; },
+      async play(a) {
+        for (const d of [3, 10, 100, 1000]) { a.say(`${d} Dimensionen …`); await a.to(st, { d: DL.indexOf(d) }, 1400, { ease: (t) => t }); await a.wait(1300); }
+        a.hl('dot'); a.say('In 1000 Dimensionen liegen fast alle Winkel zwischen 85° und 95°. Zwei zufällige Richtungen stehen praktisch immer senkrecht.');
+      },
+    },
+    schale: {
+      views: ['shell'],
+      formula: `Anteil der Schale = 1 − ${T('f', '0,9<sup><i>d</i></sup>', 'c-new', 'Volumen der inneren Kugel mit 90 % des Radius, relativ zur ganzen')}`,
+      setup() { st.shellK = 0; },
+      async play(a) {
+        a.say('Die äußere Schicht, ein Zehntel des Radius dick. Wie viel Volumen steckt darin?');
+        a.hl('f');
+        for (let i = 1; i <= DIMS.length; i++) { await a.to(st, { shellK: i }, 700); await a.wait(500); }
+        a.say('In 100 Dimensionen ist die Kugel zu 99,997 % Schale. Die Mitte ist praktisch leer.');
+      },
+    },
+    viele: {
+      views: ['gram'],
+      formula: () => `${T('G', '<i>G<sub>ij</sub></i>', '', 'Ähnlichkeit von Richtung i und j')} = <b>u</b><sub><i>i</i></sub> · <b>u</b><sub><i>j</i></sub><span class="sep">40 Richtungen in</span><i>d</i> = ${V('gd')} Dimensionen`,
+      setup() { st.gramD = 0; },
+      async play(a) {
+        a.hl('G'); a.say('40 Richtungen in 2 Dimensionen: viele sehr ähnliche Paare (hell).'); await a.wait(2000);
+        for (const d of [3, 10, 100, 1000]) { a.say(`${d} Dimensionen …`); await a.to(st, { gramD: DL.indexOf(d) }, 1200, { ease: (t) => t }); await a.wait(1200); }
+        a.say('Nur noch die Diagonale ist hell: 40 Richtungen, alle fast senkrecht zueinander, und es wäre Platz für viel mehr.');
+      },
+    },
+    merkmal: {
+      views: ['toy'],
+      formula: toyF,
+      setup() { st.spars = 0; st.toyInA = 1; st.xin = [1, 0, 0, 0, 0]; toyInit(2); toy.W = [[1, 0, 0, 0, 0], [0, 1, 0, 0, 0]]; toy.b = [0, 0, 0, 0, 0]; },
+      async play(a) {
+        a.hl('W'); a.say('Zwei Merkmale, zwei senkrechte Richtungen. Die anderen drei haben keinen Platz (Länge 0).'); await a.wait(2200);
+        a.hl('out'); a.say('Merkmal 1 ist aktiv: Es kommt sauber wieder heraus, die anderen bleiben null.'); await a.wait(1800);
+        a.set(st, { xin: [0, 1, 0, 0, 0] }); a.say('Merkmal 2 ebenso.'); await a.wait(1500);
+        a.set(st, { xin: [0, 0, 1, 0, 0] }); a.say('Merkmal 3 geht verloren: Es hat keine Richtung.');
+      },
+    },
+    superposition: {
+      views: ['toy'],
+      formula: () => `${toyF}<span class="sep">Sparsity</span>${V('sp')}`,
+      setup() { st.spars = 0.9; st.toyInA = 0; st.xin = [0, 0, 0, 0, 0]; toyInit(1); },
+      async play(a) {
+        a.say('Neues Netz, zufällig gestartet. Die Merkmale sind selten: Jedes ist nur in 10 % der Beispiele aktiv.'); await a.wait(1800);
+        a.hl('W'); a.say('Training …');
+        await a.loop(() => { toyStep(0.9); return toy.t < 3000; }, (i) => (i < 100 ? 150 : 900));
+        a.say('Ein Fünfeck: fünf Merkmale in zwei Dimensionen, jedes in seiner eigenen Richtung.'); await a.wait(1600);
+        a.hl('out'); a.set(st, { toyInA: 1, xin: [0, 0, 1, 0, 0] }); a.say('Ein Merkmal aktiv: Es kommt fast sauber heraus; die Störung auf die anderen schneidet der Knick weg.'); await a.wait(2600);
+        a.set(st, { xin: [0, 1, 1, 0, 0] }); a.say('Zwei gleichzeitig: Jetzt stören sie sich sichtbar. Das ist der Preis der Superposition.');
+      },
+    },
+    dicht: {
+      views: ['toy'],
+      formula: () => `${toyF}<span class="sep">Sparsity</span>${V('sp')}`,
+      setup() { st.spars = 0; st.toyInA = 0; st.xin = [0, 0, 0, 0, 0]; toyInit(1); },
+      async play(a) {
+        a.say('Dasselbe Netz, aber die Merkmale sind fast immer alle gleichzeitig aktiv.'); await a.wait(1400);
+        await a.loop(() => { toyStep(0); return toy.t < 3000; }, (i) => (i < 100 ? 150 : 900));
+        a.hl('W'); a.say('Nur die zwei wichtigsten Merkmale bekommen eine Richtung, senkrecht zueinander. Der Rest wird aufgegeben.'); await a.wait(2600);
+        a.say('Dazwischen, bei 70 % Sparsity …'); st.spars = 0.7; toyInit(1);
+        await a.loop(() => { toyStep(0.7); return toy.t < 3000; }, 900);
+        a.say('… vier Merkmale als zwei Gegensatzpaare. Das Netz wägt ab: Störung gegen Platz.');
+      },
+    },
+    projektion: {
+      views: ['proj'],
+      formula: `${T('P', '<b>P</b>', '', 'Matrix 2×50: eine Blickrichtung, ein Schatten (Kapitel 2)')} <b>x</b><span class="sep">→</span>${T('pca', 'Hauptkomponenten', 'c-new', 'die zwei Richtungen, in denen die Daten am stärksten streuen')}`,
+      setup() { st.proj = 0; st.pcaT = 0; },
+      async play(a) {
+        a.hl('P'); a.say('Drei getrennte Gruppen in 50 Dimensionen, aus zufälligen Richtungen betrachtet …');
+        await a.to(st, { proj: Math.PI * 1.5 }, 7000, { ease: (t) => t });
+        a.say('Meist ein einziger Haufen. Die Trennung liegt in Richtungen, die der Schatten verschluckt.'); await a.wait(1400);
+        a.hl('pca'); a.say('Jetzt die Blickrichtung der Hauptkomponenten:');
+        await a.to(st, { pcaT: 1 }, 2200);
+        a.say('Drei klar getrennte Gruppen. Wer hochdimensionale Daten zeigt, wählt immer eine Blickrichtung.');
+      },
+    },
+    ausblick: {
+      views: ['gram'],
+      formula: `Wort → Vektor in ℝ<sup><i>d</i></sup><span class="sep">·</span>Bedeutung → Richtung`,
+      setup() { st.gramD = DL.length - 1; },
+      async play(a) { a.say('Ein Sprachmodell hat Platz für sehr viele fast unabhängige Richtungen. Kapitel 6 zeigt, was Wörter darin tun.'); },
+    },
+  };
+
+  story = S.story($('#story'), {
+    views: { hist, shell, gram: gramV, toy: toyV, proj: projV },
+    steps,
+    values: () => ({ d: String(dOf(st.d)), gd: String(dOf(st.gramD)), sp: fmt(st.spars * 100, 0) + ' %' }),
+  });
+})();
+</script>
+</body>
+</html>

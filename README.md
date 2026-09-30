@@ -23,8 +23,17 @@ is currently doing the work. The engine lives in `series.js` (`S.story`).
 - **Chapter 2, *Die Matrix***: vectors, then matrices as transformations from simple to
   general (stretch, reflect, rotate, shear, flatten, compose, SVD, 2D→3D, 3D→2D), and
   only then the regression as a matrix product and as an orthogonal projection.
-- Chapters 3–9 are planned; the hub page lists the figures proposed for each. The
-  circuits chapter will read a small transformer we train ourselves.
+- **Chapter 3, *Die Grenze***: pass/fail instead of a number, the sigmoid, cross-entropy as
+  surprise, the boundary perpendicular to w, the 3D ramp, softmax on three penguin species,
+  temperature on next-word probabilities, and XOR where one boundary fails.
+- **Chapter 4, *Den Raum falten***: ReLU as a fold, one layer as matrix plus fold (a
+  creased sheet in 3D where a plane separates), a network trained live in the browser,
+  backpropagation as the error flowing back, curves from kinks, the two spirals.
+- **Chapter 5, *Viele Dimensionen***: angles between random directions, the volume in the
+  shell, near-orthogonal directions, superposition trained live (Toy Models, 2022), and
+  projections as shadows vs. principal components.
+- Chapters 6–9 are planned; the circuits chapter will read a small transformer we train
+  ourselves.
 
 Unlike the studies below, the chapters share `series.css` and `series.js`. Both are
 loaded as plain (non-module) files, so the pages still open straight from `file://`.
