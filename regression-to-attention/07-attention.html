@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Attention · Kapitel 7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 7 von 9</div>
+    <h1>Attention</h1>
+    <p class="lead">Ein Wort hat in der Tabelle nur einen Vektor, egal in welchem Satz es steht. Attention lässt jedes Wort die anderen Wörter im Satz ansehen und sich mit ihnen mischen. Wir bauen den Mechanismus Teil für Teil zusammen, bis die Formel aus „Attention Is All You Need“ dasteht.</p>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="zwei"><div class="vlabel">Zwei Sätze, ein Wort</div><div class="plot" id="v-zwei" role="img" aria-label="Zwei Sätze mit dem Wort Bank; darunter jeweils derselbe Vektor."></div></div>
+        <div class="view" data-view="mix"><div class="vlabel">Ein gewichteter Mittelwert</div><div class="plot" id="v-mix" role="img" aria-label="Punkte in der Ebene und ihr gewichteter Mittelwert."></div></div>
+        <div class="view" data-view="attn"><div class="vlabel" id="l-attn">„Bank“ sieht sich im Satz um</div><div class="plot" id="v-attn" role="img" aria-label="Die Wörter eines Satzes mit Punktzahlen und Gewichten; darunter die Lage von Bank zwischen Stuhl und Sparkasse."></div></div>
+        <div class="view" data-view="qk"><div class="vlabel">Ein Beispiel von Hand: Wer ist „sie“?</div><div class="plot" id="v-qk" role="img" aria-label="Wörter als Pfeile in der Ebene, die Frage von sie als gedrehter Pfeil und die Punktzahlen."></div></div>
+        <div class="view" data-view="pipe"><div class="vlabel">Die ganze Rechnung</div><div class="plot" id="v-pipe" role="img" aria-label="Rechenschritte der Attention als Kette."></div></div>
+        <div class="view" data-view="amat"><div class="vlabel" id="l-amat">Die Attention-Matrix</div><div class="plot" id="v-amat" role="img" aria-label="Tabelle: wie stark jedes Wort auf jedes andere schaut."></div></div>
+        <div class="view" data-view="sqrtd"><div class="vlabel">Punktzahlen zufälliger Vektoren in d Dimensionen</div><div class="plot" id="v-sqrtd" role="img" aria-label="Punktzahlen und Softmax-Gewichte für wachsende Dimension, mit und ohne Teilen durch Wurzel d."></div></div>
+        <div class="view" data-view="heads"><div class="vlabel">Zwei Köpfe, zwei Fragen</div><div class="plot" id="v-heads" role="img" aria-label="Zwei Attention-Matrizen nebeneinander mit verschiedenen Mustern."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="problem"><div class="card">
+        <span class="kicker">Ausgangspunkt</span>
+        <h3>Ein Wort, zwei Sätze, ein Vektor</h3>
+        <p>Am Ende von Kapitel 6 stand ein Problem: „Bank“ hat in der Tabelle genau eine Zeile. In „der Mann bringt Geld zur Bank“ und in „der Mann sitzt auf der Bank“ bekommt es dieselben 12 Zahlen.</p>
+        <p>Ein Mensch liest die Bedeutung aus den Wörtern drumherum. Das Netz soll dasselbe tun: Der Vektor von „Bank“ soll sich nach dem Satz richten.</p>
+      </div></article>
+
+      <article class="step" data-step="mischen"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Mischen mit Gewichten</h3>
+        <p>Das Werkzeug dafür ist ein gewichteter Mittelwert. Zwei Punkte, Gewichte 0,5 und 0,5: genau die Mitte. Gewichte 0,8 und 0,2: viel näher am ersten. Die Gewichte sind nie negativ und ergeben zusammen 1.</p>
+        <p>Mit drei Punkten geht es genauso: Die Mischung liegt irgendwo dazwischen, gezogen zu dem Punkt mit dem größten Gewicht. Das ist dieselbe Spaltenmischung wie in Kapitel 2.</p>
+      </div></article>
+
+      <article class="step" data-step="handmix"><div class="card">
+        <span class="kicker">Die Idee</span>
+        <h3>„Bank“ nimmt etwas vom Satz auf</h3>
+        <p>Wir behalten den Vektor von „Bank“ und addieren eine Mischung der anderen Wörter im Satz: <b>Bank</b><sub>neu</sub> = <b>Bank</b> + Σ Gewicht · <b>Wort</b>. Die Vektoren stammen aus Kapitel 6.</p>
+        <p>Unten zeigen wir die Lage auf der Achse von „Stuhl“ zu „Sparkasse“. Geben wir „Geld“ das ganze Gewicht, rückt „Bank“ zum Geld. Geben wir es „sitzt“, rückt es zum Stuhl. Bleibt die Frage: Wer legt die Gewichte fest?</p>
+      </div></article>
+
+      <article class="step" data-step="punkte"><div class="card">
+        <span class="kicker">Gewichte, erster Teil</span>
+        <h3>Wer ist relevant? Das Skalarprodukt</h3>
+        <p>Ein naheliegendes Maß für Relevanz kennen wir: das Skalarprodukt (Kapitel 5 und 6). Wir rechnen es zwischen „Bank“ und jedem Wort im Satz aus. Das ergibt eine Punktzahl pro Wort.</p>
+        <p>Ähnliche Wörter bekommen viel, fremde wenig oder Negatives.</p>
+      </div></article>
+
+      <article class="step" data-step="softmax"><div class="card">
+        <span class="kicker">Gewichte, zweiter Teil</span>
+        <h3>Aus Punktzahlen werden Gewichte</h3>
+        <p>Gewichte müssen positiv sein und sich zu 1 addieren. Genau das macht die Softmax aus Kapitel 3: e hoch Punktzahl, dann durch die Summe teilen. Ein Faktor davor (wie die Temperatur) macht die Verteilung schärfer oder weicher.</p>
+        <p>Und hier zeigt sich ein Problem: „Bank“ ist sich selbst am ähnlichsten. Fast das ganze Gewicht geht an „Bank“ selbst, und es bewegt sich kaum.</p>
+      </div></article>
+
+      <article class="step" data-step="ohneselbst"><div class="card">
+        <span class="kicker">Erster Erfolg</span>
+        <h3>Nur die anderen ansehen</h3>
+        <p>Lassen wir „Bank“ für den Moment nur die anderen Wörter ansehen. Jetzt geht das Gewicht an die Wörter, die zu „Bank“ passen: „bringt“ und „Geld“ im ersten Satz, „sitzt“ im zweiten, „Holz“ im dritten.</p>
+        <p>Und „Bank“ bewegt sich: zum Geld, zum Sitzen, zum Holz. Derselbe Ausgangsvektor, drei verschiedene Ergebnisse, je nach Satz. Das ist der Kern von Attention, noch ganz ohne gelernte Zahlen.</p>
+      </div></article>
+
+      <article class="step" data-step="frage"><div class="card">
+        <span class="kicker">Query und Key</span>
+        <h3>Fragen und Schilder</h3>
+        <p>Reine Ähnlichkeit reicht aber nicht immer. In „die Katze schläft, weil sie müde ist“ soll „sie“ die „Katze“ finden. Die ähnlichsten Wörter zu „sie“ sind aber andere kleine Wörter wie „die“, und „sie“ selbst.</p>
+        <p>Darum bekommt jedes Wort zwei neue Vektoren, beide per Matrix aus seinem Embedding gemacht (Kapitel 2): eine <strong>Frage</strong> <b>q</b> = <b>W</b><sub>Q</sub> <b>x</b> („Was suche ich?“) und ein <strong>Schild</strong> <b>k</b> = <b>W</b><sub>K</sub> <b>x</b> („Was biete ich an?“). Die Punktzahl ist <b>q</b> · <b>k</b>. Im Beispiel dreht <b>W</b><sub>Q</sub> die Frage von „sie“ um 90°: Sie zeigt jetzt dahin, wo die Nomen liegen.</p>
+        <div class="ex"><b>Hinweis</b>Dieses Beispiel ist von Hand gebaut, damit man es sehen kann. In echten Netzen werden <b>W</b><sub>Q</sub> und <b>W</b><sub>K</sub> gelernt, wie alle anderen Zahlen auch.</div>
+      </div></article>
+
+      <article class="step" data-step="wert"><div class="card">
+        <span class="kicker">Value</span>
+        <h3>Was weitergegeben wird</h3>
+        <p>Die dritte Matrix bestimmt, was beim Mischen tatsächlich weitergegeben wird: der <strong>Wert</strong> <b>v</b> = <b>W</b><sub>V</sub> <b>x</b>. „sie“ soll von „Katze“ die Bedeutung übernehmen, nicht ihre Wortart.</p>
+        <p>Im Beispiel ist <b>W</b><sub>V</sub> eine Projektion (Kapitel 2, plattdrücken): Sie behält nur die waagrechte Richtung, die Bedeutung. Danach trägt „sie“ etwas von „Katze“ in sich.</p>
+      </div></article>
+
+      <article class="step" data-step="formel"><div class="card">
+        <span class="kicker">Zusammengesetzt</span>
+        <h3>Die Formel</h3>
+        <p>Jetzt alle Wörter auf einmal. Die Embeddings stehen als Zeilen in einer Matrix <b>X</b>. Drei Matrixmultiplikationen machen daraus alle Fragen <b>Q</b>, Schilder <b>K</b> und Werte <b>V</b>.</p>
+        <p><b>Q</b><b>K</b><sup>⊤</sup> enthält alle Punktzahlen, jede Frage mit jedem Schild. Geteilt durch √<i>d</i> (gleich mehr dazu), Softmax je Zeile, mal <b>V</b>: Jede Zeile des Ergebnisses ist die Mischung für ein Wort. Das ist die Formel aus „Attention Is All You Need“ (2017).</p>
+      </div></article>
+
+      <article class="step" data-step="matrix"><div class="card">
+        <span class="kicker">Hinschauen</span>
+        <h3>Die Attention-Matrix</h3>
+        <p>Die Gewichte nach der Softmax bilden eine Tabelle: Zeile = welches Wort schaut, Spalte = worauf. Jede Zeile ergibt zusammen 1.</p>
+        <p>Hier für einen Satz, mit den Vektoren aus Kapitel 6 und ohne den Blick auf sich selbst. Solche Tabellen sind das, was man meint, wenn man sagt, man „schaut einem Modell bei der Attention zu“.</p>
+      </div></article>
+
+      <article class="step" data-step="wurzel"><div class="card">
+        <span class="kicker">Ein Detail mit Grund</span>
+        <h3>Warum durch √d teilen?</h3>
+        <p>Ein Skalarprodukt ist eine Summe aus <i>d</i> Produkten. Bei zufälligen Vektoren wächst ihre Streuung wie √<i>d</i> (die Münzwürfe aus Kapitel 5, diesmal ohne Teilen durch die Längen). In 1000 Dimensionen sind die Punktzahlen also riesig.</p>
+        <p>Große Punktzahlen machen die Softmax extrem scharf: Ein Wort bekommt alles, die anderen nichts, und das Lernen kommt kaum noch voran. Teilen durch √<i>d</i> bringt die Punktzahlen zurück in einen vernünftigen Bereich, egal wie groß <i>d</i> ist.</p>
+      </div></article>
+
+      <article class="step" data-step="maske"><div class="card">
+        <span class="kicker">Für Sprachmodelle</span>
+        <h3>Nur zurückschauen</h3>
+        <p>Ein Sprachmodell lernt, an jeder Stelle das <em>nächste</em> Wort vorherzusagen. Dürfte ein Wort beim Lernen nach rechts schauen, könnte es die Antwort einfach ablesen.</p>
+        <p>Darum wird die obere Hälfte der Matrix gesperrt: Ihre Punktzahlen werden vor der Softmax auf −∞ gesetzt, ihre Gewichte werden 0. Jedes Wort sieht nur sich und die Wörter davor. Das heißt <strong>kausale Maske</strong>.</p>
+      </div></article>
+
+      <article class="step" data-step="koepfe"><div class="card">
+        <span class="kicker">Mehr Fragen gleichzeitig</span>
+        <h3>Mehrere Köpfe</h3>
+        <p>Ein Satz ist voller Beziehungen: Wer tut etwas, worauf bezieht sich „sie“, was stand direkt davor? Eine einzige Frage pro Wort reicht dafür nicht.</p>
+        <p>Also gibt es mehrere Sätze von <b>W</b><sub>Q</sub>, <b>W</b><sub>K</sub>, <b>W</b><sub>V</sub> nebeneinander, die <strong>Köpfe</strong>. Jeder Kopf hat sein eigenes Muster. Ihre Ergebnisse werden aneinandergehängt und mit einer weiteren Matrix <b>W</b><sub>O</sub> zurück in den Raum der Embeddings gebracht.</p>
+        <div class="ex"><b>Zur Abbildung</b>Links ein Kopf, der nach Ähnlichem fragt (die Vektoren aus Kapitel 6). Rechts ein Muster „schau auf das vorige Wort“, von Hand gesetzt. Wie ein Kopf so etwas lernen kann, sehen wir in Kapitel 8 und 9.</div>
+      </div></article>
+
+      <article class="step" data-step="ausblick"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>Ein Baustein</h3>
+        <p>Attention mischt Information zwischen den Wörtern. Was noch fehlt: die Reihenfolge der Wörter, die Verarbeitung jedes einzelnen Worts, das Stapeln vieler Schichten und eine Aufgabe zum Lernen. Zusammen ergibt das den Transformer, Kapitel 8. Dort trainieren wir einen eigenen.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>D. Bahdanau, K. Cho, Y. Bengio (2014): <a href="https://arxiv.org/abs/1409.0473"><i>Neural Machine Translation by Jointly Learning to Align and Translate</i></a>.</li>
+      <li>A. Vaswani u. a. (2017): <a href="https://arxiv.org/abs/1706.03762"><i>Attention Is All You Need</i></a>.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="06-embeddings.html"><span class="dir">Zurück · Kapitel 6</span><span class="name">Bedeutung als Richtung</span></a>
+    <a class="next" href="08-transformer.html"><span class="dir">Weiter · Kapitel 8</span><span class="name">Der Transformer</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script src="wordmodel.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const FRAC = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+  const { rng, gauss, dotN, unit, sub, add } = WM;
+  const fin = WM.fin, vec = (w) => unit(fin().E[fin().id[w]]);
+
+  const SENTS = ['der Mann bringt Geld zur Bank', 'der Mann sitzt auf der Bank', 'die Bank ist aus Holz'].map((s) => s.split(' '));
+  const BETA = 6;
+  const st = {
+    zA: 0, zB: 0,
+    mixN: 2, mw: [0.5, 0.5, 0], mixA: 1,
+    sent: 0, mode: 'hand', hw: null, scoreA: 0, wA: 0, moveA: 0, self: 1, ghosts: [],
+    qkRot: 0, qkScore: 0, qkW: 0, qkV: 0, qkMove: 0,
+    pipeK: 0,
+    amSent: 0, amA: 0, amMask: 0, amHi: -1,
+    sdI: 0, sdDiv: 0,
+    hdA: 0,
+  };
+  let story = null;
+
+  // ── attention of "Bank" in a sentence, with the chapter-6 vectors ─
+  function attend(words, opt) {
+    const bi = words.lastIndexOf('Bank'), q = vec('Bank');
+    const sc = words.map((w, j) => (j === bi && !opt.self ? null : dotN(q, vec(w))));
+    let wts;
+    if (opt.hand) wts = words.map((w, j) => opt.hand[j] || 0);
+    else { const z = sc.map((s) => (s == null ? -Infinity : BETA * s)), m = Math.max(...z), e = z.map((x) => (x === -Infinity ? 0 : Math.exp(x - m))), S2 = e.reduce((a, b) => a + b); wts = e.map((x) => x / S2); }
+    const mix = Array(WM.D).fill(0); words.forEach((w, j) => { if (j === bi && !opt.self) return; vec(w).forEach((x, k) => (mix[k] += wts[j] * x)); });
+    return { bi, sc, wts, out: unit(add(q, mix)) };
+  }
+  const AXW = ['Sofa', 'Stuhl', 'Holz', 'Sparkasse'];
+  const axis = () => unit(sub(vec('Sparkasse'), vec('Stuhl')));
+
+  // ── 1. two sentences, one vector ────────────────────────────────
+  const zweiV = S.canvas($('#v-zwei'), (ctx, W, H) => {
+    const e = fin().E[fin().id.Bank], mx = Math.max(...e.map(Math.abs));
+    SENTS.slice(0, 2).forEach((ws, k) => {
+      const a = k === 0 ? st.zA : st.zB; if (a <= 0) return;
+      ctx.globalAlpha = a; const y = H * (k === 0 ? 0.22 : 0.62), fs = Math.min(22, W / 22);
+      ctx.font = S.font(fs, 'body', '500'); const wd = ws.map((w) => ctx.measureText(w).width), tot = wd.reduce((p, c) => p + c, 0) + fs * 0.5 * (ws.length - 1);
+      let x = (W - tot) / 2, bx = 0;
+      ws.forEach((w, i) => { const isB = w === 'Bank'; if (isB) { bx = x + wd[i] / 2; ctx.fillStyle = S.alpha('accent', 0.22); ctx.fillRect(x - 4, y - fs * 0.8, wd[i] + 8, fs * 1.6); } S.label(ctx, w, x, y, isB ? S.c.accent : S.c.fg, S.font(fs, 'body', isB ? '600' : '500'), 'left'); x += wd[i] + fs * 0.5; });
+      const bw = Math.min(16, W / 30), y0 = y + 62, x0 = bx - (bw * e.length) / 2;
+      ctx.strokeStyle = S.alpha('fg', 0.3); ctx.beginPath(); ctx.moveTo(bx, y + fs * 0.9); ctx.lineTo(bx, y0 - 30); ctx.stroke();
+      e.forEach((v, j) => { const h = (v / mx) * 26; ctx.fillStyle = v >= 0 ? S.c.model : S.c.error; ctx.fillRect(x0 + j * bw + 1, v >= 0 ? y0 - h : y0, bw - 2, Math.abs(h)); });
+      ctx.globalAlpha = 1;
+    });
+    if (st.zB > 0.9) S.label(ctx, 'dieselben 12 Zahlen', W / 2, H - 16, S.c['fg-2'], S.font(13, 'body', '600'), 'center');
+  });
+
+  // ── 2. a weighted mean in the plane ─────────────────────────────
+  const MP = [[-1.6, -0.8], [1.8, -0.4], [0.2, 1.7]], MN = ['A', 'B', 'C'], MC = () => [S.c.model, S.c.error, S.c.grad];
+  const mixV = S.canvas($('#v-mix'), (ctx, W, H) => {
+    const wide = W > H, pw = wide ? W * 0.62 : W, ph = wide ? H : H * 0.66, k = Math.min(pw, ph) / 5, cx = pw / 2, cy = ph / 2, P = (p) => [cx + p[0] * k, cy - p[1] * k];
+    const n = st.mixN, w = st.mw.slice(0, n), s = w.reduce((a, b) => a + b, 0) || 1, m = [0, 1].map((d) => MP.slice(0, n).reduce((acc, p, i) => acc + (w[i] / s) * p[d], 0));
+    ctx.strokeStyle = S.alpha('fg', 0.18); ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.beginPath(); MP.slice(0, n).forEach((p, i) => (i ? ctx.lineTo(...P(p)) : ctx.moveTo(...P(p)))); if (n > 2) ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+    MP.slice(0, n).forEach((p, i) => { const q = P(p); ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(...q); ctx.lineTo(...P(m)); ctx.stroke(); S.dot(ctx, q[0], q[1], 7, MC()[i], S.c.surface, 2); S.label(ctx, MN[i], q[0] + 12, q[1] - 10, MC()[i], S.font(16, 'body', '600'), 'left'); });
+    const pm = P(m); S.dot(ctx, pm[0], pm[1], 8, S.c.accent, S.c.surface, 2.5); S.label(ctx, 'Mischung', pm[0] + 12, pm[1] + 14, S.c.accent, S.font(14, 'body', '600'), 'left');
+    const bx = wide ? pw + 20 : 40, by = wide ? H * 0.3 : ph + 14, bw = wide ? W - pw - 50 : W - 90, rh = 30;
+    MN.slice(0, n).forEach((nm, i) => { const y = by + i * rh; S.label(ctx, `Gewicht ${nm}`, bx, y + rh / 2, MC()[i], S.font(13, 'body', '600'), 'left'); const x0 = bx + 86; ctx.fillStyle = S.alpha('fg', 0.08); ctx.fillRect(x0, y + 6, bw - 86, rh - 12); ctx.fillStyle = MC()[i]; ctx.fillRect(x0, y + 6, (bw - 86) * (w[i] / s), rh - 12); S.label(ctx, fmt(w[i] / s, 2), x0 + (bw - 86) + 6, y + rh / 2, S.c['fg-2'], S.font(12, 'mono'), 'left'); });
+    S.label(ctx, `Summe = ${fmt(1, 2)}`, bx, by + n * rh + 14, S.c['fg-2'], S.font(12, 'mono'), 'left');
+  });
+
+  // ── 3–6. Bank looks around its sentence ─────────────────────────
+  const attnV = S.canvas($('#v-attn'), (ctx, W, H) => {
+    const ws = SENTS[st.sent], r = attend(ws, st.mode === 'hand' ? { hand: st.hw || [], self: false } : { self: st.self > 0.5 });
+    const n = ws.length, cw = Math.min(110, (W - 20) / n), x0 = (W - cw * n) / 2, yW = 26, fs = Math.min(16, cw / 4.5);
+    // words
+    ws.forEach((w, j) => { const x = x0 + j * cw + cw / 2, isB = j === r.bi; if (isB) { ctx.fillStyle = S.alpha('accent', 0.22); ctx.fillRect(x - cw / 2 + 4, yW - 14, cw - 8, 28); } S.label(ctx, w, x, yW, isB ? S.c.accent : S.c.fg, S.font(fs, 'body', '600'), 'center'); });
+    const yS = 64, hS = Math.min(80, Math.max(36, (H - 230) / 2)), yWt = yS + hS + 30, hW = hS;
+    // scores
+    if (st.scoreA > 0) {
+      ctx.globalAlpha = st.scoreA; S.label(ctx, 'Punktzahl = Bank · Wort', 8, yS - 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      const mid = yS + hS / 2; ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + n * cw, mid); ctx.stroke();
+      ws.forEach((w, j) => { const s = r.sc[j], x = x0 + j * cw + cw * 0.3; if (s == null) { S.label(ctx, '–', x + cw * 0.2, mid, S.c.muted, S.font(13, 'mono'), 'center'); return; } const h = s * (hS / 2 - 4); ctx.fillStyle = s >= 0 ? S.c.model : S.c.error; ctx.fillRect(x, s >= 0 ? mid - h : mid, cw * 0.4, Math.abs(h)); S.label(ctx, fmt(s, 2), x + cw * 0.2, s >= 0 ? mid - h - 9 : mid - h + 9, S.c['fg-2'], S.font(11, 'mono'), 'center'); });
+      ctx.globalAlpha = 1;
+    }
+    // weights
+    if (st.wA > 0) {
+      ctx.globalAlpha = st.wA; S.label(ctx, st.mode === 'hand' ? 'Gewichte, von Hand gesetzt' : 'Gewicht = softmax(Punktzahl)', 8, yWt - 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      const base = yWt + hW; ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x0 + n * cw, base); ctx.stroke();
+      ws.forEach((w, j) => { const a = r.wts[j], x = x0 + j * cw + cw * 0.3, h = a * (hW - 12); ctx.fillStyle = S.c.accent; ctx.fillRect(x, base - h, cw * 0.4, h); if (a > 0.005) S.label(ctx, `${fmt(a * 100, 0)} %`, x + cw * 0.2, base - h - 9, S.c.fg, S.font(11.5, 'mono', '600'), 'center'); });
+      ctx.globalAlpha = 1;
+    }
+    // the axis Stuhl ↔ Sparkasse
+    const ax = axis(), yA = Math.min(H - 56, yWt + hW + 90), X = lin(-0.75, 0.65, 40, W - 40);
+    ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(30, yA); ctx.lineTo(W - 30, yA); ctx.stroke();
+    S.label(ctx, '← Sitzen', 30, yA + 34, S.c['fg-2'], S.font(12, 'body', '600'), 'left'); S.label(ctx, 'Geld →', W - 30, yA + 34, S.c['fg-2'], S.font(12, 'body', '600'), 'right');
+    AXW.forEach((w, i) => { const x = X(dotN(vec(w), ax)); S.dot(ctx, x, yA, 4, S.c['fg-2']); S.label(ctx, w, x, yA + (i % 2 ? 16 : -14), S.c['fg-2'], S.font(11.5, 'body'), 'center'); });
+    st.ghosts.forEach((gx) => { ctx.strokeStyle = S.alpha('accent', 0.4); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(gx), yA, 6, 0, Math.PI * 2); ctx.stroke(); });
+    const b0 = dotN(vec('Bank'), ax), b1 = dotN(r.out, ax), bx = X(S.lerp(b0, b1, st.moveA));
+    if (st.moveA > 0) { ctx.strokeStyle = S.alpha('accent', 0.5); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(X(b0), yA, 6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    S.dot(ctx, bx, yA, 7, S.c.accent, S.c.surface, 2); S.label(ctx, st.moveA > 0.5 ? 'Bank neu' : 'Bank', bx, yA - 30, S.c.accent, S.font(14, 'body', '600'), 'center');
+  });
+  const bankShift = () => { const r = attend(SENTS[st.sent], st.mode === 'hand' ? { hand: st.hw || [] } : { self: st.self > 0.5 }); return dotN(r.out, axis()); };
+
+  // ── 7–8. a hand-built example of query, key, value ──────────────
+  const QW = ['die', 'Katze', 'schläft', 'weil', 'sie'], QX = [[0.35, 0.9], [1.0, 0.2], [0.3, -0.8], [-0.25, 0.75], [0.15, 1.0]];
+  const qkV = S.canvas($('#v-qk'), (ctx, W, H) => {
+    const wide = W > H * 1.2, pw = wide ? W * 0.55 : W, ph = wide ? H : H * 0.56, k = Math.min(pw, ph) / 3.2, cx = pw * 0.42, cy = ph / 2 + 10, P = (p) => [cx + p[0] * k, cy - p[1] * k];
+    ctx.strokeStyle = S.alpha('fg', 0.12); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - 1.3 * k, cy); ctx.lineTo(cx + 1.4 * k, cy); ctx.moveTo(cx, cy - 1.3 * k); ctx.lineTo(cx, cy + 1.3 * k); ctx.stroke();
+    S.label(ctx, 'Inhalt →', cx + 1.38 * k, cy + 14, S.c.muted, S.font(11.5, 'body'), 'right'); S.label(ctx, W < 560 ? '↑ Funktionswort' : '↑ kleines Funktionswort', cx - 6, cy - 1.25 * k, S.c.muted, S.font(11.5, 'body'), 'right');
+    const ang = -st.qkRot * Math.PI / 2, rot = (p) => [p[0] * Math.cos(ang) - p[1] * Math.sin(ang), p[0] * Math.sin(ang) + p[1] * Math.cos(ang)];
+    const si = QW.indexOf('sie'), q = rot(QX[si]), sc = QX.map((x) => dotN(q, x)), z = sc.map((s) => 3 * s), m = Math.max(...z), e = z.map((x) => Math.exp(x - m)), Sm = e.reduce((a, b) => a + b), wts = e.map((x) => x / Sm);
+    // values: projection onto the horizontal axis
+    const vproj = (p) => [p[0], S.lerp(p[1], 0, st.qkV)];
+    QX.forEach((p, i) => { const isS = i === si, col = isS ? S.c.accent : QW[i] === 'Katze' ? S.c.grad : S.c['fg-2'], tip = isS ? p : vproj(p); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.globalAlpha = st.qkV > 0 && !isS ? 0.85 : 1; S.arrow(ctx, cx, cy, ...P(tip), 10, isS ? 3 : 2); const l = P(tip.map((x) => x * 1.12)); S.label(ctx, `${QW[i]}`, l[0], l[1] - 6, col, S.font(13.5, 'body', '600'), 'center'); ctx.globalAlpha = 1; });
+    if (st.qkRot > 0) { ctx.strokeStyle = S.c.accent; ctx.fillStyle = S.c.accent; ctx.setLineDash([6, 4]); S.arrow(ctx, cx, cy, ...P(q), 11, 2.5); ctx.setLineDash([]); const l = P(q.map((x) => x * 1.15)); S.label(ctx, 'Frage q von „sie“', l[0], l[1] + 16, S.c.accent, S.font(12.5, 'body', '600'), 'center'); }
+    if (st.qkMove > 0) {
+      const mix = [0, 1].map((d) => QX.reduce((acc, p, i) => acc + wts[i] * vproj(p)[d], 0)), nw = add(QX[si], mix.map((x) => x * st.qkMove));
+      ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad; S.arrow(ctx, ...P(QX[si]), ...P(nw), 10, 2.5);
+      S.dot(ctx, ...P(nw), 6, S.c.accent, S.c.surface, 2); S.label(ctx, '„sie“ neu', P(nw)[0] + 10, P(nw)[1] - 12, S.c.accent, S.font(13, 'body', '600'), 'left');
+    }
+    if (st.qkScore > 0) {
+      ctx.globalAlpha = st.qkScore;
+      const bx = wide ? pw + 70 : 80, by = wide ? H * 0.2 : ph + 20, bw = (wide ? W - pw - 90 : W - 110), rh = Math.min(30, (wide ? H * 0.6 : H - ph - 30) / QW.length);
+      S.label(ctx, st.qkW > 0.5 ? 'Gewicht (Softmax)' : (st.qkRot > 0.5 ? 'Punktzahl q · k' : 'Punktzahl x · x (Ähnlichkeit)'), bx + bw / 2, by - 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
+      QW.forEach((w, i) => { const y = by + i * rh, val = st.qkW > 0.5 ? wts[i] : sc[i], mid = st.qkW > 0.5 ? bx : bx + bw / 2, wd = (st.qkW > 0.5 ? val : val / 1.2 / 2) * bw; S.label(ctx, w, bx - 8, y + rh / 2, i === si ? S.c.accent : S.c.fg, S.font(12.5, 'body', '600'), 'right'); ctx.fillStyle = st.qkW > 0.5 ? S.c.accent : val >= 0 ? S.c.model : S.c.error; ctx.fillRect(wd >= 0 ? mid : mid + wd, y + 5, Math.abs(wd), rh - 10); S.label(ctx, st.qkW > 0.5 ? `${fmt(val * 100, 0)} %` : fmt(val, 2), Math.max(mid, mid + wd) + 6, y + rh / 2, S.c['fg-2'], S.font(11.5, 'mono'), 'left'); });
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 9. the whole computation as a chain ─────────────────────────
+  const PIPE = [['X', 'Wörter als Zeilen'], ['Q, K, V', 'X·W_Q, X·W_K, X·W_V'], ['Q·Kᵀ', 'alle Punktzahlen'], ['÷ √d', 'zurück in einen vernünftigen Bereich'], ['softmax', 'je Zeile: Gewichte, Summe 1'], ['· V', 'Werte mischen'], ['Ausgabe', 'eine Mischung pro Wort']];
+  const pipeV = S.canvas($('#v-pipe'), (ctx, W, H) => {
+    const n = PIPE.length, vert = W < 640, bw = vert ? Math.min(260, W - 40) : (W - 40) / n - 14, bh = vert ? Math.min(46, (H - 20) / n - 12) : 64;
+    PIPE.forEach(([a, b], i) => {
+      const on = st.pipeK >= i, cur = Math.round(st.pipeK) === i, x = vert ? (W - bw) / 2 : 20 + i * (bw + 14), y = vert ? 10 + i * (bh + 12) : H / 2 - bh / 2;
+      ctx.globalAlpha = on ? 1 : 0.25;
+      ctx.fillStyle = cur ? S.alpha('accent', 0.22) : S.c['surface-2']; ctx.strokeStyle = cur ? S.c.accent : S.c['fg-2']; ctx.lineWidth = cur ? 2 : 1;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, bw, bh, 8) : ctx.rect(x, y, bw, bh); ctx.fill(); ctx.stroke();
+      S.label(ctx, a, x + bw / 2, y + bh * 0.36, cur ? S.c.accent : S.c.fg, S.font(15, 'mono', '600'), 'center');
+      S.label(ctx, b, x + bw / 2, y + bh * 0.72, S.c['fg-2'], S.font(vert ? 11.5 : 10.5, 'body'), 'center');
+      if (i < n - 1) { ctx.strokeStyle = S.c['fg-2']; ctx.fillStyle = S.c['fg-2']; if (vert) S.arrow(ctx, W / 2, y + bh + 1, W / 2, y + bh + 11, 6, 1.5); else S.arrow(ctx, x + bw + 1, H / 2, x + bw + 13, H / 2, 6, 1.5); }
+      ctx.globalAlpha = 1;
+    });
+  });
+
+  // ── 10 & 12. the attention matrix of a sentence ─────────────────
+  const AMS = 'der Mann bringt Geld zur Bank'.split(' ');
+  function amatrix(mask) {
+    return AMS.map((wi, i) => {
+      const z = AMS.map((wj, j) => { const ok = mask ? j < i || (i === 0 && j === 0) : j !== i; return ok ? BETA * dotN(vec(wi), vec(wj)) : -Infinity; });
+      const m = Math.max(...z), e = z.map((x) => (x === -Infinity ? 0 : Math.exp(x - m))), s = e.reduce((a, b) => a + b); return e.map((x) => x / s);
+    });
+  }
+  const amatV = S.canvas($('#v-amat'), (ctx, W, H) => {
+    const n = AMS.length, lab = W < 500 ? 56 : 76, side = Math.min(W - lab - 20, H - lab - 30), cs = side / n, x0 = lab + (W - lab - side) / 2 - 10, y0 = lab;
+    const A0 = amatrix(false), A1 = amatrix(true), A = A0.map((row, i) => row.map((v, j) => S.lerp(v, A1[i][j], st.amMask)));
+    AMS.forEach((w, j) => { ctx.save(); ctx.translate(x0 + (j + 0.5) * cs, y0 - 8); ctx.rotate(-0.8); S.label(ctx, w, 0, 0, w === 'Bank' ? S.c.accent : S.c['fg-2'], S.font(12, 'body', '600'), 'left'); ctx.restore(); });
+    A.forEach((row, i) => {
+      const al = clamp(st.amA * n - i, 0, 1); if (al <= 0) return;
+      S.label(ctx, AMS[i], x0 - 8, y0 + (i + 0.5) * cs, AMS[i] === 'Bank' ? S.c.accent : S.c.fg, S.font(12.5, 'body', '600'), 'right');
+      row.forEach((v, j) => {
+        const x = x0 + j * cs, y = y0 + i * cs, blocked = st.amMask > 0.5 && j > i;
+        ctx.globalAlpha = al; ctx.fillStyle = S.alpha('fg', 0.05); ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+        if (blocked) { ctx.fillStyle = S.alpha('error', 0.18 * st.amMask); ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2); S.label(ctx, '−∞', x + cs / 2, y + cs / 2, S.alpha('error', 0.8), S.font(Math.min(12, cs * 0.25), 'mono'), 'center'); }
+        else { ctx.fillStyle = S.c.accent; ctx.globalAlpha = al * clamp(v * 1.4, 0, 1); ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2); ctx.globalAlpha = al; if (cs > 38 && v >= 0.01) { ctx.font = S.font(Math.min(12, cs * 0.24), 'mono', '600'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = v > 0.45 ? S.c.surface : S.c.fg; ctx.fillText(fmt(v * 100, 0), x + cs / 2, y + cs / 2); } }
+      });
+      if (st.amHi === i) { ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2.5; ctx.strokeRect(x0, y0 + i * cs, n * cs, cs); }
+      ctx.globalAlpha = 1;
+    });
+    S.label(ctx, 'Zeile: wer schaut · Spalte: worauf · Zahlen in Prozent, jede Zeile ergibt 100', W / 2, H - 10, S.c['fg-2'], S.font(11.5, 'body'), 'center');
+  });
+
+  // ── 11. why divide by √d ────────────────────────────────────────
+  const SDD = [4, 64, 1024];
+  const SDV = SDD.map((d, i) => { const r = rng(70 + i), g = () => Array.from({ length: d }, () => gauss(r)), q = g(); return Array.from({ length: 8 }, () => dotN(q, g())); });
+  const sqrtdV = S.canvas($('#v-sqrtd'), (ctx, W, H) => {
+    const i = Math.round(st.sdI), d = SDD[i], div = S.lerp(1, Math.sqrt(d), st.sdDiv), sc = SDV[i].map((s) => s / div);
+    const X = lin(-80, 80, 30, W - 30), yL = H * 0.22;
+    ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(30, yL); ctx.lineTo(W - 30, yL); ctx.stroke();
+    [-80, -40, 0, 40, 80].forEach((v) => S.label(ctx, String(v), X(v), yL + 16, S.c.muted, S.font(11, 'mono'), 'center'));
+    sc.forEach((s, j) => S.dot(ctx, X(clamp(s, -80, 80)), yL, 5, S.c.model, S.c.surface, 1.5));
+    S.label(ctx, st.sdDiv > 0.5 ? `8 Punktzahlen, geteilt durch √${d} = ${fmt(Math.sqrt(d), 0)}` : `8 Punktzahlen q · k in d = ${d}`, 30, yL - 24, S.c.fg, S.font(14, 'body', '600'), 'left');
+    const m = Math.max(...sc), e = sc.map((s) => Math.exp(s - m)), Sm = e.reduce((a, b) => a + b), p = e.map((x) => x / Sm);
+    const by = H * 0.42, bh = H * 0.42, bw = (W - 80) / 8;
+    S.label(ctx, 'Softmax-Gewichte', 30, by - 10, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+    p.forEach((v, j) => { ctx.fillStyle = S.c.accent; ctx.fillRect(40 + j * bw + bw * 0.2, by + bh - v * bh, bw * 0.6, v * bh); S.label(ctx, `${fmt(v * 100, 0)} %`, 40 + j * bw + bw / 2, by + bh - v * bh - 10, S.c['fg-2'], S.font(11, 'mono'), 'center'); });
+    ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(40, by + bh); ctx.lineTo(W - 40, by + bh); ctx.stroke();
+  });
+
+  // ── 13. two heads ───────────────────────────────────────────────
+  const headsV = S.canvas($('#v-heads'), (ctx, W, H) => {
+    const n = AMS.length, A1 = amatrix(true), A2 = AMS.map((_, i) => AMS.map((__, j) => (i === 0 ? (j === 0 ? 1 : 0) : j === i - 1 ? 1 : 0)));
+    const narrow = W < 620, gw = narrow ? W - 20 : (W - 40) / 2, side = Math.min(gw - 70, narrow ? (H - 70) / 2 - 30 : H - 110), cs = side / n;
+    [[A1, 'Kopf 1: Ähnliches'], [A2, 'Kopf 2: voriges Wort']].forEach(([A, title], k) => {
+      const ox = narrow ? (W - side) / 2 + 30 : 20 + k * (gw + 20) + 60, oy = narrow ? 30 + k * (side + 50) : 60;
+      ctx.globalAlpha = k === 0 ? 1 : st.hdA; if (ctx.globalAlpha <= 0) return;
+      S.label(ctx, title, ox + side / 2 - 30, oy - 16, k === 0 ? S.c.accent : S.c.grad, S.font(13.5, 'body', '600'), 'center');
+      A.forEach((row, i) => { S.label(ctx, AMS[i], ox - 6, oy + (i + 0.5) * cs, S.c['fg-2'], S.font(11, 'body'), 'right'); row.forEach((v, j) => { ctx.fillStyle = S.alpha('fg', 0.05); ctx.fillRect(ox + j * cs + 1, oy + i * cs + 1, cs - 2, cs - 2); if (j <= i) { ctx.fillStyle = k === 0 ? S.c.accent : S.c.grad; const al = ctx.globalAlpha; ctx.globalAlpha = al * clamp(v * 1.4, 0, 1); ctx.fillRect(ox + j * cs + 1, oy + i * cs + 1, cs - 2, cs - 2); ctx.globalAlpha = al; } }); });
+      ctx.globalAlpha = 1;
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const mixF = `${T('n', '<b>Bank</b><sub>neu</sub>', '', 'der Vektor von Bank nach dem Umsehen')} = <b>Bank</b> + ${T('s', 'Σ<sub><i>j</i></sub> <i>w<sub>j</sub></i> · <b>Wort</b><sub><i>j</i></sub>', 'c-new', 'Mischung der anderen Wörter mit den Gewichten w_j')}`;
+  const attnF = (extra) => () => `${T('w', '<i>w<sub>j</sub></i>', 'c-new', 'Gewicht für Wort j')} = softmax<sub><i>j</i></sub>(${T('b', 'β', '', 'Schärfe, wie die Temperatur in Kapitel 3')} · ${T('s', '<b>Bank</b> · <b>Wort</b><sub><i>j</i></sub>', '', 'Punktzahl: Skalarprodukt')})<span class="sep">Lage auf der Achse</span>${V('pos')}${extra || ''}`;
+  const steps = {
+    problem: {
+      views: ['zwei'],
+      formula: `${T('e', '<b>e</b><sub>Bank</sub>', 'c-new', 'eine Zeile der Tabelle E, unabhängig vom Satz')} = dieselbe Zeile in jedem Satz`,
+      setup() { st.zA = 0; st.zB = 0; },
+      async play(a) {
+        await a.to(st, { zA: 1 }, 900); a.say('„der Mann bringt Geld zur Bank“: Bank ist ein Geldinstitut.'); await a.wait(2400);
+        await a.to(st, { zB: 1 }, 900); a.say('„der Mann sitzt auf der Bank“: Bank ist eine Sitzgelegenheit.'); await a.wait(2400);
+        a.hl('e'); a.say('Aus der Tabelle bekommt „Bank“ beide Male denselben Vektor. Das soll sich ändern.');
+      },
+    },
+    mischen: {
+      views: ['mix'],
+      formula: `${T('m', 'Mischung', 'c-new', 'gewichteter Mittelwert')} = ${T('w', '<i>w</i><sub>A</sub>', '', 'Gewicht von A')} · A + <i>w</i><sub>B</sub> · B + …<span class="sep">alle</span><i>w</i> ≥ 0, Summe = 1`,
+      setup() { st.mixN = 2; st.mw = [0.5, 0.5, 0]; },
+      async play(a) {
+        a.hl('m'); a.say('Zwei Punkte, je Gewicht 0,5: genau die Mitte.'); await a.wait(2200);
+        a.hl('w'); await a.to(st, { mw: [0.8, 0.2, 0] }, 1600); a.say('0,8 und 0,2: die Mischung rückt zu A.'); await a.wait(1800);
+        await a.to(st, { mw: [0.1, 0.9, 0] }, 1600); a.say('0,1 und 0,9: fast bei B.'); await a.wait(1800);
+        a.set(st, { mixN: 3, mw: [0.34, 0.33, 0.33] }); a.say('Drei Punkte, gleich gewichtet: die Mitte des Dreiecks.'); await a.wait(2200);
+        await a.to(st, { mw: [0.1, 0.15, 0.75] }, 1800); a.say('Viel Gewicht auf C: Die Mischung wandert zu C.');
+      },
+    },
+    handmix: {
+      views: ['attn'],
+      formula: () => `${mixF}<span class="sep">Lage auf der Achse</span>${V('pos')}`,
+      setup() { Object.assign(st, { sent: 0, mode: 'hand', hw: [0, 0, 0, 0, 0, 0], scoreA: 0, wA: 1, moveA: 0, ghosts: [] }); },
+      async play(a) {
+        a.say('Unten: die Achse von Stuhl zu Sparkasse. Dort liegt „Bank“, etwas näher am Geld.'); await a.wait(2600);
+        a.hl('s'); a.set(st, { hw: [0, 0, 0, 1, 0, 0] }); a.say('Satz 1: Wir geben „Geld“ das ganze Gewicht …'); await a.wait(1400);
+        await a.to(st, { moveA: 1 }, 1400); a.say('… und „Bank“ rückt zum Geld.'); await a.wait(2000);
+        a.set(st, { ghosts: [bankShift()], sent: 1, hw: [0, 0, 1, 0, 0, 0], moveA: 0 }); a.say('Satz 2: diesmal das ganze Gewicht auf „sitzt“ …'); await a.wait(1400);
+        await a.to(st, { moveA: 1 }, 1400); a.say('… und „Bank“ rückt zum Sitzen. Aber die Gewichte haben wir von Hand gesetzt. Wer soll sie festlegen?');
+      },
+    },
+    punkte: {
+      views: ['attn'],
+      formula: `${T('s', 'Punktzahl<sub><i>j</i></sub> = <b>Bank</b> · <b>Wort</b><sub><i>j</i></sub>', 'c-new', 'Skalarprodukt der auf Länge 1 gebrachten Vektoren aus Kapitel 6')}`,
+      setup() { Object.assign(st, { sent: 0, mode: 'soft', self: 1, scoreA: 0, wA: 0, moveA: 0, ghosts: [] }); },
+      async play(a) {
+        a.hl('s'); a.say('Für jedes Wort im Satz: Skalarprodukt mit „Bank“.');
+        await a.to(st, { scoreA: 1 }, 1200); await a.wait(1600);
+        a.say('„Bank“ mit sich selbst: 1, mehr geht nicht. „bringt“ und „zur“ passen gut, „der“ kaum.'); await a.wait(3000);
+        a.set(st, { sent: 1 }); a.say('Im zweiten Satz: „sitzt“ und „auf“ passen.');
+      },
+    },
+    softmax: {
+      views: ['attn'],
+      formula: attnF(),
+      setup() { Object.assign(st, { sent: 0, mode: 'soft', self: 1, scoreA: 1, wA: 0, moveA: 0, ghosts: [] }); },
+      async play(a) {
+        a.hl('w'); a.say('Softmax: aus den Punktzahlen werden Gewichte, alle positiv, Summe 1.');
+        await a.to(st, { wA: 1 }, 1200); await a.wait(1800);
+        a.say(`Problem: „Bank“ bekommt ${fmt(attend(SENTS[0], { self: true }).wts[5] * 100, 0)} % von sich selbst.`); await a.wait(2600);
+        await a.to(st, { moveA: 1 }, 1400); a.say('Darum bewegt es sich kaum. Ähnlichkeit allein schaut vor allem in den Spiegel.');
+      },
+    },
+    ohneselbst: {
+      views: ['attn'],
+      formula: attnF('<span class="sep">ohne sich selbst</span>'),
+      setup() { Object.assign(st, { sent: 0, mode: 'soft', self: 0, scoreA: 1, wA: 1, moveA: 0, ghosts: [] }); },
+      async play(a) {
+        a.hl('w'); a.say('Jetzt ohne den Blick auf sich selbst. Satz 1: Das Gewicht geht an „bringt“ und „Geld“ …');
+        await a.wait(1800); await a.to(st, { moveA: 1 }, 1400); a.say('… „Bank“ rückt zum Geld.'); await a.wait(2200);
+        a.set(st, { ghosts: [bankShift()], sent: 1, moveA: 0 }); a.say('Satz 2: Das Gewicht geht an „sitzt“ …'); await a.wait(1600);
+        await a.to(st, { moveA: 1 }, 1400); a.say('… „Bank“ rückt zum Sitzen.'); await a.wait(2200);
+        a.set(st, { ghosts: [...st.ghosts, bankShift()], sent: 2, moveA: 0 }); a.say('Satz 3: „die Bank ist aus Holz“ …'); await a.wait(1600);
+        await a.to(st, { moveA: 1 }, 1400); a.say('… „Bank“ rückt sogar über die Mitte zum Holz. Ein Vektor, drei Bedeutungen, je nach Satz.');
+      },
+    },
+    frage: {
+      views: ['qk'],
+      formula: `${T('q', '<b>q</b> = <b>W</b><sub>Q</sub> <b>x</b>', 'c-new', 'Frage: was dieses Wort sucht')}<span class="sep">·</span>${T('k', '<b>k</b> = <b>W</b><sub>K</sub> <b>x</b>', '', 'Schild: was dieses Wort anbietet (hier einfach x)')}<span class="sep">·</span>${T('s', 'Punktzahl = <b>q</b> · <b>k</b>', '', 'Frage trifft Schild')}`,
+      setup() { Object.assign(st, { qkRot: 0, qkScore: 0, qkW: 0, qkV: 0, qkMove: 0 }); },
+      async play(a) {
+        a.say('Fünf Wörter als Pfeile, von Hand gelegt: rechts Inhaltswörter, oben kleine Funktionswörter.'); await a.wait(2800);
+        await a.to(st, { qkScore: 1 }, 800); a.say('Reine Ähnlichkeit: „sie“ passt am besten zu sich selbst und zu „die“. Gesucht ist aber „Katze“.'); await a.wait(3400);
+        a.hl('q'); a.say('Die Matrix W_Q dreht die Frage von „sie“ um 90° …');
+        await a.to(st, { qkRot: 1 }, 1800); await a.wait(600);
+        a.hl('s'); a.say('… jetzt zeigt die Frage zu den Inhaltswörtern. Höchste Punktzahl: „Katze“.'); await a.wait(2600);
+        await a.to(st, { qkW: 1 }, 800); a.say('Nach der Softmax geht das meiste Gewicht an „Katze“.');
+      },
+    },
+    wert: {
+      views: ['qk'],
+      formula: `${T('v', '<b>v</b> = <b>W</b><sub>V</sub> <b>x</b>', 'c-new', 'Wert: was beim Mischen weitergegeben wird')}<span class="sep">·</span><b>x</b><sub>sie, neu</sub> = <b>x</b><sub>sie</sub> + Σ <i>w<sub>j</sub></i> <b>v</b><sub><i>j</i></sub>`,
+      setup() { Object.assign(st, { qkRot: 1, qkScore: 1, qkW: 1, qkV: 0, qkMove: 0 }); },
+      async play(a) {
+        a.hl('v'); a.say('W_V drückt alle Pfeile auf die waagrechte Achse: Weitergegeben wird nur der Inhalt.');
+        await a.to(st, { qkV: 1 }, 1800); await a.wait(1200);
+        a.say('Jetzt mischen, mit den Gewichten von eben …');
+        await a.to(st, { qkMove: 1 }, 1600);
+        a.say('„sie“ rückt nach rechts: Es trägt jetzt etwas vom Inhalt von „Katze“ in sich.');
+      },
+    },
+    formel: {
+      views: ['pipe'],
+      formula: () => `Attention(<b>Q</b>, <b>K</b>, <b>V</b>) = ${T('sm', 'softmax', '', 'je Zeile: Gewichte')}(${FRAC(T('qk', '<b>Q</b><b>K</b><sup>⊤</sup>', 'c-new', 'alle Punktzahlen: jede Frage mit jedem Schild'), T('d', '√<i>d</i>', '', 'Wurzel aus der Länge der Fragevektoren'))}) ${T('v', '<b>V</b>', '', 'die Werte, die gemischt werden')}`,
+      setup() { st.pipeK = 0; },
+      async play(a) {
+        const txt = ['Alle Wörter als Zeilen einer Matrix X.', 'Drei Matrixmultiplikationen: alle Fragen Q, Schilder K, Werte V auf einmal.', 'Q mal K transponiert: jede Frage mit jedem Schild, eine Tabelle von Punktzahlen.', 'Durch √d teilen (gleich mehr dazu).', 'Softmax in jeder Zeile: Gewichte, die sich zu 1 addieren.', 'Mal V: Jede Zeile wird eine Mischung der Werte.', 'Pro Wort ein neuer Vektor, der den Satz kennt.'];
+        const hl = [[], [], ['qk'], ['d'], ['sm'], ['v'], []];
+        for (let i = 0; i < PIPE.length; i++) { await a.to(st, { pipeK: i }, 500); a.hl(...hl[i]); a.say(txt[i]); await a.wait(2400); }
+      },
+    },
+    matrix: {
+      views: ['amat'],
+      formula: `${T('A', '<b>A</b> = softmax(<b>Q</b><b>K</b><sup>⊤</sup> / √<i>d</i>)', 'c-new', 'die Attention-Matrix: alle Gewichte')}<span class="sep">Zeile</span><i>i</i>: worauf Wort <i>i</i> schaut`,
+      setup() { Object.assign(st, { amA: 0, amMask: 0, amHi: -1 }); },
+      async play(a) {
+        a.hl('A'); a.say('Jedes Wort des Satzes schaut auf die anderen. Zeile für Zeile:');
+        await a.to(st, { amA: 1 }, 3000, { ease: (t) => t }); await a.wait(800);
+        a.set(st, { amHi: 5 }); a.say('Die Zeile von „Bank“: dieselben Gewichte wie vorhin, „bringt“ und „Geld“ vorn.'); await a.wait(3000);
+        a.set(st, { amHi: 2 }); a.say('Die Zeile von „bringt“: Es schaut vor allem auf „Bank“ und „Geld“.');
+      },
+    },
+    wurzel: {
+      views: ['sqrtd'],
+      formula: () => `Punktzahl = ${FRAC('<b>q</b> · <b>k</b>', T('d', '√<i>d</i>', 'c-new', 'gleicht das Wachsen der Summe aus'))}<span class="sep">d =</span>${V('d')}`,
+      setup() { st.sdI = 0; st.sdDiv = 0; },
+      async play(a) {
+        a.say('Zufällige Frage, 8 zufällige Schilder, in 4 Dimensionen: Die Punktzahlen liegen nah beieinander, die Gewichte sind verteilt.'); await a.wait(3200);
+        a.set(st, { sdI: 1 }); a.say('In 64 Dimensionen streuen die Punktzahlen viel weiter …'); await a.wait(2600);
+        a.set(st, { sdI: 2 }); a.say('… in 1024 Dimensionen noch weiter, und die Softmax gibt einem einzigen Schild fast alles.'); await a.wait(3200);
+        a.hl('d'); await a.to(st, { sdDiv: 1 }, 1600);
+        a.say('Geteilt durch √1024 = 32: wieder ein vernünftiger Bereich, wieder verteilte Gewichte.'); await a.wait(2600);
+        a.set(st, { sdI: 0 }); a.say('Für jedes d derselbe Bereich. Darum steht √d in der Formel.');
+      },
+    },
+    maske: {
+      views: ['amat'],
+      formula: `Punktzahl<sub><i>ij</i></sub> = ${T('m', '−∞', 'c-new', 'für j > i: e hoch −∞ ist 0, das Gewicht verschwindet')} für <i>j</i> > <i>i</i>`,
+      setup() { Object.assign(st, { amA: 1, amMask: 0, amHi: -1 }); },
+      async play(a) {
+        a.say('Wieder die Matrix. Für ein Sprachmodell darf kein Wort nach rechts schauen.'); await a.wait(2400);
+        a.hl('m'); await a.to(st, { amMask: 1 }, 1600);
+        a.say('Die obere Hälfte ist gesperrt. Jede Zeile verteilt ihre Gewichte nur auf die Wörter davor. Das erste Wort sieht nur sich selbst.');
+      },
+    },
+    koepfe: {
+      views: ['heads'],
+      formula: `${T('h', 'Kopf<sub><i>h</i></sub>', 'c-new', 'eigene W_Q, W_K, W_V pro Kopf')} = Attention(<b>X</b><b>W</b><sub>Q</sub><sup><i>h</i></sup>, <b>X</b><b>W</b><sub>K</sub><sup><i>h</i></sup>, <b>X</b><b>W</b><sub>V</sub><sup><i>h</i></sup>)<span class="sep">→</span>[Kopf<sub>1</sub>, Kopf<sub>2</sub>, …] <b>W</b><sub>O</sub>`,
+      setup() { st.hdA = 0; },
+      async play(a) {
+        a.hl('h'); a.say('Kopf 1 fragt nach Ähnlichem (mit Maske).'); await a.wait(2400);
+        await a.to(st, { hdA: 1 }, 900); a.say('Kopf 2 fragt nach etwas ganz anderem: dem Wort direkt davor. Eine schräge Linie unter der Diagonale.'); await a.wait(3000);
+        a.say('Beide rechnen gleichzeitig. Ihre Ergebnisse werden aneinandergehängt und mit W_O zurückgerechnet.');
+      },
+    },
+    ausblick: {
+      views: ['heads'],
+      formula: `Attention + Reihenfolge + Verarbeitung pro Wort + viele Schichten = Transformer`,
+      setup() { st.hdA = 1; },
+      async play(a) { a.say('Kapitel 8: Wir bauen daraus einen Transformer und trainieren ihn selbst.'); },
+    },
+  };
+
+  (window.requestIdleCallback || ((f) => setTimeout(f, 800)))(() => fin());
+  story = S.story($('#story'), {
+    views: { zwei: zweiV, mix: mixV, attn: attnV, qk: qkV, pipe: pipeV, amat: amatV, sqrtd: sqrtdV, heads: headsV },
+    steps,
+    values: () => ({ pos: fmt(S.lerp(dotN(vec('Bank'), axis()), bankShift(), st.moveA), 2), d: String(SDD[Math.round(st.sdI)]) }),
+  });
+})();
+</script>
+</body>
+</html>

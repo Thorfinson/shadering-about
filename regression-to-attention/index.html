@@ -241,49 +241,46 @@
         </div>
         <div class="formula"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
       </li>
-              <li>Ähnlichkeit als Skalarprodukt</li>
-              <li>Lineare Richtungen: König − Mann + Frau</li>
-              <li>Ein echter Embedding-Raum, auf zwei Dimensionen projiziert</li>
-            </ul>
-          </details>
-        </div>
-        <div class="formula"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
-      </li>
 
-      <li class="rung">
+      <li class="rung ready">
         <div class="num">7</div>
         <div class="body">
-          <div class="top"><h2>Aufmerksamkeit</h2><span class="chip planned">Geplant</span></div>
-          <div class="sub">Attention: Query, Key, Value</div>
+          <div class="top"><h2><a href="07-attention.html">Attention</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Query, Key, Value</div>
           <p class="new"><b>Neue Idee</b>Die Gewichte der Mischung werden aus den Daten selbst berechnet. Jedes Wort entscheidet, auf welche anderen Wörter es achtet.</p>
           <details>
-            <summary>Geplante Abbildungen</summary>
+            <summary>Die Geschichte in 14 Schritten</summary>
             <ul>
-              <li>Q, K und V als drei Matrizen, die dieselben Wörter unterschiedlich abbilden</li>
-              <li>Die Attention-Matrix live an einem Satz</li>
-              <li>Warum durch √d geteilt wird</li>
-              <li>Mehrere Köpfe, mehrere Muster</li>
+              <li>„Bank“ in zwei Sätzen: ein Vektor; Mischen mit Gewichten</li>
+              <li>Gewichte von Hand, dann aus dem Skalarprodukt, dann per Softmax; die Falle „ich bin mir selbst am ähnlichsten“</li>
+              <li>„Bank“ rückt je nach Satz zum Geld, zum Sitzen, zum Holz (mit den Vektoren aus Kapitel 6)</li>
+              <li>Fragen und Schilder (Q, K) und Werte (V) an einem Beispiel von Hand: Wer ist „sie“?</li>
+              <li>Die Formel Schritt für Schritt, die Attention-Matrix, warum durch √d geteilt wird</li>
+              <li>Kausale Maske und mehrere Köpfe</li>
             </ul>
           </details>
+          <a class="open-link" href="07-attention.html">Kapitel öffnen →</a>
         </div>
         <div class="formula"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
       </li>
 
-      <li class="rung">
+      <li class="rung ready">
         <div class="num">8</div>
         <div class="body">
-          <div class="top"><h2>Der Strom</h2><span class="chip planned">Geplant</span></div>
-          <div class="sub">Transformer und Residual Stream, an einem selbst trainierten Mini-Transformer</div>
-          <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Strom und addieren ihr Ergebnis zurück. Das Netz ist eine Folge kleiner Korrekturen.</p>
+          <div class="top"><h2><a href="08-transformer.html">Der Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Residualstrom, Positionen, nächstes Token, ein selbst trainierter Mini-Transformer</div>
+          <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Strom und addieren ihr Ergebnis zurück. Am Ende steht eine Wahrscheinlichkeit für das nächste Token.</p>
           <details>
-            <summary>Geplante Abbildungen</summary>
+            <summary>Die Geschichte in 15 Schritten</summary>
             <ul>
-              <li>Wir trainieren einen winzigen Transformer (zwei Schichten) auf einer Spielaufgabe und schauen beim Lernen zu</li>
-              <li>Der Residual Stream als Band durch die Schichten</li>
-              <li>Positionskodierung und LayerNorm als Projektion auf eine Kugel</li>
-              <li>Die Vorhersage des nächsten Tokens</li>
+              <li>Addieren statt ersetzen: der Residualstrom; das MLP pro Wort; Blöcke stapeln</li>
+              <li>Attention kennt keine Reihenfolge; Positionsvektoren</li>
+              <li>Die Ausgabe: Skalarprodukt mit Ausgabe-Vektoren und Softmax</li>
+              <li>Ein eigener Transformer mit zwei Schichten, live im Browser trainiert auf Folgen, die sich wiederholen</li>
+              <li>Der plötzliche Sprung im Verlust; Vorhersagen vorher und nachher; das Modell schreibt Muster weiter</li>
             </ul>
           </details>
+          <a class="open-link" href="08-transformer.html">Kapitel öffnen →</a>
         </div>
         <div class="formula">
           <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> Attn(<b>x</b>)</span>
@@ -291,22 +288,24 @@
         </div>
       </li>
 
-      <li class="rung">
+      <li class="rung ready">
         <div class="num">9</div>
         <div class="body">
-          <div class="top"><h2>Schaltkreise</h2><span class="chip planned">Geplant</span></div>
-          <div class="sub">Circuits: unseren Mini-Transformer lesen</div>
+          <div class="top"><h2><a href="09-circuits.html">Schaltkreise lesen</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Circuits: unseren Mini-Transformer verstehen</div>
           <p class="new"><b>Neue Idee</b>Merkmale sind Richtungen im Raum, Schaltkreise sind die Gewichte, die sie verbinden, und beides lässt sich lesen.</p>
           <details>
-            <summary>Geplante Abbildungen</summary>
+            <summary>Die Geschichte in 11 Schritten</summary>
             <ul>
-              <li>Features und Circuits in Bildnetzen (Zoom In, 2020)</li>
-              <li>QK- und OV-Schaltkreise der Köpfe unseres eigenen Modells (nach dem Mathematical Framework, 2021)</li>
-              <li>Induction Heads: der Moment im Training, in dem das Modell lernt, Muster fortzusetzen (2022)</li>
-              <li>Eingriffe: einen Kopf abschalten und sehen, was kaputtgeht</li>
-              <li>Superposition, dünne Autoencoder und Attributionsgraphen</li>
+              <li>Merkmale und Schaltkreise (Zoom In, 2020)</li>
+              <li>Kopf 0 schaut vor allem einen Platz zurück, Kopf 1 auf die Stelle nach der letzten Kopie (Induction Head)</li>
+              <li>Der Algorithmus in zwei Schritten: Notiz schreiben, Notiz suchen und kopieren</li>
+              <li>OV- und QK-Schaltkreis direkt aus den Gewichten (nach dem Mathematical Framework, 2021)</li>
+              <li>Köpfe abschalten; der Schaltkreis entsteht im Phasenübergang (2022)</li>
+              <li>Ausblick: Superposition, dünne Autoencoder, Attributionsgraphen</li>
             </ul>
           </details>
+          <a class="open-link" href="09-circuits.html">Kapitel öffnen →</a>
         </div>
         <div class="formula">
           <span><b>W</b><sub>QK</sub> = <span class="hl-new"><b>W</b><sub>Q</sub><sup>⊤</sup><b>W</b><sub>K</sub></span></span>
@@ -334,7 +333,7 @@
     </div>
 
     <h2>Arbeitsstand</h2>
-    <p>Kapitel 1 bis 6 sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Die übrigen Kapitel sind geplant; die Abbildungslisten sind ein Vorschlag und werden sich beim Bauen ändern. Jede Abbildung läuft im Browser, ohne Bibliotheken und ohne Server.</p>
+    <p>Alle neun Kapitel sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Alles läuft im Browser, ohne Bibliotheken und ohne Server, auch das Training der Wortvektoren und des Mini-Transformers.</p>
 
     <h2>Quellen der Reihe</h2>
     <ol class="refs">
