@@ -219,16 +219,27 @@
         </div>
       </li>
 
-      <li class="rung">
+      <li class="rung ready">
         <div class="num">6</div>
         <div class="body">
-          <div class="top"><h2>Bedeutung als Richtung</h2><span class="chip planned">Geplant</span></div>
+          <div class="top"><h2><a href="06-embeddings.html">Bedeutung als Richtung</a></h2><span class="chip ready">Als Geschichte</span></div>
           <div class="sub">Embeddings</div>
           <p class="new"><b>Neue Idee</b>Wörter werden zu Vektoren, und Bedeutung wird zu Geometrie: Ähnlichkeit ist ein Skalarprodukt, Beziehungen sind Richtungen.</p>
           <details>
-            <summary>Geplante Abbildungen</summary>
+            <summary>Die Geschichte in 12 Schritten</summary>
             <ul>
-              <li>Die Embedding-Tabelle als Nachschlagen</li>
+              <li>Warum Nummern nicht reichen; ein Schalter pro Wort (One-Hot)</li>
+              <li>Nachschlagen in der Tabelle E als Matrixmultiplikation</li>
+              <li>Nachbarn zählen, Nachbarn raten: Softmax und Kreuzentropie für Wörter</li>
+              <li>Eigene Wortvektoren live trainieren, als Schatten auf zwei Hauptkomponenten</li>
+              <li>Ähnlichkeit als Kosinus; Differenzpfeile; König − Mann + Frau ≈ Königin</li>
+              <li>„Bank“: eine Zeile, zwei Bedeutungen, der Grund für Attention</li>
+            </ul>
+          </details>
+          <a class="open-link" href="06-embeddings.html">Kapitel öffnen →</a>
+        </div>
+        <div class="formula"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
+      </li>
               <li>Ähnlichkeit als Skalarprodukt</li>
               <li>Lineare Richtungen: König − Mann + Frau</li>
               <li>Ein echter Embedding-Raum, auf zwei Dimensionen projiziert</li>
@@ -322,7 +333,7 @@
     </div>
 
     <h2>Arbeitsstand</h2>
-    <p>Kapitel 1 bis 5 sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Die übrigen Kapitel sind geplant; die Abbildungslisten sind ein Vorschlag und werden sich beim Bauen ändern. Jede Abbildung läuft im Browser, ohne Bibliotheken und ohne Server.</p>
+    <p>Kapitel 1 bis 6 sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Die übrigen Kapitel sind geplant; die Abbildungslisten sind ein Vorschlag und werden sich beim Bauen ändern. Jede Abbildung läuft im Browser, ohne Bibliotheken und ohne Server.</p>
 
     <h2>Quellen der Reihe</h2>
     <ol class="refs">

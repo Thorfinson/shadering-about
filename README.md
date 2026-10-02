@@ -36,7 +36,12 @@ is currently doing the work. The engine lives in `series.js` (`S.story`).
   by pair, volume shrinking as 0.9^d, the table of all pairs, features as directions built
   by hand (120°, pentagon with a threshold), sparsity, superposition trained live (Toy
   Models, 2022), and the best shadow (principal components) in 2D and in 50D.
-- Chapters 6–9 are planned; the circuits chapter will read a small transformer we train
+- **Chapter 6, *Bedeutung als Richtung***: why numbering words fails, one-hot vectors, the
+  embedding table as a matrix lookup, counting and predicting neighbours (skip-gram with a
+  softmax), word vectors trained live on a small generated German corpus, cosine
+  similarity, difference vectors and König − Mann + Frau ≈ Königin, and "Bank" as one row
+  for two meanings.
+- Chapters 7–9 are planned; the circuits chapter will read a small transformer we train
   ourselves.
 
 Unlike the studies below, the chapters share `series.css` and `series.js`. Both are
