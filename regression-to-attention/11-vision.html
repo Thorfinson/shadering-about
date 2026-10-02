@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Merkmale und Schaltkreise · Kapitel 11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 11 von 12</div>
+    <h1>Merkmale und Schaltkreise</h1>
+    <p class="lead">Chris Olah und Kollegen haben vorgeschlagen, neuronale Netze nicht als Blackbox zu behandeln, sondern sie zu lesen wie eine Schaltung. Ihre Werkzeuge haben sie an Netzen entwickelt, die Bilder erkennen. Wir bauen erst Schritt für Schritt ein solches Netz, trainieren ein kleines live im Browser und wenden dann Olahs Werkzeuge darauf an.</p>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="box"><div class="vlabel">Blackbox oder Schaltung?</div><div class="plot" id="v-box" role="img" aria-label="Ein Netz als geschlossene Kiste und als lesbare Schaltung."></div></div>
+        <div class="view" data-view="pix"><div class="vlabel" id="l-pix">Ein Bild ist eine Tabelle aus Zahlen</div><div class="plot" id="v-pix" role="img" aria-label="Ein Bild und ein vergrößerter Ausschnitt mit den Helligkeitswerten."></div></div>
+        <div class="view" data-view="filt"><div class="vlabel" id="l-filt">Ein Filter fährt über das Bild</div><div class="plot" id="v-filt" role="img" aria-label="Ein kleiner Filter, ein Bildausschnitt, ihr Skalarprodukt und die entstehende Merkmalskarte."></div></div>
+        <div class="view" data-view="multi"><div class="vlabel">Mehrere Filter, mehrere Karten</div><div class="plot" id="v-multi" role="img" aria-label="Vier Filter und die Merkmalskarten, die sie auf einem Bild erzeugen."></div></div>
+        <div class="view" data-view="pool"><div class="vlabel">Verkleinern: das Stärkste behalten</div><div class="plot" id="v-pool" role="img" aria-label="Eine Merkmalskarte wird in Zweierblöcken verkleinert."></div></div>
+        <div class="view" data-view="zweite"><div class="vlabel">Die zweite Schicht kombiniert</div><div class="plot" id="v-zweite" role="img" aria-label="Zwei Kantenkarten werden zu einer Eckenkarte kombiniert."></div></div>
+        <div class="view" data-view="data"><div class="vlabel" id="l-data">Unsere Bilder</div><div class="plot" id="v-data" role="img" aria-label="Beispielbilder von Kreisen, Quadraten, Dreiecken und Kreuzen; die Entscheidung des Netzes."></div></div>
+        <div class="view" data-view="train"><div class="vlabel">Training live</div><div class="plot" id="v-train" role="img" aria-label="Die Filter der ersten Schicht während des Trainings und die Trefferquote."></div></div>
+        <div class="view" data-view="units"><div class="vlabel" id="l-units">Merkmale der zweiten Schicht</div><div class="plot" id="v-units" role="img" aria-label="Für Einheiten der zweiten Schicht: sichtbar gemachte Merkmale und die Bildausschnitte, auf die sie am stärksten reagieren."></div></div>
+        <div class="view" data-view="circ"><div class="vlabel">Ein Schaltkreis</div><div class="plot" id="v-circ" role="img" aria-label="Welche Kantendetektoren an welcher Stelle zu einem Kurvendetektor beitragen."></div></div>
+        <div class="view" data-view="claims"><div class="vlabel">Drei Behauptungen</div><div class="plot" id="v-claims" role="img" aria-label="Die drei Behauptungen aus Zoom In."></div></div>
+        <div class="view" data-view="uni"><div class="vlabel">Zwei Netze, getrennt trainiert</div><div class="plot" id="v-uni" role="img" aria-label="Filter und Merkmale zweier unabhängig trainierter Netze nebeneinander."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="frage"><div class="card">
+        <span class="kicker">Die Frage</span>
+        <h3>Was passiert im Inneren?</h3>
+        <p>Ein trainiertes Netz löst seine Aufgabe, aber niemand hat ihm gesagt, wie. Die Zahlen darin sind gelernt, nicht programmiert. Lange galten Netze deshalb als Blackbox: Man sieht, was hineingeht und was herauskommt, nicht aber das Dazwischen.</p>
+        <p>Chris Olah und Kollegen (bei Google Brain, OpenAI, später Anthropic) haben gezeigt, dass man trotzdem hineinsehen kann. Ihr Programm heißt <strong>Circuits</strong>: Ein Netz besteht aus erkennbaren Merkmalen, die über lesbare Verbindungen zusammenhängen. Dieses Kapitel baut ihre Werkzeuge nach.</p>
+      </div></article>
+
+      <article class="step" data-step="bild"><div class="card">
+        <span class="kicker">Grundlage 1</span>
+        <h3>Ein Bild ist eine Tabelle aus Zahlen</h3>
+        <p>Ein Graustufenbild mit 28 × 28 Pixeln ist eine Tabelle aus 784 Zahlen, eine Helligkeit pro Pixel. Hier: −0,5 für Schwarz, +0,5 für Weiß.</p>
+        <p>Ein Netz sieht nur diese Zahlen. Eine Kante ist für das Netz eine Stelle, an der die Zahlen von klein nach groß springen.</p>
+      </div></article>
+
+      <article class="step" data-step="filter"><div class="card">
+        <span class="kicker">Grundlage 2</span>
+        <h3>Ein Filter: ein kleines Muster</h3>
+        <p>Ein <strong>Filter</strong> ist eine kleine Tabelle aus Gewichten, hier 5 × 5. Dieser hier ist links negativ, rechts positiv. Legt man ihn auf einen Ausschnitt des Bilds, multipliziert Feld für Feld und addiert alles, entsteht eine Zahl: das Skalarprodukt aus Kapitel 5, nur mit 25 Einträgen.</p>
+        <p>Die Zahl ist groß, wenn der Ausschnitt dem Muster ähnelt: links dunkel, rechts hell. Dieser Filter erkennt also eine senkrechte Kante.</p>
+      </div></article>
+
+      <article class="step" data-step="schieben"><div class="card">
+        <span class="kicker">Grundlage 3</span>
+        <h3>Den Filter über das Bild schieben</h3>
+        <p>Jetzt schieben wir den Filter über das ganze Bild, Platz für Platz, und schreiben jede Zahl an ihre Stelle. Es entsteht ein neues Bild, eine <strong>Merkmalskarte</strong>: hell, wo das Muster vorkommt.</p>
+        <p>Das Verschieben heißt <strong>Faltung</strong> (englisch <i>convolution</i>). Ein Netz aus solchen Schichten heißt Faltungsnetz.</p>
+      </div></article>
+
+      <article class="step" data-step="mehrere"><div class="card">
+        <span class="kicker">Grundlage 4</span>
+        <h3>Mehrere Filter und der Knick</h3>
+        <p>Ein Filter erkennt ein Muster. Mehrere Filter erkennen mehrere: senkrechte Kanten, waagrechte, schräge. Jeder liefert seine eigene Karte.</p>
+        <p>Danach kommt der Knick aus Kapitel 4: Negatives wird 0. Übrig bleibt pro Karte, wo ihr Muster vorkommt.</p>
+      </div></article>
+
+      <article class="step" data-step="verkleinern"><div class="card">
+        <span class="kicker">Grundlage 5</span>
+        <h3>Verkleinern</h3>
+        <p>Die Karten werden halbiert: Von je 2 × 2 Feldern bleibt nur das stärkste übrig (<strong>Max-Pooling</strong>). So wird die Karte kleiner, und es kommt nicht mehr auf das einzelne Pixel an.</p>
+      </div></article>
+
+      <article class="step" data-step="zweite"><div class="card">
+        <span class="kicker">Grundlage 6</span>
+        <h3>Die zweite Schicht kombiniert</h3>
+        <p>Die zweite Schicht macht dasselbe noch einmal, aber nicht mit dem Bild, sondern mit dem Stapel der Karten. Ihre Filter schauen auf alle Karten gleichzeitig und kombinieren sie.</p>
+        <p>Beispiel von Hand: „Senkrechte Kante links“ plus „waagrechte Kante oben“ ergibt „Ecke oben links“. Aus einfachen Mustern werden zusammengesetzte. Das ist der Kern dessen, was Olah einen <strong>Schaltkreis</strong> nennt.</p>
+      </div></article>
+
+      <article class="step" data-step="aufgabe"><div class="card">
+        <span class="kicker">Unser Netz</span>
+        <h3>Vier Formen erkennen</h3>
+        <p>Unser Netz soll vier Formen unterscheiden: Kreis, Quadrat, Dreieck, Kreuz. Jede Form kommt in zufälliger Größe, Lage und Drehung, mal hell auf dunkel, mal dunkel auf hell, mit etwas Rauschen.</p>
+        <p>Der Aufbau: 8 Filter 5 × 5, Knick, Verkleinern. Dann 12 Filter der zweiten Schicht, Knick. Von jeder der 12 Karten der stärkste Wert, daraus per Softmax (Kapitel 3) eine Wahrscheinlichkeit für jede Form. Zusammen 2672 Zahlen, alle anfangs zufällig, auch die Filter.</p>
+      </div></article>
+
+      <article class="step" data-step="training"><div class="card">
+        <span class="kicker">Live</span>
+        <h3>Training: Die Filter lernen sehen</h3>
+        <p>1500 Lernschritte mit je 16 Bildern, Gradientenabstieg mit Adam wie immer. Oben die 8 Filter der ersten Schicht, blau positiv, orange negativ. Sie starten als Rauschen.</p>
+        <p>Niemand gibt ihnen Kanten vor. Trotzdem werden aus dem Rauschen nach und nach gerichtete Muster.</p>
+      </div></article>
+
+      <article class="step" data-step="kanten"><div class="card">
+        <span class="kicker">Die erste Schicht</span>
+        <h3>Kantendetektoren, von selbst</h3>
+        <p>Nach dem Training sind viele der 8 Filter Kantendetektoren: dunkel auf der einen Seite, hell auf der anderen, in verschiedenen Richtungen. Andere sind unordentlicher.</p>
+        <p>Das ist kein Zufall unseres kleinen Netzes. Fast jedes Bildnetz lernt in der ersten Schicht Kanten- und Streifendetektoren, und auch die erste Verarbeitungsstufe im Sehzentrum des Gehirns enthält Zellen für gerichtete Kanten.</p>
+      </div></article>
+
+      <article class="step" data-step="beispiele"><div class="card">
+        <span class="kicker">Werkzeug 1</span>
+        <h3>Wobei feuert eine Einheit?</h3>
+        <p>Was erkennt eine Einheit der zweiten Schicht? Erstes Werkzeug: Wir zeigen dem Netz viele Bilder und sammeln die Ausschnitte, bei denen die Einheit am stärksten anspringt. Olah nennt das <strong>Datensatz-Beispiele</strong>.</p>
+        <p>Manche Einheiten springen nur bei Kreisen an, andere nur bei Dreiecksecken oder Kreuzen. Einige springen nie an: Sie sind beim Training verstummt.</p>
+      </div></article>
+
+      <article class="step" data-step="sichtbar"><div class="card">
+        <span class="kicker">Werkzeug 2</span>
+        <h3>Ein Merkmal sichtbar machen</h3>
+        <p>Zweites Werkzeug: Wir fragen das Netz direkt, welches Bild eine Einheit am liebsten hätte. Dazu starten wir mit grauem Rauschen und verändern die Pixel per Gradientenaufstieg, also Gradientenabstieg andersherum: jeden Schritt so, dass die Einheit stärker anspringt. Zwischendurch glätten wir ein wenig, damit kein Pixelrauschen entsteht.</p>
+        <p>Olah nennt das <strong>Feature Visualization</strong>. Das Bild, das herauskommt, zeigt, worauf die Einheit reagiert.</p>
+      </div></article>
+
+      <article class="step" data-step="kurven"><div class="card">
+        <span class="kicker">Was wir finden</span>
+        <h3>Kurvendetektoren</h3>
+        <p>Beide Werkzeuge zusammen für alle Einheiten, die überhaupt anspringen. Vier davon sind <strong>Kurvendetektoren</strong>: Sie springen auf Kreise und Kreisbögen an, mal hell, mal dunkel, mal auf einen Bogen oben links, mal auf einen ganzen Kreis. Andere erkennen Dreiecksecken oder die Arme eines Kreuzes.</p>
+        <p>Kurvendetektoren sind auch Olahs bekanntestes Beispiel. In einem großen Bildnetz (InceptionV1) fanden sie eine ganze Familie davon, für jede Richtung einen. Unser kleines Netz ist weniger ordentlich, aber die Idee ist dieselbe.</p>
+      </div></article>
+
+      <article class="step" data-step="schaltkreis"><div class="card">
+        <span class="kicker">Werkzeug 3</span>
+        <h3>Den Schaltkreis ablesen</h3>
+        <p>Drittes Werkzeug: Wie baut sich ein Kurvendetektor aus der ersten Schicht zusammen? Wir nehmen ein Bild, bei dem er stark anspringt, und zerlegen seinen Wert in die Beiträge der 8 Kantendetektoren.</p>
+        <p>Für jeden Kantendetektor sehen wir: wo im Ausschnitt er seine Kante findet, wie stark die Gewichte dort sind, und was dabei herauskommt. Den größten Teil liefert ein Kantendetektor, der genau entlang des Bogens anspringt, und die Gewichte des Kurvendetektors sind genau dort positiv. Zwei weitere Kantendetektoren ergänzen ihn. Eine Kurve, zusammengesetzt aus Kantenstücken: ein Schaltkreis, abgelesen an den Gewichten.</p>
+      </div></article>
+
+      <article class="step" data-step="thesen"><div class="card">
+        <span class="kicker">Zoom In, 2020</span>
+        <h3>Olahs drei Behauptungen</h3>
+        <p>In „Zoom In: An Introduction to Circuits“ fassten Olah und Kollegen ihr Programm in drei Behauptungen:</p>
+        <p><strong>1. Merkmale</strong> sind die Grundbausteine eines Netzes. Sie entsprechen Richtungen im Raum der Aktivierungen und lassen sich verstehen. <strong>2. Schaltkreise:</strong> Merkmale sind über Gewichte verbunden, und diese Verbindungen bilden lesbare Algorithmen. <strong>3. Universalität:</strong> Ähnliche Merkmale und Schaltkreise entstehen in verschiedenen Netzen und bei verschiedenen Aufgaben immer wieder.</p>
+        <p>Die ersten beiden haben wir gerade gesehen. Die dritte prüfen wir jetzt.</p>
+      </div></article>
+
+      <article class="step" data-step="universell"><div class="card">
+        <span class="kicker">Behauptung 3</span>
+        <h3>Ein zweites Netz, dieselben Ideen</h3>
+        <p>Wir trainieren ein zweites Netz mit derselben Aufgabe, aber anderen Zufallszahlen am Start. Die Gewichte sind am Ende ganz andere, die Merkmale an anderen Stellen.</p>
+        <p>Trotzdem findet es wieder Kantendetektoren in verschiedenen Richtungen, wieder Kurvendetektoren, wieder Dreiecks- und Kreuz-Einheiten. Nicht identisch, aber dieselben Ideen. Im Kleinen genau das, was Olah Universalität nennt.</p>
+      </div></article>
+
+      <article class="step" data-step="poly"><div class="card">
+        <span class="kicker">Eine Komplikation</span>
+        <h3>Einheiten mit zwei Bedeutungen</h3>
+        <p>Nicht jede Einheit ist so sauber. Im zweiten Netz gibt es Einheiten, die auf zwei verschiedene Dinge anspringen, etwa auf Kreise <em>und</em> Kreuze. Olah nennt solche Einheiten <strong>polysemantisch</strong>. In InceptionV1 fanden sie eine, die auf Katzengesichter, Autofronten und Katzenbeine reagiert.</p>
+        <p>Eine Erklärung kennen wir aus Kapitel 5: <strong>Superposition</strong>. Gibt es mehr Merkmale als Einheiten, teilen sich Merkmale die Einheiten. Das macht große Netze schwer zu lesen. Für Transformer kommen wir in Kapitel 12 darauf zurück.</p>
+      </div></article>
+
+      <article class="step" data-step="ausblick"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>Vom Bild zum Text</h3>
+        <p>Merkmale finden, Verbindungen lesen, durch Vergleich und Eingriff prüfen: Mit genau diesen Werkzeugen öffnen wir in Kapitel 12 unseren eigenen Transformer aus Kapitel 10.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>C. Olah, A. Mordvintsev, L. Schubert (2017): <a href="https://distill.pub/2017/feature-visualization/"><i>Feature Visualization</i></a>. Distill.</li>
+      <li>C. Olah u. a. (2020): <a href="https://distill.pub/2020/circuits/zoom-in/"><i>Zoom In: An Introduction to Circuits</i></a>. Distill. Die drei Behauptungen, Kurvendetektoren, polysemantische Neuronen.</li>
+      <li>N. Cammarata u. a. (2020): <a href="https://distill.pub/2020/circuits/curve-detectors/"><i>Curve Detectors</i></a>. Distill.</li>
+      <li>D. Hubel, T. Wiesel (1959): <i>Receptive fields of single neurones in the cat's striate cortex</i>. Journal of Physiology 148, 574–591. Zellen für gerichtete Kanten im Sehzentrum.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="10-training.html"><span class="dir">Zurück · Kapitel 10</span><span class="name">Ein eigener Transformer</span></a>
+    <a class="next" href="12-circuits.html"><span class="dir">Weiter · Kapitel 12</span><span class="name">Schaltkreise im Transformer</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script src="cnn.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const { S: N, K1, C1, C2, O1, P1, O2, RF, NAMES } = CNN, STEPS = 1500;
+
+  // two reference networks (seeds 1 and 2), trained in idle time; the live step trains its own copy of the first
+  const REF = [CNN.create(1), CNN.create(2)];
+  let liveRunning = false;
+  const done = (k) => REF[k].t >= STEPS;
+  (function bg() {
+    const go = (dl) => { if (!liveRunning) { const t0 = performance.now(), k = done(0) ? 1 : 0; while (!done(k) && performance.now() - t0 < (dl && dl.timeRemaining ? Math.max(4, dl.timeRemaining() - 2) : 12)) REF[k].step(); } if (!done(1)) schedule(); else story && story.redraw(); };
+    const schedule = () => (window.requestIdleCallback ? requestIdleCallback(go, { timeout: 200 }) : setTimeout(go, 16));
+    schedule();
+  })();
+  const waitRef = async (a, k = 0) => { if (done(k)) return; a.say(k ? 'Das zweite Netz trainiert noch im Hintergrund …' : 'Das Netz trainiert noch im Hintergrund …'); await a.loop(() => !done(k), 4); };
+
+  // caches of the expensive analyses per network
+  const cache = [{}, {}];
+  const tops = (k) => cache[k].tops || (cache[k].tops = REF[k].topPatches(500, 8));
+  const alive = (k) => tops(k).map((l, c) => [c, l]).filter(([, l]) => l[0].v > 2).map(([c]) => c);
+
+  const st = { boxA: 0, zoom: 0, fPos: 0, fSweep: 0, mN: 1, relu: 0, pool: 0, z2: 0, dataN: 0, dec: 0, live: null, unitList: [], unitMode: 'tops', visK: 0, visImg: null, visUnit: 0, circA: 0, claimK: 0, uniA: 0, polyA: 0 };
+  let story = null;
+
+  // ── drawing helpers ─────────────────────────────────────────────
+  const gray = (v) => { const g = Math.round(clamp((v + 0.5) * 255, 0, 255)); return `rgb(${g},${g},${g})`; };
+  function drawImg(ctx, arr, n, x, y, size, mode = 'gray', mx = null) {
+    const cs = size / n; mx = mx || Math.max(1e-6, ...Array.from(arr, Math.abs));
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const v = arr[i * n + j];
+      if (mode === 'gray') ctx.fillStyle = gray(v);
+      else { const a = clamp(v / mx, -1, 1); ctx.fillStyle = a >= 0 ? S.alpha('model', 0.08 + 0.92 * a) : S.alpha('error', 0.08 + 0.92 * -a); }
+      ctx.fillRect(x + j * cs, y + i * cs, cs + 0.5, cs + 0.5);
+    }
+    ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1; ctx.strokeRect(x - 0.5, y - 0.5, size + 1, size + 1);
+  }
+  const conv = (img, n, W, k) => { const m = n - k + 1, out = new Float32Array(m * m); for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) { let s = 0; for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) s += W[i * k + j] * img[(y + i) * n + x + j]; out[y * m + x] = s; } return out; };
+  const relu = (a) => a.map((v) => Math.max(0, v));
+  const pool2 = (a, n) => { const m = n / 2, out = new Float32Array(m * m); for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) out[y * m + x] = Math.max(a[2 * y * n + 2 * x], a[2 * y * n + 2 * x + 1], a[(2 * y + 1) * n + 2 * x], a[(2 * y + 1) * n + 2 * x + 1]); return out; };
+
+  // a clean example: a bright square on dark ground
+  const DEMO = (() => { const img = new Float32Array(N * N); for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const d = Math.max(Math.abs(x + 0.5 - 14), Math.abs(y + 0.5 - 14)) - 6.5; img[y * N + x] = Math.min(1, Math.max(0, 0.5 - d)) - 0.5; } return img; })();
+  const HF = (() => { const v = [], h = [], d1 = [], d2 = []; for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) { v.push((j - 2) / 6); h.push((i - 2) / 6); d1.push(clamp((j - i) / 4, -1, 1) / 3); d2.push(clamp((j + i - 4) / 4, -1, 1) / 3); } return [['senkrecht', v], ['waagrecht', h], ['schräg ↗', d1], ['schräg ↘', d2]]; })();
+
+  // ── 1. black box vs circuit ─────────────────────────────────────
+  const boxV = S.canvas($('#v-box'), (ctx, W, H) => {
+    const nar = W < 560, cx = W / 2, cy = H / 2, bw = nar ? W - 140 : Math.min(380, W * 0.7), bh = Math.min(220, H * 0.5), al = nar ? 22 : 34, lf = S.font(nar ? 11.5 : 14, 'body', '600');
+    S.label(ctx, 'Bild', cx - bw / 2 - al - 6, cy, S.c['fg-2'], lf, 'right'); S.label(ctx, '„Kreis“', cx + bw / 2 + al + 6, cy, S.c['fg-2'], lf, 'left');
+    ctx.strokeStyle = S.c['fg-2']; ctx.fillStyle = S.c['fg-2']; S.arrow(ctx, cx - bw / 2 - al, cy, cx - bw / 2 - 4, cy, 8, 1.5); S.arrow(ctx, cx + bw / 2 + 4, cy, cx + bw / 2 + al, cy, 8, 1.5);
+    ctx.fillStyle = S.alpha('fg', 0.9 * (1 - st.boxA) + 0.05); ctx.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
+    if (st.boxA < 0.5) S.label(ctx, '?', cx, cy, S.c.surface, S.font(48, 'math', '600'), 'center');
+    if (st.boxA > 0) {
+      ctx.globalAlpha = st.boxA; const L = [[0.2, ['Kante', 'Kante', 'Kante']], [0.5, ['Ecke', 'Kurve']], [0.8, ['Kreis']]];
+      L.forEach(([fx, names], l) => names.forEach((nm, i) => { const x = cx - bw / 2 + fx * bw, y = cy - bh / 2 + ((i + 0.5) * bh) / names.length; if (l < 2) L[l + 1][1].forEach((_, j) => { const x2 = cx - bw / 2 + L[l + 1][0] * bw, y2 = cy - bh / 2 + ((j + 0.5) * bh) / L[l + 1][1].length; ctx.strokeStyle = S.alpha('accent', 0.4); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke(); }); S.dot(ctx, x, y, 6, S.c.accent); S.label(ctx, nm, x, y + 16, S.c.fg, S.font(12, 'body', '600'), 'center'); }));
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 2. pixels as numbers ────────────────────────────────────────
+  const pixV = S.canvas($('#v-pix'), (ctx, W, H) => {
+    const wide = W > H * 1.1, size = wide ? Math.min(W * 0.42, H * 0.8) : Math.min(W * 0.8, H * 0.42), x0 = wide ? W * 0.05 : (W - size) / 2, y0 = wide ? (H - size) / 2 : 16;
+    drawImg(ctx, DEMO, N, x0, y0, size);
+    const cy0 = 5, cx0 = 4, k = 6, cs = size / N; ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2; ctx.strokeRect(x0 + cx0 * cs, y0 + cy0 * cs, k * cs, k * cs);
+    if (st.zoom > 0) {
+      ctx.globalAlpha = st.zoom; const zs = wide ? Math.min(W * 0.45, H * 0.8) : Math.min(W * 0.8, H * 0.45), zx = wide ? W * 0.52 : (W - zs) / 2, zy = wide ? (H - zs) / 2 : y0 + size + 20, zc = zs / k;
+      for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) { const v = DEMO[(cy0 + i) * N + cx0 + j]; ctx.fillStyle = gray(v); ctx.fillRect(zx + j * zc, zy + i * zc, zc - 1, zc - 1); ctx.font = S.font(Math.min(14, zc * 0.3), 'mono', '600'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = v > 0 ? '#111' : '#eee'; ctx.fillText(fmt(v, 1), zx + j * zc + zc / 2, zy + i * zc + zc / 2); }
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 3–4. one filter, sliding ────────────────────────────────────
+  const FMAP = conv(DEMO, N, HF[0][1], 5);
+  const filtV = S.canvas($('#v-filt'), (ctx, W, H) => {
+    const wide = W > H, s1 = wide ? Math.min(W * 0.3, H * 0.6) : Math.min(W * 0.44, H * 0.3), x0 = wide ? 16 : 10, y0 = wide ? (H - s1) / 2 : 20, cs = s1 / N;
+    drawImg(ctx, DEMO, N, x0, y0, s1);
+    const total = O1 * O1, idx = Math.floor(st.fSweep > 0 ? st.fSweep * (total - 1) : st.fPos), py = Math.floor(idx / O1), px = idx % O1;
+    ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2; ctx.strokeRect(x0 + px * cs, y0 + py * cs, 5 * cs, 5 * cs);
+    // filter and value
+    const fs = wide ? Math.min(W * 0.16, H * 0.35) : Math.min(W * 0.28, H * 0.2), fx = wide ? x0 + s1 + 30 : W - fs - 16, fy = wide ? H * 0.18 : y0;
+    drawImg(ctx, HF[0][1], 5, fx, fy, fs, 'div'); S.label(ctx, 'Filter', fx + fs / 2, fy - 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
+    let v = 0; for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) v += HF[0][1][i * 5 + j] * DEMO[(py + i) * N + px + j];
+    S.label(ctx, `Skalarprodukt = ${fmt(v, 2)}`, fx + fs / 2, fy + fs + 22, v > 0.3 ? S.c.model : v < -0.3 ? S.c.error : S.c.fg, S.font(14, 'mono', '600'), 'center');
+    // the growing map
+    if (st.fSweep > 0) {
+      const s2 = wide ? Math.min(W * 0.3, H * 0.6) : Math.min(W * 0.44, H * 0.3), mx2 = wide ? W - s2 - 16 : 10, my2 = wide ? (H - s2) / 2 : y0 + s1 + 30, part = FMAP.map((x, i) => (i <= idx ? x : 0));
+      drawImg(ctx, part, O1, mx2, my2, s2, 'div', Math.max(...Array.from(FMAP, Math.abs))); S.label(ctx, 'Merkmalskarte', mx2 + s2 / 2, my2 - 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
+    }
+  });
+
+  // ── 5. several filters, ReLU ────────────────────────────────────
+  const MAPS = HF.map(([, W]) => conv(DEMO, N, W, 5));
+  const multiV = S.canvas($('#v-multi'), (ctx, W, H) => {
+    const n = Math.max(1, Math.round(st.mN)), narrow = W < 600, cols = narrow ? 2 : 4, cw = (W - 20) / cols, ms = Math.min(cw * 0.8, (H - 40) / (narrow ? 2 : 1) * 0.62), fsz = ms * 0.4;
+    for (let k = 0; k < n; k++) {
+      const col = k % cols, row = Math.floor(k / cols), x = 10 + col * cw + (cw - ms) / 2, y = 20 + row * (ms + fsz + 40);
+      drawImg(ctx, HF[k][1], 5, x + (ms - fsz) / 2, y, fsz, 'div'); S.label(ctx, HF[k][0], x + ms / 2, y + fsz + 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
+      const m = MAPS[k].map((v) => S.lerp(v, Math.max(0, v), st.relu)); drawImg(ctx, m, O1, x, y + fsz + 24, ms, 'div', Math.max(...Array.from(MAPS[k], Math.abs)));
+    }
+  });
+
+  // ── 6. pooling ──────────────────────────────────────────────────
+  const R0 = relu(MAPS[0]), P0 = pool2(R0, O1);
+  const poolV = S.canvas($('#v-pool'), (ctx, W, H) => {
+    const wide = W > H, s = wide ? Math.min(W * 0.4, H * 0.75) : Math.min(W * 0.8, H * 0.4), x0 = wide ? W * 0.06 : (W - s) / 2, y0 = wide ? (H - s) / 2 : 14, mx = Math.max(...R0);
+    drawImg(ctx, R0, O1, x0, y0, s, 'div', mx); S.label(ctx, '24 × 24', x0 + s / 2, y0 + s + 14, S.c['fg-2'], S.font(12, 'mono'), 'center');
+    const cs = s / O1; ctx.strokeStyle = S.alpha('fg', 0.3); ctx.lineWidth = 0.5; for (let i = 0; i <= O1; i += 2) { ctx.beginPath(); ctx.moveTo(x0 + i * cs, y0); ctx.lineTo(x0 + i * cs, y0 + s); ctx.moveTo(x0, y0 + i * cs); ctx.lineTo(x0 + s, y0 + i * cs); ctx.stroke(); }
+    if (st.pool > 0) { ctx.globalAlpha = st.pool; const s2 = s * 0.5 * (1 + (1 - st.pool)), x2 = wide ? W * 0.56 + (s - s2) / 2 : (W - s2) / 2, y2 = wide ? (H - s2) / 2 : y0 + s + 40; drawImg(ctx, P0, P1, x2, y2, s2, 'div', mx); S.label(ctx, '12 × 12', x2 + s2 / 2, y2 + s2 + 14, S.c['fg-2'], S.font(12, 'mono'), 'center'); ctx.globalAlpha = 1; }
+  });
+
+  // ── 7. a second layer, by hand: corner = vertical edge left + horizontal edge top
+  const PV = pool2(relu(MAPS[0]), O1), PH = pool2(relu(MAPS[1]), O1);
+  const WV = [1, 0, 0, 1, 0, 0, 1, 0, 0].map((x) => x * 0.5), WH = [1, 1, 1, 0, 0, 0, 0, 0, 0].map((x) => x * 0.5);
+  const CORNER = (() => { const m = P1 - 2, out = new Float32Array(m * m); for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) { let s = -0.9; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s += WV[i * 3 + j] * PV[(y + i) * P1 + x + j] + WH[i * 3 + j] * PH[(y + i) * P1 + x + j]; out[y * m + x] = Math.max(0, s); } return out; })();
+  const zweiteV = S.canvas($('#v-zweite'), (ctx, W, H) => {
+    const narrow = W < 600, s = narrow ? Math.min(W * 0.36, H * 0.24) : Math.min(W * 0.2, H * 0.36), ws = s * 0.42, row = (y, map, w, name) => { drawImg(ctx, map, P1, 16, y, s, 'div'); S.label(ctx, name, narrow ? 8 : 16 + s / 2, y + s + 14, S.c['fg-2'], S.font(12, 'body', '600'), narrow ? 'left' : 'center'); S.label(ctx, '×', 16 + s + 18, y + s / 2, S.c.fg, S.font(18, 'mono'), 'center'); drawImg(ctx, w, 3, 16 + s + 34, y + (s - ws) / 2, ws, 'div', 1); };
+    const yA = narrow ? 20 : H * 0.12, yB = narrow ? yA + s + 40 : H * 0.55;
+    row(yA, PV, WV, 'senkrechte Kanten'); row(yB, PH, WH, 'waagrechte Kanten');
+    S.label(ctx, 'Gewichte: links / oben', 16 + s + 34 + ws / 2, yA - 10, S.c['fg-2'], S.font(11.5, 'body'), 'center');
+    if (st.z2 > 0) { ctx.globalAlpha = st.z2; const rx = narrow ? 16 + s + 34 + ws + 30 : W * 0.62, ry = narrow ? yA + s / 2 : (H - s * 1.3) / 2, rs = narrow ? Math.min(W - rx - 10, s) : s * 1.3; S.label(ctx, '= Summe →', rx - 8, ry - 14, S.c.fg, S.font(13, 'body', '600'), 'left'); drawImg(ctx, CORNER, P1 - 2, rx, ry, rs, 'div'); S.label(ctx, 'Ecke oben links', rx + rs / 2, ry + rs + 14, S.c.accent, S.font(13, 'body', '600'), 'center'); ctx.globalAlpha = 1; }
+  });
+
+  // ── 8. our data and the decision ────────────────────────────────
+  const SAMPLES = (() => { const r = CNN.rng(42); return Array.from({ length: 16 }, (_, i) => ({ y: i % 4, img: CNN.shape(i % 4, r) })); })();
+  const dataV = S.canvas($('#v-data'), (ctx, W, H) => {
+    const n = Math.round(st.dataN), cols = W < 560 ? 4 : 8, size = Math.min((W - 20) / cols - 10, (H - 120) / Math.ceil(16 / cols) - 24);
+    SAMPLES.slice(0, n).forEach((s, i) => { const x = 10 + (i % cols) * (size + 10), y = 10 + Math.floor(i / cols) * (size + 24); drawImg(ctx, s.img, N, x, y, size); if (size > 46) S.label(ctx, NAMES[s.y], x + size / 2, y + size + 10, S.c['fg-2'], S.font(11.5, 'body'), 'center'); });
+    if (st.dec > 0 && done(0)) {
+      const f = REF[0].forward(SAMPLES[0].img), by = H - 70, bw = (W - 40) / 4; ctx.globalAlpha = st.dec;
+      S.label(ctx, W < 560 ? 'Entscheidung für das erste Bild' : 'Entscheidung des trainierten Netzes für das erste Bild', 20, by - 16, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      f.p.forEach((p, k) => { ctx.fillStyle = S.alpha('fg', 0.08); ctx.fillRect(20 + k * bw, by, bw - 16, 18); ctx.fillStyle = S.c.accent; ctx.fillRect(20 + k * bw, by, (bw - 16) * p, 18); if (W < 560) { S.label(ctx, NAMES[k], 20 + k * bw, by + 30, S.c.fg, S.font(11, 'body', '600'), 'left'); S.label(ctx, `${fmt(p * 100, 0)} %`, 20 + k * bw, by + 45, S.c['fg-2'], S.font(11, 'mono'), 'left'); } else S.label(ctx, `${NAMES[k]} ${fmt(p * 100, 0)} %`, 20 + k * bw, by + 32, S.c.fg, S.font(12, 'body', '600'), 'left'); });
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 9. live training ────────────────────────────────────────────
+  const trainV = S.canvas($('#v-train'), (ctx, W, H) => {
+    const M = st.live || REF[0], fs = Math.min((W - 40) / 8 - 10, H * 0.2);
+    for (let c = 0; c < C1; c++) drawImg(ctx, M.P.W1.slice(c * 25, c * 25 + 25), 5, 20 + c * (fs + 10), 20, fs, 'div');
+    S.label(ctx, `die 8 Filter der ersten Schicht · Schritt ${M.t}`, 20, fs + 36, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+    const x0 = 50, x1 = W - 20, y0 = fs + 70, y1 = H - 30, X = lin(0, STEPS, x0, x1), Y = lin(0, 1, y1, y0);
+    S.axes(ctx, { x: X, y: Y, xt: [0, 500, 1000, 1500], yt: [0, 0.25, 0.5, 0.75, 1], xfmt: String, yfmt: (v) => `${fmt(v * 100, 0)} %`, xlabel: 'Lernschritt' });
+    ctx.strokeStyle = S.c.grad; ctx.lineWidth = 2; ctx.beginPath(); M.hist.forEach((h, i) => (i ? ctx.lineTo(X(h.t), Y(h.acc)) : ctx.moveTo(X(h.t), Y(h.acc)))); ctx.stroke();
+    S.label(ctx, 'Trefferquote', x0 + 6, y0 + 8, S.c.grad, S.font(12, 'body', '600'), 'left');
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = S.alpha('fg', 0.35); ctx.beginPath(); ctx.moveTo(x0, Y(0.25)); ctx.lineTo(x1, Y(0.25)); ctx.stroke(); ctx.setLineDash([]); S.label(ctx, 'Raten', x1 - 4, Y(0.25) - 9, S.c.muted, S.font(11, 'body'), 'right');
+  });
+
+  // ── 10–13. units: edges, examples, visualisation ───────────────
+  function orientLabel(w) { let gxx = 0, gyy = 0, gxy = 0; for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { const g = (yy, xx) => w[yy * 5 + xx], gx = g(y, x + 1) - g(y, x) + g(y + 1, x + 1) - g(y + 1, x), gy = g(y + 1, x) - g(y, x) + g(y + 1, x + 1) - g(y, x + 1); gxx += gx * gx; gyy += gy * gy; gxy += gx * gy; } const tr = gxx + gyy, det = gxx * gyy - gxy * gxy, l1 = tr / 2 + Math.sqrt(Math.max(0, tr * tr / 4 - det)), l2 = tr - l1, coh = (l1 - l2) / (l1 + l2 + 1e-9); if (coh < 0.5) return 'unordentlich'; let a = ((0.5 * Math.atan2(2 * gxy, gxx - gyy) * 180) / Math.PI + 90) % 180; return a < 22 || a > 158 ? 'Kante —' : a < 68 ? 'Kante ╲' : a < 112 ? 'Kante |' : 'Kante ╱'; }
+  const visCache = [{}, {}];
+  const unitsV = S.canvas($('#v-units'), (ctx, W, H) => {
+    const k = st.unitNet || 0, M = REF[k];
+    if (st.unitMode === 'edges') {
+      const cols = W < 560 ? 4 : 8, fs = Math.min((W - 20) / cols - 14, H * 0.3);
+      for (let c = 0; c < C1; c++) { const x = 10 + (c % cols) * (fs + 14), y = 30 + Math.floor(c / cols) * (fs + 46), w = M.P.W1.slice(c * 25, c * 25 + 25); drawImg(ctx, w, 5, x, y, fs, 'div'); S.label(ctx, orientLabel(w), x + fs / 2, y + fs + 14, S.c['fg-2'], S.font(11, 'body'), 'center'); }
+      return;
+    }
+    if (!done(k)) return;
+    const list = st.unitList, rows = list.length, rh = Math.min(96, (H - 20) / Math.max(1, rows)), sz = rh - 22, showVis = st.unitMode !== 'tops';
+    list.forEach((c, r) => {
+      const y = 10 + r * rh, l = tops(k)[c], dead = l[0].v <= 2;
+      S.label(ctx, `Einheit ${c}`, 8, y + sz / 2, S.c.fg, S.font(12.5, 'body', '600'), 'left');
+      let x = 84;
+      if (showVis) { const vc = visCache[k][c]; if (vc) drawImg(ctx, vc.img.slice ? vc.img : vc.img, N, x, y, sz); else { ctx.strokeStyle = S.alpha('fg', 0.25); ctx.strokeRect(x, y, sz, sz); } S.label(ctx, 'sichtbar gemacht', x + sz / 2, y + sz + 10, S.c.accent, S.font(10.5, 'body'), 'center'); x += sz + 18; }
+      if (dead) { S.label(ctx, 'stumm: springt bei keinem Bild an', x, y + sz / 2, S.c.muted, S.font(12.5, 'body'), 'left'); return; }
+      const nShow = Math.max(1, Math.min(l.length, Math.floor((W - x - 10) / (sz * 0.8 + 6))));
+      l.slice(0, nShow).forEach((o, i) => { const s2 = sz * 0.8; drawImg(ctx, o.patch, RF, x + i * (s2 + 6), y + (sz - s2) / 2, s2); });
+    });
+  });
+  async function computeVis(a, k, units, live) {
+    const M = REF[k];
+    for (const c of units) {
+      if (visCache[k][c]) continue;
+      if (live) { st.visUnit = c; let img = null; let it = 0; await a.loop(() => { const r = M.visualise(c, 6, img); img = r.img; visCache[k][c] = { img: Float32Array.from(img) }; it += 6; return it < 240; }, 30); }
+      else { await a.loop(() => { visCache[k][c] = { img: M.visualise(c, 240).img }; return false; }, 30); }
+    }
+  }
+
+  // ── 14. reading a circuit ───────────────────────────────────────
+  function circuitData(k, c) {
+    if (cache[k]['c' + c]) return cache[k]['c' + c];
+    const M = REF[k], r = CNN.rng(7); let best = null;
+    for (let i = 0; i < 300; i++) { const y = i % 4, img = CNN.shape(y, r), f = M.forward(img); if (!best || f.g[c] > best.v) best = { v: f.g[c], img, f }; }
+    const id = best.f.arg2[c] - c * O2 * O2, y2 = Math.floor(id / O2), x2 = id % O2, W2 = M.P.W2, contrib = [];
+    for (let d = 0; d < C1; d++) { let s = 0; const act = new Float32Array(25), w = new Float32Array(25), pr = new Float32Array(25); for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) { const a = best.f.p1[(d * P1 + y2 + i) * P1 + x2 + j], ww = W2[((c * C1 + d) * 5 + i) * 5 + j]; act[i * 5 + j] = a; w[i * 5 + j] = ww; pr[i * 5 + j] = a * ww; s += a * ww; } contrib.push({ d, s, act, w, pr }); }
+    const patch = new Float32Array(RF * RF); for (let i = 0; i < RF; i++) for (let j = 0; j < RF; j++) patch[i * RF + j] = best.img[(2 * y2 + i) * N + 2 * x2 + j];
+    return (cache[k]['c' + c] = { patch, contrib: contrib.sort((a, b) => b.s - a.s), total: best.v });
+  }
+  const circV = S.canvas($('#v-circ'), (ctx, W, H) => {
+    if (!done(0) || st.circUnit == null) return;
+    const M = REF[0], D = circuitData(0, st.circUnit), narrow = W < 600, ps = narrow ? Math.min(W * 0.3, 110) : Math.min(H * 0.32, 150);
+    drawImg(ctx, D.patch, RF, 14, 14, ps); S.label(ctx, `Einheit ${st.circUnit} springt an: ${fmt(D.total, 1)}`, 14 + ps + 16, 30, S.c.fg, S.font(13.5, 'body', '600'), 'left');
+    S.label(ctx, narrow ? 'größte Beiträge:' : 'die größten Beiträge der 8 Kantendetektoren:', 14 + ps + 16, 54, S.c['fg-2'], S.font(12, 'body'), 'left');
+    const rows = 3, y0 = ps + 44, rh = (H - y0 - 10) / rows, ts = Math.min(rh - 26, narrow ? (W - 60) / 4 - 14 : 90), colsX = narrow ? [10, 10 + ts + 14, 10 + 2 * (ts + 14), 10 + 3 * (ts + 14)] : [20, 160, 300, 440];
+    (narrow ? (ts < 44 ? [] : ['Filter', 'wo', 'Gewicht', 'Produkt']) : ['Kantendetektor', 'wo er anspringt', 'Gewichte', 'Beitrag']).forEach((t, i) => S.label(ctx, t, colsX[i] + ts / 2, y0 - 10, S.c['fg-2'], S.font(narrow ? 10.5 : 12, 'body', '600'), 'center'));
+    D.contrib.slice(0, rows).forEach((cd, r) => {
+      const a = clamp(st.circA * rows - r, 0, 1); if (a <= 0) return; ctx.globalAlpha = a; const y = y0 + r * rh;
+      drawImg(ctx, M.P.W1.slice(cd.d * 25, cd.d * 25 + 25), 5, colsX[0], y, ts, 'div');
+      drawImg(ctx, cd.act, 5, colsX[1], y, ts, 'div'); drawImg(ctx, cd.w, 5, colsX[2], y, ts, 'div'); drawImg(ctx, cd.pr, 5, colsX[3], y, ts, 'div');
+      S.label(ctx, `${orientLabel(M.P.W1.slice(cd.d * 25, cd.d * 25 + 25))} · ${fmt(cd.s, 1)}`, colsX[0] + ts / 2, y + ts + 12, S.c.fg, S.font(10.5, 'body'), 'left');
+      if (!narrow) S.label(ctx, `+${fmt(cd.s, 1)}`, colsX[3] + ts + 12, y + ts / 2, S.c.model, S.font(14, 'mono', '600'), 'left');
+      ctx.globalAlpha = 1;
+    });
+  });
+
+  // ── 15. the three claims ────────────────────────────────────────
+  const CLAIMS = [['1  Merkmale', 'Grundbausteine; Richtungen im Raum der Aktivierungen; verständlich'], ['2  Schaltkreise', 'Merkmale sind über Gewichte verbunden; die Verbindungen bilden lesbare Algorithmen'], ['3  Universalität', 'ähnliche Merkmale und Schaltkreise entstehen in verschiedenen Netzen immer wieder']];
+  const claimsV = S.canvas($('#v-claims'), (ctx, W, H) => {
+    const nar = W < 560, bw = Math.min(560, W - (nar ? 20 : 40)), bh = nar ? Math.min(110, (H - 20) / 3 - 8) : Math.min(110, (H - 60) / 3 - 16), x = (W - bw) / 2;
+    CLAIMS.forEach(([a, b], i) => { const al = clamp(st.claimK - i, 0, 1); if (al <= 0) return; ctx.globalAlpha = al; const y = nar ? 8 + i * (bh + 8) : 20 + i * (bh + 16); ctx.fillStyle = S.c['surface-2']; ctx.strokeStyle = i < 2 ? S.c.grad : S.c.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, bw, bh, 10) : ctx.rect(x, y, bw, bh); ctx.fill(); ctx.stroke(); S.label(ctx, a, x + 14, y + (nar ? 20 : 28), S.c.fg, S.font(nar ? 14 : 18, 'body', '600'), 'left'); { const f = S.font(W < 560 ? 11.5 : 13.5, 'body'); ctx.font = f; const lines = [''], maxW = bw - 28; b.split(' ').forEach((w) => { const t = lines[lines.length - 1] ? lines[lines.length - 1] + ' ' + w : w; if (ctx.measureText(t).width > maxW && lines[lines.length - 1]) lines.push(w); else lines[lines.length - 1] = t; }); lines.forEach((t, j) => S.label(ctx, t, x + 14, y + (nar ? 40 + j * 14 : 56 + j * 17), S.c['fg-2'], f, 'left')); } S.label(ctx, i < 2 ? 'gesehen ✓' : 'gleich', x + bw - 14, y + (nar ? 20 : 28), i < 2 ? S.c.grad : S.c.accent, S.font(12.5, 'body', '600'), 'right'); ctx.globalAlpha = 1; });
+  });
+
+  // ── 16–17. universality and polysemantic units ──────────────────
+  const famOf = (k, c) => { const cls = [0, 0, 0, 0]; tops(k)[c].forEach((o) => cls[o.y]++); const m = Math.max(...cls); return { cls, main: cls.indexOf(m), pure: m >= 7 }; };
+  const uniV = S.canvas($('#v-uni'), (ctx, W, H) => {
+    if (!done(1)) return;
+    const narrow = W < 640, half = narrow ? W - 20 : (W - 30) / 2;
+    if (st.polyA > 0) {
+      // the most mixed unit of the second net
+      const k = 1, cands = alive(k).map((c) => [c, famOf(k, c)]).sort((a, b) => Math.max(...a[1].cls) - Math.max(...b[1].cls)), [c, fam] = cands[0], l = tops(k)[c], sz = Math.min(80, (W - 40) / 8 - 8);
+      S.label(ctx, `Netz B, Einheit ${c}: die 8 stärksten Beispiele`, 20, 22, S.c.fg, S.font(14, 'body', '600'), 'left');
+      l.forEach((o, i) => { const x = 20 + (i % 8) * (sz + 8), y = 40 + Math.floor(i / 8) * (sz + 28); drawImg(ctx, o.patch, RF, x, y, sz); S.label(ctx, NAMES[o.y], x + sz / 2, y + sz + 10, S.c['fg-2'], S.font(11, 'body'), 'center'); });
+      const by = 40 + sz + 60; S.label(ctx, 'aus welcher Form die Beispiele stammen:', 20, by, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      fam.cls.forEach((n, i) => { const y = by + 18 + i * 24; S.label(ctx, NAMES[i], 100, y + 8, S.c.fg, S.font(12.5, 'body'), 'right'); ctx.fillStyle = S.c.accent; ctx.fillRect(110, y, n * 30, 16); S.label(ctx, String(n), 116 + n * 30, y + 8, S.c['fg-2'], S.font(12, 'mono'), 'left'); });
+      return;
+    }
+    [0, 1].forEach((k) => {
+      const ox = narrow ? 10 : 10 + k * (half + 10), oy = narrow ? k * (H / 2) : 0, fs = narrow ? Math.min((half - 20) / 8 - 6, 30) : Math.min((half - 20) / 8 - 6, 46);
+      S.label(ctx, k ? 'Netz B (anderer Start)' : 'Netz A', ox + 4, oy + (narrow ? 10 : 16), k ? S.c.accent : S.c.grad, S.font(13.5, 'body', '600'), 'left');
+      for (let c = 0; c < C1; c++) drawImg(ctx, REF[k].P.W1.slice(c * 25, c * 25 + 25), 5, ox + 4 + c * (fs + 6), oy + (narrow ? 22 : 30), fs, 'div');
+      const fams = [[0, 'Kreise'], [2, 'Dreiecke'], [3, 'Kreuze']], sz = Math.min(fs * 1.25, 56), al = st.uniA;
+      ctx.globalAlpha = al;
+      if (narrow) {
+        // compact: one row of images per family, label to the left
+        const rh = Math.min(30, (H / 2 - fs - 34) / 3), isz = rh - 4;
+        fams.forEach(([cl, nm], r) => { const us = alive(k).filter((c) => famOf(k, c).main === cl && famOf(k, c).pure), y = oy + 22 + fs + 8 + r * rh; S.label(ctx, `${nm}: ${us.length}`, ox + 4, y + isz / 2, S.c['fg-2'], S.font(11.5, 'body', '600'), 'left'); us.slice(0, 6).forEach((c, i) => { const vc = visCache[k][c], x = ox + 84 + i * (isz + 4); if (vc) drawImg(ctx, vc.img, N, x, y, isz); else drawImg(ctx, tops(k)[c][0].patch, RF, x, y, isz); }); });
+        ctx.globalAlpha = 1; return;
+      }
+      fams.forEach(([cl, nm], r) => {
+        const us = alive(k).filter((c) => famOf(k, c).main === cl && famOf(k, c).pure), y = oy + 30 + fs + 30 + r * (sz + 30);
+        S.label(ctx, `${nm}: ${us.length} Einheit${us.length === 1 ? '' : 'en'}`, ox + 4, y - 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+        us.slice(0, Math.floor((half - 10) / (sz + 6))).forEach((c, i) => { const vc = visCache[k][c]; if (vc) drawImg(ctx, vc.img, N, ox + 4 + i * (sz + 6), y, sz); else drawImg(ctx, tops(k)[c][0].patch, RF, ox + 4 + i * (sz + 6), y, sz); });
+      });
+      ctx.globalAlpha = 1;
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const steps = {
+    frage: {
+      views: ['box'],
+      formula: `Netz = ${T('b', 'Blackbox', '', 'man sieht nur Eingabe und Ausgabe')}? oder ${T('c', 'lesbare Schaltung', 'c-new', 'Merkmale, die über Gewichte verbunden sind')}?`,
+      setup() { st.boxA = 0; },
+      async play(a) { a.hl('b'); a.say('Bild hinein, Antwort heraus. Was dazwischen passiert, sieht man nicht.'); await a.wait(2800); a.hl('c'); await a.to(st, { boxA: 1 }, 1800); a.say('Olahs Vorschlag: hineinsehen und lesen. Kanten werden zu Ecken und Kurven, Kurven zu Formen.'); },
+    },
+    bild: {
+      views: ['pix'],
+      formula: `Bild = ${T('t', 'Tabelle 28 × 28', 'c-new', 'eine Helligkeit pro Pixel: −0,5 schwarz, +0,5 weiß')}`,
+      setup() { st.zoom = 0; },
+      async play(a) { a.say('Ein helles Quadrat auf dunklem Grund.'); await a.wait(1800); a.hl('t'); await a.to(st, { zoom: 1 }, 1200); a.say('Vergrößert: Jedes Pixel ist eine Zahl. Am Rand des Quadrats springen die Zahlen von −0,5 auf +0,5.'); },
+    },
+    filter: {
+      views: ['filt'],
+      formula: `${T('s', 'Wert', 'c-new', 'Skalarprodukt: Feld für Feld multiplizieren, alles addieren')} = Σ Filter · Ausschnitt`,
+      setup() { st.fSweep = 0; st.fPos = 4 * O1 + 2; },
+      async play(a) {
+        a.say('Links das Bild mit einem Ausschnitt, rechts der Filter: links negativ (orange), rechts positiv (blau).'); await a.wait(2800);
+        a.hl('s'); a.say('Im dunklen Bereich: fast 0.'); await a.wait(2000);
+        await a.to(st, { fPos: 10 * O1 + 3 }, 1400); a.say('Genau auf der linken Kante des Quadrats: links dunkel, rechts hell. Großer Wert.'); await a.wait(2600);
+        await a.to(st, { fPos: 10 * O1 + 15 }, 1400); a.say('Auf der rechten Kante: links hell, rechts dunkel. Negativ.');
+      },
+    },
+    schieben: {
+      views: ['filt'],
+      formula: `${T('k', 'Merkmalskarte', 'c-new', 'an jeder Stelle der Wert des Filters')}[<i>y</i>, <i>x</i>] = Σ Filter · Ausschnitt an (<i>y</i>, <i>x</i>)`,
+      setup() { st.fSweep = 0.0001; st.fPos = 0; },
+      async play(a) { a.hl('k'); a.say('Der Filter fährt Platz für Platz über das Bild …'); await a.to(st, { fSweep: 1 }, 7000, { ease: (t) => t }); a.say('Die Merkmalskarte: blau an der linken Kante, orange an der rechten. Der Filter hat senkrechte Kanten gefunden.'); },
+    },
+    mehrere: {
+      views: ['multi'],
+      formula: `4 Filter → 4 Karten → ${T('r', 'ReLU', 'c-new', 'Negatives wird 0, Kapitel 4')}`,
+      setup() { st.mN = 1; st.relu = 0; },
+      async play(a) { a.say('Vier Filter, vier Richtungen.'); await a.to(st, { mN: 4 }, 2400, { ease: (t) => t }); await a.wait(1600); a.say('Jede Karte zeigt die Kanten ihrer Richtung.'); await a.wait(2000); a.hl('r'); await a.to(st, { relu: 1 }, 1200); a.say('Nach dem Knick bleibt nur das Positive: wo genau dieses Muster vorkommt.'); },
+    },
+    verkleinern: {
+      views: ['pool'],
+      formula: `${T('p', 'Max-Pooling', 'c-new', 'von je 2 × 2 Feldern bleibt das stärkste')}: 24 × 24 → 12 × 12`,
+      setup() { st.pool = 0; },
+      async play(a) { a.say('Eine Karte, in Zweierblöcke eingeteilt.'); await a.wait(1800); a.hl('p'); await a.to(st, { pool: 1 }, 1600); a.say('Von jedem Block bleibt das Stärkste. Halb so groß, dieselbe Information: Hier gibt es eine senkrechte Kante.'); },
+    },
+    zweite: {
+      views: ['zweite'],
+      formula: `${T('e', 'Ecke', 'c-new', 'zweite Schicht: kombiniert Karten der ersten')} = Gewichte · senkrechte Kanten + Gewichte · waagrechte Kanten`,
+      setup() { st.z2 = 0; },
+      async play(a) { a.say('Zwei verkleinerte Karten: senkrechte und waagrechte Kanten des Quadrats. Daneben die Gewichte eines Filters der zweiten Schicht.'); await a.wait(3200); a.hl('e'); await a.to(st, { z2: 1 }, 1400); a.say('Wo links eine senkrechte und oben eine waagrechte Kante ist, springt die neue Karte an: die Ecke oben links.'); },
+    },
+    aufgabe: {
+      views: ['data'],
+      formula: `Bild → ${T('l1', '8 Filter', '', 'erste Schicht')} → ${T('l2', '12 Filter', '', 'zweite Schicht')} → ${T('m', 'stärkster Wert je Karte', '', '12 Zahlen')} → softmax → ${T('k', '4 Formen', 'c-new', 'Kreis, Quadrat, Dreieck, Kreuz')}`,
+      setup() { st.dataN = 0; st.dec = 0; },
+      async play(a) {
+        a.hl('k'); a.say('Unsere Bilder: Kreise, Quadrate, Dreiecke, Kreuze, in allen Lagen und Größen.'); await a.to(st, { dataN: 16 }, 3000, { ease: (t) => t }); await a.wait(1200);
+        a.hl('l1', 'l2', 'm'); a.say('Zwei Faltungsschichten, dann der stärkste Wert jeder Karte, dann die Softmax.'); await a.wait(2600);
+        await waitRef(a); await a.to(st, { dec: 1 }, 800); a.say('So entscheidet das trainierte Netz für das erste Bild.');
+      },
+    },
+    training: {
+      views: ['train'],
+      formula: () => `Training<span class="sep">Schritt</span>${V('t')}<span class="sep">Trefferquote</span>${V('acc')}`,
+      setup() { st.live = CNN.create(1); },
+      async play(a) {
+        const M = st.live; liveRunning = true;
+        try { a.say('Die 8 Filter starten als Rauschen. Training läuft …'); await a.loop(() => { M.step(); return M.t < STEPS; }, (i) => (i < 60 ? 20 : 140)); }
+        finally { liveRunning = false; }
+        if (!done(0)) REF[0] = M;
+        a.say(`Fertig: ${fmt(M.accuracy(200) * 100, 0)} % der Testbilder richtig. Aus dem Rauschen sind gerichtete Muster geworden.`);
+      },
+    },
+    kanten: {
+      views: ['units'],
+      formula: `erste Schicht: ${T('k', 'Kantendetektoren', 'c-new', 'dunkel auf der einen, hell auf der anderen Seite')}`,
+      setup() { st.unitMode = 'edges'; st.unitNet = 0; },
+      async play(a) { await waitRef(a); a.set(st, {}); a.hl('k'); a.say('Die 8 gelernten Filter, groß. Viele sind Kanten in verschiedenen Richtungen, darunter die Beschriftung aus ihrer Hauptrichtung.'); },
+    },
+    beispiele: {
+      views: ['units'],
+      formula: `${T('d', 'Datensatz-Beispiele', 'c-new', 'die Bildausschnitte, bei denen eine Einheit am stärksten anspringt')}`,
+      setup() { st.unitMode = 'tops'; st.unitNet = 0; st.unitList = []; },
+      async play(a) {
+        await waitRef(a); a.say('Wir zeigen dem Netz 500 Bilder und merken uns pro Einheit die stärksten Ausschnitte …'); await a.loop(() => { tops(0); return false; }, 30);
+        a.hl('d'); a.set(st, { unitList: [0, 1, 4, 5, 9] }); a.say('Einheit 0 und 4: Kreisbögen. Einheit 5: Dreiecksecken. Einheit 9: Kreuze. Einheit 1: stumm.');
+      },
+    },
+    sichtbar: {
+      views: ['units'],
+      formula: `${T('v', 'Bild', 'c-new', 'wird verändert, bis die Einheit maximal anspringt')} ← Bild + Schritt · Gradient der Einheit`,
+      setup() { st.unitMode = 'vis'; st.unitNet = 0; st.unitList = [0, 4]; },
+      async play(a) { await waitRef(a); a.hl('v'); a.say('Wir starten mit grauem Rauschen und verändern die Pixel, bis die Einheit möglichst stark anspringt …'); await computeVis(a, 0, [0, 4], true); a.say('Links das Ergebnis, rechts die echten Beispiele. Beide zeigen dasselbe: einen Bogen.'); },
+    },
+    kurven: {
+      views: ['units'],
+      formula: `${T('k', 'Kurvendetektoren', 'c-new', 'Einheiten für Kreisbögen in verschiedenen Lagen')} und Detektoren für Ecken und Kreuzarme`,
+      setup() { st.unitMode = 'vis'; st.unitNet = 0; st.unitList = []; },
+      async play(a) {
+        await waitRef(a); const al = alive(0); a.set(st, { unitList: al }); a.say('Alle Einheiten, die überhaupt anspringen. Die Bilder werden berechnet …'); await computeVis(a, 0, al, false);
+        a.hl('k'); a.say('Mehrere Einheiten für Kreise und Bögen, hell oder dunkel: Kurvendetektoren. Dazu Dreiecks- und Kreuz-Einheiten.');
+      },
+    },
+    schaltkreis: {
+      views: ['circ'],
+      formula: `${T('w', 'Wert der Einheit', '', 'was der Kurvendetektor ausgibt')} = Σ über Kantendetektoren ${T('b', 'Beitrag', 'c-new', 'wo die Kante liegt × Gewicht an dieser Stelle')}`,
+      setup() { st.circA = 0; st.circUnit = null; },
+      async play(a) {
+        await waitRef(a); const al = alive(0), c = al.find((u) => famOf(0, u).main === 0 && famOf(0, u).pure) ?? al[0];
+        a.set(st, { circUnit: c }); await a.loop(() => { circuitData(0, c); return false; }, 30);
+        a.say(`Ein Bild, bei dem der Kurvendetektor (Einheit ${c}) stark anspringt.`); await a.wait(2400);
+        a.hl('b'); await a.to(st, { circA: 1 }, 3000, { ease: (t) => t });
+        a.say('Der größte Beitrag: ein Kantendetektor, der entlang des Bogens anspringt, genau dort, wo die Gewichte positiv sind. Zwei weitere ergänzen.');
+      },
+    },
+    thesen: {
+      views: ['claims'],
+      formula: `Zoom In (2020): ${T('m', 'Merkmale', '', '')} · ${T('s', 'Schaltkreise', '', '')} · ${T('u', 'Universalität', 'c-new', 'als Nächstes geprüft')}`,
+      setup() { st.claimK = 0; },
+      async play(a) { for (let i = 1; i <= 3; i++) { await a.to(st, { claimK: i }, 700); a.hl(['m', 's', 'u'][i - 1]); a.say(['Merkmale: verständliche Bausteine.', 'Schaltkreise: Verbindungen, die Algorithmen bilden.', 'Universalität: Dieselben Ideen tauchen in verschiedenen Netzen wieder auf.'][i - 1]); await a.wait(2400); } },
+    },
+    universell: {
+      views: ['uni'],
+      formula: `Netz A und ${T('b', 'Netz B', 'c-new', 'gleiche Aufgabe, anderer Zufallsstart')}: dieselben Arten von Merkmalen?`,
+      setup() { st.uniA = 0; st.polyA = 0; },
+      async play(a) {
+        await waitRef(a, 1); a.set(st, {}); a.hl('b'); a.say('Oben die Filter beider Netze. Andere Zahlen, aber in beiden: Kanten in mehreren Richtungen.'); await a.wait(3200);
+        a.say('Jetzt die Einheiten der zweiten Schicht, nach der Form sortiert, auf die sie anspringen …'); await a.loop(() => { tops(1); return false; }, 30);
+        await computeVis(a, 1, alive(1).filter((c) => famOf(1, c).pure), false);
+        await a.to(st, { uniA: 1 }, 900); a.say('In beiden Netzen: Kreis-Einheiten, Dreieck-Einheiten, Kreuz-Einheiten. Nicht dieselben, aber dieselben Ideen.');
+      },
+    },
+    poly: {
+      views: ['uni'],
+      formula: `${T('p', 'polysemantisch', 'c-new', 'eine Einheit, mehrere unabhängige Bedeutungen')}: eine Einheit, zwei Formen`,
+      setup() { st.polyA = 1; },
+      async play(a) { await waitRef(a, 1); a.set(st, {}); a.hl('p'); a.say('Die Einheit im zweiten Netz mit der gemischtesten Kundschaft: Sie springt auf zwei verschiedene Formen an.'); },
+    },
+    ausblick: {
+      views: ['claims'],
+      formula: `Merkmale finden · Verbindungen lesen · durch Vergleich und Eingriff prüfen`,
+      setup() { st.claimK = 3; },
+      async play(a) { a.say('Kapitel 12: dieselben Werkzeuge für unseren Transformer.'); },
+    },
+  };
+
+  story = S.story($('#story'), {
+    views: { box: boxV, pix: pixV, filt: filtV, multi: multiV, pool: poolV, zweite: zweiteV, data: dataV, train: trainV, units: unitsV, circ: circV, claims: claimsV, uni: uniV },
+    steps,
+    values: () => ({ t: String(st.live ? st.live.t : 0), acc: st.live && st.live.acc != null ? `${fmt(st.live.acc * 100, 0)} %` : '–' }),
+  });
+})();
+</script>
+</body>
+</html>

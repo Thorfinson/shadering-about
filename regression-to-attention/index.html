@@ -91,7 +91,7 @@
 <main class="page">
 
   <header class="col hub-head">
-    <div class="eyebrow">Interaktive Visualisierungen · 9 Kapitel</div>
+    <div class="eyebrow">Interaktive Visualisierungen · 12 Kapitel</div>
     <h1>Von der Geraden zur Attention</h1>
     <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann. Zum Anfassen statt zum Lesen.</p>
   </header>
@@ -245,42 +245,62 @@
       <li class="rung ready">
         <div class="num">7</div>
         <div class="body">
-          <div class="top"><h2><a href="07-attention.html">Attention</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Query, Key, Value</div>
-          <p class="new"><b>Neue Idee</b>Die Gewichte der Mischung werden aus den Daten selbst berechnet. Jedes Wort entscheidet, auf welche anderen Wörter es achtet.</p>
+          <div class="top"><h2><a href="07-attention.html">Mischen nach Relevanz</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Attention I: die Idee ohne neue Matrizen</div>
+          <p class="new"><b>Neue Idee</b>Ein Wort wird zum gewichteten Mittel der Wörter um es herum. Die Gewichte kommen aus der Ähnlichkeit, Softmax macht sie zu Anteilen.</p>
           <details>
-            <summary>Die Geschichte in 14 Schritten</summary>
+            <summary>Die Geschichte in 15 Schritten</summary>
             <ul>
-              <li>„Bank“ in zwei Sätzen: ein Vektor; Mischen mit Gewichten</li>
-              <li>Gewichte von Hand, dann aus dem Skalarprodukt, dann per Softmax; die Falle „ich bin mir selbst am ähnlichsten“</li>
-              <li>„Bank“ rückt je nach Satz zum Geld, zum Sitzen, zum Holz (mit den Vektoren aus Kapitel 6)</li>
-              <li>Fragen und Schilder (Q, K) und Werte (V) an einem Beispiel von Hand: Wer ist „sie“?</li>
-              <li>Die Formel Schritt für Schritt, die Attention-Matrix, warum durch √d geteilt wird</li>
-              <li>Kausale Maske und mehrere Köpfe</li>
+              <li>„Bank“ hat nur einen Vektor; wie wir selbst lesen: der Blick springt zu den wichtigen Wörtern</li>
+              <li>Gewichtetes Mittel erst mit Zahlen, dann mit Punkten, dann mit Vektoren; Mischen von Hand</li>
+              <li>Relevanz als Skalarprodukt; e hoch, teilen, Schärfe: die Softmax entsteht Schritt für Schritt</li>
+              <li>Die Falle: jedes Wort ist sich selbst am ähnlichsten; ohne sich selbst rückt „Bank“ zu Geld, Sitzen, Holz</li>
+              <li>Alle Wörter auf einmal als Tabelle; die Grenze: Wer ist „sie“?</li>
             </ul>
           </details>
           <a class="open-link" href="07-attention.html">Kapitel öffnen →</a>
         </div>
-        <div class="formula"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
+        <div class="formula"><span><b>x</b>′ = <span class="hl-new">Σ softmax(<b>x</b>·<b>x</b><sub><i>j</i></sub>)</span> <b>x</b><sub><i>j</i></sub></span></div>
       </li>
 
       <li class="rung ready">
         <div class="num">8</div>
         <div class="body">
-          <div class="top"><h2><a href="08-transformer.html">Der Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Residualstrom, Positionen, nächstes Token, ein selbst trainierter Mini-Transformer</div>
-          <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Strom und addieren ihr Ergebnis zurück. Am Ende steht eine Wahrscheinlichkeit für das nächste Token.</p>
+          <div class="top"><h2><a href="08-qkv.html">Fragen, Schilder, Werte</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Attention II: Query, Key, Value</div>
+          <p class="new"><b>Neue Idee</b>Drei gelernte Matrizen geben jedem Wort drei Rollen: eine Frage, ein Schild und einen Inhalt. So kann „sie“ nach einem Nomen suchen, statt nach sich selbst.</p>
+          <details>
+            <summary>Die Geschichte in 18 Schritten</summary>
+            <ul>
+              <li>Ein Wort, drei Rollen; eine Matrix dreht einen Vektor (Kapitel 2)</li>
+              <li>Die Frage von „sie“, Punktzahlen, Gewichte: „Katze“ bekommt 91 %</li>
+              <li>Schilder und Werte als eigene Matrizen; das Ergebnis</li>
+              <li>Alles als Tabellen: X → Q, das Kreuz QKᵀ, Softmax zeilenweise, mal V</li>
+              <li>Die ganze Formel; warum durch √d geteilt wird; mehrere Köpfe; alles gelernt</li>
+            </ul>
+          </details>
+          <a class="open-link" href="08-qkv.html">Kapitel öffnen →</a>
+        </div>
+        <div class="formula"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
+      </li>
+
+      <li class="rung ready">
+        <div class="num">9</div>
+        <div class="body">
+          <div class="top"><h2><a href="09-transformer.html">Der Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Residualstrom, MLP, Positionen, nächstes Wort</div>
+          <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Notizblatt und addieren ihr Ergebnis zurück. Am Ende steht eine Wahrscheinlichkeit für das nächste Wort.</p>
           <details>
             <summary>Die Geschichte in 15 Schritten</summary>
             <ul>
-              <li>Addieren statt ersetzen: der Residualstrom; das MLP pro Wort; Blöcke stapeln</li>
+              <li>Die Teile; addieren statt ersetzen; das Notizblatt (Residualstrom)</li>
+              <li>Das MLP aus Kapitel 4, an Zahlen vorgerechnet, für jedes Wort einzeln; ein Block</li>
               <li>Attention kennt keine Reihenfolge; Positionsvektoren</li>
-              <li>Die Ausgabe: Skalarprodukt mit Ausgabe-Vektoren und Softmax</li>
-              <li>Ein eigener Transformer mit zwei Schichten, live im Browser trainiert auf Folgen, die sich wiederholen</li>
-              <li>Der plötzliche Sprung im Verlust; Vorhersagen vorher und nachher; das Modell schreibt Muster weiter</li>
+              <li>Die Aufgabe: das nächste Wort; die Maske; die Ausgabe; der Verlust</li>
+              <li>Der Bauplan im Ganzen, und wie groß echte Modelle sind</li>
             </ul>
           </details>
-          <a class="open-link" href="08-transformer.html">Kapitel öffnen →</a>
+          <a class="open-link" href="09-transformer.html">Kapitel öffnen →</a>
         </div>
         <div class="formula">
           <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> Attn(<b>x</b>)</span>
@@ -289,23 +309,65 @@
       </li>
 
       <li class="rung ready">
-        <div class="num">9</div>
+        <div class="num">10</div>
         <div class="body">
-          <div class="top"><h2><a href="09-circuits.html">Schaltkreise lesen</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Circuits: unseren Mini-Transformer verstehen</div>
-          <p class="new"><b>Neue Idee</b>Merkmale sind Richtungen im Raum, Schaltkreise sind die Gewichte, die sie verbinden, und beides lässt sich lesen.</p>
+          <div class="top"><h2><a href="10-training.html">Ein eigener Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Live im Browser trainiert</div>
+          <p class="new"><b>Neue Idee</b>Ein winziger Transformer mit zwei Köpfen lernt vor unseren Augen, Muster fortzusetzen, und zwar nicht allmählich, sondern mit einem plötzlichen Sprung.</p>
           <details>
-            <summary>Die Geschichte in 11 Schritten</summary>
+            <summary>Die Geschichte in 12 Schritten</summary>
             <ul>
-              <li>Merkmale und Schaltkreise (Zoom In, 2020)</li>
-              <li>Kopf 0 schaut vor allem einen Platz zurück, Kopf 1 auf die Stelle nach der letzten Kopie (Induction Head)</li>
-              <li>Der Algorithmus in zwei Schritten: Notiz schreiben, Notiz suchen und kopieren</li>
-              <li>OV- und QK-Schaltkreis direkt aus den Gewichten (nach dem Mathematical Framework, 2021)</li>
-              <li>Köpfe abschalten; der Schaltkreis entsteht im Phasenübergang (2022)</li>
+              <li>Warum ein kleines Modell; die Aufgabe: Folgen, die sich wiederholen</li>
+              <li>Lernen rückwärts durch alle Teile; der Bauplan: 1856 Zahlen</li>
+              <li>Vorher raten; ein Lernschritt; das Training live</li>
+              <li>Der Sprung im Verlust; nachher; das Modell schreibt Muster weiter; die Grenzen</li>
+            </ul>
+          </details>
+          <a class="open-link" href="10-training.html">Kapitel öffnen →</a>
+        </div>
+        <div class="formula"><span><b>θ</b> ← <b>θ</b> − <span class="hl-new">η ∇<i>L</i></span></span><span class="small">1856 Zahlen, live trainiert</span></div>
+      </li>
+
+      <li class="rung ready">
+        <div class="num">11</div>
+        <div class="body">
+          <div class="top"><h2><a href="11-vision.html">Merkmale und Schaltkreise</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Olah I: ein eigenes Bildnetz, live trainiert</div>
+          <p class="new"><b>Neue Idee</b>Ein Netz lässt sich lesen: Einheiten erkennen Merkmale, Gewichte verbinden sie zu Schaltkreisen, und verschiedene Netze lernen ähnliche Dinge.</p>
+          <details>
+            <summary>Die Geschichte in 18 Schritten</summary>
+            <ul>
+              <li>Ein Bild sind Zahlen; ein Filter, über das Bild geschoben; mehrere Filter, ReLU, verkleinern</li>
+              <li>Eine zweite Schicht von Hand: Ecke = senkrechte Kante + waagrechte Kante</li>
+              <li>Vier Formen erkennen, live trainiert; die ersten Filter werden zu Kantendetektoren</li>
+              <li>Beispiele pro Einheit; sichtbar machen durch Optimieren; Kurven- und Kreisdetektoren</li>
+              <li>Ein Schaltkreis aus Gewichten gelesen; die drei Thesen aus „Zoom In“</li>
+              <li>Universalität: ein zweites Netz lernt ähnliche Merkmale; polysemantische Einheiten</li>
+            </ul>
+          </details>
+          <a class="open-link" href="11-vision.html">Kapitel öffnen →</a>
+        </div>
+        <div class="formula"><span>Kanten <span class="hl-new">→</span> Kurven <span class="hl-new">→</span> Formen</span></div>
+      </li>
+
+      <li class="rung ready">
+        <div class="num">12</div>
+        <div class="body">
+          <div class="top"><h2><a href="12-circuits.html">Schaltkreise im Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
+          <div class="sub">Olah II: unseren Transformer aus Kapitel 10 lesen</div>
+          <p class="new"><b>Neue Idee</b>Dieselben Werkzeuge im Transformer: Zwei Köpfe bilden zusammen einen Induction Head, und das steht direkt in den Gewichten.</p>
+          <details>
+            <summary>Die Geschichte in 14 Schritten</summary>
+            <ul>
+              <li>Dieselben Werkzeuge wie im Bildnetz; Kopf 0 schaut einen Platz zurück, Kopf 1 nach der letzten Kopie</li>
+              <li>Der Algorithmus: Notiz schreiben, Notiz suchen, kopieren</li>
+              <li>Wer zur Vorhersage beiträgt; ein Buchstabe läuft durch Kopf 1</li>
+              <li>OV- und QK-Schaltkreis direkt aus den Gewichten; K-Komposition (Mathematical Framework, 2021)</li>
+              <li>Köpfe abschalten; der Schaltkreis entsteht im Phasenübergang (Induction Heads, 2022)</li>
               <li>Ausblick: Superposition, dünne Autoencoder, Attributionsgraphen</li>
             </ul>
           </details>
-          <a class="open-link" href="09-circuits.html">Kapitel öffnen →</a>
+          <a class="open-link" href="12-circuits.html">Kapitel öffnen →</a>
         </div>
         <div class="formula">
           <span><b>W</b><sub>QK</sub> = <span class="hl-new"><b>W</b><sub>Q</sub><sup>⊤</sup><b>W</b><sub>K</sub></span></span>
@@ -320,20 +382,20 @@
     <div class="threads">
       <div>
         <h3>Das Skalarprodukt</h3>
-        <p><span class="m"><i>w</i> · <i>x</i></span> in Kapitel 1, Zeile mal Vektor in Kapitel 2, Ähnlichkeit zweier Wörter in Kapitel 6, <span class="m"><b>q</b> · <b>k</b></span> in Kapitel 7. Fast jede Rechnung in einem Transformer ist ein Skalarprodukt.</p>
+        <p><span class="m"><i>w</i> · <i>x</i></span> in Kapitel 1, Zeile mal Vektor in Kapitel 2, Ähnlichkeit zweier Wörter in Kapitel 6, Relevanz in Kapitel 7, <span class="m"><b>q</b> · <b>k</b></span> in Kapitel 8. Fast jede Rechnung in einem Transformer ist ein Skalarprodukt.</p>
       </div>
       <div>
         <h3>Der Raum</h3>
-        <p>In Kapitel 1 wird ein Datensatz zu einem Punkt in <span class="m">ℝ<sup><i>n</i></sup></span>, in Kapitel 2 verformen Matrizen den Raum. Kapitel 5 zeigt, wie sich hohe Dimensionen verhalten, Kapitel 9 findet dort die Merkmale, die ein Netz gelernt hat.</p>
+        <p>In Kapitel 1 wird ein Datensatz zu einem Punkt in <span class="m">ℝ<sup><i>n</i></sup></span>, in Kapitel 2 verformen Matrizen den Raum. Kapitel 5 zeigt, wie sich hohe Dimensionen verhalten, Kapitel 11 und 12 finden dort die Merkmale, die ein Netz gelernt hat.</p>
       </div>
       <div>
         <h3>Bergab</h3>
-        <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Mini-Transformer in Kapitel 8.</p>
+        <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Mini-Transformer in Kapitel 10 und das Bildnetz in Kapitel 11.</p>
       </div>
     </div>
 
     <h2>Arbeitsstand</h2>
-    <p>Alle neun Kapitel sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Alles läuft im Browser, ohne Bibliotheken und ohne Server, auch das Training der Wortvektoren und des Mini-Transformers.</p>
+    <p>Alle zwölf Kapitel sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Alles läuft im Browser, ohne Bibliotheken und ohne Server, auch das Training der Wortvektoren, des Mini-Transformers und des Bildnetzes.</p>
 
     <h2>Quellen der Reihe</h2>
     <ol class="refs">

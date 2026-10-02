@@ -43,24 +43,39 @@ is currently doing the work. The engine lives in `series.js` (`S.story`).
   gradient nudges and how shared neighbours pull words together, word vectors trained live
   on a small generated German corpus, cosine neighbours, the direction Frau − Mann, analogies,
   and "Bank" as one row for two meanings.
-- **Chapter 7, *Attention***: one vector for two meanings of "Bank", weighted means, weights
-  by hand, from dot products and from a softmax, the self-similarity trap, "Bank" moving
-  towards money, seats or wood depending on the sentence (with the chapter-6 vectors),
-  queries, keys and values on a hand-built example, the formula step by step, the attention
-  matrix, why scores are divided by √d, the causal mask and multiple heads.
-- **Chapter 8, *Der Transformer***: the residual stream, the per-token MLP, why attention
-  ignores word order and how position vectors fix it, the output layer, and a two-layer
-  attention-only transformer trained live in the browser on repeating letter sequences,
-  with its sudden drop in loss and pattern continuation.
-- **Chapter 9, *Schaltkreise lesen***: Olah's features and circuits, then our own model read
-  completely: a previous-token head and an induction head, the two-step algorithm, the OV
-  and QK circuits computed from the weights (including K-composition), head ablations, and
-  the phase change in which the circuit forms.
+- **Chapter 7, *Mischen nach Relevanz*** (attention without new matrices): one vector for
+  two meanings of "Bank", how we read ourselves, weighted means with numbers, points and
+  vectors, mixing by hand, relevance as a dot product, softmax built from e^x, dividing and
+  sharpness, the self-similarity trap, "Bank" moving towards money, seats or wood (with the
+  chapter-6 vectors), the full table, and where it fails ("sie").
+- **Chapter 8, *Fragen, Schilder, Werte***: one word in three roles, a matrix rotating a
+  vector, the query of "sie", scores and weights, keys and values as their own matrices,
+  everything as tables (X → Q, QKᵀ, row softmax, times V), the full formula, √d, multiple
+  heads, and all of it learned.
+- **Chapter 9, *Der Transformer***: the parts, adding instead of replacing (the residual
+  stream as a notepad), the per-token MLP worked through with numbers, a block, why
+  attention ignores word order and how position vectors fix it, next-word prediction, the
+  causal mask, the output, the loss, the whole blueprint and real-world sizes.
+- **Chapter 10, *Ein eigener Transformer***: a two-layer attention-only transformer
+  (1856 parameters) trained live in the browser on repeating letter sequences: the task,
+  learning backwards, one training step, the sudden drop in loss, predictions before and
+  after, continuing patterns, and its limits.
+- **Chapter 11, *Merkmale und Schaltkreise*** (Olah I): images as numbers, a filter slid
+  over an image, several filters, ReLU, pooling, a hand-built second layer, then a small
+  CNN trained live on four shapes: edge detectors, dataset examples, feature visualisation,
+  curve units, a circuit read from the weights, the three claims of *Zoom In*, universality
+  across two runs, and a polysemantic unit.
+- **Chapter 12, *Schaltkreise im Transformer*** (Olah II): the same tools on the chapter-10
+  model: a previous-token head and an induction head, the two-step algorithm, logit
+  attribution per head, a letter walked through the OV circuit, the OV and QK circuits from
+  the weights, K-composition, head ablations, the phase change, and an outlook on
+  superposition, sparse autoencoders and attribution graphs.
 
-Unlike the studies below, the chapters share `series.css` and `series.js`; chapters 6 and 7
-also share `wordmodel.js` (the word vectors), chapters 8 and 9 share `transformer.js` (the
-mini transformer with hand-written backpropagation). All are loaded as plain (non-module)
-files, so the pages still open straight from `file://`.
+Unlike the studies below, the chapters share `series.css` and `series.js`; chapters 6 to 9
+share `wordmodel.js` (the word vectors), chapters 10 and 12 share `transformer.js` (the
+mini transformer with hand-written backpropagation), and chapter 11 uses `cnn.js` (the small
+convolutional network). All are loaded as plain (non-module) files, so the pages still open
+straight from `file://`.
 
 ## Studies
 
