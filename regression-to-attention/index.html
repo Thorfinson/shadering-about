@@ -226,13 +226,14 @@
           <div class="sub">Embeddings</div>
           <p class="new"><b>Neue Idee</b>Wörter werden zu Vektoren, und Bedeutung wird zu Geometrie: Ähnlichkeit ist ein Skalarprodukt, Beziehungen sind Richtungen.</p>
           <details>
-            <summary>Die Geschichte in 12 Schritten</summary>
+            <summary>Die Geschichte in 22 Schritten</summary>
             <ul>
-              <li>Warum Nummern nicht reichen; ein Schalter pro Wort (One-Hot)</li>
-              <li>Nachschlagen in der Tabelle E als Matrixmultiplikation</li>
-              <li>Nachbarn zählen, Nachbarn raten: Softmax und Kreuzentropie für Wörter</li>
-              <li>Eigene Wortvektoren live trainieren, als Schatten auf zwei Hauptkomponenten</li>
-              <li>Ähnlichkeit als Kosinus; Differenzpfeile; König − Mann + Frau ≈ Königin</li>
+              <li>Warum Nummern nicht reichen; ein Schalter pro Wort, erst mit 3, dann mit 65 Wörtern</li>
+              <li>Eine Karte von Hand; die Karte als Tabelle, Nachschlagen als Matrixmultiplikation</li>
+              <li>Paare zählen, Zählprofile vergleichen: Bedeutung steckt schon in der Statistik; Embedding als verdichtetes Profil</li>
+              <li>Das Ratespiel; in einer Welt aus 4 Wörtern: Punktzahl, Schubsen, gleiche Nachbarn ⇒ gleicher Platz</li>
+              <li>Alle 65 Wörter live trainiert; Kosinus-Nachbarn; Differenzpfeile</li>
+              <li>Die Richtung Frau − Mann, eine gewählte Ebene, das nächste Wort, König − Mann + Frau ≈ Königin</li>
               <li>„Bank“: eine Zeile, zwei Bedeutungen, der Grund für Attention</li>
             </ul>
           </details>
