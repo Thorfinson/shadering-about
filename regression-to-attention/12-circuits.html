@@ -111,8 +111,9 @@
 
       <article class="step" data-step="gegenprobe"><div class="card">
         <span class="kicker">Die Gegenprobe</span>
-        <h3>Ohne die Notiz: nichts</h3>
-        <p>Und wenn Kopf 1 die Buchstaben selbst vergleicht, ohne die Notiz von Kopf 0? Dann ist die Tabelle Rauschen. Kopf 1 kann nur suchen, weil Kopf 0 vorgearbeitet hat.</p>
+        <h3>Ohne die Notiz: sogar das Gegenteil</h3>
+        <p>Und wenn Kopf 1 die Buchstaben selbst vergleicht, ohne die Notiz von Kopf 0? Dann gibt es keine helle Diagonale. Im Gegenteil: Die Diagonale ist orange, in jeder Zeile ist sie der niedrigste Wert. Kopf 1 <em>meidet</em> Stellen mit seinem eigenen Buchstaben.</p>
+        <p>Das ergibt Sinn. Steht jetzt „R“, dann ist die frühere Stelle mit „R“ genau die falsche, denn dort steht ja nur „R“. Die richtige ist die Stelle eins dahinter, mit dem Buchstaben, der damals auf „R“ folgte. Kopf 1 hat also gelernt, die Kopie selbst zu übergehen und nur die Stelle mit der Notiz „vor mir stand R“ zu nehmen.</p>
         <p>Die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat. Olah und Kollegen nennen das <strong>K-Komposition</strong>: Zwei Köpfe, hintereinandergeschaltet über das Notizblatt. Damit ist die Vermutung aus dem Trick-Schritt an den Gewichten bestätigt.</p>
       </div></article>
 
@@ -366,9 +367,9 @@
     },
     gegenprobe: {
       views: ['circ'],
-      formula: `${T('k', 'K-Komposition', 'c-new', 'die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat')}: ohne Kopf 0 keine Suche`,
+      formula: `${T('k', 'K-Komposition', 'c-new', 'die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat')}: Kopie meiden, Notiz finden`,
       setup() { st.circMode = 'qkd'; st.circA = 0; },
-      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, eher das Gegenteil: Direkt gelesen meidet Kopf 1 den eigenen Buchstaben. Die Suche funktioniert nur über die Notiz von Kopf 0: zwei Köpfe, hintereinandergeschaltet.'); },
+      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, sondern eine orange: Kopf 1 meidet die Kopie selbst, denn dort steht nur derselbe Buchstabe. Gesucht ist die Stelle dahinter, und die findet er nur über die Notiz von Kopf 0.'); },
     },
     abschalten: {
       views: ['abl'],

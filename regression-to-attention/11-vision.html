@@ -101,7 +101,7 @@
         <span class="kicker">Unser Netz</span>
         <h3>Vier Formen erkennen</h3>
         <p>Unser Netz soll vier Formen unterscheiden: Kreis, Quadrat, Dreieck, Kreuz. Jede Form kommt in zufälliger Größe, Lage und Drehung, mal hell auf dunkel, mal dunkel auf hell, mit etwas Rauschen.</p>
-        <p>Der Aufbau: 8 Filter 5 × 5, Knick, Verkleinern. Dann 12 Filter der zweiten Schicht, Knick. Von jeder der 12 Karten der stärkste Wert, daraus per Softmax (Kapitel 3) eine Wahrscheinlichkeit für jede Form. Zusammen 2672 Zahlen, alle anfangs zufällig, auch die Filter.</p>
+        <p>Der Aufbau: 8 Filter 5 × 5, Knick, Verkleinern. Dann 12 Filter der zweiten Schicht. Von jeder der 12 Karten der stärkste Wert, daraus per Softmax (Kapitel 3) eine Wahrscheinlichkeit für jede Form. Zusammen 2672 Zahlen, alle anfangs zufällig, auch die Filter.</p>
       </div></article>
 
       <article class="step" data-step="training"><div class="card">
@@ -122,7 +122,7 @@
         <span class="kicker">Werkzeug 1</span>
         <h3>Wobei feuert eine Einheit?</h3>
         <p>Was erkennt eine Einheit der zweiten Schicht? Erstes Werkzeug: Wir zeigen dem Netz viele Bilder und sammeln die Ausschnitte, bei denen die Einheit am stärksten anspringt. Olah nennt das <strong>Datensatz-Beispiele</strong>.</p>
-        <p>Manche Einheiten springen nur bei Kreisen an, andere nur bei Dreiecksecken oder Kreuzen. Einige springen nie an: Sie sind beim Training verstummt.</p>
+        <p>Jede Einheit hat ihre Spezialität: Manche springen nur bei Kreisen an, andere nur bei Dreiecksecken oder bei Kreuzen.</p>
       </div></article>
 
       <article class="step" data-step="sichtbar"><div class="card">
@@ -135,8 +135,8 @@
       <article class="step" data-step="kurven"><div class="card">
         <span class="kicker">Was wir finden</span>
         <h3>Kurvendetektoren</h3>
-        <p>Beide Werkzeuge zusammen für alle Einheiten, die überhaupt anspringen. Vier davon sind <strong>Kurvendetektoren</strong>: Sie springen auf Kreise und Kreisbögen an, mal hell, mal dunkel, mal auf einen Bogen oben links, mal auf einen ganzen Kreis. Andere erkennen Dreiecksecken oder die Arme eines Kreuzes.</p>
-        <p>Kurvendetektoren sind auch Olahs bekanntestes Beispiel. In einem großen Bildnetz (InceptionV1) fanden sie eine ganze Familie davon, für jede Richtung einen. Unser kleines Netz ist weniger ordentlich, aber die Idee ist dieselbe.</p>
+        <p>Beide Werkzeuge zusammen für alle 12 Einheiten. Mehrere davon sind <strong>Kurvendetektoren</strong>: Jede springt auf einen Bogen an, aber jede auf einen Bogen in einer anderen Lage, etwa oben links, unten links oder oben. Zusammen decken sie die Richtungen eines Kreises ab. Andere Einheiten erkennen Dreiecksecken oder die Arme eines Kreuzes.</p>
+        <p>Kurvendetektoren sind Olahs bekanntestes Beispiel. In einem großen Bildnetz (InceptionV1) fanden sie genau so eine Familie: dasselbe Merkmal, für jede Richtung eine eigene Einheit. Unser Netz hat nur 12 Einheiten und braucht deshalb nur wenige davon, aber das Prinzip ist dasselbe.</p>
       </div></article>
 
       <article class="step" data-step="schaltkreis"><div class="card">
@@ -201,8 +201,8 @@
   const T = S.formulaTerm, V = S.formulaValue;
   const { S: N, K1, C1, C2, O1, P1, O2, RF, NAMES } = CNN, STEPS = 1500;
 
-  // two reference networks (seeds 1 and 2), trained in idle time; the live step trains its own copy of the first
-  const REF = [CNN.create(1), CNN.create(2)];
+  // two reference networks (seeds 10 and 3), trained in idle time; the live step trains its own copy of the first
+  const NET_SEEDS = [10, 3], REF = NET_SEEDS.map((sd) => CNN.create(sd));
   let liveRunning = false;
   const done = (k) => REF[k].t >= STEPS;
   (function bg() {
@@ -216,6 +216,8 @@
   const cache = [{}, {}];
   const tops = (k) => cache[k].tops || (cache[k].tops = REF[k].topPatches(500, 8));
   const alive = (k) => tops(k).map((l, c) => [c, l]).filter(([, l]) => l[0].v > 2).map(([c]) => c);
+  /** pure units of each family: circles (curve detectors), triangles, crosses */
+  const examples = (k) => { const pure = (cl) => alive(k).filter((c) => famOf(k, c).main === cl && famOf(k, c).pure); return { circ: pure(0), tri: pure(2), cross: pure(3) }; };
 
   const st = { boxA: 0, zoom: 0, fPos: 0, fSweep: 0, mN: 1, relu: 0, pool: 0, z2: 0, dataN: 0, dec: 0, live: null, unitList: [], unitMode: 'tops', visK: 0, visImg: null, visUnit: 0, circA: 0, claimK: 0, uniA: 0, polyA: 0 };
   let story = null;
@@ -353,15 +355,16 @@
       return;
     }
     if (!done(k)) return;
-    const list = st.unitList, rows = list.length, rh = Math.min(96, (H - 20) / Math.max(1, rows)), sz = rh - 22, showVis = st.unitMode !== 'tops';
+    const list = st.unitList, rows = list.length, rh = Math.min(96, (H - 20) / Math.max(1, rows)), compact = rh - 22 < 30, sz = compact ? rh - 3 : rh - 22, showVis = st.unitMode !== 'tops';
+    if (compact && showVis && rows) S.label(ctx, 'links: sichtbar gemacht', W - 8, 6, S.c.accent, S.font(10.5, 'body'), 'right');
     list.forEach((c, r) => {
-      const y = 10 + r * rh, l = tops(k)[c], dead = l[0].v <= 2;
-      S.label(ctx, `Einheit ${c}`, 8, y + sz / 2, S.c.fg, S.font(12.5, 'body', '600'), 'left');
-      let x = 84;
-      if (showVis) { const vc = visCache[k][c]; if (vc) drawImg(ctx, vc.img.slice ? vc.img : vc.img, N, x, y, sz); else { ctx.strokeStyle = S.alpha('fg', 0.25); ctx.strokeRect(x, y, sz, sz); } S.label(ctx, 'sichtbar gemacht', x + sz / 2, y + sz + 10, S.c.accent, S.font(10.5, 'body'), 'center'); x += sz + 18; }
+      const y = (compact ? 14 : 10) + r * rh, l = tops(k)[c], dead = l[0].v <= 2;
+      S.label(ctx, compact ? `E ${c}` : `Einheit ${c}`, 8, y + sz / 2, S.c.fg, S.font(compact ? 11.5 : 12.5, 'body', '600'), 'left');
+      let x = compact ? 44 : 84;
+      if (showVis) { const vc = visCache[k][c]; if (vc) drawImg(ctx, vc.img, N, x, y, sz); else { ctx.strokeStyle = S.alpha('fg', 0.25); ctx.strokeRect(x, y, sz, sz); } if (!compact) S.label(ctx, 'sichtbar gemacht', x + sz / 2, y + sz + 10, S.c.accent, S.font(10.5, 'body'), 'center'); x += sz + (compact ? 10 : 18); }
       if (dead) { S.label(ctx, 'stumm: springt bei keinem Bild an', x, y + sz / 2, S.c.muted, S.font(12.5, 'body'), 'left'); return; }
-      const nShow = Math.max(1, Math.min(l.length, Math.floor((W - x - 10) / (sz * 0.8 + 6))));
-      l.slice(0, nShow).forEach((o, i) => { const s2 = sz * 0.8; drawImg(ctx, o.patch, RF, x + i * (s2 + 6), y + (sz - s2) / 2, s2); });
+      const s2 = compact ? sz : sz * 0.8, gap = compact ? 3 : 6, nShow = Math.max(1, Math.min(l.length, Math.floor((W - x - 10) / (s2 + gap))));
+      l.slice(0, nShow).forEach((o, i) => drawImg(ctx, o.patch, RF, x + i * (s2 + gap), y + (sz - s2) / 2, s2));
     });
   });
   async function computeVis(a, k, units, live) {
@@ -414,7 +417,7 @@
     const narrow = W < 640, half = narrow ? W - 20 : (W - 30) / 2;
     if (st.polyA > 0) {
       // the most mixed unit of the second net
-      const k = 1, cands = alive(k).map((c) => [c, famOf(k, c)]).sort((a, b) => Math.max(...a[1].cls) - Math.max(...b[1].cls)), [c, fam] = cands[0], l = tops(k)[c], sz = Math.min(80, (W - 40) / 8 - 8);
+      const k = 1, two = (f) => { const v = [...f.cls].sort((x, y) => y - x); return (v[0] + v[1] >= 7 ? 100 : 0) + v[1]; }, cands = alive(k).map((c) => [c, famOf(k, c)]).sort((a, b) => two(b[1]) - two(a[1])), [c, fam] = cands[0], l = tops(k)[c], sz = Math.min(80, (W - 40) / 8 - 8);
       S.label(ctx, `Netz B, Einheit ${c}: die 8 stärksten Beispiele`, 20, 22, S.c.fg, S.font(14, 'body', '600'), 'left');
       l.forEach((o, i) => { const x = 20 + (i % 8) * (sz + 8), y = 40 + Math.floor(i / 8) * (sz + 28); drawImg(ctx, o.patch, RF, x, y, sz); S.label(ctx, NAMES[o.y], x + sz / 2, y + sz + 10, S.c['fg-2'], S.font(11, 'body'), 'center'); });
       const by = 40 + sz + 60; S.label(ctx, 'aus welcher Form die Beispiele stammen:', 20, by, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
@@ -506,7 +509,7 @@
     training: {
       views: ['train'],
       formula: () => `Training<span class="sep">Schritt</span>${V('t')}<span class="sep">Trefferquote</span>${V('acc')}`,
-      setup() { st.live = CNN.create(1); },
+      setup() { st.live = CNN.create(NET_SEEDS[0]); },
       async play(a) {
         const M = st.live; liveRunning = true;
         try { a.say('Die 8 Filter starten als Rauschen. Training läuft …'); await a.loop(() => { M.step(); return M.t < STEPS; }, (i) => (i < 60 ? 20 : 140)); }
@@ -527,22 +530,24 @@
       setup() { st.unitMode = 'tops'; st.unitNet = 0; st.unitList = []; },
       async play(a) {
         await waitRef(a); a.say('Wir zeigen dem Netz 500 Bilder und merken uns pro Einheit die stärksten Ausschnitte …'); await a.loop(() => { tops(0); return false; }, 30);
-        a.hl('d'); a.set(st, { unitList: [0, 1, 4, 5, 9] }); a.say('Einheit 0 und 4: Kreisbögen. Einheit 5: Dreiecksecken. Einheit 9: Kreuze. Einheit 1: stumm.');
+        const ex = examples(0), nm = (l) => l.map((c) => `Einheit ${c}`).join(' und ');
+        a.hl('d'); a.set(st, { unitList: [...ex.circ.slice(0, 2), ...ex.tri.slice(0, 1), ...ex.cross.slice(0, 1)] });
+        a.say([ex.circ.length && `${nm(ex.circ.slice(0, 2))}: Kreisbögen.`, ex.tri.length && `${nm(ex.tri.slice(0, 1))}: Dreiecksecken.`, ex.cross.length && `${nm(ex.cross.slice(0, 1))}: Kreuze.`].filter(Boolean).join(' '));
       },
     },
     sichtbar: {
       views: ['units'],
       formula: `${T('v', 'Bild', 'c-new', 'wird verändert, bis die Einheit maximal anspringt')} ← Bild + Schritt · Gradient der Einheit`,
-      setup() { st.unitMode = 'vis'; st.unitNet = 0; st.unitList = [0, 4]; },
-      async play(a) { await waitRef(a); a.hl('v'); a.say('Wir starten mit grauem Rauschen und verändern die Pixel, bis die Einheit möglichst stark anspringt …'); await computeVis(a, 0, [0, 4], true); a.say('Links das Ergebnis, rechts die echten Beispiele. Beide zeigen dasselbe: einen Bogen.'); },
+      setup() { st.unitMode = 'vis'; st.unitNet = 0; st.unitList = []; },
+      async play(a) { await waitRef(a); const two = examples(0).circ.slice(0, 2); a.set(st, { unitList: two }); a.hl('v'); a.say('Wir starten mit grauem Rauschen und verändern die Pixel, bis die Einheit möglichst stark anspringt …'); await computeVis(a, 0, two, true); a.say('Links das Ergebnis, rechts die echten Beispiele. Beide zeigen dasselbe: einen Bogen.'); },
     },
     kurven: {
       views: ['units'],
       formula: `${T('k', 'Kurvendetektoren', 'c-new', 'Einheiten für Kreisbögen in verschiedenen Lagen')} und Detektoren für Ecken und Kreuzarme`,
       setup() { st.unitMode = 'vis'; st.unitNet = 0; st.unitList = []; },
       async play(a) {
-        await waitRef(a); const al = alive(0); a.set(st, { unitList: al }); a.say('Alle Einheiten, die überhaupt anspringen. Die Bilder werden berechnet …'); await computeVis(a, 0, al, false);
-        a.hl('k'); a.say('Mehrere Einheiten für Kreise und Bögen, hell oder dunkel: Kurvendetektoren. Dazu Dreiecks- und Kreuz-Einheiten.');
+        await waitRef(a); const al = alive(0); a.set(st, { unitList: al }); a.say('Alle 12 Einheiten. Die Bilder werden berechnet …'); await computeVis(a, 0, al, false);
+        a.hl('k'); a.say('Mehrere Einheiten für Bögen, jede in einer anderen Lage: eine Familie von Kurvendetektoren. Dazu Dreiecks- und Kreuz-Einheiten.');
       },
     },
     schaltkreis: {

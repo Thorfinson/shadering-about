@@ -36,18 +36,18 @@
       for (let c = 0; c < C1; c++) for (let y = 0; y < O1; y++) for (let x = 0; x < O1; x++) { let s = P.b1[c]; for (let i = 0; i < K1; i++) for (let j = 0; j < K1; j++) s += P.W1[c * 25 + i * K1 + j] * img[(y + i) * S + x + j]; a1[(c * O1 + y) * O1 + x] = s > 0 ? s : 0; }
       const p1 = new Float32Array(C1 * P1 * P1), arg1 = new Int32Array(C1 * P1 * P1);
       for (let c = 0; c < C1; c++) for (let y = 0; y < P1; y++) for (let x = 0; x < P1; x++) { let m = -1, am = 0; for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { const id = (c * O1 + 2 * y + i) * O1 + 2 * x + j; if (a1[id] > m) { m = a1[id]; am = id; } } p1[(c * P1 + y) * P1 + x] = m; arg1[(c * P1 + y) * P1 + x] = am; }
-      const a2 = new Float32Array(C2 * O2 * O2);
-      for (let c = 0; c < C2; c++) for (let y = 0; y < O2; y++) for (let x = 0; x < O2; x++) { let s = P.b2[c]; for (let d = 0; d < C1; d++) for (let i = 0; i < K2; i++) for (let j = 0; j < K2; j++) s += P.W2[((c * C1 + d) * K2 + i) * K2 + j] * p1[(d * P1 + y + i) * P1 + x + j]; a2[(c * O2 + y) * O2 + x] = s > 0 ? s : 0; }
+      const a2 = new Float32Array(C2 * O2 * O2), z2 = new Float32Array(C2 * O2 * O2);
+      for (let c = 0; c < C2; c++) for (let y = 0; y < O2; y++) for (let x = 0; x < O2; x++) { let s = P.b2[c]; for (let d = 0; d < C1; d++) for (let i = 0; i < K2; i++) for (let j = 0; j < K2; j++) s += P.W2[((c * C1 + d) * K2 + i) * K2 + j] * p1[(d * P1 + y + i) * P1 + x + j]; z2[(c * O2 + y) * O2 + x] = s; a2[(c * O2 + y) * O2 + x] = s > 0 ? s : 0; }
       const g = new Float32Array(C2), arg2 = new Int32Array(C2);
-      for (let c = 0; c < C2; c++) { let m = -1, am = 0; for (let k = 0; k < O2 * O2; k++) if (a2[c * O2 * O2 + k] > m) { m = a2[c * O2 * O2 + k]; am = c * O2 * O2 + k; } g[c] = m; arg2[c] = am; }
+      for (let c = 0; c < C2; c++) { let m = -Infinity, am = 0; for (let k = 0; k < O2 * O2; k++) if (z2[c * O2 * O2 + k] > m) { m = z2[c * O2 * O2 + k]; am = c * O2 * O2 + k; } g[c] = m; arg2[c] = am; }
       const z = new Float32Array(NC); for (let k = 0; k < NC; k++) { let s = P.b3[k]; for (let c = 0; c < C2; c++) s += P.W3[k * C2 + c] * g[c]; z[k] = s; }
       const mx = Math.max(...z), e = Array.from(z, (v) => Math.exp(v - mx)), sum = e.reduce((p, q) => p + q), p = e.map((v) => v / sum);
-      return { a1, p1, arg1, a2, g, arg2, p };
+      return { a1, p1, arg1, a2, z2, g, arg2, p };
     }
     function backward(img, f, y, G) {
       const dz = f.p.map((v, k) => v - (k === y ? 1 : 0)), dg = new Float32Array(C2);
       for (let k = 0; k < NC; k++) { G.b3[k] += dz[k]; for (let c = 0; c < C2; c++) { G.W3[k * C2 + c] += dz[k] * f.g[c]; dg[c] += dz[k] * P.W3[k * C2 + c]; } }
-      const da2 = new Float32Array(C2 * O2 * O2); for (let c = 0; c < C2; c++) if (f.g[c] > 0) da2[f.arg2[c]] = dg[c];
+      const da2 = new Float32Array(C2 * O2 * O2); for (let c = 0; c < C2; c++) da2[f.arg2[c]] = dg[c];
       const dp1 = new Float32Array(C1 * P1 * P1);
       for (let c = 0; c < C2; c++) for (let y2 = 0; y2 < O2; y2++) for (let x2 = 0; x2 < O2; x2++) { const d = da2[(c * O2 + y2) * O2 + x2]; if (!d) continue; G.b2[c] += d; for (let dd = 0; dd < C1; dd++) for (let i = 0; i < K2; i++) for (let j = 0; j < K2; j++) { const wi = ((c * C1 + dd) * K2 + i) * K2 + j, pi = (dd * P1 + y2 + i) * P1 + x2 + j; G.W2[wi] += d * f.p1[pi]; dp1[pi] += d * P.W2[wi]; } }
       const da1 = new Float32Array(C1 * O1 * O1); for (let k = 0; k < dp1.length; k++) if (dp1[k] && f.a1[f.arg1[k]] > 0) da1[f.arg1[k]] += dp1[k];
