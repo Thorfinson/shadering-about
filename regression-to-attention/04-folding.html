@@ -26,6 +26,7 @@
         <div class="view" data-view="hidden"><div class="vlabel">Der verborgene Raum h (ziehen zum Drehen)</div><div class="plot" id="v-hidden" role="img" aria-label="Die Eingabeebene nach einer Schicht des Netzes: eine gefaltete Fläche im dreidimensionalen Raum."></div></div>
         <div class="view" data-view="plane"><div class="vlabel" id="l-plane">Die Eingabe: zwei Klassen</div><div class="plot" id="v-plane" role="img" aria-label="Die Daten in der Eingabeebene, eingefärbt nach der Entscheidung des Netzes."></div></div>
         <div class="view" data-view="fn"><div class="vlabel" id="l-fn">Eine Funktion</div><div class="plot" id="v-fn" role="img" aria-label="Graph einer Funktion."></div></div>
+        <div class="view" data-view="chain"><div class="vlabel">Eine Kette von Rechenschritten</div><div class="plot" id="v-chain" role="img" aria-label="Eine Kette aus Rechenschritten, durch die eine kleine Änderung wandert."></div></div>
         <div class="view" data-view="graph"><div class="vlabel">Das Netz als Graph</div><div class="plot" id="v-graph" role="img" aria-label="Das Netz mit zwei Eingaben, drei verborgenen Neuronen und einer Ausgabe."></div></div>
       </div>
       <div class="stage-bar">
@@ -55,18 +56,25 @@
         <div class="ex"><b>Anderes Beispiel</b>Ein Neuron im Gehirn feuert erst ab einer Schwelle. Ein Heizkörperthermostat heizt erst, wenn es unter die Solltemperatur geht. Beides ist so ein Knick.</div>
       </div></article>
 
-      <article class="step" data-step="knick2d"><div class="card">
-        <span class="kicker">Knick in 2D</span>
-        <h3>Die Ebene wird gefaltet</h3>
-        <p>Wendet man ReLU auf jede Koordinate an, bleibt die rechte obere Ecke der Ebene unverändert. Alles andere wird auf die Achsen geklappt, wie Papier, das man an zwei Linien faltet.</p>
-        <p>Das ist genau die Operation, die eine Matrix nicht kann: Gerade Gitterlinien bekommen einen Knick.</p>
+      <article class="step" data-step="neuron"><div class="card">
+        <span class="kicker">Ein Neuron mit Knick</span>
+        <h3>Eine Rampe über der Ebene</h3>
+        <p>Ein Neuron rechnet wie in Kapitel 3 eine Punktzahl w · x + b aus, und gibt sie durch den Knick. Auf der einen Seite einer Linie ist die Punktzahl negativ, das Neuron schweigt (0). Auf der anderen Seite wächst seine Ausgabe gleichmäßig an.</p>
+        <p>Über der Ebene ist das eine <strong>Rampe</strong>, die an einer Linie beginnt. Die Linie ist genau die Grenze aus Kapitel 3.</p>
+      </div></article>
+
+      <article class="step" data-step="dreineuronen"><div class="card">
+        <span class="kicker">Mehrere Neuronen</span>
+        <h3>Drei Rampen umzingeln die Mitte</h3>
+        <p>Drei Neuronen, drei Linien, jede Rampe zeigt nach außen. In der Mitte schweigen alle drei. Draußen ist immer mindestens eines aktiv.</p>
+        <p>Das ist der Trick: Schweigen alle, ist der Punkt innen. Damit ist das Ring-Problem schon fast gelöst, und zwar mit Bausteinen, die jeder für sich gerade sind.</p>
       </div></article>
 
       <article class="step" data-step="schicht"><div class="card">
         <span class="kicker">Eine Schicht</span>
         <h3>Matrix, dann Falte</h3>
-        <p>Eine Schicht eines neuronalen Netzes ist beides hintereinander: Erst hebt eine Matrix die Ebene in drei Dimensionen (Kapitel 2), dann faltet ReLU jede Koordinate.</p>
-        <p>Die Ebene wird dabei zu einer geknickten Fläche, wie ein gefaltetes Blatt im Raum.</p>
+        <p>Die drei Neuronen liefern für jeden Punkt drei Zahlen. Nimmt man sie als Koordinaten, wird jeder Punkt der Ebene ein Punkt im Raum. Das ist eine <strong>Schicht</strong>: Die drei Zeilen w·x + b bilden zusammen eine Matrix (Kapitel 2), die die Ebene schräg in den Raum hebt, und dann klappt der Knick jede negative Koordinate auf null.</p>
+        <p>Die Ebene wird dabei zu einer geknickten Fläche, wie ein gefaltetes Blatt im Raum. Die Mitte, wo alle schweigen, landet genau im Ursprung.</p>
       </div></article>
 
       <article class="step" data-step="trennen"><div class="card">
@@ -79,15 +87,22 @@
       <article class="step" data-step="training"><div class="card">
         <span class="kicker">Lernen</span>
         <h3>Das Netz findet die Falte selbst</h3>
-        <p>Bisher waren die Gewichte von Hand gewählt. Jetzt starten sie zufällig, und das Netz lernt mit Gradientenabstieg, wie es falten muss.</p>
+        <p>Bisher waren die Gewichte von Hand gewählt. Jetzt starten sie zufällig, und das Netz lernt bergab wie in Kapitel 1. Wir benutzen dabei eine verbesserte Form des Gradientenabstiegs (Adam), die jedem Gewicht seine eigene Schrittweite gibt.</p>
         <p>Links sieht man, wie sich die Fläche im verborgenen Raum verbiegt, rechts, wie sich die Entscheidung in der Eingabe formt.</p>
+      </div></article>
+
+      <article class="step" data-step="kette"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Wirkungen multiplizieren sich</h3>
+        <p>Um ein Gewicht tief im Netz richtig zu verstellen, müssen wir wissen: Wenn es sich ein bisschen ändert, wie stark ändert sich dann der Fehler am Ende? Dazwischen liegen mehrere Rechenschritte.</p>
+        <p>Wie bei Zahnrädern: Verdoppelt der erste Schritt jede Änderung und verdreifacht der zweite sie, kommt am Ende das Sechsfache an. Wirkungen in einer Kette <strong>multiplizieren</strong> sich. Ein schweigender Knick ist ein ausgekuppeltes Zahnrad: Faktor 0. Das ist die <strong>Kettenregel</strong>.</p>
       </div></article>
 
       <article class="step" data-step="rueckwaerts"><div class="card">
         <span class="kicker">Backpropagation</span>
         <h3>Wer ist schuld am Fehler?</h3>
-        <p>Beim Lernen muss jedes Gewicht wissen, wie viel es zum Fehler beigetragen hat. Dazu läuft der Fehler vom Ausgang <strong>rückwärts</strong> durchs Netz. An jeder Kante wird er mit dem Gewicht multipliziert, und an jedem Knick nur durchgelassen, wenn das Neuron aktiv war.</p>
-        <p>Am Ende bekommt jedes Gewicht wieder „Fehler mal Eingabe“, die Regel aus Kapitel 1. Das ist die Kettenregel, geschickt organisiert.</p>
+        <p>Jetzt im ganzen Netz: Der Fehler am Ausgang läuft <strong>rückwärts</strong>. An jeder Kante wird er mit dem Gewicht multipliziert (das Zahnrad), an jedem Knick nur durchgelassen, wenn das Neuron aktiv war. Was bei einem Neuron ankommt, nennen wir seinen <strong>Fehleranteil δ</strong>.</p>
+        <p>Jedes Gewicht bekommt dann wieder „Fehleranteil mal Eingabe“, die Regel aus Kapitel 1. Weil man rückwärts geht, rechnet man jeden Zwischenwert nur einmal. Das heißt <strong>Backpropagation</strong>.</p>
       </div></article>
 
       <article class="step" data-step="knicke"><div class="card">
@@ -97,11 +112,18 @@
         <p>Das ist der Kern des <strong>universellen Approximationssatzes</strong>: Ein Netz mit genug Neuronen kann jede vernünftige Funktion darstellen. Ob es sie auch findet, ist eine andere Frage.</p>
       </div></article>
 
+      <article class="step" data-step="doppelt"><div class="card">
+        <span class="kicker">Warum Tiefe hilft</span>
+        <h3>Falten auf Falten</h3>
+        <p>Faltet man ein Blatt in der Mitte, hat es zwei Lagen. Faltet man das gefaltete Blatt noch einmal, vier. Dann acht. Jede weitere Schicht faltet, was die vorige schon gefaltet hat.</p>
+        <p>Darum erzeugen wenige Schichten hintereinander sehr viel mehr Knicke als eine einzige breite Schicht mit derselben Zahl Neuronen.</p>
+      </div></article>
+
       <article class="step" data-step="spirale"><div class="card">
         <span class="kicker">Tiefe</span>
-        <h3>Falten auf Falten</h3>
+        <h3>Zwei Spiralen</h3>
         <p>Zwei ineinander gedrehte Spiralen. Ein Netz mit zwei Schichten zu je 16 Neuronen faltet den Raum, faltet das Ergebnis noch einmal, und am Ende trennt eine Grenze sauber.</p>
-        <p>Jede Schicht knickt, was die vorige schon geknickt hat. So entstehen mit wenigen Schichten sehr viele Knicke.</p>
+        <p>Jetzt sieht man, warum das geht: Jede Schicht faltet, was die vorige gefaltet hat.</p>
         <div class="ex"><b>Nach Chris Olah (2014)</b>„Neural Networks, Manifolds, and Topology“: Netze verformen die Datenmannigfaltigkeit, bis die Klassen linear trennbar werden.</div>
       </div></article>
 
@@ -136,6 +158,7 @@
   'use strict';
   const { $, fmt, lin, clamp } = S;
   const T = S.formulaTerm, V = S.formulaValue;
+  const FRAC = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
   const sig = (z) => 1 / (1 + Math.exp(-z));
   const relu = (z) => Math.max(0, z);
   function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -205,6 +228,7 @@
     fn: 'relu', reluT: 0, nKinks: 1, kinkA: 1,
     flowT: 0, backT: 0, probe: [1.1, 0.5, 0],
     loss: NaN, acc: NaN, steps: 0,
+    rampN: 0, rampSum: 0, tentN: 0, chainT: 0, chainGate: 1, chainStage: 0,
   };
   let story = null;
   const interrupt = () => story && story.interrupt();
@@ -229,6 +253,28 @@
       c.putImageData(img, 0, 0);
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(off, cx - side / 2, cy - side / 2, side, side);
+    }
+    // ramps of hand-made neurons: zero on one side of a line, rising on the other
+    if (st.rampN > 0) {
+      const L = HAND[0], G = 70; off.width = G; off.height = G;
+      const c = off.getContext('2d'), img = c.createImageData(G, G), bg = S.parse(S.c.surface), ac = S.parse(S.c.accent);
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const x = -R + ((i + 0.5) / G) * 2 * R, y = R - ((j + 0.5) / G) * 2 * R;
+        let v = 0; for (let k = 0; k < 3; k++) { const wgt = clamp(st.rampN - k, 0, 1); v += wgt * relu(L.W[k][0] * x + L.W[k][1] * y + L.b[k]); }
+        const a = clamp(v / 1.6, 0, 1) * 0.75, q = (j * G + i) * 4;
+        for (let ch = 0; ch < 3; ch++) img.data[q + ch] = bg[ch] + (ac[ch] - bg[ch]) * a;
+        img.data[q + 3] = 255;
+      }
+      c.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, cx - side / 2, cy - side / 2, side, side);
+      for (let k = 0; k < 3; k++) {
+        const wgt = clamp(st.rampN - k, 0, 1); if (wgt <= 0) continue;
+        const w = L.W[k], b = L.b[k], foot = [-b * w[0], -b * w[1]], dir = [-w[1], w[0]];
+        ctx.globalAlpha = wgt; ctx.setLineDash([6, 4]); ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.75;
+        ctx.beginPath(); ctx.moveTo(X(foot[0] - dir[0] * 4), Y(foot[1] - dir[1] * 4)); ctx.lineTo(X(foot[0] + dir[0] * 4), Y(foot[1] + dir[1] * 4)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = S.c.accent; ctx.fillStyle = S.c.accent; S.arrow(ctx, X(foot[0]), Y(foot[1]), X(foot[0] + w[0] * 0.7), Y(foot[1] + w[1] * 0.7), 9, 2.5);
+        S.label(ctx, `h${'₁₂₃'[k]}`, X(foot[0] + w[0] * 0.95), Y(foot[1] + w[1] * 0.95), S.c.accent, S.font(15, 'math', 'italic'), 'center');
+        ctx.globalAlpha = 1;
+      }
     }
     // grid, optionally folded by ReLU(x + shift)
     const sh = [0.35, -0.25];
@@ -305,8 +351,14 @@
     S.axes(ctx, { x: X, y: Y, xt: [-2, -1, 0, 1, 2], yt: [-2, -1, 0, 1, 2], xfmt: (v) => fmt(v), yfmt: (v) => fmt(v), xlabel: st.fn === 'relu' ? 'z' : 'x' });
     ctx.strokeStyle = S.alpha('fg', 0.4); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(0), Y(-2.2)); ctx.lineTo(X(0), Y(2.2)); ctx.moveTo(X(-2.2), Y(0)); ctx.lineTo(X(2.2), Y(0)); ctx.stroke();
     ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
-    const curve = (f, col, w, dash = []) => { ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); for (let i = 0; i <= 300; i++) { const x = -2.2 + (4.4 * i) / 300; i ? ctx.lineTo(X(x), Y(f(x))) : ctx.moveTo(X(x), Y(f(x))); } ctx.stroke(); ctx.setLineDash([]); };
-    if (st.fn === 'relu') {
+    const curve = (f, col, w, dash = []) => { ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); let pen = false; for (let i = 0; i <= 600; i++) { const x = -2.2 + (4.4 * i) / 600, y = f(x); if (!isFinite(y)) { pen = false; continue; } pen ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y)); pen = true; } ctx.stroke(); ctx.setLineDash([]); };
+    if (st.fn === 'tent') {
+      // folding [−1, 1] onto itself: T(x) = 1 − 2|x|, applied k times
+      const Tm = (x) => 1 - 2 * Math.abs(x), it = (x, k) => { for (let i = 0; i < k; i++) x = Tm(x); return x; };
+      const k0 = Math.floor(st.tentN), f = st.tentN - k0;
+      curve((x) => (Math.abs(x) > 1 ? NaN : S.lerp(it(x, k0), it(x, k0 + 1), f)), S.c.model, 3);
+      S.label(ctx, `${Math.round(st.tentN)}× gefaltet · ${2 ** Math.round(st.tentN)} gerade Stücke`, W - m.r - 6, m.t + 12, S.c.model, S.font(13, 'body', '600'), 'right');
+    } else if (st.fn === 'relu') {
       curve((z) => S.lerp(z, relu(z), st.reluT), S.c.model, 3);
       if (st.reluT > 0.5) S.label(ctx, 'negativ → 0', X(-1.2), Y(0) - 14, S.c['fg-2'], S.font(12.5, 'body'), 'center');
     } else {
@@ -317,7 +369,34 @@
       A.terms.forEach((t) => S.dot(ctx, X(t.k), Y(A.f(t.k)), 3, S.c.model, S.c.surface, 1.2));
     }
     ctx.restore();
-    if (st.fn !== 'relu') S.label(ctx, `${Math.round(st.nKinks)} Knicke`, W - m.r - 6, m.t + 12, S.c.model, S.font(13, 'body', '600'), 'right');
+    if (st.fn === 'approx') S.label(ctx, `${Math.round(st.nKinks)} Knicke`, W - m.r - 6, m.t + 12, S.c.model, S.font(13, 'body', '600'), 'right');
+  });
+
+  // ── a chain of steps: effects multiply ──────────────────────────
+  const chain = S.canvas($('#v-chain'), (ctx, W, H) => {
+    const x0 = 1, dx = 0.1 * st.chainT, x = x0 + dx, gate = st.chainGate;
+    const u = 2 * x, uu = gate > 0.5 ? u : -u, r = relu(uu), y = 3 * r;
+    const vals = [[x, x0, 'x'], [uu, gate > 0.5 ? 2 * x0 : -2 * x0, 'u'], [r, relu(gate > 0.5 ? 2 * x0 : -2 * x0), 'ReLU(u)'], [y, 3 * relu(gate > 0.5 ? 2 * x0 : -2 * x0), 'y']];
+    const ops = [gate > 0.5 ? '× 2' : '× (−2)', 'Knick', '× 3'];
+    const n = vals.length, bw = Math.min(130, (W - 40) / (n * 2)), gap = (W - n * bw) / (n + 1), cy = H * 0.45, bh = 74;
+    vals.forEach(([v, v0, name], i) => {
+      const bx = gap + i * (bw + gap);
+      ctx.fillStyle = S.c['surface-2']; ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, cy - bh / 2, bw, bh, 8) : ctx.rect(bx, cy - bh / 2, bw, bh); ctx.fill(); ctx.stroke();
+      S.label(ctx, name, bx + bw / 2, cy - bh / 2 - 14, S.c.muted, S.font(13, 'math', 'italic'), 'center');
+      S.label(ctx, fmt(v, 2), bx + bw / 2, cy - 8, S.c.fg, S.font(18, 'mono', '600'), 'center');
+      if (st.chainT > 0.05) S.label(ctx, `Δ ${S.signed(v - v0, 2)}`, bx + bw / 2, cy + 18, Math.abs(v - v0) > 1e-9 ? S.c.grad : S.c.muted, S.font(12, 'mono', '500'), 'center');
+      if (i < n - 1) {
+        const ax = bx + bw + 6, bx2 = bx + bw + gap - 6;
+        ctx.strokeStyle = S.c['fg-2']; ctx.fillStyle = S.c['fg-2']; S.arrow(ctx, ax, cy, bx2, cy, 9, 2);
+        S.label(ctx, ops[i], (ax + bx2) / 2, cy - 16, ops[i] === 'Knick' ? S.c.accent : S.c.fg, S.font(13, 'mono', '600'), 'center');
+        if (i === 1) S.label(ctx, uu > 0 ? 'aktiv: Faktor 1' : 'schweigt: Faktor 0', (ax + bx2) / 2, cy + bh / 2 + 18, uu > 0 ? S.c.grad : S.c.error, S.font(11.5, 'body', '600'), 'center');
+      }
+    });
+    if (st.chainT > 0.5) {
+      const tot = (vals[3][0] - vals[3][1]) / dx;
+      S.label(ctx, `Gesamtwirkung: Änderung von y ÷ Änderung von x = ${fmt(tot || 0, 1)}`, W / 2, cy + bh / 2 + 60, S.c.fg, S.font(14, 'body', '600'), 'center');
+    }
   });
 
   // ── the network as a graph, with forward and backward flow ──────
@@ -359,7 +438,7 @@
   let trainStep = null;
   const startTraining = (sizes, seed, data, lr) => { st.net = makeNet(sizes, seed); st.data = data; trainStep = trainer(st.net, data, lr); st.steps = 0; st.loss = NaN; st.acc = NaN; };
   const doTrain = () => { const r = trainStep(); st.loss = r.loss; st.acc = r.acc; st.steps = r.t; };
-  const reset = (o = {}) => Object.assign(st, { data: RING, ptsA: 1, net: null, heatA: 0, lineA: 0, fold2A: 0, fold2T: 0, liftT: 0, foldT: 0, sepA: 0, flowT: 0, backT: 0 }, o);
+  const reset = (o = {}) => Object.assign(st, { data: RING, ptsA: 1, net: null, heatA: 0, lineA: 0, fold2A: 0, fold2T: 0, liftT: 0, foldT: 0, sepA: 0, flowT: 0, backT: 0, rampN: 0 }, o);
   const layerF = `${T('h', '<b>h</b>', 'c-new', 'die neue Darstellung: drei Zahlen pro Punkt')} = ${T('relu', 'ReLU', 'c-new', 'Knick: negative Werte werden null')}(${T('W', '<b>W</b>', '', 'Matrix 3×2: hebt die Ebene in den Raum (Kapitel 2)')} <b>x</b> + <b>b</b>)`;
   const steps = {
     problem: {
@@ -387,16 +466,25 @@
         a.say('Positive Werte laufen unverändert durch. Mehr steckt nicht dahinter.');
       },
     },
-    knick2d: {
+    neuron: {
       views: ['plane'],
-      formula: `<b>h</b> = ${T('relu', 'ReLU', 'c-new', 'auf jede Koordinate einzeln')}(<b>x</b> + <b>b</b>)`,
-      setup() { reset({ fold2A: 1, fold2T: 0 }); },
+      formula: `${T('h', '<i>h</i>', 'c-new', 'Ausgabe des Neurons: Höhe der Rampe')} = ReLU(${T('z', '<b>w</b> · <b>x</b> + <i>b</i>', '', 'die Punktzahl aus Kapitel 3: null auf der gestrichelten Linie')})`,
+      setup() { reset({ rampN: 0 }); },
       async play(a) {
-        a.say('Das Gitter der Ebene, dazu die Daten.'); await a.wait(1400);
-        a.hl('relu'); a.say('ReLU auf beide Koordinaten: Die Ebene wird an zwei Linien gefaltet …');
-        await a.to(st, { fold2T: 1 }, 3000); await a.wait(1200);
-        a.say('… alles links und unten liegt jetzt auf den Achsen. Viele Punkte sind zusammengeklappt.');
-        await a.to(st, { fold2T: 0 }, 1400); await a.to(st, { fold2T: 1 }, 2400);
+        a.hl('z'); a.say('Ein Neuron: Auf der gestrichelten Linie ist seine Punktzahl null, wie die Grenze in Kapitel 3.');
+        await a.to(st, { rampN: 1 }, 1600);
+        a.hl('h'); a.say('Hinter der Linie, in Pfeilrichtung, steigt seine Ausgabe (violett). Davor schweigt es: 0.'); await a.wait(2400);
+        a.say('Eine Rampe allein trennt aber nur eine Seite ab: immer noch eine Gerade.');
+      },
+    },
+    dreineuronen: {
+      views: ['plane'],
+      formula: `${T('h1', '<i>h</i><sub>1</sub>', 'c-new', 'Rampe nach oben')}, ${T('h2', '<i>h</i><sub>2</sub>', 'c-new', 'Rampe nach links unten')}, ${T('h3', '<i>h</i><sub>3</sub>', 'c-new', 'Rampe nach rechts unten')}<span class="sep">·</span>${T('zero', 'innen: alle drei = 0', '', 'die dunkle Fläche in der Mitte')}`,
+      setup() { reset({ rampN: 1 }); },
+      async play(a) {
+        a.hl('h2'); a.say('Ein zweites Neuron mit einer Rampe in eine andere Richtung …'); await a.to(st, { rampN: 2 }, 1600); await a.wait(800);
+        a.hl('h3'); a.say('… und ein drittes.'); await a.to(st, { rampN: 3 }, 1600); await a.wait(800);
+        a.hl('zero'); a.say('Wo alle drei schweigen, bleibt ein dunkles Dreieck. Genau dort liegen die blauen Punkte; jeder orange Punkt weckt mindestens ein Neuron.');
       },
     },
     schicht: {
@@ -404,8 +492,8 @@
       formula: layerF,
       setup() { reset({ net: clone(HAND) }); },
       async play(a) {
-        a.say('Die Eingabeebene mit allen Punkten, flach im Raum.'); await a.wait(1400);
-        a.hl('W'); a.say('Erst die Matrix: Sie kippt die Ebene schräg in den dreidimensionalen Raum.');
+        a.say('Die Eingabeebene mit allen Punkten, flach im Raum. Gleich werden die drei Rampenhöhen zu drei Koordinaten.'); await a.wait(1800);
+        a.hl('W'); a.say('Erst die Matrix: drei Punktzahlen pro Punkt. Sie kippt die Ebene schräg in den dreidimensionalen Raum.');
         await a.to(st, { liftT: 1 }, 2400); await a.wait(800);
         a.hl('relu'); a.say('Dann der Knick: Was in einer Koordinate negativ ist, wird auf null geklappt. Die Ebene faltet sich.');
         await a.to(st, { foldT: 1 }, 3000);
@@ -435,9 +523,24 @@
         a.say(`Nach ${st.steps} Schritten: ${fmt(st.acc * 100, 0)} % Treffer. Das Netz hat eine Falte gefunden, die trennt.`);
       },
     },
+    kette: {
+      views: ['chain'],
+      formula: `${FRAC('Änderung von <i>y</i>', 'Änderung von <i>x</i>')} = ${T('f1', '2', '', 'Wirkung des ersten Schritts')} · ${T('f2', '[aktiv]', 'c-new', 'der Knick: 1 wenn aktiv, 0 wenn er schweigt')} · ${T('f3', '3', '', 'Wirkung des dritten Schritts')}`,
+      setup() { st.chainT = 0; st.chainGate = 1; },
+      async play(a) {
+        a.say('Drei Rechenschritte hintereinander: mal 2, Knick, mal 3. Aus x = 1 wird y = 6.'); await a.wait(2200);
+        a.hl('f1', 'f2', 'f3'); a.say('Jetzt stupsen wir x um 0,1 an. Δ (Delta) heißt: so viel hat sich der Wert geändert …');
+        await a.to(st, { chainT: 1 }, 1800);
+        a.say('… u ändert sich um 0,2, y um 0,6. Gesamtwirkung 6 = 2 · 1 · 3. Die Wirkungen multiplizieren sich.'); await a.wait(3000);
+        a.hl('f2'); a.say('Jetzt ist der erste Schritt „mal −2“: u wird negativ, der Knick schweigt …');
+        await a.to(st, { chainT: 0 }, 600); a.set(st, { chainGate: 0 }); await a.wait(600);
+        await a.to(st, { chainT: 1 }, 1800);
+        a.say('… und am Ende kommt keine Änderung an. Ein schweigender Knick ist ein ausgekuppeltes Zahnrad: Faktor 0.');
+      },
+    },
     rueckwaerts: {
       views: ['graph', 'plane'], cols: 'minmax(0, 2fr) minmax(0, 3fr)',
-      formula: `${T('dw', '<i>Δw</i>', 'c-new', 'wie sehr ein Gewicht sich ändern soll')} = ${T('d', '<i>δ</i>', 'c-new', 'der Fehleranteil, der beim Neuron ankommt')} · ${T('in', 'Eingabe', 'c-data', 'was über diese Kante hereinkam')}<span class="sep">·</span>${T('back', '<i>δ</i><sub>h</sub> = <i>δ</i><sub>out</sub> · <i>v</i> · [<i>h</i> > 0]', '', 'rückwärts: mal Gewicht, und nur durch aktive Knicke')}`,
+      formula: `${T('dw', '<i>Δw</i>', 'c-new', 'wie sehr ein Gewicht sich ändern soll')} = ${T('d', '<i>δ</i>', 'c-new', 'Fehleranteil: was vom Fehler rückwärts bei diesem Neuron ankommt (Wirkungen multipliziert, wie bei der Kette)')} · ${T('in', 'Eingabe', 'c-data', 'was über diese Kante hereinkam')}<span class="sep">·</span>${T('back', '<i>δ</i><sub>h</sub> = <i>δ</i><sub>out</sub> · <i>v</i> · [<i>h</i> > 0]', '', 'rückwärts: mal Gewicht, und nur durch aktive Knicke')}`,
       setup() { reset({ heatA: 1 }); startTraining([2, 3, 1], 3, RING, 0.03); for (let i = 0; i < 25; i++) doTrain(); st.probe = [1.25, 0.9, 0]; },
       async play(a) {
         a.say('Ein Netz am Anfang des Trainings. Ein Punkt aus dem Ring (Soll: 0) geht vorwärts durchs Netz.');
@@ -460,6 +563,17 @@
         await a.to(st, { kinkA: 0 }, 400); await a.to(st, { nKinks: 30 }, 2600);
       },
     },
+    doppelt: {
+      views: ['fn'],
+      formula: () => `${T('T', '<i>f</i>(<i>x</i>) = 1 − 2 |<i>x</i>|', 'c-new', 'eine Falte: aus zwei Knicken (ReLU) gebaut')}<span class="sep">angewendet</span>${V('k')}-mal`,
+      setup() { st.fn = 'tent'; st.tentN = 0; },
+      async play(a) {
+        a.say('Eine Gerade von −1 bis 1.'); await a.wait(1200);
+        a.hl('T');
+        for (const k of [1, 2, 3, 4]) { a.say(`${k}× gefaltet: ${2 ** k} gerade Stücke.`); await a.to(st, { tentN: k }, 1500); await a.wait(1100); }
+        a.say('Vier Schichten mit je einer Falte: 16 Stücke. Eine einzige Schicht bräuchte dafür 16 Neuronen.');
+      },
+    },
     spirale: {
       views: ['plane'],
       formula: () => `<i>p</i> = σ(<b>W</b><sub>3</sub> ReLU(<b>W</b><sub>2</sub> ${T('inner', 'ReLU(<b>W</b><sub>1</sub> <b>x</b>)', 'c-new', 'erste Faltung')}))<span class="sep">Schritt</span>${V('steps')}<span class="sep">Treffer</span>${V('acc')}`,
@@ -480,9 +594,9 @@
   };
 
   story = S.story($('#story'), {
-    views: { hidden: { redraw: hidden.redraw }, plane, fn, graph },
+    views: { hidden: { redraw: hidden.redraw }, plane, fn, graph, chain },
     steps,
-    values: () => ({ steps: String(st.steps), acc: isFinite(st.acc) ? fmt(st.acc * 100, 0) + ' %' : '–', loss: isFinite(st.loss) ? fmt(st.loss, 3) : '–', n: String(Math.round(st.nKinks)) }),
+    values: () => ({ k: String(Math.round(st.tentN)), steps: String(st.steps), acc: isFinite(st.acc) ? fmt(st.acc * 100, 0) + ' %' : '–', loss: isFinite(st.loss) ? fmt(st.loss, 3) : '–', n: String(Math.round(st.nKinks)) }),
   });
   hidden.st.el.addEventListener('pointerdown', interrupt);
 })();

@@ -159,13 +159,13 @@
           <div class="sub">Logistische Regression, Wahrscheinlichkeit, Softmax</div>
           <p class="new"><b>Neue Idee</b>Eine Nichtlinearität am Ausgang macht aus einer Zahl eine Wahrscheinlichkeit. Die Gerade wird zur Grenze zwischen zwei Klassen.</p>
           <details>
-            <summary>Die Geschichte in 13 Schritten</summary>
+            <summary>Die Geschichte in 17 Schritten</summary>
             <ul>
-              <li>Bestanden oder nicht: warum die Gerade scheitert und die Sigmoidfunktion hilft</li>
-              <li>Was w und b jetzt tun, Kreuzentropie als Überraschung, Lernen mit „Fehler mal Eingabe“</li>
+              <li>Bestanden oder nicht: Wahrscheinlichkeit als Anteil, warum die Gerade scheitert</li>
+              <li>e hoch z, daraus Schritt für Schritt die Sigmoidfunktion</li>
+              <li>Was w und b jetzt tun; der Logarithmus, Kreuzentropie als Überraschung, Lernen mit „Fehler mal Eingabe“</li>
               <li>Zwei Merkmale: die Grenze steht senkrecht auf w, die Rampe in 3D</li>
-              <li>Drei Pinguinarten: eine Zeile pro Klasse, Softmax Schritt für Schritt</li>
-              <li>Temperatur am nächsten Wort eines Sprachmodells; XOR als Grenze der Grenze</li>
+              <li>Drei Pinguinarten: eine Zeile pro Klasse, Softmax; Temperatur am nächsten Wort; XOR als Grenze der Grenze</li>
             </ul>
           </details>
           <a class="open-link" href="03-classification.html">Kapitel öffnen →</a>
@@ -180,13 +180,13 @@
           <div class="sub">Neuronale Netze und Backpropagation</div>
           <p class="new"><b>Neue Idee</b>Eine Nichtlinearität zwischen zwei Matrizen lässt das Netz den Raum falten, bis die Daten durch eine einzige Grenze trennbar sind.</p>
           <details>
-            <summary>Die Geschichte in 10 Schritten</summary>
+            <summary>Die Geschichte in 13 Schritten</summary>
             <ul>
               <li>Innen und außen: keine Gerade reicht</li>
-              <li>ReLU als Knick, in 1D und als Falte der Ebene</li>
-              <li>Eine Schicht = Matrix + Falte: die Ebene als geknickte Fläche in 3D, dort trennt eine Ebene</li>
-              <li>Das Netz trainiert live; Backpropagation als Rückfluss des Fehlers</li>
-              <li>Jede Kurve aus Knicken; zwei Spiralen, Falten auf Falten</li>
+              <li>ReLU als Knick; ein Neuron als Rampe über der Ebene, drei Neuronen, drei Rampen</li>
+              <li>Eine Schicht = Matrix + Knick: die Ebene als geknickte Fläche in 3D, dort trennt eine Ebene</li>
+              <li>Das Netz trainiert live; Wirkungen in einer Kette multiplizieren sich; Backpropagation</li>
+              <li>Jede Kurve aus Knicken; Falten auf Falten verdoppeln die Stücke; zwei Spiralen</li>
             </ul>
           </details>
           <a class="open-link" href="04-folding.html">Kapitel öffnen →</a>
@@ -201,13 +201,14 @@
           <div class="sub">Geometrie in ℝ<sup>d</sup> und Superposition</div>
           <p class="new"><b>Neue Idee</b>In vielen Dimensionen stehen fast alle Richtungen fast senkrecht aufeinander. Deshalb passen mehr Merkmale hinein, als es Dimensionen gibt.</p>
           <details>
-            <summary>Die Geschichte in 9 Schritten</summary>
+            <summary>Die Geschichte in 17 Schritten</summary>
             <ul>
-              <li>Winkel zwischen Zufallsrichtungen: ab 1000 Dimensionen fast alles senkrecht</li>
-              <li>Eine Orange ist fast nur Schale</li>
-              <li>Viel Platz für fast senkrechte Richtungen</li>
-              <li>Superposition: fünf Merkmale in zwei Dimensionen, live trainiert (Toy Models, 2022)</li>
-              <li>Jede Projektion ist ein Schatten; Hauptkomponenten</li>
+              <li>Ein Punkt aus vielen Zahlen; Länge und Richtung; Ähnlichkeit als Schatten (Skalarprodukt)</li>
+              <li>Viele kleine Produkte heben sich auf: Zufallsrichtungen stehen fast senkrecht</li>
+              <li>Etwas kleiner, viel weniger drin: 0,9 hoch d, eine Orange ist fast nur Schale</li>
+              <li>Die Tabelle aller Paare: viel Platz für fast senkrechte Richtungen</li>
+              <li>Merkmale als Richtungen, erst von Hand (120°, Fünfeck), dann Sparsity, dann live trainiert (Toy Models, 2022)</li>
+              <li>Der beste Schatten in der Ebene, dann Hauptkomponenten in 50 Dimensionen</li>
             </ul>
           </details>
           <a class="open-link" href="05-dimensions.html">Kapitel öffnen →</a>

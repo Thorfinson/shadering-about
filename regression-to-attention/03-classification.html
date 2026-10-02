@@ -26,6 +26,7 @@
         <div class="view" data-view="line1d"><div class="vlabel" id="l-line1d">Lernstunden und Ergebnis</div><div class="plot" id="v-line1d" role="img" aria-label="Lernstunden gegen Ergebnis der Prüfung, mit dem Modell als Kurve."></div></div>
         <div class="view" data-view="plane2d"><div class="vlabel" id="l-plane2d">Zwei Merkmale</div><div class="plot" id="v-plane2d" role="img" aria-label="Daten mit zwei Merkmalen, eingefärbt nach der Wahrscheinlichkeit des Modells, mit der Entscheidungsgrenze."></div></div>
         <div class="view" data-view="sheet3d"><div class="vlabel">Die Wahrscheinlichkeit als Rampe (ziehen zum Drehen)</div><div class="plot" id="v-sheet3d" role="img" aria-label="Die Wahrscheinlichkeit des Modells als Fläche über der Ebene der Merkmale."></div></div>
+        <div class="view" data-view="fn3"><div class="vlabel" id="l-fn3">Eine Funktion</div><div class="plot" id="v-fn3" role="img" aria-label="Graph einer Funktion mit einem wandernden Messpunkt."></div></div>
         <div class="view" data-view="bars"><div class="vlabel" id="l-bars">Wahrscheinlichkeiten</div><div class="plot" id="v-bars" role="img" aria-label="Balken mit Punktzahlen oder Wahrscheinlichkeiten."></div></div>
       </div>
       <div class="stage-bar">
@@ -55,11 +56,33 @@
         <p>Schlimmer: Kommen ein paar sehr fleißige Studierende dazu, kippt die Gerade, und ihre 50-Prozent-Marke wandert nach rechts. Plötzlich gelten Leute als durchgefallen, die bestanden haben.</p>
       </div></article>
 
+      <article class="step" data-step="anteil"><div class="card">
+        <span class="kicker">Was heißt Wahrscheinlichkeit?</span>
+        <h3>Ein Anteil</h3>
+        <p>Was soll „die Wahrscheinlichkeit, mit 5 Lernstunden zu bestehen“ bedeuten? Ganz handfest: Nimm alle, die ungefähr so viel gelernt haben, und zähle, welcher <strong>Anteil</strong> bestanden hat.</p>
+        <p>Drei von fünf bestanden: 60 %. Diese Anteile liegen immer zwischen 0 und 1, und sie steigen nicht gerade, sondern in einer S-Form: unten flach, in der Mitte steil, oben wieder flach.</p>
+      </div></article>
+
+      <article class="step" data-step="exp"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>e hoch z: wiederholtes Malnehmen</h3>
+        <p>Für so eine S-Form brauchen wir eine Funktion, die wir bisher nicht hatten. <strong>e hoch z</strong> heißt: Starte bei 1 und nimm z-mal mit der Zahl e ≈ 2,718 mal. Bei z = 0 ist das 1, bei z = 1 schon 2,7, bei z = 3 etwa 20.</p>
+        <p>Negative z heißen <strong>teilen</strong>: e hoch −1 ist 1/2,7 ≈ 0,37, e hoch −3 ≈ 0,05. Das Ergebnis wird nie negativ und nie ganz null.</p>
+        <div class="ex"><b>Kennt man</b>Zinseszins oder Bakterien, die sich in festen Abständen vervielfachen, wachsen genau so: immer um denselben Faktor.</div>
+      </div></article>
+
+      <article class="step" data-step="sigbau"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Die S-Kurve, Stück für Stück</h3>
+        <p>Die <strong>Sigmoidfunktion</strong> baut daraus eine S-Kurve: σ(z) = 1 / (1 + e hoch −z). Lies sie für drei Fälle:</p>
+        <p>Bei z = 0 ist e hoch 0 = 1, also 1/(1+1) = <strong>0,5</strong>. Bei großem z wird e hoch −z winzig, also 1/(1+fast 0) ≈ <strong>1</strong>. Bei sehr negativem z wird e hoch −z riesig, also 1/(riesig) ≈ <strong>0</strong>. Dazwischen steigt sie glatt an.</p>
+      </div></article>
+
       <article class="step" data-step="sigmoid"><div class="card">
         <span class="kicker">Die neue Idee</span>
         <h3>Die Gerade wird gebogen</h3>
-        <p>Wir behalten die Rechnung <strong>w·x + b</strong>, lesen das Ergebnis aber als Punktzahl <strong>z</strong>: Wie sehr spricht alles für bestanden? Dann quetscht die <strong>Sigmoidfunktion σ</strong> jede Punktzahl zwischen 0 und 1.</p>
-        <p>Sehr viele Punkte: fast 1. Sehr wenige: fast 0. Genau null Punkte: 50 %.</p>
+        <p>Jetzt setzen wir zusammen: Wir behalten die Rechnung <strong>w·x + b</strong> aus Kapitel 1, lesen das Ergebnis aber als Punktzahl <strong>z</strong>: Wie sehr spricht alles für bestanden? Diese Punktzahl geben wir in die Sigmoidfunktion.</p>
+        <p>Die Gerade wird zur S-Kurve, die genau so verläuft wie die Anteile von vorhin.</p>
       </div></article>
 
       <article class="step" data-step="knoepfe"><div class="card">
@@ -69,25 +92,33 @@
         <p>Diese Stelle ist die <strong>Grenze</strong>: Links davon sagt das Modell „durchgefallen“, rechts „bestanden“. Sie liegt dort, wo die Punktzahl null ist.</p>
       </div></article>
 
+      <article class="step" data-step="log"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Wie gut erklärt das Modell alle Daten?</h3>
+        <p>Das Modell gibt jeder Person eine Wahrscheinlichkeit für das, was ihr wirklich passiert ist. Wie wahrscheinlich findet es <strong>alle</strong> Ergebnisse zusammen? Man multipliziert: 0,9 · 0,8 · 0,1 = 0,072. Mit 22 Personen wird das Produkt winzig und unhandlich.</p>
+        <p>Der <strong>Logarithmus</strong> macht aus Malnehmen Addieren: log(a · b) = log a + log b. Statt eines winzigen Produkts erhalten wir eine Summe, für jede Person einen Beitrag −log p. Der ist 0, wenn p = 1, und wächst steil, wenn p gegen 0 geht.</p>
+      </div></article>
+
       <article class="step" data-step="ueberraschung"><div class="card">
         <span class="kicker">Der Verlust</span>
         <h3>Wie überrascht ist das Modell?</h3>
-        <p>Quadrate passen hier schlecht. Stattdessen fragen wir: Wie viel Wahrscheinlichkeit hat das Modell dem gegeben, was wirklich passiert ist? War es wenig, ist das Modell <strong>überrascht</strong>, und das kostet.</p>
-        <p>Die Überraschung ist −log p. Bei p = 1 ist sie null, bei p nahe 0 wird sie riesig. Ihr Mittelwert heißt <strong>Kreuzentropie</strong>.</p>
+        <p>Den Beitrag −log p einer Person kann man als ihre <strong>Überraschung</strong> lesen: Hat das Modell ihr Ergebnis erwartet (p nahe 1), ist sie klein. Hielt es das Ergebnis für fast unmöglich, ist sie riesig.</p>
+        <p>Der Mittelwert aller Überraschungen ist unser neuer Verlust. Er heißt <strong>Kreuzentropie</strong> und ersetzt die Quadrate aus Kapitel 1.</p>
         <div class="ex"><b>Anderes Beispiel</b>Der Wetterbericht sagt 95 % Sonne, und es regnet: große Überraschung. Er sagt 50 %: Man war auf beides gefasst.</div>
       </div></article>
 
       <article class="step" data-step="lernen"><div class="card">
         <span class="kicker">Lernen</span>
         <h3>Bergab, wie gehabt</h3>
-        <p>Gelernt wird wie in Kapitel 1: Gradientenabstieg auf dem Verlust. Und der Gradient sieht wieder gleich aus: <strong>Fehler mal Eingabe</strong>, nur dass der Fehler jetzt p − y ist, der Abstand zwischen vorhergesagter Wahrscheinlichkeit und Wahrheit.</p>
+        <p>Gelernt wird wie in Kapitel 1: Die Kugel rollt in der Verlustlandschaft bergab. Rechnet man die Steigung aus, kommt ein schönes Ergebnis heraus: wieder <strong>Fehler mal Eingabe</strong>. Der Fehler ist jetzt p − y, der Abstand zwischen vorhergesagter Wahrscheinlichkeit und dem, was passiert ist.</p>
+        <p>Jede Person zieht also an der Kurve: Wer bestanden hat, aber nur 30 % bekam, zieht sie nach oben, mit Kraft 0,7.</p>
       </div></article>
 
       <article class="step" data-step="zwei"><div class="card">
         <span class="kicker">Zwei Merkmale</span>
         <h3>Die Grenze ist eine Linie</h3>
         <p>Mit Lernstunden und Schlaf hat jeder Studierende zwei Zahlen, einen Vektor <strong>x</strong>. Die Punktzahl ist das Skalarprodukt <strong>w · x + b</strong> aus Kapitel 2.</p>
-        <p>Die Grenze (Punktzahl null) ist eine Gerade, und <strong>w</strong> steht senkrecht auf ihr: Es zeigt in die Richtung, in der die Punktzahl am schnellsten wächst.</p>
+        <p>Die Grenze ist die Linie, auf der die Punktzahl genau null ist. Gehst du <strong>entlang</strong> der Grenze, ändert sich die Punktzahl nicht. Gehst du in Richtung <strong>w</strong>, wächst sie am schnellsten. Deshalb steht w senkrecht auf der Grenze.</p>
       </div></article>
 
       <article class="step" data-step="rampe"><div class="card">
@@ -115,7 +146,7 @@
         <span class="kicker">Formel lesen</span>
         <h3>Softmax</h3>
         <p>Wie macht man aus drei beliebigen Punktzahlen drei Wahrscheinlichkeiten? Zwei Schritte: <strong>e hoch</strong> macht alles positiv und verstärkt Unterschiede. <strong>Durch die Summe teilen</strong> sorgt dafür, dass alles zusammen 1 ergibt.</p>
-        <p>Das ist die Softmax. Bei zwei Klassen ist sie genau die Sigmoidfunktion von vorhin.</p>
+        <p>Das ist die <strong>Softmax</strong>: e hoch kennen wir aus dem Sigmoid-Schritt, und „durch die Summe teilen“ ist wieder die Idee vom Anteil.</p>
       </div></article>
 
       <article class="step" data-step="temperatur"><div class="card">
@@ -196,6 +227,8 @@
     Ws: [[0, 0], [0, 0], [0, 0]], bs: [0, 0, 0], probe: [45, 205], probeA: 0,
     bars: 'none', stageT: 0, temp: 1,
     loss: NaN, acc: NaN, steps: 0,
+    // building blocks
+    binA: 0, pullA: 0, fnMode: 'exp', expT: 0, mirA: 0, zp: -6, traceT: 0, pp: 1, walkA: 0, walkS: 0, walkN: 0,
   };
   let story = null;
   const interrupt = () => story && story.interrupt();
@@ -226,6 +259,19 @@
     for (const v of [0, 1]) { ctx.beginPath(); ctx.moveTo(m.l, Y(v)); ctx.lineTo(W - m.r, Y(v)); ctx.stroke(); }
     ctx.setLineDash([]);
     const pts = STUD.concat(EXTRA.map((p) => [...p, 'extra']));
+    // share of passes per two-hour group: what "probability" means
+    if (st.binA > 0) {
+      ctx.globalAlpha = st.binA;
+      for (let g = 0; g < 10; g += 2) {
+        const inBin = STUD.filter(([x]) => x >= g && x < g + 2), k = inBin.filter(([, y]) => y).length;
+        if (!inBin.length) continue;
+        const f = k / inBin.length;
+        ctx.fillStyle = S.alpha('accent', 0.12); ctx.fillRect(X(g) + 2, Y(1.25), X(g + 2) - X(g) - 4, Y(-0.25) - Y(1.25));
+        ctx.strokeStyle = S.c.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(g) + 6, Y(f)); ctx.lineTo(X(g + 2) - 6, Y(f)); ctx.stroke();
+        S.label(ctx, `${k}/${inBin.length}`, (X(g) + X(g + 2)) / 2, Y(f) - 12, S.c.accent, S.font(12.5, 'mono', '600'), 'center');
+      }
+      ctx.globalAlpha = 1;
+    }
     // least-squares line (step 2)
     if (st.lineA > 0) {
       const L = lsLine(pts1());
@@ -253,6 +299,11 @@
         ctx.fillStyle = S.alpha('error', 0.75);
         ctx.fillRect(X(x) - 4, Y(y0), 8, (y ? 1 : -1) * (Y(0) - Y(h)));
       });
+      ctx.globalAlpha = 1;
+    }
+    if (st.pullA > 0 && st.curveA > 0) {
+      ctx.globalAlpha = st.pullA; ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad;
+      pts1().forEach(([x, y]) => { const p = p1(x), d = y - p; if (Math.abs(d) < 0.06) return; S.arrow(ctx, X(x), Y(p), X(x), Y(p + d * 0.85), 7, 1.75); });
       ctx.globalAlpha = 1;
     }
     pts.forEach(([x, y, extra], i) => {
@@ -337,6 +388,18 @@
         ctx.globalAlpha = 1;
       }
     }
+    if (st.ds2 === 'bin' && st.walkA > 0) {
+      const sc = SC2.bin, wr = [st.w2[0] / sc.s[0], st.w2[1] / sc.s[1]], br = st.b2 - wr[0] * sc.m[0] - wr[1] * sc.m[1];
+      const zc = wr[0] * sc.m[0] + wr[1] * sc.m[1] + br, nn = wr[0] ** 2 + wr[1] ** 2;
+      const foot = [sc.m[0] - (zc * wr[0]) / nn, sc.m[1] - (zc * wr[1]) / nn], len = Math.sqrt(nn);
+      const along = [-wr[1] / len, wr[0] / len], up = [wr[0] / len, wr[1] / len];
+      const q = [foot[0] + along[0] * st.walkS * 2.5 + up[0] * st.walkN * 2, foot[1] + along[1] * st.walkS * 2.5 + up[1] * st.walkN * 2];
+      const z = wr[0] * q[0] + wr[1] * q[1] + br;
+      ctx.globalAlpha = st.walkA;
+      S.dot(ctx, X(q[0]), Y(q[1]), 7, S.c.fg, S.c.surface, 2.5);
+      S.label(ctx, `z = ${fmt(z, 2)}`, X(q[0]) + 12, Y(q[1]) - 14, S.c.fg, S.font(13, 'mono', '600'), 'left');
+      ctx.globalAlpha = 1;
+    }
     const pts = d.pts;
     pts.forEach((p, i) => {
       const a = clamp(st.pts2A * pts.length - i, 0, 1);
@@ -366,6 +429,40 @@
       const set = (p) => { st.probe = [plane.fr.X.inv(p.x), plane.fr.Y.inv(p.y)]; st.probeA = 1; redraw(); };
       set(q); return { move: set };
     },
+  });
+
+  // ── building blocks: e hoch z, the sigmoid, −log p ──────────────
+  const fn3 = S.canvas($('#v-fn3'), (ctx, W, H) => {
+    const m = { l: 52, r: 18, t: 12, b: 40 };
+    const curve = (X, Y, f, a, b, col, w, dash = []) => { ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); let first = true; for (let i = 0; i <= 300; i++) { const x = a + ((b - a) * i) / 300, y = f(x); if (!isFinite(y)) continue; first ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y)); first = false; } ctx.stroke(); ctx.setLineDash([]); };
+    if (st.fnMode === 'exp') {
+      const X = lin(-3.2, 3.2, m.l, W - m.r), Y = lin(0, 21, H - m.b, m.t);
+      S.axes(ctx, { x: X, y: Y, xt: [-3, -2, -1, 0, 1, 2, 3], yt: [0, 5, 10, 15, 20], xfmt: (v) => fmt(v), yfmt: (v) => fmt(v), xlabel: 'z' });
+      ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, W - m.l - m.r, H - m.t - m.b); ctx.clip();
+      const zEnd = -3.2 + 6.4 * st.expT;
+      curve(X, Y, Math.exp, -3.2, zEnd, S.c.model, 3);
+      for (let z = -3; z <= Math.floor(zEnd); z++) { S.dot(ctx, X(z), Y(Math.exp(z)), 4.5, S.c.model, S.c.surface, 1.5); S.label(ctx, fmt(Math.exp(z), Math.exp(z) < 1 ? 2 : 1), X(z) + 6, Y(Math.exp(z)) - 12, S.c.fg, S.font(12, 'mono'), 'left'); }
+      if (st.mirA > 0) { ctx.globalAlpha = st.mirA; curve(X, Y, (z) => Math.exp(-z), -3.2, 3.2, S.c.accent, 2.5, [7, 5]); ctx.globalAlpha = 1; }
+      ctx.restore();
+      if (st.mirA > 0.5) S.label(ctx, 'e hoch −z (gespiegelt)', X(-2.2), Y(Math.exp(2.2)) - 4, S.c.accent, S.font(12.5, 'body', '600'), 'left');
+      if (st.expT > 0.9) S.label(ctx, 'e hoch z', X(2.4), Y(Math.exp(2.4)), S.c.model, S.font(12.5, 'body', '600'), 'right');
+    } else if (st.fnMode === 'sig') {
+      const X = lin(-6.5, 6.5, m.l, W - m.r), Y = lin(-0.05, 1.08, H - m.b, m.t), sg = (z) => 1 / (1 + Math.exp(-z));
+      S.axes(ctx, { x: X, y: Y, xt: [-6, -4, -2, 0, 2, 4, 6], yt: [0, 0.5, 1], xfmt: (v) => fmt(v), yfmt: (v) => fmt(v, v === 0.5 ? 1 : 0), xlabel: 'Punktzahl z' });
+      curve(X, Y, sg, -6.5, -6.5 + 13 * st.traceT, S.c.model, 3);
+      const z = st.zp, y = sg(z);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.25; ctx.beginPath(); ctx.moveTo(X(z), Y(0)); ctx.lineTo(X(z), Y(y)); ctx.lineTo(m.l, Y(y)); ctx.stroke(); ctx.setLineDash([]);
+      S.dot(ctx, X(z), Y(y), 6, S.c.model, S.c.surface, 2);
+      S.label(ctx, `σ(${fmt(z, 1)}) = ${fmt(y, 3)}`, X(z) + (z > 3 ? -10 : 10), Y(y) + (y > 0.8 ? 18 : -14), S.c.fg, S.font(13, 'mono', '600'), z > 3 ? 'right' : 'left');
+    } else {
+      const X = lin(0, 1.02, m.l, W - m.r), Y = lin(0, 5, H - m.b, m.t);
+      S.axes(ctx, { x: X, y: Y, xt: [0, 0.25, 0.5, 0.75, 1], yt: [0, 1, 2, 3, 4, 5], xfmt: (v) => fmt(v, 2), yfmt: (v) => fmt(v), xlabel: 'Wahrscheinlichkeit p für das, was wirklich passiert ist' });
+      curve(X, Y, (p) => -Math.log(p), 0.006, 1, S.c.error, 3);
+      const p = st.pp, v = -Math.log(p);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.25; ctx.beginPath(); ctx.moveTo(X(p), Y(0)); ctx.lineTo(X(p), Y(Math.min(v, 5))); ctx.stroke(); ctx.setLineDash([]);
+      S.dot(ctx, X(p), Y(Math.min(v, 5)), 6, S.c.error, S.c.surface, 2);
+      S.label(ctx, `−log ${fmt(p, 2)} = ${fmt(v, 2)}`, X(p) + 10, Y(Math.min(v, 5)) - 14, S.c.fg, S.font(13, 'mono', '600'), p > 0.75 ? 'right' : 'left');
+    }
   });
 
   // ── 3D ramp ─────────────────────────────────────────────────────
@@ -470,8 +567,8 @@
   //  Steps
   // ════════════════════════════════════════════════════════════════
   const fit1 = () => { st.w = 0; st.b = 0; for (let i = 0; i < 1500; i++) train1dStep(); };
-  const base1 = (o = {}) => Object.assign(st, { ptsA: 22, extraA: 0, xmax: 11, lineA: 0, sigT: 1, curveA: 0, surpriseA: 0, hl: -1 }, o);
-  const base2 = (ds, o = {}) => Object.assign(st, { ds2: ds, heatA: 0, boundA: 0, arrowA: 0, pts2A: 1, probeA: 0, bars: 'none', stageT: 0, steps: 0 }, o);
+  const base1 = (o = {}) => Object.assign(st, { ptsA: 22, extraA: 0, xmax: 11, lineA: 0, sigT: 1, curveA: 0, surpriseA: 0, hl: -1, binA: 0, pullA: 0 }, o);
+  const base2 = (ds, o = {}) => Object.assign(st, { ds2: ds, heatA: 0, boundA: 0, arrowA: 0, pts2A: 1, probeA: 0, bars: 'none', stageT: 0, steps: 0, walkA: 0, walkS: 0, walkN: 0 }, o);
   const zForm = () => `${T('p', '<i>p</i>', 'c-model', 'Wahrscheinlichkeit für bestanden')} = ${T('sig', 'σ', 'c-new', 'Sigmoid: quetscht jede Zahl zwischen 0 und 1')}(${T('z', '<i>w</i> · <i>x</i> + <i>b</i>', '', 'Punktzahl z: wie sehr alles für bestanden spricht')})`;
   const steps = {
     frage: {
@@ -499,6 +596,42 @@
         a.say('Die Gerade kippt, ihre 0,5-Marke rutscht nach rechts. Eingekreist: Leute, die bestanden haben, aber jetzt als durchgefallen gelten.');
       },
     },
+    anteil: {
+      views: ['line1d'],
+      formula: `${T('p', '<i>p</i>', 'c-new', 'Wahrscheinlichkeit = Anteil der Fälle, in denen etwas passiert')} = ${FRAC('Anzahl bestanden', 'Anzahl in der Gruppe')}`,
+      setup() { base1(); },
+      async play(a) {
+        a.say('Wir teilen die Studierenden in Gruppen zu je zwei Lernstunden …');
+        a.hl('p'); await a.to(st, { binA: 1 }, 1600); await a.wait(1200);
+        a.say('… und zählen in jeder Gruppe, welcher Anteil bestanden hat. 0/5 heißt 0 %, 5/5 heißt 100 %.'); await a.wait(2800);
+        a.say('Die violetten Striche steigen in einer S-Form: unten flach, in der Mitte steil, oben flach. So eine Form suchen wir.');
+      },
+    },
+    exp: {
+      views: ['fn3'],
+      formula: `${T('e', '<i>e</i><sup><i>z</i></sup>', 'c-model', 'e hoch z: bei 1 starten und z-mal mit e ≈ 2,718 malnehmen')}<span class="sep">·</span>${T('m', '<i>e</i><sup>−<i>z</i></sup> = 1 / <i>e</i><sup><i>z</i></sup>', 'c-new', 'negatives z heißt: z-mal durch e teilen')}`,
+      setup() { st.fnMode = 'exp'; st.expT = 0; st.mirA = 0; },
+      async play(a) {
+        a.hl('e'); a.say('Bei z = 0 sind wir bei 1. Jeder Schritt nach rechts: mal 2,718.');
+        await a.to(st, { expT: 1 }, 4200, { ease: (t) => t });
+        a.say('Nach links wird geteilt: 0,37, dann 0,14, dann 0,05. Nie negativ, nie ganz null.'); await a.wait(2400);
+        a.hl('m'); a.say('Spiegelt man die Kurve (e hoch −z), fällt sie stattdessen von links nach rechts.');
+        await a.to(st, { mirA: 1 }, 1200);
+      },
+    },
+    sigbau: {
+      views: ['fn3'],
+      formula: () => `σ(<i>z</i>) = ${FRAC('1', `1 + ${T('em', '<i>e</i><sup>−<i>z</i></sup>', 'c-new', 'bei großem z winzig, bei sehr negativem z riesig')}`)}<span class="sep">e<sup>−z</sup> =</span>${V('ez')}<span class="sep">σ =</span>${V('sz')}`,
+      setup() { st.fnMode = 'sig'; st.zp = -6; st.traceT = 0; },
+      async play(a) {
+        a.hl('em'); a.say('Sehr negatives z: e hoch −z ist riesig, also 1 / riesig ≈ 0.');
+        await a.wait(1800);
+        await a.to(st, { zp: 0, traceT: 0.5 }, 3000, { ease: (t) => t });
+        a.say('Bei z = 0: e hoch 0 = 1, also 1 / (1 + 1) = 0,5. Genau die Mitte.'); await a.wait(2200);
+        await a.to(st, { zp: 6, traceT: 1 }, 3000, { ease: (t) => t });
+        a.say('Großes z: e hoch −z ist fast 0, also 1 / (1 + fast 0) ≈ 1. Fertig ist die S-Kurve.');
+      },
+    },
     sigmoid: {
       views: ['line1d'],
       formula: () => `${zForm()}<span class="sep">σ(z) =</span>${FRAC('1', '1 + <i>e</i><sup>−<i>z</i></sup>')}`,
@@ -507,7 +640,8 @@
         a.hl('z'); a.say('Die Rechnung bleibt <i>w</i>·<i>x</i> + <i>b</i>. Ihr Ergebnis ist eine Punktzahl, hier als Gerade.'); await a.wait(2200);
         a.hl('sig'); a.say('σ biegt die Gerade: Große Punktzahlen werden fast 1, kleine fast 0.');
         await a.to(st, { sigT: 1 }, 2600);
-        a.hl('p'); a.say('Jetzt ist die Kurve überall eine echte Wahrscheinlichkeit.'); await a.wait(1400);
+        a.hl('p'); a.say('Jetzt ist die Kurve überall eine echte Wahrscheinlichkeit, und sie trifft die Anteile aus den Gruppen.');
+        await a.to(st, { binA: 1 }, 800); await a.wait(1600); await a.to(st, { binA: 0 }, 600);
         a.say('Und die Fleißigen stören nicht mehr: Die Kurve ist rechts schon bei fast 1.');
         await a.to(st, { xmax: 21 }, 1000); await a.to(st, { extraA: 1 }, 900);
         await a.loop((i) => { train1dStep(); return i < 200; }, 80);
@@ -526,6 +660,18 @@
         a.hl('b'); a.say('<i>b</i> verschiebt die ganze Kurve nach links oder rechts.');
         await a.to(st, { b: b0 + 2.5 }, 1200); await a.to(st, { b: b0 - 2.5 }, 1600); await a.to(st, { b: b0 }, 1000);
         a.hl('g'); a.say('Die violette Linie ist die Grenze. Hier ist die Punktzahl null, p = 50 %.');
+      },
+    },
+    log: {
+      views: ['fn3'],
+      formula: `−log(${T('prod', '<i>p</i><sub>1</sub> · <i>p</i><sub>2</sub> · … · <i>p<sub>n</sub></i>', '', 'wie wahrscheinlich das Modell alle Ergebnisse zusammen findet')}) = ${T('sum', '(−log <i>p</i><sub>1</sub>) + (−log <i>p</i><sub>2</sub>) + …', 'c-err', 'der Logarithmus macht aus dem Produkt eine Summe: ein Beitrag pro Person')}`,
+      setup() { st.fnMode = 'nlog'; st.pp = 1; },
+      async play(a) {
+        a.hl('prod'); a.say('Drei Personen: Das Modell gab ihren tatsächlichen Ergebnissen 0,9, 0,8 und 0,1. Zusammen: 0,9 · 0,8 · 0,1 = 0,072.'); await a.wait(3200);
+        a.hl('sum'); a.say('Mit −log wird jeder Faktor ein Summand. Die Kurve zeigt, wie groß er ist:');
+        for (const [p, t] of [[0.9, 'p = 0,9: kleiner Beitrag, 0,11.'], [0.5, 'p = 0,5: 0,69.'], [0.1, 'p = 0,1: schon 2,3.'], [0.01, 'p = 0,01: 4,6. Je unerwarteter, desto teurer.']]) { await a.to(st, { pp: p }, 1300); a.say(t); await a.wait(1500); }
+        await a.to(st, { pp: 1 }, 1200);
+        a.say('Bei p = 1 kostet es nichts. Summe: 0,11 + 0,22 + 2,30 = 2,63 für unsere drei Personen.');
       },
     },
     ueberraschung: {
@@ -547,8 +693,9 @@
     lernen: {
       views: ['line1d'],
       formula: () => `${FRAC('∂<i>L</i>', '∂<i>w</i>')} = ${FRAC('1', '<i>n</i>')} ∑ ${T('err', '(<i>p</i> − <i>y</i>)', 'c-err', 'Fehler: Wahrscheinlichkeit minus Wahrheit')} · ${T('x', '<i>x</i>', 'c-data', 'Eingabe')}<span class="sep">L =</span>${V('L1')}`,
-      setup() { base1({ curveA: 1, surpriseA: 1 }); st.w = 0.0001; st.b = 0; },
+      setup() { base1({ curveA: 1, surpriseA: 0, pullA: 1 }); st.w = 0.0001; st.b = 0; },
       async play(a) {
+        a.say('Grüne Pfeile: wie stark jede Person an der Kurve zieht, nämlich p − y.'); await a.wait(2200);
         a.hl('err', 'x'); a.say('Start: überall 50 %. Jeder Schritt schiebt mit „Fehler mal Eingabe“, wie bei der Geraden in Kapitel 1.');
         await a.wait(1600);
         await a.loop((i) => { train1dStep(0.4); return i < 160; }, (i) => (i < 20 ? 8 : 40));
@@ -565,7 +712,12 @@
         a.hl('z'); a.say('Die Punktzahl färbt die Ebene: blau heißt eher bestanden, orange eher durchgefallen.');
         await a.to(st, { heatA: 1 }, 1200);
         a.hl('g'); a.say('Die Grenze ist eine Gerade.'); await a.to(st, { boundA: 1 }, 800); await a.wait(800);
-        a.hl('w'); a.say('Der Vektor <b>w</b> steht senkrecht auf ihr und zeigt Richtung „bestanden“.'); await a.to(st, { arrowA: 1 }, 800); await a.wait(1200);
+        a.hl('w'); a.say('Der Vektor <b>w</b> zeigt Richtung „bestanden“.'); await a.to(st, { arrowA: 1 }, 800); await a.wait(1000);
+        a.say('Ein Messpunkt läuft entlang der Grenze: Die Punktzahl bleibt 0.');
+        await a.to(st, { walkA: 1, walkS: -1, walkN: 0 }, 500); await a.to(st, { walkS: 1 }, 2600, { ease: (t) => t });
+        a.say('Jetzt läuft er in Richtung <b>w</b>: Die Punktzahl wächst am schnellsten. Darum steht <b>w</b> senkrecht auf der Grenze.');
+        await a.to(st, { walkS: 0 }, 900); await a.to(st, { walkN: 1 }, 2200); await a.to(st, { walkN: -0.6 }, 2000);
+        await a.to(st, { walkA: 0 }, 500); a.set(st, { walkN: 0 });
         a.say('Dreht man <b>w</b>, dreht sich die Grenze mit, immer senkrecht dazu.');
         const r = Math.hypot(...st.w2), a0 = Math.atan2(st.w2[1], st.w2[0]), o = { t: 0 };
         await a.to(o, { t: 1 }, 4000, { ease: (t) => t, update: () => { const ang = a0 + Math.sin(o.t * Math.PI * 2) * 1.1; st.w2 = [r * Math.cos(ang), r * Math.sin(ang)]; } });
@@ -652,7 +804,7 @@
   };
 
   story = S.story($('#story'), {
-    views: { line1d: line1d.c, plane2d: plane.c, sheet3d: { redraw: sheet.redraw }, bars },
+    views: { line1d: line1d.c, plane2d: plane.c, sheet3d: { redraw: sheet.redraw }, bars, fn3 },
     steps,
     values() {
       return {
@@ -660,6 +812,7 @@
         L1: fmt(surprise(pts1(), p1), 3),
         L2: fmt(st.loss, 3), acc: isFinite(st.acc) ? fmt(st.acc * 100, 0) + ' %' : '–', steps: String(st.steps),
         temp: fmt(st.temp, 2),
+        ez: fmt(Math.exp(-st.zp), Math.exp(-st.zp) < 10 ? 2 : 0), sz: fmt(1 / (1 + Math.exp(-st.zp)), 3),
       };
     },
   });
