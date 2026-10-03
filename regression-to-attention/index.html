@@ -247,12 +247,12 @@
         <div class="body">
           <div class="top"><h2><a href="07-attention.html">Mischen nach Relevanz</a></h2><span class="chip ready">Als Geschichte</span></div>
           <div class="sub">Attention I: die Idee ohne neue Matrizen</div>
-          <p class="new"><b>Neue Idee</b>Ein Wort wird zum gewichteten Mittel der Wörter um es herum. Die Gewichte kommen aus der Ähnlichkeit, Softmax macht sie zu Anteilen.</p>
+          <p class="new"><b>Neue Idee</b>Ein Wort wird zum gewichteten Mittel der Wörter um es herum. Die Anteile kommen aus der Ähnlichkeit, Softmax macht sie zu Anteilen.</p>
           <details>
             <summary>Die Geschichte in 15 Schritten</summary>
             <ul>
               <li>„Bank“ hat nur einen Vektor; wie wir selbst lesen: der Blick springt zu den wichtigen Wörtern</li>
-              <li>Gewichtetes Mittel erst mit Zahlen, dann mit Punkten, dann mit Vektoren; Mischen von Hand</li>
+              <li>Mittelwert mit Anteilen erst mit Zahlen, dann mit Punkten, dann mit Vektoren; Mischen von Hand</li>
               <li>Relevanz als Skalarprodukt; e hoch, teilen, Schärfe: die Softmax entsteht Schritt für Schritt</li>
               <li>Die Falle: jedes Wort ist sich selbst am ähnlichsten; ohne sich selbst rückt „Bank“ zu Geld, Sitzen, Holz</li>
               <li>Alle Wörter auf einmal als Tabelle; die Grenze: Wer ist „sie“?</li>
@@ -273,7 +273,7 @@
             <summary>Die Geschichte in 18 Schritten</summary>
             <ul>
               <li>Ein Wort, drei Rollen; eine Matrix dreht einen Vektor (Kapitel 2)</li>
-              <li>Die Frage von „sie“, Punktzahlen, Gewichte: „Katze“ bekommt 91 %</li>
+              <li>Die Frage von „sie“, Punktzahlen, Anteile: „Frau“ bekommt 91 %</li>
               <li>Schilder und Werte als eigene Matrizen; das Ergebnis</li>
               <li>Alles als Tabellen: X → Q, das Kreuz QKᵀ, Softmax zeilenweise, mal V</li>
               <li>Die ganze Formel; warum durch √d geteilt wird; mehrere Köpfe; alles gelernt</li>

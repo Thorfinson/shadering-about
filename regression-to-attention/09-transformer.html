@@ -111,7 +111,7 @@
       <article class="step" data-step="maske"><div class="card">
         <span class="kicker">Teil 4, eine Bedingung</span>
         <h3>Nicht spicken</h3>
-        <p>Dürfte ein Wort beim Lernen nach rechts schauen, könnte es das nächste Wort einfach ablesen und würde nichts lernen. Darum wird in der Attention-Matrix die obere Hälfte gesperrt: Diese Punktzahlen werden vor der Softmax auf −∞ gesetzt. e hoch −∞ ist 0, ihr Gewicht verschwindet.</p>
+        <p>Dürfte ein Wort beim Lernen nach rechts schauen, könnte es das nächste Wort einfach ablesen und würde nichts lernen. Darum wird in der Attention-Matrix die obere Hälfte gesperrt: Diese Punktzahlen werden vor der Softmax auf −∞ gesetzt. e hoch −∞ ist 0, ihr Anteil verschwindet.</p>
         <p>Jedes Wort sieht nur sich und die Wörter davor. Das heißt <strong>kausale Maske</strong>.</p>
       </div></article>
 
@@ -392,7 +392,7 @@
     },
     maske: {
       views: ['mask'],
-      formula: `Punktzahl<sub><i>ij</i></sub> = ${T('m', '−∞', 'c-new', 'für j > i: e hoch −∞ ist 0, das Gewicht verschwindet')} für <i>j</i> > <i>i</i>`,
+      formula: `Punktzahl<sub><i>ij</i></sub> = ${T('m', '−∞', 'c-new', 'für j > i: e hoch −∞ ist 0, der Anteil verschwindet')} für <i>j</i> > <i>i</i>`,
       setup() { st.mkA = 1; st.mkMask = 0; },
       async play(a) {
         a.say('Ohne Maske könnte „der“ schon auf „König“ schauen, die Antwort also ablesen.'); await a.wait(2600);

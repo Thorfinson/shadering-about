@@ -63,21 +63,21 @@
       <article class="step" data-step="kopf1"><div class="card">
         <span class="kicker">Hinschauen, Kopf 1</span>
         <h3>Kopf 1 sucht die letzte Kopie</h3>
-        <p>Kopf 1 in Schicht 1 schaut woanders hin. Steht gerade ein „A“, schaut er auf die Stellen, die früher <em>direkt nach</em> einem „A“ kamen. Genau dort steht die Antwort: die Regel aus Kapitel 10.</p>
+        <p>Kopf 1 in Schicht 1 schaut woanders hin. Steht gerade ein „R“, schaut er auf die Stellen, die früher <em>direkt nach</em> einem „R“ kamen. Genau dort steht die Antwort: die Regel aus Kapitel 10.</p>
         <p>Ein solcher Kopf heißt <strong>Induction Head</strong>.</p>
       </div></article>
 
       <article class="step" data-step="matrizen"><div class="card">
         <span class="kicker">Als Matrix</span>
         <h3>Zwei Muster, zwei Matrizen</h3>
-        <p>Dieselben Gewichte als Attention-Matrix wie in Kapitel 7. Kopf 0: am hellsten direkt unter der Diagonale, einen Platz zurück. Kopf 1: schräge Streifen im Abstand der Periode, ab der ersten Wiederholung.</p>
+        <p>Dieselben Anteile, als Attention-Matrix wie in Kapitel 7. Kopf 0: am hellsten direkt unter der Diagonale, einen Platz zurück. Kopf 1: schräge Streifen im Abstand der Periode, ab der ersten Wiederholung.</p>
       </div></article>
 
       <article class="step" data-step="trick"><div class="card">
         <span class="kicker">Der Algorithmus</span>
         <h3>Zusammenarbeit in zwei Schritten</h3>
-        <p>Woher weiß Kopf 1, welche Stelle nach einem „A“ kam? Jede Stelle kennt anfangs nur ihren eigenen Buchstaben und ihren Platz. Hier kommt Kopf 0 ins Spiel.</p>
-        <p>Schritt 1: Kopf 0 schreibt an jede Stelle eine Notiz auf das Notizblatt (den Residualstrom aus Kapitel 9): „vor mir stand X“. Schritt 2: Kopf 1 fragt mit dem aktuellen Buchstaben „A“ nach der Notiz „vor mir stand A“, findet diese Stelle und kopiert ihren Buchstaben als Vorhersage.</p>
+        <p>Woher weiß Kopf 1, welche Stelle nach einem „R“ kam? Jede Stelle kennt anfangs nur ihren eigenen Buchstaben und ihren Platz. Hier kommt Kopf 0 ins Spiel.</p>
+        <p>Schritt 1: Kopf 0 schreibt an jede Stelle eine Notiz auf das Notizblatt (den Residualstrom aus Kapitel 9): „vor mir stand X“. Schritt 2: Kopf 1 fragt mit dem aktuellen Buchstaben „R“ nach der Notiz „vor mir stand R“, findet diese Stelle (dort steht „N“) und kopiert ihren Buchstaben als Vorhersage.</p>
         <p>Das ist bisher eine Vermutung, abgelesen am Verhalten. Die nächsten Schritte prüfen sie an den Gewichten.</p>
       </div></article>
 
@@ -91,15 +91,15 @@
       <article class="step" data-step="ovschritt"><div class="card">
         <span class="kicker">Werkzeug: Gewichte lesen</span>
         <h3>Ein Buchstabe läuft durch Kopf 1</h3>
-        <p>Was schreibt Kopf 1, wenn er auf eine Stelle mit dem Buchstaben „K“ schaut? Wir verfolgen den Weg: der Vektor von „K“ aus der Tabelle <b>E</b> (16 Zahlen), mal die Wert-Matrix <b>W</b><sub>V</sub> (8 Zahlen), mal die Ausgabe-Matrix <b>W</b><sub>O</sub> (wieder 16 Zahlen, das, was auf das Notizblatt kommt), mal die Ausgabe-Vektoren <b>U</b>: 16 Punktzahlen, eine pro Buchstabe.</p>
-        <p>Die höchste Punktzahl hat „K“. Kopf 1 schreibt also: „Der nächste Buchstabe ist K.“ Er kopiert.</p>
+        <p>Steht gerade „R“, findet Kopf 1 die Stelle nach dem letzten „R“, und dort steht „N“. Was schreibt Kopf 1, wenn er auf dieses „N“ schaut? Wir verfolgen den Weg: der Vektor von „N“ aus der Tabelle <b>E</b> (16 Zahlen), mal die Wert-Matrix <b>W</b><sub>V</sub> (8 Zahlen), mal die Ausgabe-Matrix <b>W</b><sub>O</sub> (wieder 16 Zahlen, das, was auf das Notizblatt kommt), mal die Ausgabe-Vektoren <b>U</b>: 16 Punktzahlen, eine pro Buchstabe.</p>
+        <p>Die höchste Punktzahl hat „N“. Kopf 1 schreibt also: „Der nächste Buchstabe ist N.“ Er kopiert, und das ist genau die richtige Vorhersage nach „R“.</p>
       </div></article>
 
       <article class="step" data-step="ov"><div class="card">
         <span class="kicker">Für alle Buchstaben</span>
         <h3>Der OV-Schaltkreis</h3>
         <p>Dasselbe für alle 16 Buchstaben ergibt eine Tabelle: Zeile = worauf Kopf 1 schaut, Spalte = welche Punktzahl steigt. Sie ist eine helle Diagonale: Für jeden Buchstaben steigt genau seine eigene Punktzahl.</p>
-        <p>Olah und Kollegen nennen das Produkt <b>W</b><sub>O</sub><b>W</b><sub>V</sub> den <strong>OV-Schaltkreis</strong> eines Kopfs: was er weitergibt.</p>
+        <p>Diesen Weg, erst <b>W</b><sub>V</sub>, dann <b>W</b><sub>O</sub>, nennen Olah und Kollegen den <strong>OV-Schaltkreis</strong> eines Kopfs: was er weitergibt. In ihren Texten steht dafür <b>W</b><sub>O</sub><b>W</b><sub>V</sub>, von rechts gelesen wie in Kapitel 2.</p>
       </div></article>
 
       <article class="step" data-step="qk"><div class="card">
@@ -231,7 +231,7 @@
   });
 
   // ── 7. one letter through head 1's OV path ──────────────────────
-  const OVL = 'K';
+  const OVL = 'N';
   const ovstepV = S.canvas($('#v-ovstep'), (ctx, W, H) => {
     if (!refDone()) return;
     const { V: Vn, D, DH, P } = REF, h1 = P.H[1], a = LET.indexOf(OVL), e = P.E.slice(a * D, a * D + D), v = mm(e, h1.V, 1, D, DH), o = mm(v, h1.O, 1, DH, D), sc = mm(o, P.U, 1, D, Vn);
@@ -332,7 +332,7 @@
     },
     trick: {
       views: ['arcs'],
-      formula: `${T('a', 'Kopf 0 schreibt', '', 'an jede Stelle: vor mir stand X')} „vor mir stand X“ → ${T('b', 'Kopf 1 sucht', 'c-new', 'die Notiz mit dem aktuellen Buchstaben und kopiert den Buchstaben dort')} „vor mir stand A“`,
+      formula: `${T('a', 'Kopf 0 schreibt', '', 'an jede Stelle: vor mir stand X')} „vor mir stand X“ → ${T('b', 'Kopf 1 sucht', 'c-new', 'die Notiz mit dem aktuellen Buchstaben und kopiert den Buchstaben dort')} „vor mir stand R“`,
       setup() { Object.assign(st, { arcH: 0, arcI: SEQ.m + 2, arcA: 0, notes: 0, findA: 0 }); },
       async play(a) {
         await waitRef(a); const i0 = SEQ.m + 2, L0 = LET[SEQ.s[i0]];
@@ -349,9 +349,9 @@
     },
     ovschritt: {
       views: ['ovstep'],
-      formula: `${T('e', '<b>E</b>[K]', '', 'der Vektor von K')} · ${T('v', '<b>W</b><sub>V</sub>', '', 'Wert-Matrix von Kopf 1')} · ${T('o', '<b>W</b><sub>O</sub>', '', 'Ausgabe-Matrix von Kopf 1')} · ${T('u', '<b>U</b>', 'c-new', 'Punktzahl für jeden Buchstaben')}`,
+      formula: `${T('e', '<b>E</b>[N]', '', 'der Vektor von N')} · ${T('v', '<b>W</b><sub>V</sub>', '', 'Wert-Matrix von Kopf 1')} · ${T('o', '<b>W</b><sub>O</sub>', '', 'Ausgabe-Matrix von Kopf 1')} · ${T('u', '<b>U</b>', 'c-new', 'Punktzahl für jeden Buchstaben')}`,
       setup() { st.ovK = 0; },
-      async play(a) { await waitRef(a); const hl = ['e', 'v', 'o', 'u'], t = ['Der Vektor von „K“ aus der Tabelle E.', 'Mal W_V: der Wert, 8 Zahlen.', 'Mal W_O: das, was Kopf 1 auf das Notizblatt schreibt.', 'Mal U: die Punktzahl jedes Buchstabens. Die höchste hat „K“.']; for (let k = 0; k < 4; k++) { a.set(st, { ovK: k }); a.hl(hl[k]); a.say(t[k]); await a.wait(2600); } a.say('Schaut Kopf 1 auf ein „K“, schreibt er „als Nächstes K“. Er kopiert.'); },
+      async play(a) { await waitRef(a); const hl = ['e', 'v', 'o', 'u'], t = ['Der Vektor von „N“ aus der Tabelle E.', 'Mal W_V: der Wert, 8 Zahlen.', 'Mal W_O: das, was Kopf 1 auf das Notizblatt schreibt.', 'Mal U: die Punktzahl jedes Buchstabens. Die höchste hat „N“.']; for (let k = 0; k < 4; k++) { a.set(st, { ovK: k }); a.hl(hl[k]); a.say(t[k]); await a.wait(2600); } a.say('Schaut Kopf 1 auf ein „N“, schreibt er „als Nächstes N“. Er kopiert.'); },
     },
     ov: {
       views: ['circ'],

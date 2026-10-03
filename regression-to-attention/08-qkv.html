@@ -23,13 +23,13 @@
     <div class="stage" aria-label="Bühne der Geschichte">
       <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
       <div class="views">
-        <div class="view" data-view="recap"><div class="vlabel">Wohin „sie“ in Kapitel 7 geschaut hat</div><div class="plot" id="v-recap" role="img" aria-label="Gewichte des Worts sie nach Ähnlichkeit."></div></div>
+        <div class="view" data-view="recap"><div class="vlabel">Wohin „sie“ in Kapitel 7 geschaut hat</div><div class="plot" id="v-recap" role="img" aria-label="Anteile des Worts sie nach Ähnlichkeit."></div></div>
         <div class="view" data-view="dreh"><div class="vlabel">Eine Matrix dreht die Ebene</div><div class="plot" id="v-dreh" role="img" aria-label="Ein Gitter und ein Pfeil, die von einer Matrix um 90 Grad gedreht werden."></div></div>
         <div class="view" data-view="qk"><div class="vlabel" id="l-qk">Ein Beispiel von Hand: Wer ist „sie“?</div><div class="plot" id="v-qk" role="img" aria-label="Wörter als Pfeile in der Ebene, Fragen und Schilder, und die Punktzahlen."></div></div>
         <div class="view" data-view="tab"><div class="vlabel" id="l-tab">Alle Wörter als Tabelle</div><div class="plot" id="v-tab" role="img" aria-label="Tabellen der Vektoren aller Wörter und ihrer Produkte."></div></div>
         <div class="view" data-view="pipe"><div class="vlabel">Die ganze Rechnung</div><div class="plot" id="v-pipe" role="img" aria-label="Rechenschritte der Attention als Kette."></div></div>
-        <div class="view" data-view="sqrtd"><div class="vlabel">Punktzahlen zufälliger Vektoren in d Dimensionen</div><div class="plot" id="v-sqrtd" role="img" aria-label="Punktzahlen und Softmax-Gewichte für wachsende Dimension, mit und ohne Teilen durch Wurzel d."></div></div>
-        <div class="view" data-view="heads"><div class="vlabel">Zwei Köpfe</div><div class="plot" id="v-heads" role="img" aria-label="Die Gewichte zweier Köpfe für dasselbe Wort und das Zusammenführen ihrer Ergebnisse."></div></div>
+        <div class="view" data-view="sqrtd"><div class="vlabel">Punktzahlen zufälliger Vektoren in d Dimensionen</div><div class="plot" id="v-sqrtd" role="img" aria-label="Punktzahlen und Softmax-Anteile für wachsende Dimension, mit und ohne Teilen durch Wurzel d."></div></div>
+        <div class="view" data-view="heads"><div class="vlabel">Zwei Köpfe</div><div class="plot" id="v-heads" role="img" aria-label="Die Anteile zweier Köpfe für dasselbe Wort und das Zusammenführen ihrer Ergebnisse."></div></div>
       </div>
       <div class="stage-bar">
         <p class="caption" aria-live="polite"></p>
@@ -55,7 +55,7 @@
         <span class="kicker">Die Idee</span>
         <h3>Suchen und gefunden werden</h3>
         <p>Ein Vergleich: In einer Kontaktbörse beschreibt jeder, wen er sucht, und hängt ein Schild auf, wie er selbst ist. Ein Treffer ist, wenn eine Suche zu einem Schild passt. Wer man ist und wen man sucht, sind zwei verschiedene Dinge.</p>
-        <p>So machen wir es mit Wörtern. Zuerst ein kleines Beispiel von Hand, mit Vektoren aus nur zwei Zahlen: Nach rechts geht es um Inhalt, nach oben um kleine Funktionswörter. Ohne Trick passt „sie“ am besten zu „die“ und zu sich selbst, wie in Kapitel 7.</p>
+        <p>So machen wir es mit Wörtern. Zuerst ein kleines Beispiel von Hand, mit dem Satz aus Kapitel 7 bis zum „sie“: <i>die Frau lacht und sie</i>. Damit man alles sehen kann, hat jedes Wort hier nur zwei Zahlen: Nach rechts geht es um Inhalt, nach oben um kleine Funktionswörter. Ohne Trick passt „sie“ am besten zu „die“ und zu sich selbst, wie in Kapitel 7.</p>
       </div></article>
 
       <article class="step" data-step="dreh"><div class="card">
@@ -76,33 +76,33 @@
         <span class="kicker">Frage trifft Wort</span>
         <h3>Neue Punktzahlen</h3>
         <p>Die Punktzahl ist jetzt das Skalarprodukt der Frage von „sie“ mit dem Vektor jedes Worts: <b>q</b> · <b>x</b>. Groß, wenn das Wort in die Richtung der Frage zeigt.</p>
-        <p>Jetzt hat „Katze“ die höchste Punktzahl. „sie“ selbst bekommt 0: Seine Frage steht senkrecht auf seinem eigenen Vektor. Die Spiegel-Falle aus Kapitel 7 ist verschwunden, ohne dass wir „sich selbst“ verbieten mussten.</p>
+        <p>Jetzt hat „Frau“ die höchste Punktzahl. „sie“ selbst bekommt 0: Seine Frage steht senkrecht auf seinem eigenen Vektor. Die Spiegel-Falle aus Kapitel 7 ist verschwunden, ohne dass wir „sich selbst“ verbieten mussten.</p>
       </div></article>
 
       <article class="step" data-step="gewichte"><div class="card">
         <span class="kicker">Wie in Kapitel 7</span>
-        <h3>Softmax macht Gewichte</h3>
-        <p>Aus den Punktzahlen werden wie gehabt per Softmax Gewichte, hier mit der Schärfe β = 3. Der größte Teil geht an „Katze“.</p>
+        <h3>Softmax macht Anteile</h3>
+        <p>Aus den Punktzahlen werden wie gehabt per Softmax Anteile, hier mit der Schärfe β = 3. Der größte Teil geht an „Frau“.</p>
       </div></article>
 
       <article class="step" data-step="schild"><div class="card">
         <span class="kicker">Das Schild</span>
         <h3>Auch das Angebot wird umgerechnet</h3>
         <p>Bisher hat die Frage direkt mit dem Wortvektor verglichen. Genauso bekommt jedes Wort eine zweite Matrix <b>W</b><sub>K</sub> (K für <i>key</i>, der Schlüssel): Sie macht aus dem Wortvektor sein <strong>Schild</strong> <b>k</b>, das, was es anderen anbietet.</p>
-        <p>Im Beispiel streckt <b>W</b><sub>K</sub> die Inhalts-Richtung und staucht die Funktionswort-Richtung (Kapitel 2, strecken). Die Schilder der Nomen ragen dadurch weiter heraus, „Katze“ wird noch klarer gefunden. Die Punktzahl ist ab jetzt <b>q</b> · <b>k</b>: Frage trifft Schild.</p>
+        <p>Im Beispiel streckt <b>W</b><sub>K</sub> die Inhalts-Richtung und staucht die Funktionswort-Richtung (Kapitel 2, strecken). Die Schilder der Nomen ragen dadurch weiter heraus, „Frau“ wird noch klarer gefunden. Die Punktzahl ist ab jetzt <b>q</b> · <b>k</b>: Frage trifft Schild.</p>
       </div></article>
 
       <article class="step" data-step="wert"><div class="card">
         <span class="kicker">Der Wert</span>
         <h3>Was weitergegeben wird</h3>
-        <p>Die dritte Matrix <b>W</b><sub>V</sub> (V für <i>value</i>) bestimmt, was beim Mischen tatsächlich weitergegeben wird: der <strong>Wert</strong> <b>v</b>. „sie“ soll von „Katze“ den Inhalt übernehmen, nicht die Wortart.</p>
+        <p>Die dritte Matrix <b>W</b><sub>V</sub> (V für <i>value</i>) bestimmt, was beim Mischen tatsächlich weitergegeben wird: der <strong>Wert</strong> <b>v</b>. „sie“ soll von „Frau“ den Inhalt übernehmen, nicht die Wortart.</p>
         <p>Im Beispiel drückt <b>W</b><sub>V</sub> alle Pfeile auf die waagrechte Achse (Kapitel 2, plattdrücken): Weitergegeben wird nur der Inhalt.</p>
       </div></article>
 
       <article class="step" data-step="ergebnis"><div class="card">
         <span class="kicker">Zusammengesetzt</span>
         <h3>„sie“ weiß jetzt, wer gemeint ist</h3>
-        <p>Wie in Kapitel 7 wird die Mischung dazuaddiert: <b>sie</b><sub>neu</sub> = <b>sie</b> + Σ Gewicht · Wert. Weil fast alles Gewicht bei „Katze“ liegt, nimmt „sie“ den Inhalt von „Katze“ auf.</p>
+        <p>Wie in Kapitel 7 wird die Mischung dazuaddiert: <b>sie</b><sub>neu</sub> = <b>sie</b> + Σ Anteil · Wert. Weil fast der ganze Anteil bei „Frau“ liegt, nimmt „sie“ den Inhalt von „Frau“ auf.</p>
         <p>Drei Matrizen, drei Rollen: <b>W</b><sub>Q</sub> fragt, <b>W</b><sub>K</sub> bietet an, <b>W</b><sub>V</sub> gibt weiter. Hier von Hand gesetzt, in echten Netzen gelernt.</p>
       </div></article>
 
@@ -111,6 +111,7 @@
         <h3>Vektoren untereinander schreiben</h3>
         <p>Bisher haben wir nur für „sie“ gerechnet. Jedes Wort macht dasselbe. Dafür schreiben wir die Vektoren aller Wörter als Zeilen untereinander: eine Tabelle <b>X</b> mit 5 Zeilen und 2 Spalten.</p>
         <p>Wenden wir <b>W</b><sub>Q</sub> auf jede Zeile an, entsteht die Tabelle aller Fragen <b>Q</b>. Genauso entstehen alle Schilder <b>K</b> und alle Werte <b>V</b>. Das ist nichts Neues, nur dieselbe Rechnung fünfmal.</p>
+        <div class="ex"><b>Schreibweise</b>In Büchern steht dafür <b>Q</b> = <b>X</b> <b>W</b><sub>Q</sub>. Weil die Wörter hier Zeilen sind, steht die Matrix rechts. Gemeint ist dieselbe Rechnung wie <b>M</b> · <b>x</b> in Kapitel 2, nur andersherum aufgeschrieben.</div>
       </div></article>
 
       <article class="step" data-step="kreuz"><div class="card">
@@ -123,13 +124,13 @@
       <article class="step" data-step="zeilen"><div class="card">
         <span class="kicker">Alle Wörter auf einmal, Teil 3</span>
         <h3>Softmax in jeder Zeile</h3>
-        <p>Jede Zeile der Punktzahl-Tabelle gehört zu einem Wort, das fragt. Die Softmax wird Zeile für Zeile angewendet: Jede Zeile wird zu Gewichten, die zusammen 1 ergeben. Das ist die Attention-Matrix aus Kapitel 7, nur jetzt mit Fragen und Schildern.</p>
+        <p>Jede Zeile der Punktzahl-Tabelle gehört zu einem Wort, das fragt. Die Softmax wird Zeile für Zeile angewendet: Jede Zeile wird zu Anteilen, die zusammen 1 ergeben. Das ist die Attention-Matrix aus Kapitel 7, nur jetzt mit Fragen und Schildern.</p>
       </div></article>
 
       <article class="step" data-step="malv"><div class="card">
         <span class="kicker">Alle Wörter auf einmal, Teil 4</span>
         <h3>Mal V: alle Mischungen</h3>
-        <p>Zuletzt mischt jede Zeile die Werte: Ergebnis für Wort <i>i</i> = Gewicht für Wort 1 mal Wert von Wort 1 plus Gewicht für Wort 2 mal Wert von Wort 2 und so weiter. Für alle Zeilen auf einmal heißt das: Attention-Matrix mal <b>V</b>.</p>
+        <p>Zuletzt mischt jede Zeile die Werte: Ergebnis für Wort <i>i</i> = Anteil von Wort 1 mal Wert von Wort 1 plus Anteil von Wort 2 mal Wert von Wort 2 und so weiter. Für alle Zeilen auf einmal heißt das: Attention-Matrix mal <b>V</b>.</p>
       </div></article>
 
       <article class="step" data-step="formel"><div class="card">
@@ -194,7 +195,7 @@
   const BETA = 3;
 
   // the hand-built example: five words with two numbers each (right = content, up = small function word)
-  const QW = ['die', 'Katze', 'schläft', 'weil', 'sie'], QX = [[0.35, 0.9], [1.0, 0.2], [0.3, -0.8], [-0.25, 0.75], [0.15, 1.0]], SI = 4;
+  const QW = ['die', 'Frau', 'lacht', 'und', 'sie'], QX = [[0.35, 0.9], [1.0, 0.2], [0.3, -0.8], [-0.25, 0.75], [0.15, 1.0]], SI = 4;
   const st = { rcA: 0, drT: 0, rot: 0, qA: 0, scA: 0, wA: 0, kS: 0, vS: 0, mv: 0, tabK: 0, tabMode: 'x', hiI: -1, hiJ: -1, pipeK: -1, pipeHi: [], sdI: 0, sdDiv: 0, hdA: 0, hdC: 0 };
   let story = null;
   // matrices, blended in by the story
@@ -242,7 +243,7 @@
     S.label(ctx, 'Inhalt →', cx + 1.55 * k, cy + 14, S.c.muted, S.font(11.5, 'body'), 'right'); S.label(ctx, W < 560 ? '↑ Funktionswort' : '↑ kleines Funktionswort', cx - 6, cy - 1.25 * k, S.c.muted, S.font(11.5, 'body'), 'right');
     const { Q, K, Vv, A } = rowsAll(), q = Q[SI], usesK = st.kS > 0.01, sc = QX.map((x, j) => dotN(st.qA > 0.5 ? q : QX[SI], usesK ? K[j] : x)), wts = (() => { const z = sc.map((s) => BETA * s), m = Math.max(...z), e = z.map((x) => Math.exp(x - m)), s = e.reduce((a, b) => a + b); return e.map((x) => x / s); })();
     QX.forEach((p, i) => {
-      const isS = i === SI, col = isS ? S.c.accent : QW[i] === 'Katze' ? S.c.grad : S.c['fg-2'], tip = isS ? p : st.vS > 0 ? Vv[i] : usesK ? K[i] : p;
+      const isS = i === SI, col = isS ? S.c.accent : QW[i] === 'Frau' ? S.c.grad : S.c['fg-2'], tip = isS ? p : st.vS > 0 ? Vv[i] : usesK ? K[i] : p;
       ctx.strokeStyle = col; ctx.fillStyle = col; S.arrow(ctx, cx, cy, ...P(tip), 10, isS ? 3 : 2); const l = P(tip.map((x) => x * 1.12)); S.label(ctx, QW[i], l[0], l[1] - 6, col, S.font(13.5, 'body', '600'), 'center');
     });
     if (st.qA > 0) { ctx.globalAlpha = st.qA; ctx.strokeStyle = S.c.accent; ctx.fillStyle = S.c.accent; ctx.setLineDash([6, 4]); S.arrow(ctx, cx, cy, ...P(q), 11, 2.5); ctx.setLineDash([]); const l = P(q.map((x) => x * 1.15)); S.label(ctx, 'Frage q', l[0], l[1] + 16, S.c.accent, S.font(12.5, 'body', '600'), 'center'); ctx.globalAlpha = 1; }
@@ -250,7 +251,7 @@
     if (st.scA > 0) {
       ctx.globalAlpha = st.scA;
       const bx = wide ? pw + 70 : 80, by = wide ? H * 0.2 : ph + 20, bw = wide ? W - pw - 100 : W - 120, rh = Math.min(30, (wide ? H * 0.6 : H - ph - 30) / QW.length), showW = st.wA > 0.5;
-      S.label(ctx, showW ? 'Gewicht (Softmax)' : st.qA > 0.5 ? (usesK ? 'Punktzahl q · k' : 'Punktzahl q · x') : (W < 560 ? 'Punktzahl x · x' : 'Punktzahl x · x (Ähnlichkeit)'), bx + bw / 2, by - 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
+      S.label(ctx, showW ? 'Anteil (Softmax)' : st.qA > 0.5 ? (usesK ? 'Punktzahl q · k' : 'Punktzahl q · x') : (W < 560 ? 'Punktzahl x · x' : 'Punktzahl x · x (Ähnlichkeit)'), bx + bw / 2, by - 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
       QW.forEach((w, i) => { const y = by + i * rh, val = showW ? wts[i] : sc[i], mid = showW ? bx : bx + bw / 2, wd = (showW ? val : val / 1.8 / 2) * bw; S.label(ctx, w, bx - 8, y + rh / 2, i === SI ? S.c.accent : S.c.fg, S.font(12.5, 'body', '600'), 'right'); ctx.fillStyle = showW ? S.c.accent : val >= 0 ? S.c.model : S.c.error; ctx.fillRect(wd >= 0 ? mid : mid + wd, y + 5, Math.abs(wd), rh - 10); S.label(ctx, showW ? `${fmt(val * 100, 0)} %` : fmt(val, 2), Math.max(mid, mid + wd) + 6, y + rh / 2, S.c['fg-2'], S.font(11.5, 'mono'), 'left'); });
       ctx.globalAlpha = 1;
     }
@@ -294,14 +295,14 @@
     }
     if (mode === 'av') {
       const a = R.A[SI], cw = narrow ? 44 : 58, x0 = narrow ? 70 : W / 2 - 160;
-      S.label(ctx, 'Zeile von „sie“: Gewicht × Wert, aufaddiert', W / 2, 36, S.c['fg-2'], S.font(fs, 'body', '600'), 'center');
+      S.label(ctx, 'Zeile von „sie“: Anteil × Wert, aufaddiert', W / 2, 36, S.c['fg-2'], S.font(fs, 'body', '600'), 'center');
       QW.forEach((w, j) => { const y = y0 + j * rh; S.label(ctx, w, x0 - 8, y + rh / 2, j === 1 ? S.c.grad : S.c.fg, S.font(fs, 'body', '600'), 'right'); S.label(ctx, `${fmt(a[j] * 100, 0)} % × (${fmt(R.Vv[j][0], 2)}; ${fmt(R.Vv[j][1], 2)})`, x0 + 4, y + rh / 2, S.c.fg, S.font(fs, 'mono'), 'left'); });
       S.label(ctx, `= (${fmt(R.O[SI][0], 2)}; ${fmt(R.O[SI][1], 2)})  das Ergebnis für „sie“`, x0 + 4, y0 + 5 * rh + 24, S.c.accent, S.font(fs + 1, 'mono', '600'), 'left');
     }
   });
 
   // ── 14. the formula as a chain ──────────────────────────────────
-  const PIPE = [['X', 'alle Wörter als Zeilen'], ['Q, K, V', 'je mit W_Q, W_K, W_V'], ['Q·Kᵀ', 'alle Punktzahlen'], ['÷ √d', 'fester Bereich'], ['softmax', 'je Zeile: Gewichte'], ['· V', 'Werte mischen'], ['Ausgabe', 'eine Mischung pro Wort']];
+  const PIPE = [['X', 'alle Wörter als Zeilen'], ['Q, K, V', 'je mit W_Q, W_K, W_V'], ['Q·Kᵀ', 'alle Punktzahlen'], ['÷ √d', 'fester Bereich'], ['softmax', 'je Zeile: Anteile'], ['· V', 'Werte mischen'], ['Ausgabe', 'eine Mischung pro Wort']];
   const pipeV = S.canvas($('#v-pipe'), (ctx, W, H) => {
     const n = PIPE.length, vert = W < 640, bw = vert ? Math.min(260, W - 40) : (W - 40) / n - 14, bh = vert ? Math.min(46, (H - 20) / n - 12) : 64;
     PIPE.forEach(([a, b], i) => {
@@ -325,7 +326,7 @@
     sc.forEach((s) => S.dot(ctx, X(clamp(s, -80, 80)), yL, 5, S.c.model, S.c.surface, 1.5));
     S.label(ctx, st.sdDiv > 0.5 ? `8 Punktzahlen, geteilt durch √${d} = ${fmt(Math.sqrt(d), 0)}` : `8 Punktzahlen q · k mit d = ${d} Zahlen`, 30, yL - 24, S.c.fg, S.font(14, 'body', '600'), 'left');
     const m = Math.max(...sc), e = sc.map((s) => Math.exp(s - m)), Sm = e.reduce((a, b) => a + b), p = e.map((x) => x / Sm), by = H * 0.42, bh = H * 0.42, bw = (W - 80) / 8;
-    S.label(ctx, 'Softmax-Gewichte', 30, by - 10, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+    S.label(ctx, 'Softmax-Anteile', 30, by - 10, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
     p.forEach((v, j) => { ctx.fillStyle = S.c.accent; ctx.fillRect(40 + j * bw + bw * 0.2, by + bh - v * bh, bw * 0.6, v * bh); S.label(ctx, `${fmt(v * 100, 0)} %`, 40 + j * bw + bw / 2, by + bh - v * bh - 10, S.c['fg-2'], S.font(11, 'mono'), 'center'); });
     ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(40, by + bh); ctx.lineTo(W - 40, by + bh); ctx.stroke();
   });
@@ -404,15 +405,15 @@
       setup() { ex({ rot: 1, qA: 1 }); },
       async play(a) {
         a.hl('q', 'x'); await a.to(st, { scA: 1 }, 900);
-        a.say('Frage mal Wort: „Katze“ hat jetzt die höchste Punktzahl.'); await a.wait(2600);
+        a.say('Frage mal Wort: „Frau“ hat jetzt die höchste Punktzahl.'); await a.wait(2600);
         a.say('„sie“ selbst bekommt 0: Seine Frage steht senkrecht auf seinem eigenen Pfeil. Kein Spiegel mehr.');
       },
     },
     gewichte: {
       views: ['qk'],
-      formula: `Gewicht = softmax(${T('b', 'β', '', 'Schärfe, hier 3')} · <b>q</b> · <b>x</b>)`,
+      formula: `Anteil = softmax(${T('b', 'β', '', 'Schärfe, hier 3')} · <b>q</b> · <b>x</b>)`,
       setup() { ex({ rot: 1, qA: 1, scA: 1 }); },
-      async play(a) { await a.wait(800); await a.to(st, { wA: 1 }, 800); a.say('Softmax: Das meiste Gewicht geht an „Katze“.'); },
+      async play(a) { await a.wait(800); await a.to(st, { wA: 1 }, 800); a.say('Softmax: Der größte Anteil geht an „Frau“.'); },
     },
     schild: {
       views: ['qk'],
@@ -422,7 +423,7 @@
         a.say('Bisher hat die Frage direkt mit den Wortvektoren verglichen.'); await a.wait(1800);
         a.hl('k'); await a.to(st, { kS: 1 }, 1800);
         a.say('W_K streckt die Inhalts-Richtung und staucht die andere: die Schilder. Die Nomen ragen weiter heraus.'); await a.wait(3000);
-        await a.to(st, { wA: 1 }, 800); a.say('Mit Schildern wird „Katze“ noch klarer gefunden.');
+        await a.to(st, { wA: 1 }, 800); a.say('Mit Schildern wird „Frau“ noch klarer gefunden.');
       },
     },
     wert: {
@@ -433,9 +434,9 @@
     },
     ergebnis: {
       views: ['qk'],
-      formula: `<b>sie</b><sub>neu</sub> = <b>sie</b> + ${T('m', 'Σ<sub><i>j</i></sub> Gewicht<sub><i>j</i></sub> · <b>v</b><sub><i>j</i></sub>', 'c-new', 'die Mischung der Werte, wie in Kapitel 7')}`,
+      formula: `<b>sie</b><sub>neu</sub> = <b>sie</b> + ${T('m', 'Σ<sub><i>j</i></sub> Anteil<sub><i>j</i></sub> · <b>v</b><sub><i>j</i></sub>', 'c-new', 'die Mischung der Werte, wie in Kapitel 7')}`,
       setup() { ex({ rot: 1, qA: 1, scA: 1, wA: 1, kS: 1, vS: 1 }); },
-      async play(a) { a.hl('m'); a.say('Mischen und dazuaddieren …'); await a.to(st, { mv: 1 }, 1800); a.say('„sie“ rückt nach rechts: Es trägt jetzt den Inhalt von „Katze“ in sich.'); },
+      async play(a) { a.hl('m'); a.say('Mischen und dazuaddieren …'); await a.to(st, { mv: 1 }, 1800); a.say('„sie“ rückt nach rechts: Es trägt jetzt den Inhalt von „Frau“ in sich.'); },
     },
     tabelle: {
       views: ['tab'],
@@ -461,19 +462,19 @@
     },
     zeilen: {
       views: ['tab'],
-      formula: `${T('A', '<b>A</b> = softmax je Zeile', 'c-new', 'jede Zeile wird zu Gewichten')}(β · <b>Q</b><b>K</b><sup>⊤</sup>)`,
+      formula: `${T('A', '<b>A</b> = softmax je Zeile', 'c-new', 'jede Zeile wird zu Anteilen')}(β · <b>Q</b><b>K</b><sup>⊤</sup>)`,
       setup() { tab({ tabMode: 'a', hiI: -1 }); },
-      async play(a) { a.hl('A'); a.say('Softmax in jeder Zeile: die Attention-Matrix.'); await a.wait(2400); a.set(st, { hiI: SI, hiJ: -1 }); a.say('Die Zeile von „sie“: Das meiste Gewicht liegt bei „Katze“.'); },
+      async play(a) { a.hl('A'); a.say('Softmax in jeder Zeile: die Attention-Matrix.'); await a.wait(2400); a.set(st, { hiI: SI, hiJ: -1 }); a.say('Die Zeile von „sie“: Der größte Anteil liegt bei „Frau“.'); },
     },
     malv: {
       views: ['tab'],
       formula: `${T('O', 'Ergebnis', 'c-new', 'Zeile i = Σ_j A_ij · Wert von Wort j')} = <b>A</b> <b>V</b>`,
       setup() { tab({ tabMode: 'av' }); },
-      async play(a) { a.hl('O'); a.say('Für die Zeile von „sie“: jedes Gewicht mal den Wert des Worts, alles addiert. A mal V macht das für alle Zeilen auf einmal.'); },
+      async play(a) { a.hl('O'); a.say('Für die Zeile von „sie“: jeder Anteil mal den Wert des Worts, alles addiert. A mal V macht das für alle Zeilen auf einmal.'); },
     },
     formel: {
       views: ['pipe'],
-      formula: () => `Attention(<b>Q</b>, <b>K</b>, <b>V</b>) = ${T('sm', 'softmax', '', 'je Zeile: Gewichte')}(${FRAC(T('qk', '<b>Q</b><b>K</b><sup>⊤</sup>', '', 'alle Punktzahlen'), T('d', '√<i>d</i>', 'c-new', 'ersetzt unseren Regler β, nächster Schritt'))}) ${T('v', '<b>V</b>', '', 'die Werte')}`,
+      formula: () => `Attention(<b>Q</b>, <b>K</b>, <b>V</b>) = ${T('sm', 'softmax', '', 'je Zeile: Anteile')}(${FRAC(T('qk', '<b>Q</b><b>K</b><sup>⊤</sup>', '', 'alle Punktzahlen'), T('d', '√<i>d</i>', 'c-new', 'ersetzt unseren Regler β, nächster Schritt'))}) ${T('v', '<b>V</b>', '', 'die Werte')}`,
       setup() { st.pipeK = 0; st.pipeHi = []; },
       async play(a) {
         const txt = ['Alle Wörter als Zeilen von X.', 'Drei Umrechnungen: alle Fragen, Schilder, Werte.', 'Q mal K transponiert: alle Punktzahlen.', 'Durch √d teilen, statt mit β malzunehmen.', 'Softmax je Zeile.', 'Mal V: die Mischungen.', 'Pro Wort ein neuer Vektor, der den Satz kennt.'], hl = [[], [], ['qk'], ['d'], ['sm'], ['v'], []];
@@ -485,7 +486,7 @@
       formula: () => `Punktzahl = ${FRAC('<b>q</b> · <b>k</b>', T('d', '√<i>d</i>', 'c-new', 'gleicht das Wachsen der Summe aus'))}<span class="sep">d =</span>${V('d')}`,
       setup() { st.sdI = 0; st.sdDiv = 0; },
       async play(a) {
-        a.say('Zufällige Frage, 8 zufällige Schilder mit je 4 Zahlen: Punktzahlen nah beieinander, Gewichte verteilt.'); await a.wait(3200);
+        a.say('Zufällige Frage, 8 zufällige Schilder mit je 4 Zahlen: Punktzahlen nah beieinander, Anteile verteilt.'); await a.wait(3200);
         a.set(st, { sdI: 1 }); a.say('Mit 64 Zahlen streuen die Punktzahlen viel weiter …'); await a.wait(2600);
         a.set(st, { sdI: 2 }); a.say('… mit 1024 noch weiter, und die Softmax gibt einem einzigen Schild fast alles.'); await a.wait(3200);
         a.hl('d'); await a.to(st, { sdDiv: 1 }, 1600); a.say('Geteilt durch √1024 = 32: wieder ein vernünftiger Bereich.'); await a.wait(2600);
@@ -497,7 +498,7 @@
       formula: `${T('h', 'Kopf<sub><i>h</i></sub>', 'c-new', 'eigene W_Q, W_K, W_V pro Kopf')}: eigene Frage<span class="sep">→</span>${T('c', '[Kopf<sub>1</sub>, Kopf<sub>2</sub>] <b>W</b><sub>O</sub>', '', 'aneinanderhängen, dann zurückrechnen')}`,
       setup() { st.hdA = 0; st.hdC = 0; },
       async play(a) {
-        a.hl('h'); a.say('Kopf 1 fragt: Wer ist gemeint? Er findet „Katze“.'); await a.wait(2600);
+        a.hl('h'); a.say('Kopf 1 fragt: Wer ist gemeint? Er findet „Frau“.'); await a.wait(2600);
         await a.to(st, { hdA: 1 }, 900); a.say('Kopf 2 fragt mit einer anderen Matrix etwas anderes: Was ist mir ähnlich?'); await a.wait(2800);
         a.hl('c'); await a.to(st, { hdC: 1 }, 900); a.say('Beide Ergebnisse nebeneinander, dann bringt W_O sie zurück auf die Größe eines Wortvektors.');
       },

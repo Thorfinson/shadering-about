@@ -75,6 +75,7 @@
         <h3>Den Filter über das Bild schieben</h3>
         <p>Jetzt schieben wir den Filter über das ganze Bild, Platz für Platz, und schreiben jede Zahl an ihre Stelle. Es entsteht ein neues Bild, eine <strong>Merkmalskarte</strong>: hell, wo das Muster vorkommt.</p>
         <p>Das Verschieben heißt <strong>Faltung</strong> (englisch <i>convolution</i>). Ein Netz aus solchen Schichten heißt Faltungsnetz.</p>
+        <div class="ex"><b>Nicht verwechseln</b>Mit dem Falten des Raums aus Kapitel 4 hat die Faltung nichts zu tun. Dort knickt der ReLU den Raum, hier wird ein Filter über das Bild geschoben. Der Name kommt aus der Mathematik und ist zufällig ähnlich.</div>
       </div></article>
 
       <article class="step" data-step="mehrere"><div class="card">
@@ -121,7 +122,8 @@
       <article class="step" data-step="beispiele"><div class="card">
         <span class="kicker">Werkzeug 1</span>
         <h3>Wobei feuert eine Einheit?</h3>
-        <p>Was erkennt eine Einheit der zweiten Schicht? Erstes Werkzeug: Wir zeigen dem Netz viele Bilder und sammeln die Ausschnitte, bei denen die Einheit am stärksten anspringt. Olah nennt das <strong>Datensatz-Beispiele</strong>.</p>
+        <p>Jeder der 12 Filter der zweiten Schicht liefert eine Karte; ihren stärksten Wert nennen wir eine <strong>Einheit</strong>. Eine Einheit ist ein Neuron wie in Kapitel 1 bis 4: Eingaben mal Gewichte, aufsummiert, nur dass es diese Rechnung an jeder Stelle des Bilds macht.</p>
+        <p>Was erkennt so eine Einheit? Erstes Werkzeug: Wir zeigen dem Netz viele Bilder und sammeln die Ausschnitte, bei denen die Einheit am stärksten anspringt. Olah nennt das <strong>Datensatz-Beispiele</strong>.</p>
         <p>Jede Einheit hat ihre Spezialität: Manche springen nur bei Kreisen an, andere nur bei Dreiecksecken oder bei Kreuzen.</p>
       </div></article>
 
@@ -164,7 +166,7 @@
       <article class="step" data-step="poly"><div class="card">
         <span class="kicker">Eine Komplikation</span>
         <h3>Einheiten mit zwei Bedeutungen</h3>
-        <p>Nicht jede Einheit ist so sauber. Im zweiten Netz gibt es Einheiten, die auf zwei verschiedene Dinge anspringen, etwa auf Kreise <em>und</em> Kreuze. Olah nennt solche Einheiten <strong>polysemantisch</strong>. In InceptionV1 fanden sie eine, die auf Katzengesichter, Autofronten und Katzenbeine reagiert.</p>
+        <p>Nicht jede Einheit ist so sauber. Im zweiten Netz gibt es Einheiten, die auf zwei ganz verschiedene Formen anspringen, zum Beispiel auf Dreiecke <em>und</em> auf Kreuze. Olah nennt solche Einheiten <strong>polysemantisch</strong>. In InceptionV1 fanden sie eine, die auf Katzengesichter, Autofronten und Katzenbeine reagiert.</p>
         <p>Eine Erklärung kennen wir aus Kapitel 5: <strong>Superposition</strong>. Gibt es mehr Merkmale als Einheiten, teilen sich Merkmale die Einheiten. Das macht große Netze schwer zu lesen. Für Transformer kommen wir in Kapitel 12 darauf zurück.</p>
       </div></article>
 
@@ -583,7 +585,7 @@
       views: ['uni'],
       formula: `${T('p', 'polysemantisch', 'c-new', 'eine Einheit, mehrere unabhängige Bedeutungen')}: eine Einheit, zwei Formen`,
       setup() { st.polyA = 1; },
-      async play(a) { await waitRef(a, 1); a.set(st, {}); a.hl('p'); a.say('Die Einheit im zweiten Netz mit der gemischtesten Kundschaft: Sie springt auf zwei verschiedene Formen an.'); },
+      async play(a) { await waitRef(a, 1); a.set(st, {}); a.hl('p'); const two = (f) => { const v = [...f.cls].sort((x, y) => y - x); return (v[0] + v[1] >= 7 ? 100 : 0) + v[1]; }, c = alive(1).sort((p, q) => two(famOf(1, q)) - two(famOf(1, p)))[0], cls = famOf(1, c).cls, top = [0, 1, 2, 3].sort((p, q) => cls[q] - cls[p]).slice(0, 2).map((i) => ['Kreise', 'Quadrate', 'Dreiecke', 'Kreuze'][i]); a.say(`Einheit ${c} im zweiten Netz springt auf zwei ganz verschiedene Formen an: ${top[0]} und ${top[1]}.`); },
     },
     ausblick: {
       views: ['claims'],
