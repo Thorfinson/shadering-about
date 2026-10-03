@@ -21,6 +21,7 @@
     <h1>Die Gerade</h1>
     <p class="lead">Wie eine Maschine aus Beispielen eine Regel lernt, am einfachsten Fall: zwei Zahlen, eine Gerade. Scrolle einfach weiter; jeder Schritt spielt seine Animation selbst ab.</p>
     <ol class="roadmap"><li>Eine Regel aus Daten</li><li>Fehler messen</li><li>Bergab zur besten Geraden</li><li>Vom Modell zum Neuron</li></ol>
+    <ul class="goals"><li>eine Gerade an Daten anpassen und erklären, was w und b dabei tun</li><li>sagen, was ein Verlust misst und warum man Fehler quadriert</li><li>Gradientenabstieg als „bergab rollen“ beschreiben und die Schrittweite einschätzen</li></ul>
     <div class="dates">Methode der kleinsten Quadrate: Legendre 1805, Gauß 1809 · Gradientenabstieg: Cauchy 1847</div>
   </header>
 
@@ -153,12 +154,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Ein Modell ist eine Rechenregel mit Knöpfen (Parametern); Lernen heißt, die Knöpfe gut einzustellen.</li><li>Der Verlust fasst alle Fehler in einer Zahl zusammen. Jede Einstellung der Knöpfe ist ein Punkt in einer Landschaft.</li><li>Gradientenabstieg: an der eigenen Stelle fühlen, wo es bergab geht, und einen kleinen Schritt machen.</li></ul>
     <div class="take-f"><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i> &nbsp;&nbsp; <i>L</i> = mittel(<i>e</i>²) &nbsp;&nbsp; <i>w</i> ← <i>w</i> − η · ∂<i>L</i>/∂<i>w</i></div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum quadriert man die Fehler, statt sie einfach zu addieren?</summary><p>Plus und Minus würden sich sonst gegenseitig aufheben. Außerdem zählen große Fehler stärker, und der Verlust wird eine glatte Schüssel, auf der man bergab rollen kann.</p></details>
-      <details><summary>Was passiert, wenn die Schrittweite η zu groß ist?</summary><p>Jeder Schritt springt über das Tal hinaus und landet höher als vorher. Der Verlust wird größer statt kleiner.</p></details>
-      <details><summary>Bei 0 °C sagt die Eisdielen-Gerade negative Kugeln voraus. Was lernt man daraus?</summary><p>Eine gelernte Regel gilt nur dort, wo es Beispiele gab. Außerhalb der Daten kann sie Unsinn liefern.</p></details>
+      <details data-href="#quadrate" data-label="„Fehler werden Flächen“"><summary>Warum quadriert man die Fehler, statt sie einfach zu addieren?</summary><p>Plus und Minus würden sich sonst gegenseitig aufheben. Außerdem zählen große Fehler stärker, und der Verlust wird eine glatte Schüssel, auf der man bergab rollen kann.</p></details>
+      <details data-href="#zugross" data-label="„Zu große Schritte“"><summary>Was passiert, wenn die Schrittweite η zu groß ist?</summary><p>Jeder Schritt springt über das Tal hinaus und landet höher als vorher. Der Verlust wird größer statt kleiner.</p></details>
+      <details data-href="#eis" data-label="„Die Eisdiele“"><summary>Bei 0 °C sagt die Eisdielen-Gerade negative Kugeln voraus. Was lernt man daraus?</summary><p>Eine gelernte Regel gilt nur dort, wo es Beispiele gab. Außerhalb der Daten kann sie Unsinn liefern.</p></details>
     </div>
   </section>
 
@@ -747,7 +748,7 @@
       async play(a) {
         a.say('Zwei beste Geraden: eine für Quadrate, eine für Beträge. Fast gleich.');
         await a.to(st, { l1A: 1 }, 700); await a.wait(1200);
-        await a.ask('Wohnung 1 wird plötzlich sehr teuer. Welche der beiden Geraden bewegt sich stärker?', ['die Quadrat-Gerade', 'die Betrags-Gerade', 'beide gleich'], 0);
+        await a.ask('Wohnung 1 wird plötzlich sehr teuer. Welche der beiden Geraden bewegt sich stärker?', ['die Quadrat-Gerade', 'die Betrags-Gerade', 'beide gleich'], 0, 'Quadrate lassen große Fehler überproportional zählen: Ein zehnmal so großer Fehler zählt hundertmal so viel. Darum zieht eine einzige teure Wohnung die Quadrat-Gerade weg.');
         a.set(st, { hlPt: 0 }); a.say('Jetzt wird Wohnung 1 sehr teuer …');
         await a.to(st, { pts: FLATS.map((p, i) => (i === 0 ? [30, 1460] : p.slice())) }, 2000);
         a.hl('sq'); a.say('Die Quadrat-Gerade wird kräftig mitgezogen …'); await a.wait(1800);

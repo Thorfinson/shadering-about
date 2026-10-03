@@ -18,6 +18,8 @@
     <h1>Schaltkreise im Transformer</h1>
     <p class="lead">Unser Transformer aus Kapitel 10 setzt Muster fort, ohne dass ihm jemand gesagt hat, wie. Mit den Werkzeugen aus Kapitel 11 öffnen wir ihn: Was sieht jeder Kopf an, was schreibt er auf das Notizblatt, wie arbeiten die beiden zusammen, und was passiert, wenn man einen abschaltet?</p>
     <ol class="roadmap"><li>Hinschauen: zwei Köpfe</li><li>Die Vermutung: zwei Schritte</li><li>Gewichte lesen: OV und QK</li><li>Prüfen: abschalten, Training</li></ol>
+    <ul class="goals"><li>den Induction Head in zwei Schritten erklären</li><li>OV- und QK-Schaltkreis aus einer Tabelle lesen</li><li>begründen, warum Abschalten eine Vermutung prüft</li></ul>
+    <p class="calm">Das dichteste Kapitel. Jeder Schritt baut auf Kapitel 9 und 10 auf; wenn ein Begriff fehlt, hilft der Link zurück in den Fragen am Ende.</p>
   </header>
 
   <section class="story" id="story">
@@ -152,12 +154,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Kopf 0 schreibt „vor mir stand X“ auf das Notizblatt, Kopf 1 sucht diese Notiz mit dem aktuellen Buchstaben und kopiert, was dort steht: ein Induction Head.</li><li>Der OV-Schaltkreis sagt, was ein Kopf weitergibt, der QK-Schaltkreis, wonach er sucht. Beide lassen sich direkt aus den Gewichten lesen.</li><li>Abschalten und der gemeinsame Sprung im Training bestätigen: Die beiden Köpfe arbeiten nur zusammen.</li></ul>
     <div class="take-f">OV: <b>W</b><sub>V</sub> → <b>W</b><sub>O</sub> &nbsp;&nbsp; QK: Frage · Schild &nbsp;&nbsp; Kopf 0 → Kopf 1 (K-Komposition)</div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum trägt Kopf 0 direkt fast nichts zur Vorhersage bei und ist trotzdem unverzichtbar?</summary><p>Seine Notiz „vor mir stand X“ ist das, wonach Kopf 1 sucht. Ohne sie findet Kopf 1 die richtige Stelle nicht.</p></details>
-      <details><summary>Was zeigt eine helle Diagonale in der OV-Tabelle?</summary><p>Schaut der Kopf auf einen Buchstaben, steigt genau die Punktzahl dieses Buchstabens: Er kopiert.</p></details>
-      <details><summary>Welche Eigenschaft aus Kapitel 9 macht es möglich, die Vorhersage in Beiträge zu zerlegen?<span class="from">Kapitel 9</span></summary><p>Alles wird auf das Notizblatt addiert. Darum ist die Punktzahl eine Summe aus den Beiträgen von Embedding, Kopf 0 und Kopf 1.</p></details>
+      <details data-href="#pfade" data-label="„Wer trägt zur Vorhersage bei?“"><summary>Warum trägt Kopf 0 direkt fast nichts zur Vorhersage bei und ist trotzdem unverzichtbar?</summary><p>Seine Notiz „vor mir stand X“ ist das, wonach Kopf 1 sucht. Ohne sie findet Kopf 1 die richtige Stelle nicht.</p></details>
+      <details data-href="#ov" data-label="„Der OV-Schaltkreis“"><summary>Was zeigt eine helle Diagonale in der OV-Tabelle?</summary><p>Schaut der Kopf auf einen Buchstaben, steigt genau die Punktzahl dieses Buchstabens: Er kopiert.</p></details>
+      <details data-href="09-transformer.html#notizblatt" data-label="Kapitel 9, „Ein Notizblatt pro Wort“"><summary>Welche Eigenschaft aus Kapitel 9 macht es möglich, die Vorhersage in Beiträge zu zerlegen?<span class="from">Kapitel 9</span></summary><p>Alles wird auf das Notizblatt addiert. Darum ist die Punktzahl eine Summe aus den Beiträgen von Embedding, Kopf 0 und Kopf 1.</p></details>
     </div>
   </section>
 
@@ -383,7 +385,7 @@
       views: ['circ'],
       formula: `${T('k', 'K-Komposition', 'c-new', 'die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat')}: Kopie meiden, Notiz finden`,
       setup() { st.circMode = 'qkd'; st.circA = 0; },
-      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.ask('Was zeigt die Tabelle, wenn Kopf 1 die Buchstaben direkt vergleicht?', ['wieder eine helle Diagonale', 'gar kein Muster', 'eine orange Diagonale: er meidet den eigenen Buchstaben'], 2); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, sondern eine orange: Kopf 1 meidet die Kopie selbst, denn dort steht nur derselbe Buchstabe. Gesucht ist die Stelle dahinter, und die findet er nur über die Notiz von Kopf 0.'); },
+      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.ask('Was zeigt die Tabelle, wenn Kopf 1 die Buchstaben direkt vergleicht?', ['wieder eine helle Diagonale', 'gar kein Muster', 'eine orange Diagonale: er meidet den eigenen Buchstaben'], 2, 'An der früheren Stelle mit demselben Buchstaben steht genau die falsche Antwort. Gesucht ist die Stelle dahinter, also lernt Kopf 1, die Kopie selbst zu meiden.'); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, sondern eine orange: Kopf 1 meidet die Kopie selbst, denn dort steht nur derselbe Buchstabe. Gesucht ist die Stelle dahinter, und die findet er nur über die Notiz von Kopf 0.'); },
     },
     abschalten: {
       views: ['abl'],
@@ -392,7 +394,7 @@
       async play(a) {
         await waitRef(a); a.set(st, { ablShown: 1 }); a.say('Mit beiden Köpfen: fast alle Wiederholungen richtig.'); await a.wait(2600);
         a.hl('x'); a.set(st, { abl: [1], ablShown: 2 }); a.say('Kopf 1 abgeschaltet: Der Kopierer fehlt. Das Modell rät nur noch.'); await a.wait(3200);
-        await a.ask('Kopf 0 trägt direkt fast nichts zur Vorhersage bei. Was passiert, wenn wir ihn abschalten?', ['fast nichts', 'die Trefferquote bricht ein'], 1);
+        await a.ask('Kopf 0 trägt direkt fast nichts zur Vorhersage bei. Was passiert, wenn wir ihn abschalten?', ['fast nichts', 'die Trefferquote bricht ein'], 1, 'Kopf 0 schreibt die Notizen, nach denen Kopf 1 sucht. Ohne sie findet Kopf 1 die richtige Stelle nicht, auch wenn Kopf 0 selbst nichts vorhersagt.');
         a.set(st, { abl: [0], ablShown: 3 }); a.say('Kopf 0 abgeschaltet: Die Notizen fehlen, Kopf 1 sucht ins Leere.'); await a.wait(3200);
         a.set(st, { abl: [] }); a.say('Beide sind nötig. Das ist der Schaltkreis.');
       },

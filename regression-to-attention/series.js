@@ -588,6 +588,8 @@
     const store = {
       get(k, d) { try { const v = localStorage.getItem('rta-' + k); return v == null ? d : v === '1'; } catch { return d; } },
       set(k, v) { try { localStorage.setItem('rta-' + k, v ? '1' : '0'); } catch { /* storage blocked: option lasts for this page only */ } },
+      getv(k) { try { return localStorage.getItem('rta-' + k); } catch { return null; } },
+      setv(k, v) { try { localStorage.setItem('rta-' + k, v); } catch { /* storage blocked */ } },
     };
     const opts = { fast: store.get('fast', false), think: store.get('think', true) };
     const hasCore = allSteps.some((el) => el.hasAttribute('data-core'));
@@ -624,39 +626,44 @@
       box.append(make('div', 'try-t', title));
       const row = make('div', 'try-row');
       box.append(row);
+      const notes = [];
+      const refresh = () => notes.forEach(([el, fn]) => (el.innerHTML = fn()));
       for (const c of list) {
+        if (c.type === 'note') { const el = make('p', 'try-note'); notes.push([el, c.text]); box.append(el); continue; }
         const get = c.get || (() => c.obj[c.key]), set = c.set || ((v) => (c.obj[c.key] = v)), fmt = c.fmt || ((v) => S.fmt(v, 2));
         const lab = make('label', 'tc');
         if (c.label) lab.append(make('span', '', c.label));
         if (c.type === 'choice') {
-          const btns = c.options.map((o) => { const b = make('button', 'btn', o.label); b.type = 'button'; b.addEventListener('click', () => { set(o.value); mark(); redraw(); }); lab.append(b); return [b, o]; });
+          const btns = c.options.map((o) => { const b = make('button', 'btn', o.label); b.type = 'button'; b.addEventListener('click', () => { set(o.value); mark(); redraw(); refresh(); }); lab.append(b); return [b, o]; });
           const mark = () => btns.forEach(([b, o]) => b.classList.toggle('on', JSON.stringify(get()) === JSON.stringify(o.value)));
           mark();
         } else if (c.type === 'text') {
           const inp = make('input'); inp.type = 'text'; inp.value = get() ?? ''; inp.maxLength = c.max || 20; inp.spellcheck = false; inp.autocomplete = 'off';
           const go = make('button', 'btn', c.go || 'Los'); go.type = 'button';
-          const fire = () => { set(inp.value); redraw(); };
+          const fire = () => { set(inp.value); redraw(); refresh(); };
           go.addEventListener('click', fire); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') fire(); });
           lab.append(inp, go);
         } else {
           const inp = make('input'), out = make('output');
           Object.assign(inp, { type: 'range', min: c.min, max: c.max, step: c.step ?? 'any' }); inp.value = get();
           out.textContent = fmt(get());
-          inp.addEventListener('input', () => { set(+inp.value); out.textContent = fmt(+inp.value); redraw(); });
+          inp.addEventListener('input', () => { set(+inp.value); out.textContent = fmt(+inp.value); redraw(); refresh(); });
           lab.append(inp, out);
         }
         row.append(lab);
       }
+      refresh();
       return box;
     }
     function reveal(my) {
       if (!pending || pending.my !== my) return;
-      const { box, choice, correct } = pending;
+      const { box, choice, correct, explain } = pending;
       pending = null;
       const btns = box.querySelectorAll('.ask-o .btn');
       if (correct != null && btns[correct]) btns[correct].classList.add('right');
-      if (choice >= 0 && choice !== correct && btns[choice]) btns[choice].classList.add('wrong');
-      box.append(make('span', 'ask-r', choice === correct ? 'Gut vermutet.' : choice < 0 ? 'Die Antwort ist grün markiert.' : 'Überrascht? Genau darum geht es in diesem Schritt.'));
+      const right = btns[correct] ? btns[correct].textContent : '';
+      const head = choice === correct ? 'Stimmt.' : choice < 0 ? `Antwort: ${right}.` : `Es ist ${right}.`;
+      box.append(make('p', 'ask-r', `<b>${head}</b> ${explain || ''}`));
     }
 
     function redraw() {
@@ -723,7 +730,7 @@
         },
         say(html) { check(); captionEl.innerHTML = html; },
         /** a prediction before the reveal: waits for a choice, the answer is marked when the step has played */
-        async ask(question, options, correct) {
+        async ask(question, options, correct, explain) {
           check();
           if (!opts.think) return null;
           const box = make('div', 'ask', `<div class="ask-q"><b>Was glaubst du?</b> ${question}</div>`), row = make('div', 'ask-o');
@@ -735,7 +742,7 @@
           while (choice == null) { await frame(); check(); }
           btns.forEach((b, i) => { b.disabled = true; b.classList.toggle('picked', i === choice); });
           skip.remove();
-          pending = { box, choice, correct, my };
+          pending = { box, choice, correct, explain, my };
           return choice;
         },
         /** try it yourself before the step goes on: shows controls and waits for "Weiter" */
@@ -822,8 +829,32 @@
     btn('next')?.addEventListener('click', () => scrollToStep(cur + 1));
     S.onTheme(redraw);
 
+    // a link like 07-attention.html#spiegel jumps to that step (and leaves the fast run if the step is hidden there)
+    function jump() {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const el = id && allSteps.find((e) => e.dataset.step === id);
+      if (!el) return;
+      if (!stepEls.includes(el)) { opts.fast = false; store.set('fast', false); const f = bar.querySelector('[data-o="fast"]'); if (f) f.checked = false; applyFast(); }
+      setTimeout(() => scrollToStep(stepEls.indexOf(el)), 60);
+    }
+    addEventListener('hashchange', jump);
+    // after each self-test answer: how well did I know it? Kept in this browser; the overview lists what to revisit.
+    document.querySelectorAll('.recap details').forEach((d, i) => {
+      const key = `q-${page}-${i}`, row = make('div', 'self', '<span>Wie gut wusstest du es?</span>'), note = make('p', 'self-note');
+      const opts3 = [['ja', 'Wusste ich'], ['teils', 'Teilweise'], ['nein', 'Noch nicht']];
+      const mark = () => {
+        const v = store.getv(key);
+        row.querySelectorAll('.btn').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+        const back = d.dataset.href ? ` <a href="${d.dataset.href}">Noch einmal ansehen: ${d.dataset.label}</a>.` : '';
+        note.innerHTML = v === 'ja' ? 'Gut. Auf der Übersicht steht sie nicht mehr bei den Fragen zum Wiederholen.'
+          : v ? `Gut zu wissen.${back} Auf der Übersicht steht sie bei den Fragen zum Wiederholen, bis du sie mit „Wusste ich“ markierst.` : '';
+      };
+      opts3.forEach(([v, l]) => { const b = make('button', 'btn', l); b.type = 'button'; b.dataset.v = v; b.addEventListener('click', () => { store.setv(key, v); mark(); }); row.append(b); });
+      d.append(row, note); mark();
+    });
+
     prepare(0); // a complete first frame before anything plays
-    requestAnimationFrame(pick);
+    requestAnimationFrame(() => { pick(); jump(); });
     return {
       redraw,
       /** the reader grabbed something: stop the animation, keep the state */

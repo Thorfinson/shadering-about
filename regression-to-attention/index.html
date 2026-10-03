@@ -35,6 +35,13 @@
   .seg:hover { border-color: var(--accent); color: var(--fg); }
   .seg.seen { border-color: var(--accent); color: var(--accent); }
   .seg.done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .review { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--rule); }
+  .review h3 { font-family: var(--font-mono); font-size: 11.5px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .review ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+  .review a { color: var(--fg); text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  .review a:hover { text-decoration-color: var(--accent); }
+  .review span { color: var(--muted); }
+  .ch-meta .open { color: var(--accent); }
   .path p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 
   .legend { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 24px; border-bottom: 1px solid var(--rule); padding-bottom: 12px; margin-bottom: -28px; }
@@ -111,6 +118,7 @@
   <aside class="path" aria-label="Dein Weg durch die Reihe">
     <h2>Dein Weg</h2>
     <div class="path-row"><span class="path-part">Teil I</span><span class="path-name">Lernen aus Daten</span><div class="seg-group"><a class="seg" href="01-linear-regression.html" data-page="01-linear-regression" aria-label="Kapitel 1: Die Gerade">1</a><a class="seg" href="02-matrix.html" data-page="02-matrix" aria-label="Kapitel 2: Die Matrix">2</a><a class="seg" href="03-classification.html" data-page="03-classification" aria-label="Kapitel 3: Die Grenze">3</a><a class="seg" href="04-folding.html" data-page="04-folding" aria-label="Kapitel 4: Den Raum falten">4</a></div></div><div class="path-row"><span class="path-part">Teil II</span><span class="path-name">Räume und Bedeutung</span><div class="seg-group"><a class="seg" href="05-dimensions.html" data-page="05-dimensions" aria-label="Kapitel 5: Viele Dimensionen">5</a><a class="seg" href="06-embeddings.html" data-page="06-embeddings" aria-label="Kapitel 6: Bedeutung als Richtung">6</a></div></div><div class="path-row"><span class="path-part">Teil III</span><span class="path-name">Attention und Transformer</span><div class="seg-group"><a class="seg" href="07-attention.html" data-page="07-attention" aria-label="Kapitel 7: Mischen nach Relevanz">7</a><a class="seg" href="08-qkv.html" data-page="08-qkv" aria-label="Kapitel 8: Fragen, Schilder, Werte">8</a><a class="seg" href="09-transformer.html" data-page="09-transformer" aria-label="Kapitel 9: Der Transformer">9</a><a class="seg" href="10-training.html" data-page="10-training" aria-label="Kapitel 10: Ein eigener Transformer">10</a></div></div><div class="path-row"><span class="path-part">Teil IV</span><span class="path-name">Ins Netz hineinsehen</span><div class="seg-group"><a class="seg" href="11-vision.html" data-page="11-vision" aria-label="Kapitel 11: Merkmale und Schaltkreise">11</a><a class="seg" href="12-circuits.html" data-page="12-circuits" aria-label="Kapitel 12: Schaltkreise im Transformer">12</a></div></div>
+    <div class="review" id="review" hidden></div>
     <p id="progress-note">Noch nichts begonnen. Dein Fortschritt wird nur in diesem Browser gespeichert.</p>
   </aside>
   </div>
@@ -328,6 +336,15 @@
       document.querySelectorAll(`[data-page="${p}"]`).forEach((el) => { el.classList.toggle('seen', seen && !done); el.classList.toggle('done', done); });
       if (seen) started++; if (done) finished++;
       if (!done && !next && (seen || started)) next = [n, title, href];
+    }
+    // questions the reader marked as not yet known, from the self-test at the end of each chapter
+    const getv = (k) => { try { return localStorage.getItem('rta-' + k); } catch { return null; } };
+    const open = pages.map(([p, title, n, href]) => [n, title, href, [0, 1, 2].filter((i) => ['teils', 'nein'].includes(getv(`q-${p}-${i}`))).length]).filter((x) => x[3] > 0);
+    if (open.length) {
+      const box = document.getElementById('review');
+      box.innerHTML = '<h3>Zum Wiederholen</h3><ul>' + open.map(([n, title, href, k]) => `<li><a href="${href}#teste-dich">Kapitel ${n}: ${title}</a> <span>${k} ${k === 1 ? 'Frage' : 'Fragen'}</span></li>`).join('') + '</ul>';
+      box.hidden = false;
+      for (const [n, , href, k] of open) { const meta = document.querySelector(`.ch[href="${href}"] .ch-meta`); if (meta) meta.insertAdjacentHTML('beforeend', `<span class="open">${k} zum Wiederholen</span>`); }
     }
     if (started) {
       const firstOpen = pages.find(([p]) => !get('done-' + p));

@@ -18,6 +18,7 @@
     <h1>Mischen nach Relevanz</h1>
     <p class="lead">Ein Wort hat in der Tabelle nur einen Vektor, egal in welchem Satz es steht. In diesem Kapitel bringen wir einem Wort bei, sich die anderen Wörter im Satz anzusehen und etwas von ihnen aufzunehmen. Dafür brauchen wir nur Werkzeuge, die wir schon kennen: Mittelwerte, das Skalarprodukt und die Softmax.</p>
     <ol class="roadmap"><li>Ein Wort, ein Vektor: das Problem</li><li>Mischen mit Anteilen</li><li>Anteile aus Ähnlichkeit und Softmax</li><li>Die Grenze der Ähnlichkeit</li></ol>
+    <ul class="goals"><li>ein gewichtetes Mittel mit Anteilen ausrechnen</li><li>aus Punktzahlen mit der Softmax Anteile machen</li><li>erklären, warum Ähnlichkeit allein nicht reicht</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -156,12 +157,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Attention mischt zu einem Wort die Vektoren der anderen Wörter dazu, mit Anteilen, die zusammen 1 ergeben.</li><li>Die Anteile kommen aus Punktzahlen: hier die Ähnlichkeit (Skalarprodukt), durch eine Softmax geschickt.</li><li>Ähnlichkeit allein schaut in den Spiegel und findet bei Pronomen das Falsche: Ein Wort muss etwas anderes suchen können, als es ist.</li></ul>
     <div class="take-f"><b>x</b><sub>neu</sub> = <b>x</b> + Σ<sub><i>j</i></sub> <i>a<sub>j</sub></i> <b>x</b><sub><i>j</i></sub> &nbsp;&nbsp; <i>a<sub>j</sub></i> = softmax(β · <b>x</b> · <b>x</b><sub><i>j</i></sub>)</div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Was ist der Unterschied zwischen Anteilen und Gewichten?</summary><p>Gewichte sind gelernte Zahlen, die nach dem Training feststehen. Anteile werden für jeden Satz neu ausgerechnet und ergeben zusammen 1.</p></details>
-      <details><summary>Warum schaut „Bank“ mit reiner Ähnlichkeit fast nur auf sich selbst?</summary><p>Mit sich selbst hat ein Vektor das größte Skalarprodukt, nämlich 1. Die Softmax gibt diesem Wort dann fast alles.</p></details>
-      <details><summary>Wo kam der Regler β schon einmal vor, nur andersherum?<span class="from">Kapitel 3</span></summary><p>Als Temperatur in Kapitel 3: β ist 1 geteilt durch die Temperatur.</p></details>
+      <details data-href="#zahlen" data-label="„Ein Mittelwert mit Anteilen“"><summary>Was ist der Unterschied zwischen Anteilen und Gewichten?</summary><p>Gewichte sind gelernte Zahlen, die nach dem Training feststehen. Anteile werden für jeden Satz neu ausgerechnet und ergeben zusammen 1.</p></details>
+      <details data-href="#spiegel" data-label="„Am ähnlichsten bin ich mir selbst“"><summary>Warum schaut „Bank“ mit reiner Ähnlichkeit fast nur auf sich selbst?</summary><p>Mit sich selbst hat ein Vektor das größte Skalarprodukt, nämlich 1. Die Softmax gibt diesem Wort dann fast alles.</p></details>
+      <details data-href="03-classification.html#temperatur" data-label="Kapitel 3, „So wählt ein Sprachmodell das nächste Wort“"><summary>Wo kam der Regler β schon einmal vor, nur andersherum?<span class="from">Kapitel 3</span></summary><p>Als Temperatur in Kapitel 3: β ist 1 geteilt durch die Temperatur.</p></details>
     </div>
   </section>
 
@@ -383,7 +384,8 @@
         let g = 0.5;
         const setHw = () => { st.hw = [0, 1 - g, 0, g, 0, 0]; st.moveA = 1; };
         setHw(); a.set(st, {});
-        await a.tryit([{ label: 'Anteil „Geld“ (Rest an „Mann“)', type: 'range', min: 0, max: 1, step: 0.01, get: () => g, set: (v) => { g = v; setHw(); }, fmt: (v) => `${fmt(v * 100, 0)} %` }],
+        await a.tryit([{ label: 'Anteil „Geld“ (Rest an „Mann“)', type: 'range', min: 0, max: 1, step: 0.01, get: () => g, set: (v) => { g = v; setHw(); }, fmt: (v) => `${fmt(v * 100, 0)} %` },
+          { type: 'note', text: () => (g > 0.7 ? '<b>„Bank“ rückt Richtung Sparkasse.</b> Viel Anteil für „Geld“ zieht die Bedeutung zum Geldinstitut.' : g < 0.3 ? '<b>„Bank“ bleibt fast, wo sie war.</b> „Mann“ sagt nichts darüber, welche Bank gemeint ist.' : '<b>Ein Mittelweg.</b> Die Mischung liegt zwischen „Geld“ und „Mann“, „Bank“ rückt nur ein Stück.') }],
           'Verteil die Anteile zwischen „Geld“ und „Mann“. Wohin rückt „Bank“?');
         a.set(st, { hw: [0, 0, 0, 0, 0, 0], moveA: 0 });
         a.hl('s'); a.set(st, { hw: [0, 0, 0, 1, 0, 0] }); a.say('Satz 1: Wir geben „Geld“ den ganzen Anteil …'); await a.wait(1400);
@@ -439,7 +441,7 @@
       formula: softF(),
       setup() { base({ scoreA: 1, wA: 1 }); },
       async play(a) {
-        await a.ask('Jetzt rechnet „Bank“ seine Anteile selbst aus. Wer bekommt den größten?', ['„Geld“', '„Bank“ selbst', 'alle etwa gleich viel'], 1);
+        await a.ask('Jetzt rechnet „Bank“ seine Anteile selbst aus. Wer bekommt den größten?', ['„Geld“', '„Bank“ selbst', 'alle etwa gleich viel'], 1, 'Mit sich selbst hat jeder Vektor das größte Skalarprodukt, nämlich 1. Nach der Softmax bekommt „Bank“ damit fast alles.');
         a.say(`Wer bekommt den größten Anteil? „Bank“ selbst, mit ${fmt(attend(SENTS[0], { self: true }).wts[5] * 100, 0)} %.`); await a.wait(3000);
         await a.to(st, { moveA: 1 }, 1400); a.say('Darum bewegt sich „Bank“ kaum. Ähnlichkeit allein schaut vor allem in den Spiegel.');
       },
@@ -474,7 +476,7 @@
       setup() { st.grA = 0; },
       async play(a) {
         a.say('„die Frau lacht und sie singt“: Wer ist „sie“?'); await a.wait(1200);
-        await a.ask('Worauf schaut „sie“ nach Ähnlichkeit am meisten?', ['auf „Frau“', 'auf „und“ und „singt“', 'auf „lacht“'], 1);
+        await a.ask('Worauf schaut „sie“ nach Ähnlichkeit am meisten?', ['auf „Frau“', 'auf „und“ und „singt“', 'auf „lacht“'], 1, 'In unseren Sätzen steht „sie“ oft neben „und“ und „singt“, darum sind diese Vektoren ähnlich. Ähnlichkeit findet Nachbarn, nicht das Nomen, auf das sich ein Pronomen bezieht.');
         await a.to(st, { grA: 1 }, 1200); a.say('Nach Ähnlichkeit schaut „sie“ vor allem auf „und“ und „singt“, nur wenig auf „Frau“.'); await a.wait(3400);
         a.hl('s', 'i'); a.say('Ein Pronomen sucht ein Nomen, nicht seinesgleichen. Dafür braucht jedes Wort eine eigene Frage: Kapitel 8.');
       },

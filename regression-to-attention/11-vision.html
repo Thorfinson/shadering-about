@@ -18,6 +18,7 @@
     <h1>Merkmale und Schaltkreise</h1>
     <p class="lead">Chris Olah und Kollegen haben vorgeschlagen, neuronale Netze nicht als Blackbox zu behandeln, sondern sie zu lesen wie eine Schaltung. Ihre Werkzeuge haben sie an Netzen entwickelt, die Bilder erkennen. Wir bauen erst Schritt für Schritt ein solches Netz, trainieren ein kleines live im Browser und wenden dann Olahs Werkzeuge darauf an.</p>
     <ol class="roadmap"><li>Ein Bild sind Zahlen</li><li>Filter und Faltung</li><li>Ein Netz live trainieren</li><li>Merkmale finden</li><li>Schaltkreise und Universalität</li></ol>
+    <ul class="goals"><li>erklären, was ein Filter auf einem Bild tut</li><li>Datensatz-Beispiele und Sichtbarmachen als Werkzeuge einsetzen</li><li>die drei Thesen aus „Zoom In“ wiedergeben</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -192,12 +193,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Ein Filter ist ein kleines Muster; über das Bild geschoben, liefert er eine Karte, wo das Muster vorkommt.</li><li>Nach dem Training sind die ersten Filter Kantendetektoren, Einheiten der zweiten Schicht erkennen Bögen, Ecken und Kreuzarme.</li><li>Olahs Werkzeuge: Datensatz-Beispiele, Sichtbarmachen, Schaltkreise an den Gewichten lesen, Netze vergleichen.</li></ul>
     <div class="take-f">Kanten → Bögen → Formen &nbsp;&nbsp; Merkmale · Schaltkreise · Universalität</div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Was zeigt eine sichtbar gemachte Einheit?</summary><p>Das Bild, das sie am stärksten anspringen lässt, gefunden durch Gradientenaufstieg an den Pixeln.</p></details>
-      <details><summary>Was heißt polysemantisch, und woher kommt es vermutlich?</summary><p>Eine Einheit springt auf mehrere, unabhängige Dinge an. Eine Erklärung ist Superposition: mehr Merkmale als Einheiten.</p></details>
-      <details><summary>Welche Rechnung aus Kapitel 5 macht ein Filter an jeder Stelle?<span class="from">Kapitel 5</span></summary><p>Ein Skalarprodukt: Filter und Ausschnitt Feld für Feld multiplizieren und aufsummieren.</p></details>
+      <details data-href="#sichtbar" data-label="„Ein Merkmal sichtbar machen“"><summary>Was zeigt eine sichtbar gemachte Einheit?</summary><p>Das Bild, das sie am stärksten anspringen lässt, gefunden durch Gradientenaufstieg an den Pixeln.</p></details>
+      <details data-href="#poly" data-label="„Einheiten mit zwei Bedeutungen“"><summary>Was heißt polysemantisch, und woher kommt es vermutlich?</summary><p>Eine Einheit springt auf mehrere, unabhängige Dinge an. Eine Erklärung ist Superposition: mehr Merkmale als Einheiten.</p></details>
+      <details data-href="05-dimensions.html#schatten" data-label="Kapitel 5, „Ähnlichkeit ist ein Schatten“"><summary>Welche Rechnung aus Kapitel 5 macht ein Filter an jeder Stelle?<span class="from">Kapitel 5</span></summary><p>Ein Skalarprodukt: Filter und Ausschnitt Feld für Feld multiplizieren und aufsummieren.</p></details>
     </div>
   </section>
 
@@ -558,7 +559,7 @@
       views: ['units'],
       formula: `erste Schicht: ${T('k', 'Kantendetektoren', 'c-new', 'dunkel auf der einen, hell auf der anderen Seite')}`,
       setup() { st.unitMode = 'edges'; st.unitNet = 0; },
-      async play(a) { await waitRef(a); a.set(st, { unitMode: 'none', unitList: [] }); await a.ask('Niemand hat den 8 Filtern etwas vorgegeben. Was ist nach dem Training aus ihnen geworden?', ['Kantendetektoren in verschiedenen Richtungen', 'kleine Kreise', 'immer noch Rauschen'], 0); a.set(st, { unitMode: 'edges' }); a.hl('k'); a.say('Die 8 gelernten Filter, groß. Viele sind Kanten in verschiedenen Richtungen, darunter die Beschriftung aus ihrer Hauptrichtung.'); },
+      async play(a) { await waitRef(a); a.set(st, { unitMode: 'none', unitList: [] }); await a.ask('Niemand hat den 8 Filtern etwas vorgegeben. Was ist nach dem Training aus ihnen geworden?', ['Kantendetektoren in verschiedenen Richtungen', 'kleine Kreise', 'immer noch Rauschen'], 0, 'Kanten sind das Einfachste, woran man Formen unterscheidet: Stellen, an denen hell auf dunkel trifft. Fast jedes Bildnetz lernt sie in der ersten Schicht.'); a.set(st, { unitMode: 'edges' }); a.hl('k'); a.say('Die 8 gelernten Filter, groß. Viele sind Kanten in verschiedenen Richtungen, darunter die Beschriftung aus ihrer Hauptrichtung.'); },
     },
     beispiele: {
       views: ['units'],

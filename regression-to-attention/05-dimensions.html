@@ -18,6 +18,7 @@
     <h1>Viele Dimensionen</h1>
     <p class="lead">Die verborgenen Räume echter Netze haben Hunderte oder Tausende Dimensionen. Dort gelten dieselben Regeln wie in drei, und trotzdem verhält sich der Raum überraschend. Netze nutzen das aus, um mehr Merkmale zu speichern, als sie Dimensionen haben.</p>
     <ol class="roadmap"><li>Pfeile mit vielen Zahlen</li><li>Ähnlichkeit als Schatten</li><li>Fast alles steht senkrecht</li><li>Mehr Merkmale als Dimensionen</li></ol>
+    <ul class="goals"><li>Ähnlichkeit als Skalarprodukt zweier Richtungen lesen</li><li>erklären, warum Zufallsrichtungen in vielen Dimensionen fast senkrecht stehen</li><li>Superposition in einem Satz erklären</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -177,12 +178,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Das Skalarprodukt zweier Pfeile der Länge 1 misst ihre Ähnlichkeit: 1 gleich, 0 senkrecht, −1 entgegengesetzt.</li><li>In vielen Dimensionen stehen zufällige Richtungen fast senkrecht. Darum passen fast senkrecht sehr viele Richtungen hinein.</li><li>Netze speichern Merkmale als Richtungen, oft mehr Merkmale als Dimensionen: Superposition, wenn Merkmale selten sind.</li></ul>
     <div class="take-f">cos ∠(<b>u</b>, <b>v</b>) = <b>u</b> · <b>v</b> / (|<b>u</b>| |<b>v</b>|) &nbsp;&nbsp; Streuung ≈ 1/√<i>d</i></div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Wie ähnlich sind zwei zufällige Richtungen in 1000 Dimensionen?</summary><p>Fast gar nicht: Ihr Skalarprodukt liegt bei etwa ±0,03, sie stehen fast senkrecht.</p></details>
-      <details><summary>Wann lohnt sich Superposition für ein Netz?</summary><p>Wenn Merkmale selten gleichzeitig aktiv sind. Dann stört die kleine Überlappung kaum.</p></details>
-      <details><summary>Woher kommt die Kosinus-Formel? Welche Rechnung aus Kapitel 2 steckt im Zähler?<span class="from">Kapitel 2</span></summary><p>Das Skalarprodukt: Einträge paarweise multiplizieren und aufsummieren, wie „Zeile mal Vektor“.</p></details>
+      <details data-href="#produkt" data-label="„Viele kleine Produkte“"><summary>Wie ähnlich sind zwei zufällige Richtungen in 1000 Dimensionen?</summary><p>Fast gar nicht: Ihr Skalarprodukt liegt bei etwa ±0,03, sie stehen fast senkrecht.</p></details>
+      <details data-href="#selten" data-label="„Was „selten“ heißt“"><summary>Wann lohnt sich Superposition für ein Netz?</summary><p>Wenn Merkmale selten gleichzeitig aktiv sind. Dann stört die kleine Überlappung kaum.</p></details>
+      <details data-href="02-matrix.html#zeilen" data-label="Kapitel 2, „Zeile mal Vektor“"><summary>Woher kommt die Kosinus-Formel? Welche Rechnung aus Kapitel 2 steckt im Zähler?<span class="from">Kapitel 2</span></summary><p>Das Skalarprodukt: Einträge paarweise multiplizieren und aufsummieren, wie „Zeile mal Vektor“.</p></details>
     </div>
   </section>
 
@@ -681,7 +682,7 @@
       formula: () => `${cosF}<span class="sep">Abweichung ≈</span>${FRAC('1', '√<i>d</i>')}<span class="sep">d =</span>${V('d')}`,
       setup() { st.d = 0; st.histN = 1500; },
       async play(a) {
-        await a.ask('Zwei zufällige Richtungen in 1000 Dimensionen: Welcher Winkel ist typisch?', ['irgendein Winkel, alle gleich oft', 'fast genau 90°', 'eher spitz, unter 45°'], 1);
+        await a.ask('Zwei zufällige Richtungen in 1000 Dimensionen: Welcher Winkel ist typisch?', ['irgendein Winkel, alle gleich oft', 'fast genau 90°', 'eher spitz, unter 45°'], 1, 'Das Skalarprodukt ist eine Summe vieler kleiner Produkte mit zufälligem Vorzeichen. Je mehr Summanden, desto genauer heben sie sich auf: Die Abweichung von 90° schrumpft wie 1/√d.');
         for (const d of [3, 10, 100, 1000]) { a.say(`${d} Dimensionen …`); await a.to(st, { d: DL.indexOf(d) }, 1400, { ease: (t) => t }); await a.wait(1300); }
         a.hl('dot'); a.say('In 1000 Dimensionen liegen fast alle Winkel zwischen 85° und 95°. Zwei zufällige Richtungen stehen praktisch immer senkrecht.');
       },

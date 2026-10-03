@@ -18,6 +18,8 @@
     <h1>Bedeutung als Richtung</h1>
     <p class="lead">Ein Sprachmodell rechnet mit Zahlen, nicht mit Wörtern. Wir bauen die Übersetzung selbst: Jedes Wort bekommt einen Pfeil in einem 12-dimensionalen Raum, gelernt nur aus der Frage, welche Wörter nebeneinander stehen. Am Ende tragen Richtungen Bedeutung.</p>
     <ol class="roadmap"><li>Wörter brauchen Zahlen</li><li>Nachbarn zählen</li><li>Ein Ratespiel lernt die Karte</li><li>Bedeutung als Richtung</li></ol>
+    <ul class="goals"><li>erklären, woher die Zahlen eines Wortvektors kommen</li><li>ähnliche Wörter mit dem Kosinus finden</li><li>König − Mann + Frau ≈ Königin begründen</li></ul>
+    <p class="calm">Dieses Kapitel ist das längste der Reihe und enthält die wichtigste Idee: Bedeutung als Richtung. Es ist normal, einzelne Schritte zweimal anzusehen; „Nochmal“ und „Pause“ sind dafür da.</p>
   </header>
 
   <section class="story" id="story">
@@ -218,12 +220,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Ein Embedding ist eine Zeile der Tabelle E: ein Wort als Pfeil mit wenigen Zahlen.</li><li>Die Zahlen kommen aus der Statistik: Wörter, die neben denselben Wörtern stehen, landen nebeneinander.</li><li>Ein gleicher Unterschied in den Nachbarschaften wird eine gleiche Richtung, darum König − Mann + Frau ≈ Königin.</li></ul>
     <div class="take-f"><b>x</b> = <b>E</b>[Wort] &nbsp;&nbsp; <i>p</i>(Nachbar) = softmax(<b>u</b> · <b>e</b>)</div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum reicht Durchnummerieren der Wörter nicht?</summary><p>Nummern behaupten Nachbarschaften, die es nicht gibt, etwa zwischen „Hund“ und „Holz“, und Mittelwerte zweier Nummern ergeben irgendein drittes Wort.</p></details>
-      <details><summary>Warum liegen „König“ und „Königin“ am Ende nah beieinander?</summary><p>Sie werden von denselben Nachbarwörtern gezogen: regiert, Krone, Schloss. Nur der/die unterscheidet sie, und das wird zu einer eigenen Richtung.</p></details>
-      <details><summary>Welcher Verlust aus Kapitel 3 bewertet das Ratespiel?<span class="from">Kapitel 3</span></summary><p>Die Kreuzentropie: −log der Wahrscheinlichkeit für den Nachbarn, der wirklich vorkam.</p></details>
+      <details data-href="#nummern" data-label="„Ein Netz braucht Zahlen“"><summary>Warum reicht Durchnummerieren der Wörter nicht?</summary><p>Nummern behaupten Nachbarschaften, die es nicht gibt, etwa zwischen „Hund“ und „Holz“, und Mittelwerte zweier Nummern ergeben irgendein drittes Wort.</p></details>
+      <details data-href="#gleich" data-label="„Gleiche Nachbarn, gleicher Platz“"><summary>Warum liegen „König“ und „Königin“ am Ende nah beieinander?</summary><p>Sie werden von denselben Nachbarwörtern gezogen: regiert, Krone, Schloss. Nur der/die unterscheidet sie, und das wird zu einer eigenen Richtung.</p></details>
+      <details data-href="03-classification.html#ueberraschung" data-label="Kapitel 3, „Wie überrascht ist das Modell?“"><summary>Welcher Verlust aus Kapitel 3 bewertet das Ratespiel?<span class="from">Kapitel 3</span></summary><p>Die Kreuzentropie: −log der Wahrscheinlichkeit für den Nachbarn, der wirklich vorkam.</p></details>
     </div>
   </section>
 
@@ -1056,7 +1058,7 @@
       setup() { fin(); Object.assign(st, { plAge: 0, plPairs: 0, plAna: 0, plAnaK: 0, plRead: 0, prA: 0 }); },
       async play(a) {
         const M = fin(), best = (w0, w1, w2) => M.nearest(add(M.vec(w0), sub(M.vec(w2), M.vec(w1))), [w0, w1, w2], 1)[0][0];
-        await a.ask('König + (Frau − Mann): Wo landet man?', ['bei „Königin“', 'bei „Frau“', 'irgendwo, ohne passendes Wort'], 0);
+        await a.ask('König + (Frau − Mann): Wo landet man?', ['bei „Königin“', 'bei „Frau“', 'irgendwo, ohne passendes Wort'], 0, '„Frau“ und „Mann“ unterscheiden sich in ihren Nachbarn fast nur bei der/er gegenüber die/sie, „Königin“ und „König“ genauso. Ein gleicher Unterschied ist eine gleiche Richtung.');
         a.hl('k'); a.say('Wir starten bei „König“ …'); await a.wait(1400);
         a.hl('d'); a.say('… und gehen den Weg von „Mann“ zu „Frau“.');
         await a.to(st, { plAna: 1 }, 1800); await a.wait(600);

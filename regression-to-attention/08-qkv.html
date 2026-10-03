@@ -18,6 +18,8 @@
     <h1>Fragen, Schilder, Werte</h1>
     <p class="lead">In Kapitel 7 hat jedes Wort nach Ähnlichem gesucht. Jetzt bekommt jedes Wort drei neue Vektoren: eine Frage, was es sucht, ein Schild, was es anbietet, und einen Wert, was es weitergibt. Alle drei entstehen durch Matrizen aus Kapitel 2. Am Ende steht die Formel aus „Attention Is All You Need“, und jedes Zeichen darin hat seinen eigenen Schritt bekommen.</p>
     <ol class="roadmap"><li>Ein Wort, drei Rollen</li><li>Frage trifft Schild</li><li>Alles als Tabellen</li><li>Die ganze Formel, Köpfe</li></ol>
+    <ul class="goals"><li>sagen, was W_Q, W_K und W_V jeweils tun</li><li>softmax(QKᵀ/√d)V Zeichen für Zeichen lesen</li><li>erklären, wofür mehrere Köpfe gut sind</li></ul>
+    <p class="calm">Hier kommen drei neue Matrizen auf einmal. Lass dir Zeit mit dem Beispiel von Hand; die Tabellen danach rechnen nur dasselbe für alle Wörter.</p>
   </header>
 
   <section class="story" id="story">
@@ -173,12 +175,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Drei gelernte Matrizen geben jedem Wort drei Rollen: W_Q macht die Frage, W_K das Schild, W_V den Wert.</li><li>Die Punktzahl ist Frage mal Schild. Die Softmax macht daraus Anteile, mit denen die Werte gemischt werden.</li><li>Für alle Wörter auf einmal: softmax(QKᵀ/√d) V. Mehrere Köpfe stellen mehrere Fragen gleichzeitig.</li></ul>
     <div class="take-f">Attention(<b>Q</b>, <b>K</b>, <b>V</b>) = softmax(<b>Q</b><b>K</b><sup>⊤</sup> / √<i>d</i>) <b>V</b></div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum findet „sie“ mit einer Frage-Matrix plötzlich „Frau“?</summary><p>W_Q dreht den Vektor von „sie“ in eine neue Richtung: zu den Inhaltswörtern. Was ein Wort sucht, muss nicht mehr dasselbe sein wie das, was es ist.</p></details>
-      <details><summary>Wofür steht das √d in der Formel?</summary><p>Skalarprodukte aus d Zahlen werden mit d immer größer. Teilen durch √d hält die Punktzahlen in einem festen Bereich, damit die Softmax nicht alles auf ein Wort legt.</p></details>
-      <details><summary>Welche Matrix-Wirkung aus Kapitel 2 nutzt W_V im Beispiel?<span class="from">Kapitel 2</span></summary><p>Plattdrücken: Alle Pfeile landen auf der waagrechten Achse, weitergegeben wird nur der Inhalt.</p></details>
+      <details data-href="#frage" data-label="„Was „sie“ sucht“"><summary>Warum findet „sie“ mit einer Frage-Matrix plötzlich „Frau“?</summary><p>W_Q dreht den Vektor von „sie“ in eine neue Richtung: zu den Inhaltswörtern. Was ein Wort sucht, muss nicht mehr dasselbe sein wie das, was es ist.</p></details>
+      <details data-href="#wurzel" data-label="„Warum durch √d teilen?“"><summary>Wofür steht das √d in der Formel?</summary><p>Skalarprodukte aus d Zahlen werden mit d immer größer. Teilen durch √d hält die Punktzahlen in einem festen Bereich, damit die Softmax nicht alles auf ein Wort legt.</p></details>
+      <details data-href="02-matrix.html#platt" data-label="Kapitel 2, „Plattdrücken“"><summary>Welche Matrix-Wirkung aus Kapitel 2 nutzt W_V im Beispiel?<span class="from">Kapitel 2</span></summary><p>Plattdrücken: Alle Pfeile landen auf der waagrechten Achse, weitergegeben wird nur der Inhalt.</p></details>
     </div>
   </section>
 
@@ -418,7 +420,7 @@
       formula: `Punktzahl = ${T('q', '<b>q</b>', '', 'Frage von sie')} · ${T('x', '<b>x</b>', 'c-new', 'der Vektor jedes Worts')}`,
       setup() { ex({ rot: 1, qA: 1 }); },
       async play(a) {
-        await a.ask('Mit der gedrehten Frage: Welche Punktzahl bekommt „sie“ mit sich selbst?', ['die höchste von allen', 'etwa 0', 'eine stark negative'], 1);
+        await a.ask('Mit der gedrehten Frage: Welche Punktzahl bekommt „sie“ mit sich selbst?', ['die höchste von allen', 'etwa 0', 'eine stark negative'], 1, 'W_Q dreht den Pfeil von „sie“ um 90°. Die Frage steht damit senkrecht auf dem eigenen Pfeil, und senkrecht heißt Skalarprodukt 0.');
         a.hl('q', 'x'); await a.to(st, { scA: 1 }, 900);
         a.say('Frage mal Wort: „Frau“ hat jetzt die höchste Punktzahl.'); await a.wait(2600);
         a.say('„sie“ selbst bekommt 0: Seine Frage steht senkrecht auf seinem eigenen Pfeil. Kein Spiegel mehr.');

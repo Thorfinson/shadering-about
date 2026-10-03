@@ -37,6 +37,7 @@
     <h1>Die Matrix</h1>
     <p class="lead">Was eine Matrixmultiplikation mit Daten macht, vom einfachsten Fall zum allgemeinen: strecken, spiegeln, drehen, scheren, plattdrücken, hintereinander ausführen, in andere Räume abbilden. Erst am Ende wird daraus wieder unsere Regression.</p>
     <ol class="roadmap"><li>Punkte sind Pfeile</li><li>Eine Matrix verformt die Ebene</li><li>Einfache Fälle, dann alles zusammen</li><li>Die Regression als Matrix</li></ol>
+    <ul class="goals"><li>eine 2×2-Matrix als Verformung der Ebene lesen</li><li>„Zeile mal Vektor“ als Neuron erkennen</li><li>erklären, warum viele Matrizen hintereinander nicht mehr können als eine</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -190,12 +191,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Eine Matrix ist eine Anweisung, wohin die Einheitspfeile gehen; ihre Spalten sind die Ziele.</li><li>Zeile mal Vektor ist ein Skalarprodukt: Jede Zeile der Matrix ist ein Neuron.</li><li>Viele Matrizen hintereinander sind wieder eine Matrix. Erst ein Knick dazwischen macht ein Netz mächtiger.</li></ul>
     <div class="take-f"><b>M</b> · <b>x</b> = <i>x</i><sub>1</sub> · Spalte<sub>1</sub> + <i>x</i><sub>2</sub> · Spalte<sub>2</sub></div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Was sagt eine Determinante von 0?</summary><p>Die Matrix drückt die Ebene platt: Eine Richtung geht ganz verloren, und man kann nicht mehr zurückrechnen.</p></details>
-      <details><summary>Ist „erst strecken, dann drehen“ dasselbe wie „erst drehen, dann strecken“?</summary><p>Nein. Bei Matrizen zählt die Reihenfolge: AB ist im Allgemeinen nicht BA.</p></details>
-      <details><summary>Welche Rechnung aus Kapitel 1 steckt in jeder Zeile einer Matrix?<span class="from">Kapitel 1</span></summary><p>w · x + b: Einträge multiplizieren und aufsummieren, also ein Neuron.</p></details>
+      <details data-href="#platt" data-label="„Plattdrücken“"><summary>Was sagt eine Determinante von 0?</summary><p>Die Matrix drückt die Ebene platt: Eine Richtung geht ganz verloren, und man kann nicht mehr zurückrechnen.</p></details>
+      <details data-href="#nacheinander" data-label="„Hintereinander ausführen“"><summary>Ist „erst strecken, dann drehen“ dasselbe wie „erst drehen, dann strecken“?</summary><p>Nein. Bei Matrizen zählt die Reihenfolge: AB ist im Allgemeinen nicht BA.</p></details>
+      <details data-href="#zeilen" data-label="„Zeile mal Vektor“"><summary>Welche Rechnung aus Kapitel 1 steckt in jeder Zeile einer Matrix?<span class="from">Kapitel 1</span></summary><p>w · x + b: Einträge multiplizieren und aufsummieren, also ein Neuron.</p></details>
     </div>
   </section>
 
@@ -736,7 +737,7 @@
         await a.to(st, { ang: 45 }, 1500, { update: () => (st.M = mm(rot(st.ang), B)) });
         st.ghost = mm(A, B);
         a.hl(); a.say('Das ist <b>AB</b>.');
-        await a.ask('Erst drehen, dann strecken: Kommt dasselbe heraus?', ['ja, dieselbe Form', 'nein, etwas anderes'], 1);
+        await a.ask('Erst drehen, dann strecken: Kommt dasselbe heraus?', ['ja, dieselbe Form', 'nein, etwas anderes'], 1, 'Strecken wirkt entlang fester Achsen. Wird vorher gedreht, liegt die Form schräg zu diesen Achsen und wird anders verzerrt. Bei Matrizen zählt die Reihenfolge.');
         a.say('Jetzt andersherum …');
         await a.to(st, { ghostA: 1 }, 400);
         await a.to(st, { M: I2 }, 900);

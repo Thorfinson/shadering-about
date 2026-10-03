@@ -18,6 +18,7 @@
     <h1>Ein eigener Transformer</h1>
     <p class="lead">Wir bauen einen winzigen Transformer nach dem Bauplan aus Kapitel 9 und trainieren ihn live im Browser. Er ist klein genug, dass wir ihn in Kapitel 12 vollständig lesen können, und er lernt etwas, das jedes große Sprachmodell auch lernt.</p>
     <ol class="roadmap"><li>Eine kleine Aufgabe</li><li>Der Bauplan</li><li>Live trainieren</li><li>Der Sprung und die Grenzen</li></ol>
+    <ul class="goals"><li>die Aufgabe „Muster fortsetzen“ und ihre Regel beschreiben</li><li>einen Phasenübergang in einer Lernkurve erkennen</li><li>sagen, was ein trainiertes Modell nicht kann</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -127,12 +128,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Ein winziger Transformer mit 1856 Zahlen lernt, Muster fortzusetzen: Suche den aktuellen Buchstaben weiter vorn und nimm, was danach kam.</li><li>Er lernt das nicht allmählich, sondern in einem Sprung, weil zwei Teile nur zusammen etwas nützen.</li><li>Er kann genau das, was in den Daten steckte: ohne Wiederholung kein Favorit, kein Alphabet, nicht über 20 Zeichen.</li></ul>
     <div class="take-f">Verlust ↓ &nbsp; ⇐ &nbsp; 1500 × (16 Folgen → vorhersagen → Verlust → Backpropagation → kleiner Schritt)</div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum kann das Modell in der ersten Runde einer Folge nicht besser als raten?</summary><p>Jeder Buchstabe ist dort neu. Es gibt nichts, worauf es zurückschauen könnte.</p></details>
-      <details><summary>Was ist ein Phasenübergang beim Training?</summary><p>Lange passiert wenig, dann fällt der Verlust plötzlich steil ab, weil zwei Teile sich ab einem Punkt gegenseitig verstärken.</p></details>
-      <details><summary>Welcher Trick aus Kapitel 9 verhindert, dass das Modell beim Lernen schummelt?<span class="from">Kapitel 9</span></summary><p>Die kausale Maske: Jede Stelle sieht nur sich und die Stellen davor.</p></details>
+      <details data-href="#zurueck" data-label="„Zurückschauen“"><summary>Warum kann das Modell in der ersten Runde einer Folge nicht besser als raten?</summary><p>Jeder Buchstabe ist dort neu. Es gibt nichts, worauf es zurückschauen könnte.</p></details>
+      <details data-href="#sprung" data-label="„Ein plötzlicher Sprung“"><summary>Was ist ein Phasenübergang beim Training?</summary><p>Lange passiert wenig, dann fällt der Verlust plötzlich steil ab, weil zwei Teile sich ab einem Punkt gegenseitig verstärken.</p></details>
+      <details data-href="09-transformer.html#maske" data-label="Kapitel 9, „Nicht spicken“"><summary>Welcher Trick aus Kapitel 9 verhindert, dass das Modell beim Lernen schummelt?<span class="from">Kapitel 9</span></summary><p>Die kausale Maske: Jede Stelle sieht nur sich und die Stellen davor.</p></details>
     </div>
   </section>
 
@@ -306,7 +307,7 @@
       async play(a) {
         const M = st.model; liveRunning = true; let said = false;
         try {
-          await a.ask('Wie wird der Verlust in den Wiederholungen sinken?', ['gleichmäßig, Schritt für Schritt', 'lange kaum, dann plötzlich', 'gar nicht'], 1);
+          await a.ask('Wie wird der Verlust in den Wiederholungen sinken?', ['gleichmäßig, Schritt für Schritt', 'lange kaum, dann plötzlich', 'gar nicht'], 1, 'Das Zurückschauen braucht zwei Teile, die einzeln nichts nützen. Lange fehlt einer, dann greifen beide plötzlich ineinander.');
           a.say('Training läuft. Beide Kurven bleiben erst einmal oben …');
           await a.loop(() => { M.train(1); const h = M.hist[M.hist.length - 1]; if (!said && h && h.rep < 1.2) { said = true; a.say(`Schritt ${M.t}: Der Verlust der Wiederholungen stürzt ab.`); } return M.t < STEPS; }, (i) => (i < 200 ? 60 : 180));
         } finally { liveRunning = false; }
@@ -342,7 +343,7 @@
       setup() { st.gen = []; st.genP = null; },
       async play(a) {
         await waitRef(a);
-        await a.ask('Vorgabe ohne Wiederholung: A B C D E F. Was sagt das Modell als Nächstes?', ['„G“: das Alphabet geht weiter', 'keinen klaren Favoriten', 'sicher wieder „A“'], 1);
+        await a.ask('Vorgabe ohne Wiederholung: A B C D E F. Was sagt das Modell als Nächstes?', ['„G“: das Alphabet geht weiter', 'keinen klaren Favoriten', 'sicher wieder „A“'], 1, 'Das Modell hat nur gelernt, Wiederholungen zu kopieren. Ein Alphabet kam in den Daten nie vor, und ohne Wiederholung gibt es nichts zu kopieren.');
         a.hl('n'); a.say('Vorgabe ohne Wiederholung: A B C D E F.');
         await generate(a, 'ABCDEF', false, 7);
         a.say('Kein klarer Favorit, die Wahrscheinlichkeit ist breit verteilt. Ein „G“ als Fortsetzung des Alphabets hat es nie gelernt.');

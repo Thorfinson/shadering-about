@@ -18,6 +18,7 @@
     <h1>Der Transformer</h1>
     <p class="lead">Aus Embeddings (Kapitel 6) und Attention (Kapitel 7 und 8) wird ein vollständiges Sprachmodell. Es fehlen noch vier Teile: wie Ergebnisse zusammengesetzt werden, eine Verarbeitung pro Wort, die Reihenfolge und eine Aufgabe zum Lernen. Wir nehmen sie uns einzeln vor.</p>
     <ol class="roadmap"><li>Addieren statt ersetzen</li><li>Das MLP für jedes Wort</li><li>Reihenfolge durch Platzvektoren</li><li>Die Aufgabe: das nächste Wort</li></ol>
+    <ul class="goals"><li>den Residualstrom als gemeinsames Notizblatt beschreiben</li><li>erklären, wozu Platzvektoren und Maske da sind</li><li>den Bauplan eines Transformers aufzählen</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -155,12 +156,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Jeder Baustein liest das Notizblatt eines Worts (den Residualstrom) und addiert sein Ergebnis dazu.</li><li>Attention tauscht zwischen den Wörtern aus, das MLP verarbeitet jedes Wort für sich. Platzvektoren bringen die Reihenfolge hinein.</li><li>Gelernt wird mit einer Aufgabe: an jeder Stelle das nächste Wort vorhersagen, ohne nach rechts zu spicken.</li></ul>
     <div class="take-f"><b>x</b> = <b>E</b>[Wort] + <b>P</b>[Platz] &nbsp; → &nbsp; (<b>x</b> += Attn(<b>x</b>), <b>x</b> += MLP(<b>x</b>)) × <i>N</i> &nbsp; → &nbsp; softmax(<b>u</b> · <b>x</b>)</div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum braucht ein Transformer Platzvektoren?</summary><p>Attention vergleicht nur Vektoren. Ohne Platz wären „der Mann füttert den Hund“ und „der Hund füttert den Mann“ für sie gleich.</p></details>
-      <details><summary>Was macht die kausale Maske?</summary><p>Sie sperrt alle Wörter rechts: Ihre Punktzahlen werden −∞, ihr Anteil 0. So kann das Modell das nächste Wort nicht ablesen.</p></details>
-      <details><summary>Woher kennen wir die Ausgabe „Skalarprodukt mit u, dann Softmax“?<span class="from">Kapitel 6</span></summary><p>Aus dem Ratespiel in Kapitel 6: Dort sagte der Vektor eines Worts seine Nachbarn vorher.</p></details>
+      <details data-href="#reihenfolge" data-label="„Attention kennt keine Reihenfolge“"><summary>Warum braucht ein Transformer Platzvektoren?</summary><p>Attention vergleicht nur Vektoren. Ohne Platz wären „der Mann füttert den Hund“ und „der Hund füttert den Mann“ für sie gleich.</p></details>
+      <details data-href="#maske" data-label="„Nicht spicken“"><summary>Was macht die kausale Maske?</summary><p>Sie sperrt alle Wörter rechts: Ihre Punktzahlen werden −∞, ihr Anteil 0. So kann das Modell das nächste Wort nicht ablesen.</p></details>
+      <details data-href="06-embeddings.html#punktzahl" data-label="Kapitel 6, „Woher die Wahrscheinlichkeiten kommen“"><summary>Woher kennen wir die Ausgabe „Skalarprodukt mit u, dann Softmax“?<span class="from">Kapitel 6</span></summary><p>Aus dem Ratespiel in Kapitel 6: Dort sagte der Vektor eines Worts seine Nachbarn vorher.</p></details>
     </div>
   </section>
 
@@ -386,7 +387,7 @@
       setup() { st.ordA = 0; },
       async play(a) {
         a.say('Zwei Sätze, dieselben Wörter, andere Bedeutung.'); await a.wait(1400);
-        await a.ask('Bekommt „Hund“ nach der Attention in beiden Sätzen dasselbe Ergebnis?', ['ja, exakt dasselbe', 'nein, verschiedene'], 0);
+        await a.ask('Bekommt „Hund“ nach der Attention in beiden Sätzen dasselbe Ergebnis?', ['ja, exakt dasselbe', 'nein, verschiedene'], 0, 'Attention vergleicht und mischt nur Vektoren. In beiden Sätzen sind es dieselben Vektoren, und ihre Reihenfolge kommt in der Rechnung nicht vor.');
         a.hl('o'); await a.to(st, { ordA: 1 }, 900); a.say('Das Ergebnis für „Hund“ ist in beiden Sätzen exakt gleich. Attention sieht die Reihenfolge nicht.');
       },
     },

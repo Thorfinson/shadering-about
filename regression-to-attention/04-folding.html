@@ -18,6 +18,7 @@
     <h1>Den Raum falten</h1>
     <p class="lead">Eine Matrix kann nur drehen und strecken, eine Grenze nur gerade schneiden. Ein neuronales Netz kann mehr, weil es zwischen die Matrizen eine winzige Knickstelle setzt. Hier trainiert ein Netz live im Browser.</p>
     <ol class="roadmap"><li>Ein Knick</li><li>Neuronen als Rampen</li><li>Eine Schicht faltet den Raum</li><li>Backpropagation</li><li>Tiefe</li></ol>
+    <ul class="goals"><li>erklären, warum ein Netz einen Knick braucht</li><li>beschreiben, wie eine Schicht den Raum faltet</li><li>Backpropagation als „Fehler rückwärts verteilen“ erklären</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -142,12 +143,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>ReLU ist ein Knick: Negatives wird 0. Erst dieser Knick macht ein Netz mächtiger als eine Matrix.</li><li>Eine Schicht faltet den Raum so, dass am Ende wieder eine gerade Grenze reicht.</li><li>Backpropagation schickt den Fehler rückwärts durch das Netz; jedes Gewicht bekommt „Fehleranteil mal Eingabe“.</li></ul>
     <div class="take-f"><b>h</b> = ReLU(<b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub>) &nbsp;&nbsp; <i>ŷ</i> = <b>W</b><sub>2</sub> <b>h</b> + <b>b</b><sub>2</sub></div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Warum braucht ein Netz überhaupt einen Knick?</summary><p>Ohne ihn wären alle Schichten zusammen wieder eine einzige Matrix, und die kann den Raum nicht biegen.</p></details>
-      <details><summary>Was passiert beim Rückwärtsrechnen an einem Neuron, das schweigt?</summary><p>Nichts kommt durch: Ein schweigender Knick ist ein ausgekuppeltes Zahnrad mit Faktor 0.</p></details>
-      <details><summary>Was konnte eine einzelne Grenze in Kapitel 3 nicht trennen?<span class="from">Kapitel 3</span></summary><p>XOR: Blau in zwei gegenüberliegenden Ecken, Orange in den anderen beiden.</p></details>
+      <details data-href="#relu" data-label="„Ein Knick“"><summary>Warum braucht ein Netz überhaupt einen Knick?</summary><p>Ohne ihn wären alle Schichten zusammen wieder eine einzige Matrix, und die kann den Raum nicht biegen.</p></details>
+      <details data-href="#rueckwaerts" data-label="„Wer ist schuld am Fehler?“"><summary>Was passiert beim Rückwärtsrechnen an einem Neuron, das schweigt?</summary><p>Nichts kommt durch: Ein schweigender Knick ist ein ausgekuppeltes Zahnrad mit Faktor 0.</p></details>
+      <details data-href="03-classification.html#xor" data-label="Kapitel 3, „Wo eine Gerade nicht reicht“"><summary>Was konnte eine einzelne Grenze in Kapitel 3 nicht trennen?<span class="from">Kapitel 3</span></summary><p>XOR: Blau in zwei gegenüberliegenden Ecken, Orange in den anderen beiden.</p></details>
     </div>
   </section>
 
@@ -584,7 +585,7 @@
       setup() { st.fn = 'tent'; st.tentN = 0; },
       async play(a) {
         a.say('Eine Gerade von −1 bis 1.'); await a.wait(1200);
-        await a.ask('Jede Falte verdoppelt die Stücke. Wie viele gerade Stücke ergeben vier Schichten mit je einer Falte?', ['4', '8', '16'], 2);
+        await a.ask('Jede Falte verdoppelt die Stücke. Wie viele gerade Stücke ergeben vier Schichten mit je einer Falte?', ['4', '8', '16'], 2, 'Jede Falte legt alles doppelt: 2, 4, 8, 16. Wenige Schichten hintereinander erzeugen so mehr Stücke als eine breite Schicht.');
         a.hl('T');
         for (const k of [1, 2, 3, 4]) { a.say(`${k}× gefaltet: ${2 ** k} gerade Stücke.`); await a.to(st, { tentN: k }, 1500); await a.wait(1100); }
         a.say('Vier Schichten mit je einer Falte: 16 Stücke. Eine einzige Schicht bräuchte dafür 16 Neuronen.');

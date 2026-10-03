@@ -18,6 +18,7 @@
     <h1>Die Grenze</h1>
     <p class="lead">Wenn die Antwort keine Zahl ist, sondern ja oder nein. Aus der Geraden wird eine Wahrscheinlichkeit, aus der Wahrscheinlichkeit eine Grenze, und aus der Grenze die Art, wie ein Sprachmodell sein nächstes Wort wählt.</p>
     <ol class="roadmap"><li>Ja oder nein statt einer Zahl</li><li>Die S-Kurve aus e hoch z</li><li>Überraschung als Verlust</li><li>Mehr Klassen: Softmax</li></ol>
+    <ul class="goals"><li>aus einer Punktzahl eine Wahrscheinlichkeit machen (Sigmoid, Softmax)</li><li>die Kreuzentropie als Überraschung lesen</li><li>zeigen, wo eine einzelne Grenze scheitert</li></ul>
   </header>
 
   <section class="story" id="story">
@@ -171,12 +172,12 @@
     <h2>Das nimmst du mit</h2>
     <ul class="take"><li>Aus einer Punktzahl w · x + b wird mit der Sigmoidfunktion eine Wahrscheinlichkeit zwischen 0 und 1.</li><li>Die Kreuzentropie misst die Überraschung des Modells: −log p für das, was wirklich passiert ist.</li><li>Bei mehreren Klassen bekommt jede ihre Punktzahl; die Softmax macht daraus Wahrscheinlichkeiten. Eine Grenze bleibt aber gerade.</li></ul>
     <div class="take-f"><i>p</i> = softmax(<b>W</b> <b>x</b> + <b>b</b>) &nbsp;&nbsp; <i>L</i> = −log <i>p</i><sub>richtig</sub></div>
-    <h3>Teste dich</h3>
-    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
     <div class="quiz">
-      <details><summary>Wo liegt die Grenze einer logistischen Regression?</summary><p>Dort, wo die Punktzahl genau 0 ist: Dort sagt die Sigmoidfunktion 50 %.</p></details>
-      <details><summary>Was macht die Softmax in zwei Schritten?</summary><p>Erst e hoch jede Punktzahl, damit alles positiv wird, dann durch die Summe teilen, damit alles zusammen 1 ergibt.</p></details>
-      <details><summary>Gelernt wird wieder mit „Fehler mal Eingabe“. Wo kam diese Regel zuerst vor?<span class="from">Kapitel 1</span></summary><p>In Kapitel 1: Jede Wohnung zieht mit „Fehler mal Fläche“ an w.</p></details>
+      <details data-href="#knoepfe" data-label="„Was w und b jetzt tun“"><summary>Wo liegt die Grenze einer logistischen Regression?</summary><p>Dort, wo die Punktzahl genau 0 ist: Dort sagt die Sigmoidfunktion 50 %.</p></details>
+      <details data-href="#softmax" data-label="„Softmax“"><summary>Was macht die Softmax in zwei Schritten?</summary><p>Erst e hoch jede Punktzahl, damit alles positiv wird, dann durch die Summe teilen, damit alles zusammen 1 ergibt.</p></details>
+      <details data-href="#lernen" data-label="„Bergab, wie gehabt“"><summary>Gelernt wird wieder mit „Fehler mal Eingabe“. Wo kam diese Regel zuerst vor?<span class="from">Kapitel 1</span></summary><p>In Kapitel 1: Jede Wohnung zieht mit „Fehler mal Fläche“ an w.</p></details>
     </div>
   </section>
 
@@ -815,8 +816,9 @@
         if (await a.tryit([
           { label: 'Richtung', type: 'range', min: 0, max: 180, step: 1, get: () => ang, set: (v) => { ang = v; setLine(); }, fmt: (v) => `${fmt(v, 0)}°` },
           { label: 'Verschiebung', type: 'range', min: -2, max: 2, step: 0.05, get: () => st.b2, set: (v) => { st.b2 = v; xorAcc(); }, fmt: (v) => fmt(v, 2) },
-        ], 'Dreh und schieb die Grenze. Schaffst du mehr als 75 % Treffer (Formel oben)?')) a.say('Mehr als 3 von 4 Ecken richtig geht nicht. Jetzt versucht es das Training.');
-        await a.ask('Wie viele Treffer schafft das Training mit einer einzigen Geraden?', ['fast 100 %', 'etwa 75 %', 'etwa 50 %'], 2);
+          { type: 'note', text: () => `<b>${fmt(st.acc * 100, 0)} % Treffer.</b> ` + (st.acc >= 0.72 ? 'Drei Ecken richtig, mehr geht mit einer Geraden nicht: Die vierte liegt immer auf der falschen Seite.' : st.acc >= 0.55 ? 'Schon besser als Raten. Versuch, drei der vier Ecken auf die richtige Seite zu bringen.' : 'Etwa Raten. Dreh die Grenze so, dass sie eine Ecke von den anderen dreien abschneidet.') },
+        ], 'Dreh und schieb die Grenze. Wie viele Treffer schaffst du mit einer einzigen Geraden?')) a.say('Mehr als 3 von 4 Ecken richtig geht nicht. Jetzt versucht es das Training.');
+        await a.ask('Wie viele Treffer schafft das Training mit einer einzigen Geraden?', ['fast 100 %', 'etwa 75 %', 'etwa 50 %'], 2, 'Eine Gerade teilt die Ebene in zwei Hälften, aber jede Farbe liegt in zwei gegenüberliegenden Ecken. Etwas landet immer auf der falschen Seite, und das Training bleibt hier sogar beim Raten hängen.');
         a.say('Training …');
         await a.loop((i) => { train2dStep(0.8); return i < 200; }, (i) => (i < 20 ? 8 : 30));
         a.say(`Nach ${st.steps} Schritten: ${fmt(st.acc * 100, 0)} % Treffer. Eine Gerade kann hier nicht mehr als raten.`); await a.wait(2400);

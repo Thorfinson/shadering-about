@@ -608,8 +608,22 @@ table.t td { font-family: var(--font-mono); font-size: 13px; }
 .ask .btn:disabled { cursor: default; opacity: 0.75; }
 .ask .btn.picked { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .ask .btn.right { opacity: 1; border-color: var(--grad); color: var(--grad); box-shadow: 0 0 0 1px var(--grad); }
-.ask .btn.wrong { text-decoration: line-through; }
-.ask-r { font-size: 13px; color: var(--fg-2); }
+.ask-r { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--fg-2); }
+.ask-r b { color: var(--fg); font-weight: 600; }
+.try-note { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--fg-2); }
+.try-note b { color: var(--fg); font-weight: 600; }
+.recap details .self { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 13.5px; color: var(--muted); }
+.recap details .self span { margin-right: 4px; }
+.recap details .self .btn { padding: 6px 11px; font-size: 13px; }
+.recap details .self .btn.on { border-color: var(--accent); color: var(--accent); }
+.recap .self-note { margin: 8px 0 0; font-size: 14px; }
+.recap .self-note:empty { display: none; }
+.recap .self-note a { color: var(--accent); text-underline-offset: 3px; }
+.goals { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 15px; color: var(--fg-2); }
+.goals::before { content: 'Danach kannst du'; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.goals li { padding-left: 1.2em; position: relative; }
+.goals li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+.calm { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--fg-2); border-left: 2px solid var(--axis); padding-left: 12px; max-width: 40rem; }
 button.btn.ghost { background: transparent; color: var(--muted); }
 .try .tc { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; font-size: 13px; color: var(--fg-2); }
 .try input[type="range"] { accent-color: var(--accent); width: min(220px, 42vw); }
