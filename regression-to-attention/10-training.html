@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Ein eigener Transformer · Kapitel 10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 10 von 12</div>
+    <h1>Ein eigener Transformer</h1>
+    <p class="lead">Wir bauen einen winzigen Transformer nach dem Bauplan aus Kapitel 9 und trainieren ihn live im Browser. Er ist klein genug, dass wir ihn in Kapitel 12 vollständig lesen können, und er lernt etwas, das jedes große Sprachmodell auch lernt.</p>
+    <ol class="roadmap"><li>Eine kleine Aufgabe</li><li>Der Bauplan</li><li>Live trainieren</li><li>Der Sprung und die Grenzen</li></ol>
+    <ul class="goals"><li>die Aufgabe „Muster fortsetzen“ und ihre Regel beschreiben</li><li>einen Phasenübergang in einer Lernkurve erkennen</li><li>sagen, was ein trainiertes Modell nicht kann</li></ul>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="seq"><div class="vlabel" id="l-seq">Folgen, die sich wiederholen</div><div class="plot" id="v-seq" role="img" aria-label="Buchstabenfolgen; darunter, wie sicher das Modell jeden Buchstaben vorhergesagt hat, und die Lernkurven."></div></div>
+        <div class="view" data-view="count"><div class="vlabel">1856 Zahlen</div><div class="plot" id="v-count" role="img" aria-label="Die Teile des Modells mit der Anzahl ihrer Zahlen."></div></div>
+        <div class="view" data-view="loop"><div class="vlabel">Ein Lernschritt</div><div class="plot" id="v-loop" role="img" aria-label="Kreislauf aus Beispielen, Vorhersage, Verlust, Gradient und Anpassung."></div></div>
+        <div class="view" data-view="gen"><div class="vlabel">Das Modell schreibt weiter</div><div class="plot" id="v-gen" role="img" aria-label="Ein Anfang aus Buchstaben und die vom Modell erzeugte Fortsetzung."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="warum"><div class="card">
+        <span class="kicker">Warum ein eigener?</span>
+        <h3>Klein genug zum Verstehen</h3>
+        <p>Große Sprachmodelle haben Milliarden Zahlen. Um wirklich zu verstehen, was in einem Transformer passiert, brauchen wir einen, den wir vollständig überblicken. Also bauen wir einen eigenen, mit einer Aufgabe, die klein ist, aber dasselbe verlangt wie Sprache.</p>
+      </div></article>
+
+      <article class="step" data-step="aufgabe" data-core><div class="card">
+        <span class="kicker">Die Aufgabe</span>
+        <h3>Folgen, die sich wiederholen</h3>
+        <p>Statt Wörtern bekommt unser Modell 16 Buchstaben. Jede Folge ist 20 Buchstaben lang und wiederholt sich: „K F A R K F A R K F …“. Wie lang das Muster ist (die <strong>Periode</strong>), ist jedes Mal anders, zwischen 3 und 8.</p>
+        <p>Grau: die erste Runde. Grün: die Wiederholungen.</p>
+      </div></article>
+
+      <article class="step" data-step="zurueck" data-core><div class="card">
+        <span class="kicker">Was man dafür braucht</span>
+        <h3>Zurückschauen</h3>
+        <p>In der ersten Runde kann niemand wissen, was als Nächstes kommt: Jeder Buchstabe ist neu. Ab der Wiederholung aber schon. Die Regel: Suche, wo der aktuelle Buchstabe schon einmal stand, und schau, was danach kam. Das kommt jetzt wieder.</p>
+        <p>Genau das muss jedes Sprachmodell früh lernen. Namen, Zitate und Code wiederholen sich in Texten ständig. Wer „Frau Albers“ schon gelesen hat, kann nach „Frau“ das „Albers“ erraten.</p>
+      </div></article>
+
+      <article class="step" data-step="bauplan"><div class="card">
+        <span class="kicker">Der Bauplan</span>
+        <h3>1856 Zahlen</h3>
+        <p>Unser Modell folgt dem Bauplan aus Kapitel 9, nur sehr klein. Jeder Buchstabe bekommt einen Vektor aus 16 Zahlen (Tabelle <b>E</b>), jeder der 20 Plätze einen weiteren (Tabelle <b>P</b>). Dann zwei Schichten mit je einem Attention-Kopf; Fragen, Schilder und Werte haben je 8 Zahlen. Am Ende ein Ausgabe-Vektor pro Buchstabe.</p>
+        <p>Ein MLP lassen wir weg, damit wir das Modell in Kapitel 12 vollständig lesen können. Zusammen sind es 1856 Zahlen, am Anfang alle zufällig.</p>
+      </div></article>
+
+      <article class="step" data-step="vorher"><div class="card">
+        <span class="kicker">Vor dem Training</span>
+        <h3>Raten ins Blaue</h3>
+        <p>Unter jedem Buchstaben steht als Balken, welche Wahrscheinlichkeit das Modell ihm gab, bevor es ihn sah. Zufällige Zahlen raten zufällig: etwa 1/16 ≈ 6 % für jeden Buchstaben, überall.</p>
+      </div></article>
+
+      <article class="step" data-step="lernschritt"><div class="card">
+        <span class="kicker">Wie gelernt wird</span>
+        <h3>Ein Lernschritt</h3>
+        <p>Ein Lernschritt läuft wie in Kapitel 1 und 4: 16 neue Beispielfolgen ziehen. Das Modell sagt an jeder Stelle den nächsten Buchstaben vorher. Der Verlust (Kapitel 9) misst, wie schlecht das war. Backpropagation (Kapitel 4) bestimmt für jede der 1856 Zahlen, in welche Richtung sie den Verlust senkt. Ein kleiner Schritt in diese Richtung (mit Adam). Und von vorn.</p>
+      </div></article>
+
+      <article class="step" data-step="training" data-core><div class="card">
+        <span class="kicker">Live</span>
+        <h3>1500 Lernschritte</h3>
+        <p>Unten zwei Lernkurven: der Verlust in der ersten Runde, die man nicht vorhersagen kann, und in den Wiederholungen.</p>
+        <p>Lange passiert wenig. Dann fällt der Verlust der Wiederholungen plötzlich steil ab.</p>
+      </div></article>
+
+      <article class="step" data-step="sprung" data-core><div class="card">
+        <span class="kicker">Was da passiert ist</span>
+        <h3>Ein plötzlicher Sprung</h3>
+        <p>Das Zurückschauen braucht zwei Teile, die nur zusammen etwas nützen (welche, sehen wir in Kapitel 12). Solange einer fehlt, bringt der andere nichts, also lernt das Modell lange kaum etwas. Sobald beide in Ansätzen da sind, verstärken sie sich gegenseitig, und der Verlust stürzt ab. Man nennt so etwas einen <strong>Phasenübergang</strong>.</p>
+        <p>Nebenbei steigt der Verlust in der ersten Runde etwas: Das Modell tippt jetzt gern auf Buchstaben, die schon vorkamen. In der ersten Runde ist die Antwort aber immer ein neuer.</p>
+      </div></article>
+
+      <article class="step" data-step="nachher" data-core><div class="card">
+        <span class="kicker">Nach dem Training</span>
+        <h3>Sicher ab der zweiten Runde</h3>
+        <p>In der ersten Runde rät das Modell weiter, das kann niemand besser. Ab der ersten Wiederholung liegt es fast immer richtig, egal ob die Periode 3 oder 8 ist.</p>
+      </div></article>
+
+      <article class="step" data-step="schreiben"><div class="card">
+        <span class="kicker">Selbst schreiben lassen</span>
+        <h3>Ein Buchstabe nach dem anderen</h3>
+        <p>So erzeugen Sprachmodelle Text: Vorhersage für das nächste Zeichen, das wahrscheinlichste anhängen, alles nochmal durch das Modell, nächstes Zeichen. Unser Modell setzt jedes Muster fort, das man ihm zweimal vorgibt.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Das Modell lernt beim Benutzen weiter.“ Nein: Nach dem Training stehen seine 1856 Zahlen fest. Was es hier schreibt, ändert keine davon. Neues lernt es nur durch ein neues Training.</div>
+      </div></article>
+
+      <article class="step" data-step="grenzen" data-core><div class="card">
+        <span class="kicker">Was es nicht kann</span>
+        <h3>Die Grenzen</h3>
+        <p>Gibt man dem Modell eine Folge ohne Wiederholung, etwa „A B C D E F“, hat es nichts, worauf es zurückschauen kann. Dann verteilt es seine Wahrscheinlichkeit auf viele Buchstaben, ohne klaren Favoriten. Ein Alphabet setzt es nicht fort: Das hat es nie gelernt.</p>
+        <p>Und über 20 Zeichen hinaus geht es gar nicht, denn es gibt nur 20 Platzvektoren. Das Modell kann genau das, was in den Daten steckte, nicht mehr.</p>
+      </div></article>
+
+      <article class="step" data-step="ausblick"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>Wie macht es das?</h3>
+        <p>Unser Modell hat einen Mechanismus gelernt, den wir ihm nie einprogrammiert haben. In Kapitel 12 öffnen wir es und lesen ihn ab. Vorher, in Kapitel 11, lernen wir die Werkzeuge dafür kennen, an einem Netz, das Bilder sieht.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Ein winziger Transformer mit 1856 Zahlen lernt, Muster fortzusetzen: Suche den aktuellen Buchstaben weiter vorn und nimm, was danach kam.</li><li>Er lernt das nicht allmählich, sondern in einem Sprung, weil zwei Teile nur zusammen etwas nützen.</li><li>Er kann genau das, was in den Daten steckte: ohne Wiederholung kein Favorit, kein Alphabet, nicht über 20 Zeichen.</li></ul>
+    <div class="take-f">Verlust ↓ &nbsp; ⇐ &nbsp; 1500 × (16 Folgen → vorhersagen → Verlust → Backpropagation → kleiner Schritt)</div>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
+    <div class="quiz">
+      <details data-href="#zurueck" data-label="„Zurückschauen“"><summary>Warum kann das Modell in der ersten Runde einer Folge nicht besser als raten?</summary><p>Jeder Buchstabe ist dort neu. Es gibt nichts, worauf es zurückschauen könnte.</p></details>
+      <details data-href="#sprung" data-label="„Ein plötzlicher Sprung“"><summary>Was ist ein Phasenübergang beim Training?</summary><p>Lange passiert wenig, dann fällt der Verlust plötzlich steil ab, weil zwei Teile sich ab einem Punkt gegenseitig verstärken.</p></details>
+      <details data-href="09-transformer.html#maske" data-label="Kapitel 9, „Nicht spicken“"><summary>Welcher Trick aus Kapitel 9 verhindert, dass das Modell beim Lernen schummelt?<span class="from">Kapitel 9</span></summary><p>Die kausale Maske: Jede Stelle sieht nur sich und die Stellen davor.</p></details>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>N. Elhage u. a. (2021): <a href="https://transformer-circuits.pub/2021/framework/index.html"><i>A Mathematical Framework for Transformer Circuits</i></a>. Das Modell nur aus Attention stammt von hier.</li>
+      <li>C. Olsson u. a. (2022): <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html"><i>In-context Learning and Induction Heads</i></a>. Der Phasenübergang.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="09-transformer.html"><span class="dir">Zurück · Kapitel 9</span><span class="name">Der Transformer</span></a>
+    <a class="next" href="11-vision.html"><span class="dir">Weiter · Kapitel 11</span><span class="name">Merkmale und Schaltkreise</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script src="transformer.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const LET = TT.LETTERS, STEPS = 1500;
+
+  // reference model trained in idle time; the live step trains its own copy (same seed, same result)
+  let REF = TT.create({ seed: 3 }), liveRunning = false;
+  const refDone = () => REF.t >= STEPS;
+  (function bg() {
+    const go = (dl) => { if (!liveRunning) { const t0 = performance.now(); while (!refDone() && performance.now() - t0 < (dl && dl.timeRemaining ? Math.max(4, dl.timeRemaining() - 2) : 12)) REF.train(1); } if (!refDone()) schedule(); };
+    const schedule = () => (window.requestIdleCallback ? requestIdleCallback(go, { timeout: 200 }) : setTimeout(go, 16));
+    schedule();
+  })();
+  const waitRef = async (a) => { if (refDone()) return; a.say('Das Modell trainiert noch im Hintergrund …'); await a.loop(() => !refDone(), 4); };
+
+  const st = { seqMode: 'show', seqN: 3, model: null, curveA: 0, back: -1, cntK: 0, loopK: -1, gen: [], genP: null, mark: 0 };
+  let story = null;
+  const FIXED = (() => { const RS = TT.rng(77), M = TT.create({ seed: 3 }); return [0, 1, 2].map(() => M.sample(RS)); })();
+
+  // ── sequences, predictions, curves ──────────────────────────────
+  const seqV = S.canvas($('#v-seq'), (ctx, W, H) => {
+    const M = st.model, Tn = 20, curve = st.curveA > 0, top = 22, rowsH = curve ? H * 0.55 : H - 30, n = st.seqN, rh = Math.min(96, rowsH / n), cw = Math.min(36, (W - 24) / Tn), x0 = (W - cw * Tn) / 2;
+    FIXED.slice(0, n).forEach(({ s, m }, k) => {
+      const y = top + k * rh, f = M && st.seqMode === 'pred' ? M.forward(s) : null;
+      s.forEach((t, i) => {
+        const x = x0 + i * cw, first = i < m;
+        ctx.fillStyle = first ? S.alpha('fg', 0.06) : S.alpha('grad', 0.12); ctx.fillRect(x + 1, y, cw - 2, cw - 2);
+        S.label(ctx, LET[t], x + cw / 2, y + cw / 2 - 1, first ? S.c.fg : S.c.grad, S.font(Math.min(16, cw * 0.48), 'mono', '600'), 'center');
+        if (f && i > 0) { const p = M.probsAt(f.logits, i - 1)[t], bh = rh - cw - 18; ctx.fillStyle = S.alpha('fg', 0.06); ctx.fillRect(x + cw * 0.2, y + cw + 2, cw * 0.6, bh); ctx.fillStyle = p > 0.5 ? S.c.grad : p > 0.15 ? S.c.accent : S.c.error; ctx.fillRect(x + cw * 0.2, y + cw + 2 + bh * (1 - p), cw * 0.6, bh * p); }
+      });
+      S.label(ctx, `Periode ${m}`, x0, y - 9, S.c['fg-2'], S.font(11.5, 'body'), 'left');
+      if (k === 0 && st.back >= m) {
+        // the rule: find the last copy of the current letter, read what came after it
+        const i = st.back, j = i - m, a = x0 + (i + 0.5) * cw, b = x0 + (j + 0.5) * cw, c = x0 + (j + 1.5) * cw, d = x0 + (i + 1.5) * cw, yy = y + cw + 6;
+        ctx.strokeStyle = S.c.accent; ctx.fillStyle = S.c.accent; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(a, yy); ctx.bezierCurveTo(a, yy + 40, b, yy + 40, b, yy + 2); ctx.stroke(); S.arrow(ctx, b, yy + 12, b, yy + 1, 8, 2.2);
+        ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad; ctx.beginPath(); ctx.moveTo(c, yy); ctx.bezierCurveTo(c, yy + 54, d, yy + 54, d, yy + 2); ctx.stroke(); S.arrow(ctx, d, yy + 12, d, yy + 1, 8, 2.2);
+        if (W < 560) { S.label(ctx, `„${LET[s[i]]}“ stand schon da → danach kam „${LET[s[j + 1]]}“`, W / 2, yy + 66, S.c.fg, S.font(11.5, 'body', '600'), 'center'); S.label(ctx, `→ also kommt jetzt „${LET[s[j + 1]]}“`, W / 2, yy + 84, S.c.fg, S.font(11.5, 'body', '600'), 'center'); }
+        else S.label(ctx, `„${LET[s[i]]}“ stand schon da → danach kam „${LET[s[j + 1]]}“ → also kommt jetzt „${LET[s[j + 1]]}“`, W / 2, yy + 72, S.c.fg, S.font(13.5, 'body', '600'), 'center');
+      }
+    });
+    if (st.seqMode === 'pred') S.label(ctx, W < 560 ? 'Balken: wie sicher das Modell vorher war' : 'Balken: Wahrscheinlichkeit, die das Modell dem Buchstaben gab, bevor er kam', W / 2, top + n * rh + 2, S.c['fg-2'], S.font(11.5, 'body'), 'center');
+    if (curve && M) {
+      ctx.globalAlpha = st.curveA; const cx0 = 50, cx1 = W - 20, cy0 = H * 0.66, cy1 = H - 30, X = lin(0, STEPS, cx0, cx1), Y = lin(0, 4, cy1, cy0);
+      S.axes(ctx, { x: X, y: Y, xt: [0, 500, 1000, 1500], yt: [0, 1, 2, 3, 4], xfmt: String, yfmt: String, xlabel: 'Lernschritt' });
+      [['first', S.c.error, 'erste Runde'], ['rep', S.c.grad, 'Wiederholungen']].forEach(([key, col, nm], k) => { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); M.hist.forEach((h, i) => (i ? ctx.lineTo(X(h.t), Y(Math.min(4, h[key]))) : ctx.moveTo(X(h.t), Y(Math.min(4, h[key]))))); ctx.stroke(); S.label(ctx, nm, cx1 - 4, cy0 + 10 + k * 16, col, S.font(12, 'body', '600'), 'right'); });
+      S.label(ctx, 'Verlust', cx0 + 6, W < 560 ? cy0 + 10 : cy0 - 6, S.c['fg-2'], S.font(11.5, 'body'), 'left');
+      if (st.mark > 0 && M.hist.length > 2) { let best = 0, bt = 0; for (let k = 1; k < M.hist.length; k++) { const d = M.hist[k - 1].rep - M.hist[k].rep; if (d > best) { best = d; bt = M.hist[k].t; } } ctx.strokeStyle = S.alpha('fg', 0.5); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(bt), cy0); ctx.lineTo(X(bt), cy1); ctx.stroke(); ctx.setLineDash([]); S.label(ctx, `Sprung bei Schritt ≈ ${bt}`, X(bt) + 6, cy0 + 40, S.c.fg, S.font(12, 'mono', '600'), 'left'); }
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── counting the numbers ────────────────────────────────────────
+  const PARTS = [['Tabelle E', '16 Buchstaben × 16 Zahlen', 256], ['Tabelle P', '20 Plätze × 16 Zahlen', 320], ['Kopf in Schicht 0', 'W_Q, W_K, W_V: je 16 × 8, W_O: 8 × 16', 512], ['Kopf in Schicht 1', 'genauso', 512], ['Ausgabe-Vektoren', '16 Buchstaben × 16 Zahlen', 256]];
+  const countV = S.canvas($('#v-count'), (ctx, W, H) => {
+    const rh = Math.min(54, (H - 80) / 6), x0 = Math.max(16, W / 2 - 300), narrow = W < 560; let sum = 0;
+    PARTS.forEach(([a, b, n], i) => { const al = clamp(st.cntK - i, 0, 1); if (al <= 0) return; sum += n * (al >= 1 ? 1 : 0); ctx.globalAlpha = al; const y = 20 + i * rh; S.label(ctx, a, x0, y + rh * 0.32, S.c.fg, S.font(narrow ? 13 : 15, 'body', '600'), 'left'); S.label(ctx, b, x0, y + rh * 0.7, S.c['fg-2'], S.font(narrow ? 11 : 12.5, 'mono'), 'left'); S.label(ctx, String(n), W - x0, y + rh / 2, S.c.accent, S.font(narrow ? 15 : 18, 'mono', '600'), 'right'); ctx.globalAlpha = 1; });
+    if (st.cntK >= PARTS.length) { const y = 20 + PARTS.length * rh + 6; ctx.strokeStyle = S.alpha('fg', 0.4); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(W - x0, y); ctx.stroke(); S.label(ctx, 'zusammen', x0, y + 24, S.c.fg, S.font(15, 'body', '600'), 'left'); S.label(ctx, '1856', W - x0, y + 24, S.c.accent, S.font(20, 'mono', '600'), 'right'); }
+  });
+
+  // ── one learning step as a loop ─────────────────────────────────
+  const LOOP = ['16 Folgen ziehen', 'vorhersagen', 'Verlust messen', 'Backpropagation', 'kleiner Schritt'];
+  const loopV = S.canvas($('#v-loop'), (ctx, W, H) => {
+    const cx = W / 2, cy = H / 2, bw = W < 560 ? 116 : 150, Rx = Math.min(Math.max(W, H) * 0.32, W / 2 - bw / 2 - 4), Ry = Math.min(H * 0.36, Math.min(W, H) * 0.4), n = LOOP.length;
+    LOOP.forEach((t, i) => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / n, x = cx + Rx * Math.cos(a), y = cy + Ry * Math.sin(a), on = Math.round(st.loopK) === i;
+      const a2 = -Math.PI / 2 + ((i + 1) * 2 * Math.PI) / n; ctx.strokeStyle = S.alpha('fg', 0.35); ctx.fillStyle = S.alpha('fg', 0.35); ctx.lineWidth = 1.5;
+      const p0 = [cx + Rx * Math.cos(a + 0.28), cy + Ry * Math.sin(a + 0.28)], p1 = [cx + Rx * Math.cos(a2 - 0.28), cy + Ry * Math.sin(a2 - 0.28)]; S.arrow(ctx, ...p0, ...p1, 8, 1.5);
+      ctx.fillStyle = on ? S.alpha('accent', 0.25) : S.c['surface-2']; ctx.strokeStyle = on ? S.c.accent : S.c['fg-2']; ctx.lineWidth = on ? 2 : 1; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - bw / 2, y - 20, bw, 40, 8) : ctx.rect(x - bw / 2, y - 20, bw, 40); ctx.fill(); ctx.stroke();
+      S.label(ctx, t, x, y, on ? S.c.accent : S.c.fg, S.font(W < 560 ? 12 : 14, 'body', '600'), 'center');
+    });
+    S.label(ctx, '× 1500', cx, cy, S.c['fg-2'], S.font(18, 'mono', '600'), 'center');
+  });
+
+  // ── generation ─────────────────────────────────────────────────
+  const genV = S.canvas($('#v-gen'), (ctx, W, H) => {
+    const g = st.gen, cw = Math.min(36, (W - 24) / 20), x0 = (W - cw * 20) / 2, y = 40;
+    g.forEach(([t, own], i) => { const x = x0 + i * cw; ctx.fillStyle = own ? S.alpha('accent', 0.25) : S.alpha('fg', 0.08); ctx.fillRect(x + 1, y, cw - 2, cw - 2); S.label(ctx, LET[t], x + cw / 2, y + cw / 2 - 1, own ? S.c.accent : S.c.fg, S.font(Math.min(16, cw * 0.48), 'mono', '600'), 'center'); });
+    S.label(ctx, 'grau: vorgegeben · violett: vom Modell geschrieben', W / 2, y + cw + 18, S.c['fg-2'], S.font(12, 'body'), 'center');
+    if (st.genP) {
+      const p = st.genP, bw = (W - 60) / 16, by = H * 0.45, bh = H * 0.4, best = p.indexOf(Math.max(...p));
+      S.label(ctx, 'Wahrscheinlichkeiten für das nächste Zeichen', 30, by - 14, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      p.forEach((v, j) => { ctx.fillStyle = j === best ? S.c.accent : S.alpha('fg', 0.35); ctx.fillRect(30 + j * bw + bw * 0.15, by + bh - v * bh, bw * 0.7, v * bh); S.label(ctx, LET[j], 30 + j * bw + bw / 2, by + bh + 12, j === best ? S.c.accent : S.c['fg-2'], S.font(12, 'mono', '600'), 'center'); if (v > 0.04) S.label(ctx, `${fmt(v * 100, 0)}`, 30 + j * bw + bw / 2, by + bh - v * bh - 9, S.c['fg-2'], S.font(10.5, 'mono'), 'center'); });
+    }
+  });
+  /** the reader's own prompt: keep the known letters, then let the model write greedily up to 20 */
+  function genNow(text) {
+    st.typed = text.toUpperCase();
+    const seq = st.typed.split('').map((c) => LET.indexOf(c)).filter((t) => t >= 0).slice(0, 19);
+    if (!seq.length || !refDone()) return;
+    st.gen = seq.map((t) => [t, false]); st.genP = null;
+    while (st.gen.length < 20) { const s = st.gen.map((g) => g[0]), f = REF.forward(s), p = REF.probsAt(f.logits, s.length - 1); st.genP = p; st.gen.push([p.indexOf(Math.max(...p)), true]); }
+  }
+  async function generate(a, start, twice, until) {
+    const seq = start.split('').map((c) => LET.indexOf(c)); st.gen = seq.map((t) => [t, false]); if (twice) seq.forEach((t) => st.gen.push([t, false])); st.genP = null; a.set(st, {}); await a.wait(1400);
+    while (st.gen.length < until) { const s = st.gen.map((g) => g[0]), f = REF.forward(s), p = REF.probsAt(f.logits, s.length - 1); a.set(st, { genP: p }); await a.wait(520); st.gen.push([p.indexOf(Math.max(...p)), true]); a.set(st, {}); await a.wait(260); }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const ce = () => { if (!st.model) return '–'; const h = st.model.hist[st.model.hist.length - 1]; return h ? fmt(h.rep, 2) : '–'; };
+  const show = (o) => Object.assign(st, { seqMode: 'show', seqN: 3, model: null, curveA: 0, back: -1, mark: 0 }, o || {});
+  const steps = {
+    warum: {
+      views: ['seq'],
+      formula: `ein Transformer, ${T('k', 'klein genug', 'c-new', 'damit wir ihn in Kapitel 12 vollständig lesen können')} zum Verstehen`,
+      setup() { show(); },
+      async play(a) { a.hl('k'); a.say('Ein eigenes Modell mit einer kleinen, aber echten Aufgabe.'); },
+    },
+    aufgabe: {
+      views: ['seq'],
+      formula: `${T('f', 'K F A R K F A R K …', 'c-new', 'eine Folge, die sich mit Periode 4 wiederholt')}<span class="sep">Periode zufällig:</span>3 bis 8`,
+      setup() { show(); },
+      async play(a) { a.hl('f'); a.say('Drei Beispielfolgen. Grau: die erste Runde. Grün: die Wiederholungen.'); },
+    },
+    zurueck: {
+      views: ['seq'],
+      formula: `nächstes Zeichen = ${T('r', 'was nach der letzten Kopie des aktuellen Zeichens kam', 'c-new', 'die Regel, die das Modell lernen muss')}`,
+      setup() { show({ seqN: 1 }); },
+      async play(a) {
+        const { m, s } = FIXED[0];
+        a.say('In der ersten Runde ist jeder Buchstabe neu. Niemand kann ihn vorhersagen.'); await a.wait(2600);
+        a.hl('r');
+        for (let i = m; i < Math.min(s.length - 1, m + 4); i++) { a.set(st, { back: i }); a.say(`An Stelle ${i + 1} steht „${LET[s[i]]}“. Wo stand es schon? Was kam danach?`); await a.wait(2600); }
+        a.say('Diese Regel muss das Modell selbst finden. Niemand sagt sie ihm.');
+      },
+    },
+    bauplan: {
+      views: ['count'],
+      formula: `${T('n', '1856 Zahlen', 'c-new', 'alle zu Beginn zufällig')}: E, P, zwei Köpfe, Ausgabe`,
+      setup() { st.cntK = 0; },
+      async play(a) { a.say('Die Teile des Modells, eins nach dem anderen.'); await a.to(st, { cntK: PARTS.length }, 6000, { ease: (t) => t }); a.hl('n'); a.say('Zusammen 1856 Zahlen. Große Modelle haben Milliarden.'); },
+    },
+    vorher: {
+      views: ['seq'],
+      formula: `${T('p', '<i>p</i>(richtiger Buchstabe)', 'c-new', 'Balken unter jedem Buchstaben')} ≈ 1/16 ≈ 6 %`,
+      setup() { show({ seqMode: 'pred', model: TT.create({ seed: 3 }) }); },
+      async play(a) { a.hl('p'); a.say('Unter jedem Buchstaben: Wie sicher war das untrainierte Modell, dass er kommt? Überall ein winziger Balken.'); },
+    },
+    lernschritt: {
+      views: ['loop'],
+      formula: `${T('l', 'Lernschritt', 'c-new', 'wie in Kapitel 1 und 4')}: Beispiele → Vorhersage → Verlust → Gradient → kleiner Schritt`,
+      setup() { st.loopK = -1; },
+      async play(a) { a.hl('l'); const t = ['16 neue Folgen.', 'An jeder Stelle eine Vorhersage für den nächsten Buchstaben.', 'Der Verlust: −log der Wahrscheinlichkeit des richtigen Buchstabens, gemittelt.', 'Backpropagation: Für jede der 1856 Zahlen, in welche Richtung sie den Verlust senkt.', 'Ein kleiner Schritt in diese Richtung. Und von vorn.']; for (let i = 0; i < LOOP.length; i++) { a.set(st, { loopK: i }); a.say(t[i]); await a.wait(2400); } },
+    },
+    training: {
+      views: ['seq'],
+      formula: () => `Training<span class="sep">Schritt</span>${V('t')}<span class="sep">Verlust in den Wiederholungen</span>${V('ce')}`,
+      setup() { show({ seqMode: 'pred', seqN: 2, model: TT.create({ seed: 3 }), curveA: 1 }); },
+      async play(a) {
+        const M = st.model; liveRunning = true; let said = false;
+        try {
+          await a.ask('Wie wird der Verlust in den Wiederholungen sinken?', ['gleichmäßig, Schritt für Schritt', 'lange kaum, dann plötzlich', 'gar nicht'], 1, 'Das Zurückschauen braucht zwei Teile, die einzeln nichts nützen. Lange fehlt einer, dann greifen beide plötzlich ineinander.');
+          a.say('Training läuft. Beide Kurven bleiben erst einmal oben …');
+          await a.loop(() => { M.train(1); const h = M.hist[M.hist.length - 1]; if (!said && h && h.rep < 1.2) { said = true; a.say(`Schritt ${M.t}: Der Verlust der Wiederholungen stürzt ab.`); } return M.t < STEPS; }, (i) => (i < 200 ? 60 : 180));
+        } finally { liveRunning = false; }
+        if (!refDone()) REF = M;
+        a.say('Fertig. Die erste Runde bleibt unvorhersagbar, die Wiederholungen sitzen.');
+      },
+    },
+    sprung: {
+      views: ['seq'],
+      formula: `${T('p', 'Phasenübergang', 'c-new', 'lange wenig, dann ein plötzlicher Sprung')}`,
+      setup() { show({ seqMode: 'pred', seqN: 2, model: refDone() ? REF : null, curveA: 1, mark: 1 }); },
+      async play(a) { await waitRef(a); a.set(st, { model: REF }); a.hl('p'); a.say('Lange ein Plateau, dann der Sprung. Zwei Teile, die nur zusammen nützen, sind gleichzeitig entstanden.'); },
+    },
+    nachher: {
+      views: ['seq'],
+      formula: `${T('p', '<i>p</i>(richtiger Buchstabe)', 'c-new', 'Balken unter jedem Buchstaben')}: erste Runde ≈ 6 %, danach ≈ 100 %`,
+      setup() { show({ seqMode: 'pred', model: refDone() ? REF : null }); },
+      async play(a) { await waitRef(a); a.set(st, { model: REF }); a.hl('p'); a.say('Erste Runde: weiter geraten. Ab der Wiederholung: fast sicher, bei jeder Periode.'); },
+    },
+    schreiben: {
+      views: ['gen'],
+      formula: `${T('g', 'Zeichen<sub><i>t</i>+1</sub> = das wahrscheinlichste', 'c-new', 'anhängen, dann wieder von vorn')}`,
+      setup() { st.gen = []; st.genP = null; },
+      async play(a) {
+        await waitRef(a); a.hl('g');
+        for (const start of ['DHAB', 'KNRSTL']) { a.say(`Vorgabe: ${start.split('').join(' ')}, zweimal hintereinander.`); await generate(a, start, true, 20); a.say('Das Muster wird fortgesetzt.'); await a.wait(2000); }
+      },
+      tryit: () => [{ label: `Eigene Vorgabe (nur ${LET.join('')})`, type: 'text', max: 16, go: 'Weiterschreiben', get: () => st.typed || '', set: (v) => genNow(v) }],
+    },
+    grenzen: {
+      views: ['gen'],
+      formula: `ohne Wiederholung: ${T('n', 'nichts zum Zurückschauen', 'c-new', 'das Modell kann nur kopieren, was schon da war')}`,
+      setup() { st.gen = []; st.genP = null; },
+      async play(a) {
+        await waitRef(a);
+        await a.ask('Vorgabe ohne Wiederholung: A B C D E F. Was sagt das Modell als Nächstes?', ['„G“: das Alphabet geht weiter', 'keinen klaren Favoriten', 'sicher wieder „A“'], 1, 'Das Modell hat nur gelernt, Wiederholungen zu kopieren. Ein Alphabet kam in den Daten nie vor, und ohne Wiederholung gibt es nichts zu kopieren.');
+        a.hl('n'); a.say('Vorgabe ohne Wiederholung: A B C D E F.');
+        await generate(a, 'ABCDEF', false, 7);
+        a.say('Kein klarer Favorit, die Wahrscheinlichkeit ist breit verteilt. Ein „G“ als Fortsetzung des Alphabets hat es nie gelernt.');
+      },
+    },
+    ausblick: {
+      views: ['seq'],
+      formula: `Wie macht es das?`,
+      setup() { show({ seqMode: 'pred', model: refDone() ? REF : null }); },
+      async play(a) { await waitRef(a); a.set(st, { model: REF }); a.say('Kapitel 11 zeigt die Werkzeuge, Kapitel 12 benutzt sie an diesem Modell.'); },
+    },
+  };
+
+  story = S.story($('#story'), {
+    views: { seq: seqV, count: countV, loop: loopV, gen: genV },
+    steps,
+    values: () => ({ t: String(st.model ? st.model.t : 0), ce: ce() }),
+  });
+})();
+</script>
+</body>
+</html>

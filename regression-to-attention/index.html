@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Von der Geraden zur Attention</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>
+  /* Layout: one axis for everything (the series' wide measure); chapters grouped into four parts as card grids. Tokens come from series.css. */
+  .hub { width: 100%; max-width: var(--wide); margin-inline: auto; display: grid; gap: 64px; padding-block: 8px 72px; }
+  .hub h1, .hub h2, .hub h3 { text-wrap: balance; }
+
+  .hero { display: grid; gap: 22px; }
+  .hero h1 { font-size: clamp(44px, 8.4vw, 96px); line-height: 0.98; max-width: 11ch; }
+  .hero .lead { max-width: 40rem; margin: 0; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+  .facts b { color: var(--fg); font-weight: 500; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .cta .go { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); text-decoration: none; font-weight: 600; font-size: 15.5px; }
+  .cta .go:hover { filter: brightness(1.08); }
+  .cta .go:focus-visible, .ch:focus-visible, .seg:focus-visible, .cta .all:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .cta .all { color: var(--fg-2); font-size: 15px; text-underline-offset: 3px; }
+
+  .top { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px 56px; align-items: end; }
+  .path { display: grid; gap: 12px; padding: 20px 22px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
+  .path h2 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .path-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: baseline; padding-block: 8px; border-top: 1px solid var(--rule); }
+  .path-part { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.08em; color: var(--accent); }
+  .path-name { font-size: 14.5px; color: var(--fg); }
+  .path .seg-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .seg { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; border: 1px solid var(--rule); background: var(--bg); color: var(--fg-2); font-family: var(--font-mono); font-size: 12.5px; text-decoration: none; font-variant-numeric: tabular-nums; }
+  .seg:hover { border-color: var(--accent); color: var(--fg); }
+  .seg.seen { border-color: var(--accent); color: var(--accent); }
+  .seg.done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .review { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--rule); }
+  .review h3 { font-family: var(--font-mono); font-size: 11.5px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .review ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+  .review a { color: var(--fg); text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  .review a:hover { text-decoration-color: var(--accent); }
+  .review span { color: var(--muted); }
+  .ch-meta .open { color: var(--accent); }
+  .path p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+  .legend { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 24px; border-bottom: 1px solid var(--rule); padding-bottom: 12px; margin-bottom: -28px; }
+  .legend h2 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .legend p { margin: 0; font-size: 15px; color: var(--fg-2); }
+  .legend .hl-new { font-weight: 600; }
+
+  .part { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 20px 40px; align-items: start; }
+  .part-head { display: grid; gap: 8px; position: sticky; top: 16px; }
+  .part-no { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .part-head h2 { font-size: clamp(26px, 2.6vw, 32px); line-height: 1.1; }
+  .part-head p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--fg-2); }
+
+  .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .ch { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 18px 20px 16px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); color: inherit; text-decoration: none; transition: border-color 0.2s, transform 0.2s; }
+  .ch:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ch-top { display: flex; justify-content: space-between; align-items: center; }
+  .ch-num { font-family: var(--font-display); font-size: 40px; line-height: 0.9; color: var(--accent); font-variant-numeric: lining-nums; }
+  .ch-state { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .ch.seen .ch-state::after { content: 'begonnen'; color: var(--accent); }
+  .ch.done .ch-state::after { content: 'gelesen ✓'; color: var(--grad); }
+  .ch h3 { font-size: 25px; line-height: 1.12; color: var(--fg); }
+  .ch-sub { margin: -4px 0 0; font-size: 14px; color: var(--muted); }
+  .ch-new { margin: 0; font-size: 15px; line-height: 1.55; color: var(--fg-2); }
+  .ch-f { margin-top: auto; display: grid; gap: 2px; padding: 12px 0 2px; border-top: 1px solid var(--rule); font-family: var(--font-math); font-size: clamp(19px, 1.9vw, 23px); line-height: 1.5; color: var(--fg); overflow-x: auto; overflow-y: hidden; white-space: nowrap; }
+  .ch-f i { font-style: italic; } .ch-f b { font-weight: 700; font-style: normal; }
+  .ch-f sub, .ch-f sup { font-size: 0.62em; line-height: 0; }
+  .ch-f .small { font-size: 0.68em; color: var(--muted); white-space: normal; }
+  .ch-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .ch-meta .live { color: var(--grad); }
+  .ch-meta .live::before { content: '● '; }
+
+  .extra { display: grid; gap: 22px; border-top: 1px solid var(--rule); padding-top: 40px; }
+  .extra > h2 { font-size: clamp(26px, 2.6vw, 32px); }
+  .threads { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 26px 32px; }
+  .threads div { display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .threads h3 { font-size: 20px; }
+  .threads p { margin: 0; font-size: 15px; color: var(--fg-2); line-height: 1.55; }
+  .threads .m { font-size: 1.05em; }
+  .about { max-width: 46rem; margin: 0; font-size: 16px; line-height: 1.6; color: var(--fg-2); }
+  .refs { max-width: 52rem; }
+  .refs a { color: var(--fg); text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  .refs a:hover { text-decoration-color: var(--accent); }
+
+  @media (max-width: 980px) {
+    .top { grid-template-columns: minmax(0, 1fr); }
+    .path { max-width: 34rem; }
+    .part { grid-template-columns: minmax(0, 1fr); }
+    .part-head { position: static; max-width: 40rem; }
+  }
+  @media (max-width: 680px) {
+    .hub { gap: 48px; }
+    .cards { grid-template-columns: minmax(0, 1fr); }
+    .legend { margin-bottom: -16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ch { transition: none; } .ch:hover { transform: none; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="hub">
+
+  <div class="top">
+  <header class="hero">
+    <div class="eyebrow">Interaktive Reihe · 12 Kapitel</div>
+    <h1>Von der Geraden zur Attention</h1>
+    <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann. Jeder Schritt ist eine Animation, die du anhalten, vorhersagen und selbst ausprobieren kannst.</p>
+    <ul class="facts"><li><b>193</b> Schritte</li><li><b>5</b> Netze, live im Browser trainiert</li><li><b>36</b> Fragen zum Selbsttest</li><li>ohne Anmeldung, ohne Server</li></ul>
+    <div class="cta">
+      <a class="go" id="go" href="01-linear-regression.html">Mit Kapitel 1 beginnen <span aria-hidden="true">→</span></a>
+      <a class="all" href="#kapitel">Alle Kapitel ansehen</a>
+    </div>
+  </header>
+  <aside class="path" aria-label="Dein Weg durch die Reihe">
+    <h2>Dein Weg</h2>
+    <div class="path-row"><span class="path-part">Teil I</span><span class="path-name">Lernen aus Daten</span><div class="seg-group"><a class="seg" href="01-linear-regression.html" data-page="01-linear-regression" aria-label="Kapitel 1: Die Gerade">1</a><a class="seg" href="02-matrix.html" data-page="02-matrix" aria-label="Kapitel 2: Die Matrix">2</a><a class="seg" href="03-classification.html" data-page="03-classification" aria-label="Kapitel 3: Die Grenze">3</a><a class="seg" href="04-folding.html" data-page="04-folding" aria-label="Kapitel 4: Den Raum falten">4</a></div></div><div class="path-row"><span class="path-part">Teil II</span><span class="path-name">Räume und Bedeutung</span><div class="seg-group"><a class="seg" href="05-dimensions.html" data-page="05-dimensions" aria-label="Kapitel 5: Viele Dimensionen">5</a><a class="seg" href="06-embeddings.html" data-page="06-embeddings" aria-label="Kapitel 6: Bedeutung als Richtung">6</a></div></div><div class="path-row"><span class="path-part">Teil III</span><span class="path-name">Attention und Transformer</span><div class="seg-group"><a class="seg" href="07-attention.html" data-page="07-attention" aria-label="Kapitel 7: Mischen nach Relevanz">7</a><a class="seg" href="08-qkv.html" data-page="08-qkv" aria-label="Kapitel 8: Fragen, Schilder, Werte">8</a><a class="seg" href="09-transformer.html" data-page="09-transformer" aria-label="Kapitel 9: Der Transformer">9</a><a class="seg" href="10-training.html" data-page="10-training" aria-label="Kapitel 10: Ein eigener Transformer">10</a></div></div><div class="path-row"><span class="path-part">Teil IV</span><span class="path-name">Ins Netz hineinsehen</span><div class="seg-group"><a class="seg" href="11-vision.html" data-page="11-vision" aria-label="Kapitel 11: Merkmale und Schaltkreise">11</a><a class="seg" href="12-circuits.html" data-page="12-circuits" aria-label="Kapitel 12: Schaltkreise im Transformer">12</a></div></div>
+    <div class="review" id="review" hidden></div>
+    <p id="progress-note">Noch nichts begonnen. Dein Fortschritt wird nur in diesem Browser gespeichert.</p>
+  </aside>
+  </div>
+
+  <div class="legend" id="kapitel">
+    <h2>Die Formel wächst</h2>
+    <p>Jedes Kapitel fügt der Formel des vorigen eine Idee hinzu. <span class="hl-new">Violett</span> ist, was neu ist.</p>
+  </div>
+
+    <section class="part" aria-labelledby="teil-I">
+      <header class="part-head">
+        <span class="part-no">Teil I · Kapitel 1–4</span>
+        <h2 id="teil-I">Lernen aus Daten</h2>
+        <p>Wie ein Modell aus Beispielen eine Regel lernt, und warum es dafür Matrizen, Wahrscheinlichkeiten und Knicke braucht.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="01-linear-regression.html" data-page="01-linear-regression">
+          <div class="ch-top"><span class="ch-num">1</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Die Gerade</h3>
+          <p class="ch-sub">Lineare Regression, Verlust, Gradientenabstieg</p>
+          <p class="ch-new">Einen Fehler mit einer Zahl messen und die Parameter bergab schieben, bis er nicht mehr kleiner wird.</p>
+          <div class="ch-f"><span><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i></span>
+          <span class="small hl-new"><i>θ</i> ← <i>θ</i> − <i>η</i> ∇<i>L</i></span></div>
+          <div class="ch-meta"><span>14 Schritte</span></div>
+        </a>
+        <a class="ch" href="02-matrix.html" data-page="02-matrix">
+          <div class="ch-top"><span class="ch-num">2</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Die Matrix</h3>
+          <p class="ch-sub">Was eine Matrixmultiplikation mit den Daten macht</p>
+          <p class="ch-new">Eine Matrix verformt den ganzen Raum auf einmal: drehen, spiegeln, strecken, scheren, plattdrücken. Wohin die Einheitspfeile gehen, bestimmt alles.</p>
+          <div class="ch-f"><span><b>y</b> = <span class="hl-new"><b>W</b></span> <b>x</b></span>
+          <span class="small">viele Neuronen auf einmal</span></div>
+          <div class="ch-meta"><span>17 Schritte</span></div>
+        </a>
+        <a class="ch" href="03-classification.html" data-page="03-classification">
+          <div class="ch-top"><span class="ch-num">3</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Die Grenze</h3>
+          <p class="ch-sub">Logistische Regression, Wahrscheinlichkeit, Softmax</p>
+          <p class="ch-new">Eine Nichtlinearität am Ausgang macht aus einer Zahl eine Wahrscheinlichkeit. Die Gerade wird zur Grenze zwischen zwei Klassen.</p>
+          <div class="ch-f"><span><i>p</i> = <span class="hl-new">σ(</span><i>w</i> · <i>x</i> + <i>b</i><span class="hl-new">)</span></span></div>
+          <div class="ch-meta"><span>17 Schritte</span></div>
+        </a>
+        <a class="ch" href="04-folding.html" data-page="04-folding">
+          <div class="ch-top"><span class="ch-num">4</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Den Raum falten</h3>
+          <p class="ch-sub">Neuronale Netze und Backpropagation</p>
+          <p class="ch-new">Eine Nichtlinearität zwischen zwei Matrizen lässt das Netz den Raum falten, bis die Daten durch eine einzige Grenze trennbar sind.</p>
+          <div class="ch-f"><span><i>ŷ</i> = <b>W</b><sub>2</sub> <span class="hl-new">σ(</span><b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub><span class="hl-new">)</span> + <b>b</b><sub>2</sub></span></div>
+          <div class="ch-meta"><span>13 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="part" aria-labelledby="teil-II">
+      <header class="part-head">
+        <span class="part-no">Teil II · Kapitel 5–6</span>
+        <h2 id="teil-II">Räume und Bedeutung</h2>
+        <p>Was in vielen Dimensionen passiert, und wie Wörter dort zu Richtungen werden.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="05-dimensions.html" data-page="05-dimensions">
+          <div class="ch-top"><span class="ch-num">5</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Viele Dimensionen</h3>
+          <p class="ch-sub">Geometrie in ℝ<sup>d</sup> und Superposition</p>
+          <p class="ch-new">In vielen Dimensionen stehen fast alle Richtungen fast senkrecht aufeinander. Deshalb passen mehr Merkmale hinein, als es Dimensionen gibt.</p>
+          <div class="ch-f"><span><b>u</b> · <b>v</b> <span class="hl-new">≈ 0</span></span>
+          <span class="small">für zufällige <b>u</b>, <b>v</b> ∈ ℝ<sup><i>d</i></sup>, <i>d</i> groß</span></div>
+          <div class="ch-meta"><span>17 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+        <a class="ch" href="06-embeddings.html" data-page="06-embeddings">
+          <div class="ch-top"><span class="ch-num">6</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Bedeutung als Richtung</h3>
+          <p class="ch-sub">Embeddings</p>
+          <p class="ch-new">Wörter werden zu Vektoren, und Bedeutung wird zu Geometrie: Ähnlichkeit ist ein Skalarprodukt, Beziehungen sind Richtungen.</p>
+          <div class="ch-f"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
+          <div class="ch-meta"><span>22 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="part" aria-labelledby="teil-III">
+      <header class="part-head">
+        <span class="part-no">Teil III · Kapitel 7–10</span>
+        <h2 id="teil-III">Attention und Transformer</h2>
+        <p>Wie Wörter einander ansehen, wie daraus ein Transformer wird, und einer, der live im Browser lernt.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="07-attention.html" data-page="07-attention">
+          <div class="ch-top"><span class="ch-num">7</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Mischen nach Relevanz</h3>
+          <p class="ch-sub">Attention I: die Idee ohne neue Matrizen</p>
+          <p class="ch-new">Ein Wort wird zum gewichteten Mittel der Wörter um es herum. Die Anteile kommen aus der Ähnlichkeit, Softmax macht sie zu Anteilen.</p>
+          <div class="ch-f"><span><b>x</b>′ = <span class="hl-new">Σ softmax(<b>x</b>·<b>x</b><sub><i>j</i></sub>)</span> <b>x</b><sub><i>j</i></sub></span></div>
+          <div class="ch-meta"><span>15 Schritte</span></div>
+        </a>
+        <a class="ch" href="08-qkv.html" data-page="08-qkv">
+          <div class="ch-top"><span class="ch-num">8</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Fragen, Schilder, Werte</h3>
+          <p class="ch-sub">Attention II: Query, Key, Value</p>
+          <p class="ch-new">Drei gelernte Matrizen geben jedem Wort drei Rollen: eine Frage, ein Schild und einen Inhalt. So kann „sie“ nach einem Nomen suchen, statt nach sich selbst.</p>
+          <div class="ch-f"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
+          <div class="ch-meta"><span>18 Schritte</span></div>
+        </a>
+        <a class="ch" href="09-transformer.html" data-page="09-transformer">
+          <div class="ch-top"><span class="ch-num">9</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Der Transformer</h3>
+          <p class="ch-sub">Residualstrom, MLP, Positionen, nächstes Wort</p>
+          <p class="ch-new">Alle Schichten lesen aus einem gemeinsamen Notizblatt und addieren ihr Ergebnis zurück. Am Ende steht eine Wahrscheinlichkeit für das nächste Wort.</p>
+          <div class="ch-f"><span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> Attn(<b>x</b>)</span>
+          <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> MLP(<b>x</b>)</span></div>
+          <div class="ch-meta"><span>15 Schritte</span></div>
+        </a>
+        <a class="ch" href="10-training.html" data-page="10-training">
+          <div class="ch-top"><span class="ch-num">10</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Ein eigener Transformer</h3>
+          <p class="ch-sub">Live im Browser trainiert</p>
+          <p class="ch-new">Ein winziger Transformer mit zwei Köpfen lernt vor unseren Augen, Muster fortzusetzen, und zwar nicht allmählich, sondern mit einem plötzlichen Sprung.</p>
+          <div class="ch-f"><span><b>θ</b> ← <b>θ</b> − <span class="hl-new">η ∇<i>L</i></span></span><span class="small">1856 Zahlen, live trainiert</span></div>
+          <div class="ch-meta"><span>12 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="part" aria-labelledby="teil-IV">
+      <header class="part-head">
+        <span class="part-no">Teil IV · Kapitel 11–12</span>
+        <h2 id="teil-IV">Ins Netz hineinsehen</h2>
+        <p>Olahs Werkzeuge: Merkmale finden, Schaltkreise lesen, erst im Bildnetz, dann im Transformer.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="11-vision.html" data-page="11-vision">
+          <div class="ch-top"><span class="ch-num">11</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Merkmale und Schaltkreise</h3>
+          <p class="ch-sub">Olah I: ein eigenes Bildnetz, live trainiert</p>
+          <p class="ch-new">Ein Netz lässt sich lesen: Einheiten erkennen Merkmale, Gewichte verbinden sie zu Schaltkreisen, und verschiedene Netze lernen ähnliche Dinge.</p>
+          <div class="ch-f"><span>Kanten <span class="hl-new">→</span> Kurven <span class="hl-new">→</span> Formen</span></div>
+          <div class="ch-meta"><span>19 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+        <a class="ch" href="12-circuits.html" data-page="12-circuits">
+          <div class="ch-top"><span class="ch-num">12</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Schaltkreise im Transformer</h3>
+          <p class="ch-sub">Olah II: unseren Transformer aus Kapitel 10 lesen</p>
+          <p class="ch-new">Dieselben Werkzeuge im Transformer: Zwei Köpfe bilden zusammen einen Induction Head, und das steht direkt in den Gewichten.</p>
+          <div class="ch-f"><span><b>W</b><sub>QK</sub> = <span class="hl-new"><b>W</b><sub>Q</sub><sup>⊤</sup><b>W</b><sub>K</sub></span></span>
+          <span><b>W</b><sub>OV</sub> = <span class="hl-new"><b>W</b><sub>O</sub><b>W</b><sub>V</sub></span></span></div>
+          <div class="ch-meta"><span>14 Schritte</span></div>
+        </a>
+      </div>
+    </section>
+
+  <section class="extra" aria-labelledby="lernen">
+    <h2 id="lernen">So lernst du mit der Reihe</h2>
+    <div class="threads">
+      <div>
+        <h3>Erst raten</h3>
+        <p>An den Schlüsselstellen hält die Animation an und fragt: Was glaubst du? Wer vorher tippt, merkt sich die Antwort besser, besonders wenn sie überrascht.</p>
+      </div>
+      <div>
+        <h3>Selbst ausprobieren</h3>
+        <p>Nach vielen Schritten erscheinen Regler: β verstellen, eine Matrix drehen, Köpfe abschalten, eine eigene Folge eintippen oder selbst eine Form malen.</p>
+      </div>
+      <div>
+        <h3>Abrufen statt nachlesen</h3>
+        <p>Jedes Kapitel endet mit drei Sätzen zum Mitnehmen und drei Fragen zum Selbsttest. Eine davon greift auf ein früheres Kapitel zurück.</p>
+      </div>
+      <div>
+        <h3>Im eigenen Tempo</h3>
+        <p>Über jeder Geschichte: „Schnelldurchlauf“ zeigt nur die Kernschritte, „Mitdenken“ schaltet Fragen und Regler ab, wenn du nur zuschauen willst.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="extra" aria-labelledby="faeden">
+    <h2 id="faeden">Drei rote Fäden</h2>
+    <div class="threads">
+      <div>
+        <h3>Das Skalarprodukt</h3>
+        <p><span class="m"><i>w</i> · <i>x</i></span> in Kapitel 1, Zeile mal Vektor in Kapitel 2, Ähnlichkeit zweier Wörter in Kapitel 6, Relevanz in Kapitel 7, <span class="m"><b>q</b> · <b>k</b></span> in Kapitel 8. Fast jede Rechnung in einem Transformer ist ein Skalarprodukt.</p>
+      </div>
+      <div>
+        <h3>Der Raum</h3>
+        <p>In Kapitel 1 wird ein Datensatz zu einem Punkt in <span class="m">ℝ<sup><i>n</i></sup></span>, in Kapitel 2 verformen Matrizen den Raum. Kapitel 5 zeigt, wie sich hohe Dimensionen verhalten, Kapitel 11 und 12 finden dort die Merkmale, die ein Netz gelernt hat.</p>
+      </div>
+      <div>
+        <h3>Bergab</h3>
+        <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Mini-Transformer in Kapitel 10 und das Bildnetz in Kapitel 11.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="extra" aria-labelledby="ueber">
+    <h2 id="ueber">Über die Reihe</h2>
+    <p class="about">Jedes Kapitel ist eine durchgehende Geschichte: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, und die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Alles läuft im Browser, ohne Bibliotheken und ohne Server, auch das Training der Wortvektoren, des Mini-Transformers und des Bildnetzes.</p>
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>C. Olah (2014): <a href="https://colah.github.io/posts/2014-03-NN-Manifolds-Topology/"><i>Neural Networks, Manifolds, and Topology</i></a>.</li>
+      <li>A. Vaswani u. a. (2017): <a href="https://arxiv.org/abs/1706.03762"><i>Attention Is All You Need</i></a>.</li>
+      <li>C. Olah u. a. (2020): <a href="https://distill.pub/2020/circuits/zoom-in/"><i>Zoom In: An Introduction to Circuits</i></a>. Distill.</li>
+      <li>N. Elhage u. a. (2021): <a href="https://transformer-circuits.pub/2021/framework/index.html"><i>A Mathematical Framework for Transformer Circuits</i></a>.</li>
+      <li>C. Olsson u. a. (2022): <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html"><i>In-context Learning and Induction Heads</i></a>.</li>
+      <li>N. Elhage u. a. (2022): <a href="https://transformer-circuits.pub/2022/toy_model/index.html"><i>Toy Models of Superposition</i></a>.</li>
+      <li>T. Bricken u. a. (2023): <a href="https://transformer-circuits.pub/2023/monosemantic-features/index.html"><i>Towards Monosemanticity</i></a>.</li>
+    </ol>
+  </section>
+
+  </div>
+</main>
+<script>
+  (() => {
+    const get = (k) => { try { return localStorage.getItem('rta-' + k) === '1'; } catch { return false; } };
+    const pages = [...document.querySelectorAll('.ch')].map((a) => [a.dataset.page, a.querySelector('h3').textContent, a.querySelector('.ch-num').textContent, a.getAttribute('href')]);
+    let started = 0, finished = 0, next = null;
+    for (const [p, title, n, href] of pages) {
+      const seen = get('seen-' + p), done = get('done-' + p);
+      document.querySelectorAll(`[data-page="${p}"]`).forEach((el) => { el.classList.toggle('seen', seen && !done); el.classList.toggle('done', done); });
+      if (seen) started++; if (done) finished++;
+      if (!done && !next && (seen || started)) next = [n, title, href];
+    }
+    // questions the reader marked as not yet known, from the self-test at the end of each chapter
+    const getv = (k) => { try { return localStorage.getItem('rta-' + k); } catch { return null; } };
+    const open = pages.map(([p, title, n, href]) => [n, title, href, [0, 1, 2].filter((i) => ['teils', 'nein'].includes(getv(`q-${p}-${i}`))).length]).filter((x) => x[3] > 0);
+    if (open.length) {
+      const box = document.getElementById('review');
+      box.innerHTML = '<h3>Zum Wiederholen</h3><ul>' + open.map(([n, title, href, k]) => `<li><a href="${href}#teste-dich">Kapitel ${n}: ${title}</a> <span>${k} ${k === 1 ? 'Frage' : 'Fragen'}</span></li>`).join('') + '</ul>';
+      box.hidden = false;
+      for (const [n, , href, k] of open) { const meta = document.querySelector(`.ch[href="${href}"] .ch-meta`); if (meta) meta.insertAdjacentHTML('beforeend', `<span class="open">${k} zum Wiederholen</span>`); }
+    }
+    if (started) {
+      const firstOpen = pages.find(([p]) => !get('done-' + p));
+      const go = document.getElementById('go');
+      if (firstOpen) { go.href = firstOpen[3]; go.firstChild.textContent = `Weiter mit Kapitel ${firstOpen[2]}: ${firstOpen[1]} `; }
+      else { go.firstChild.textContent = 'Alle Kapitel gelesen. Von vorn beginnen '; }
+      document.getElementById('progress-note').textContent = `${finished} von 12 Kapiteln bis zum Ende gelesen, ${started - finished} begonnen. Gespeichert nur in diesem Browser.`;
+    }
+  })();
+</script>
+</body>
+</html>

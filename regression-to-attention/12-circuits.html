@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Schaltkreise im Transformer · Kapitel 12</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 12 von 12</div>
+    <h1>Schaltkreise im Transformer</h1>
+    <p class="lead">Unser Transformer aus Kapitel 10 setzt Muster fort, ohne dass ihm jemand gesagt hat, wie. Mit den Werkzeugen aus Kapitel 11 öffnen wir ihn: Was sieht jeder Kopf an, was schreibt er auf das Notizblatt, wie arbeiten die beiden zusammen, und was passiert, wenn man einen abschaltet?</p>
+    <ol class="roadmap"><li>Hinschauen: zwei Köpfe</li><li>Die Vermutung: zwei Schritte</li><li>Gewichte lesen: OV und QK</li><li>Prüfen: abschalten, Training</li></ol>
+    <ul class="goals"><li>den Induction Head in zwei Schritten erklären</li><li>OV- und QK-Schaltkreis aus einer Tabelle lesen</li><li>begründen, warum Abschalten eine Vermutung prüft</li></ul>
+    <p class="calm">Das dichteste Kapitel. Jeder Schritt baut auf Kapitel 9 und 10 auf; wenn ein Begriff fehlt, hilft der Link zurück in den Fragen am Ende.</p>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="tools"><div class="vlabel">Dieselben Werkzeuge</div><div class="plot" id="v-tools" role="img" aria-label="Die Werkzeuge aus dem Bildnetz und ihre Entsprechung im Transformer."></div></div>
+        <div class="view" data-view="arcs"><div class="vlabel" id="l-arcs">Wohin ein Kopf schaut</div><div class="plot" id="v-arcs" role="img" aria-label="Eine Buchstabenfolge mit Bögen von einem Buchstaben zu den Stellen, die ein Kopf ansieht."></div></div>
+        <div class="view" data-view="pat"><div class="vlabel">Die Attention-Matrix eines Kopfs</div><div class="plot" id="v-pat" role="img" aria-label="Attention-Matrix eines Kopfs auf einer Folge."></div></div>
+        <div class="view" data-view="paths"><div class="vlabel">Wer zur Vorhersage beiträgt</div><div class="plot" id="v-paths" role="img" aria-label="Die Beiträge von Embedding, Kopf 0 und Kopf 1 zur Punktzahl des richtigen Buchstabens."></div></div>
+        <div class="view" data-view="ovstep"><div class="vlabel">Ein Buchstabe läuft durch Kopf 1</div><div class="plot" id="v-ovstep" role="img" aria-label="Ein Buchstabenvektor wird nacheinander mit vier Matrizen multipliziert."></div></div>
+        <div class="view" data-view="circ"><div class="vlabel" id="l-circ">Ein Schaltkreis als Tabelle</div><div class="plot" id="v-circ" role="img" aria-label="Tabelle 16 mal 16 aus den Gewichten des Modells."></div></div>
+        <div class="view" data-view="abl"><div class="vlabel">Ein Kopf wird abgeschaltet</div><div class="plot" id="v-abl" role="img" aria-label="Trefferquote mit und ohne die einzelnen Köpfe, dazu die Vorhersagen."></div></div>
+        <div class="view" data-view="phase"><div class="vlabel">Während des Trainings</div><div class="plot" id="v-phase" role="img" aria-label="Verlauf von Verlust und Kopfmustern während des Trainings."></div></div>
+        <div class="view" data-view="ladder"><div class="vlabel">Der ganze Weg</div><div class="plot" id="v-ladder" role="img" aria-label="Die Formeln der zwölf Kapitel untereinander."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="werkzeuge" data-core><div class="card">
+        <span class="kicker">Vom Bild zum Text</span>
+        <h3>Dieselben Werkzeuge, ein Transformer</h3>
+        <p>Im Bildnetz haben wir Merkmale gefunden (Beispiele, Sichtbarmachen), ihre Verbindungen an den Gewichten abgelesen und durch Vergleich geprüft. Nelson Elhage, Chris Olah und Kollegen haben 2021 gezeigt, wie dasselbe Programm für Transformer funktioniert.</p>
+        <p>Statt Einheiten untersuchen wir Köpfe. Statt Bildausschnitten schauen wir, wohin ein Kopf schaut. Statt Gewichtskacheln lesen wir zwei Tabellen pro Kopf. Und als Prüfung schalten wir Köpfe ab.</p>
+      </div></article>
+
+      <article class="step" data-step="kopf0" data-core><div class="card">
+        <span class="kicker">Hinschauen, Kopf 0</span>
+        <h3>Kopf 0 schaut zurück</h3>
+        <p>Zuerst beobachten: Für jede Stelle der Folge zeigen Bögen, wohin der Kopf in Schicht 0 schaut. Der dickste Bogen geht jedes Mal zum Buchstaben direkt davor. Ein Rest verteilt sich auf weiter zurückliegende Stellen, immer schwächer.</p>
+        <p>Kopf 0 holt sich also vor allem den vorigen Buchstaben.</p>
+      </div></article>
+
+      <article class="step" data-step="kopf1" data-core><div class="card">
+        <span class="kicker">Hinschauen, Kopf 1</span>
+        <h3>Kopf 1 sucht die letzte Kopie</h3>
+        <p>Kopf 1 in Schicht 1 schaut woanders hin. Steht gerade ein „R“, schaut er auf die Stellen, die früher <em>direkt nach</em> einem „R“ kamen. Genau dort steht die Antwort: die Regel aus Kapitel 10.</p>
+        <p>Ein solcher Kopf heißt <strong>Induction Head</strong>.</p>
+      </div></article>
+
+      <article class="step" data-step="matrizen"><div class="card">
+        <span class="kicker">Als Matrix</span>
+        <h3>Zwei Muster, zwei Matrizen</h3>
+        <p>Dieselben Anteile, als Attention-Matrix wie in Kapitel 7. Kopf 0: am hellsten direkt unter der Diagonale, einen Platz zurück. Kopf 1: schräge Streifen im Abstand der Periode, ab der ersten Wiederholung.</p>
+      </div></article>
+
+      <article class="step" data-step="trick" data-core><div class="card">
+        <span class="kicker">Der Algorithmus</span>
+        <h3>Zusammenarbeit in zwei Schritten</h3>
+        <p>Woher weiß Kopf 1, welche Stelle nach einem „R“ kam? Jede Stelle kennt anfangs nur ihren eigenen Buchstaben und ihren Platz. Hier kommt Kopf 0 ins Spiel.</p>
+        <p>Schritt 1: Kopf 0 schreibt an jede Stelle eine Notiz auf das Notizblatt (den Residualstrom aus Kapitel 9): „vor mir stand X“. Schritt 2: Kopf 1 fragt mit dem aktuellen Buchstaben „R“ nach der Notiz „vor mir stand R“, findet diese Stelle (dort steht „N“) und kopiert ihren Buchstaben als Vorhersage.</p>
+        <p>Das ist bisher eine Vermutung, abgelesen am Verhalten. Die nächsten Schritte prüfen sie an den Gewichten.</p>
+      </div></article>
+
+      <article class="step" data-step="pfade"><div class="card">
+        <span class="kicker">Werkzeug: das Notizblatt zerlegen</span>
+        <h3>Wer trägt zur Vorhersage bei?</h3>
+        <p>Weil im Transformer alles nur addiert wird (Kapitel 9), ist das Notizblatt am Ende eine Summe: Embedding plus Platz, plus was Kopf 0 schrieb, plus was Kopf 1 schrieb. Und weil die Punktzahl eines Buchstabens ein Skalarprodukt ist, zerfällt auch sie in diese drei Teile.</p>
+        <p>An einer Stelle in der Wiederholung: Fast die ganze Punktzahl des richtigen Buchstabens kommt von Kopf 1. Kopf 0 trägt direkt kaum etwas bei. Seine Rolle muss also indirekt sein.</p>
+      </div></article>
+
+      <article class="step" data-step="ovschritt"><div class="card">
+        <span class="kicker">Werkzeug: Gewichte lesen</span>
+        <h3>Ein Buchstabe läuft durch Kopf 1</h3>
+        <p>Steht gerade „R“, findet Kopf 1 die Stelle nach dem letzten „R“, und dort steht „N“. Was schreibt Kopf 1, wenn er auf dieses „N“ schaut? Wir verfolgen den Weg: der Vektor von „N“ aus der Tabelle <b>E</b> (16 Zahlen), mal die Wert-Matrix <b>W</b><sub>V</sub> (8 Zahlen), mal die Ausgabe-Matrix <b>W</b><sub>O</sub> (wieder 16 Zahlen, das, was auf das Notizblatt kommt), mal die Ausgabe-Vektoren <b>U</b>: 16 Punktzahlen, eine pro Buchstabe.</p>
+        <p>Die höchste Punktzahl hat „N“. Kopf 1 schreibt also: „Der nächste Buchstabe ist N.“ Er kopiert, und das ist genau die richtige Vorhersage nach „R“.</p>
+      </div></article>
+
+      <article class="step" data-step="ov" data-core><div class="card">
+        <span class="kicker">Für alle Buchstaben</span>
+        <h3>Der OV-Schaltkreis</h3>
+        <p>Dasselbe für alle 16 Buchstaben ergibt eine Tabelle: Zeile = worauf Kopf 1 schaut, Spalte = welche Punktzahl steigt. Sie ist eine helle Diagonale: Für jeden Buchstaben steigt genau seine eigene Punktzahl.</p>
+        <p>Diesen Weg, erst <b>W</b><sub>V</sub>, dann <b>W</b><sub>O</sub>, nennen Olah und Kollegen den <strong>OV-Schaltkreis</strong> eines Kopfs: was er weitergibt. In ihren Texten steht dafür <b>W</b><sub>O</sub><b>W</b><sub>V</sub>, von rechts gelesen wie in Kapitel 2.</p>
+      </div></article>
+
+      <article class="step" data-step="qk" data-core><div class="card">
+        <span class="kicker">Werkzeug: Gewichte lesen</span>
+        <h3>Der QK-Schaltkreis: wonach Kopf 1 sucht</h3>
+        <p>Die andere Hälfte ist der <strong>QK-Schaltkreis</strong>: Welche Frage passt zu welchem Schild (Kapitel 8)? Wir rechnen die Frage von Kopf 1 für jeden aktuellen Buchstaben <i>a</i> aus, und das Schild, das entsteht, wenn auf dem Notizblatt die Notiz von Kopf 0 „vor mir stand <i>b</i>“ steht.</p>
+        <p>Wieder eine helle Diagonale: Kopf 1 sucht genau die Notiz mit seinem eigenen Buchstaben.</p>
+      </div></article>
+
+      <article class="step" data-step="gegenprobe" data-core><div class="card">
+        <span class="kicker">Die Gegenprobe</span>
+        <h3>Ohne die Notiz: sogar das Gegenteil</h3>
+        <p>Und wenn Kopf 1 die Buchstaben selbst vergleicht, ohne die Notiz von Kopf 0? Dann gibt es keine helle Diagonale. Im Gegenteil: Die Diagonale ist orange, in jeder Zeile ist sie der niedrigste Wert. Kopf 1 <em>meidet</em> Stellen mit seinem eigenen Buchstaben.</p>
+        <p>Das ergibt Sinn. Steht jetzt „R“, dann ist die frühere Stelle mit „R“ genau die falsche, denn dort steht ja nur „R“. Die richtige ist die Stelle eins dahinter, mit dem Buchstaben, der damals auf „R“ folgte. Kopf 1 hat also gelernt, die Kopie selbst zu übergehen und nur die Stelle mit der Notiz „vor mir stand R“ zu nehmen.</p>
+        <p>Die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat. Olah und Kollegen nennen das <strong>K-Komposition</strong>: Zwei Köpfe, hintereinandergeschaltet über das Notizblatt. Damit ist die Vermutung aus dem Trick-Schritt an den Gewichten bestätigt.</p>
+      </div></article>
+
+      <article class="step" data-step="abschalten" data-core><div class="card">
+        <span class="kicker">Werkzeug: Eingreifen</span>
+        <h3>Einen Kopf abschalten</h3>
+        <p>Die stärkste Probe: Wir schalten einen Kopf ab, indem wir seinen Beitrag zum Notizblatt weglassen, und messen, wie oft das Modell in den Wiederholungen richtig liegt.</p>
+        <p>Ohne Kopf 1 fehlt der Kopierer, das Modell rät nur noch. Ohne Kopf 0 fehlen die Notizen, und Kopf 1 sucht ins Leere. Beide sind nötig, keiner reicht allein.</p>
+      </div></article>
+
+      <article class="step" data-step="phase" data-core><div class="card">
+        <span class="kicker">Rückblick aufs Training</span>
+        <h3>Der Schaltkreis entsteht auf einen Schlag</h3>
+        <p>Während des Trainings haben wir mitgeschrieben, wie stark Kopf 0 auf den vorigen Buchstaben schaut und wie stark Kopf 1 auf die Stelle nach der letzten Kopie.</p>
+        <p>Beide Muster entstehen im selben kurzen Abschnitt, genau dann, wenn der Verlust abstürzt: der Phasenübergang aus Kapitel 10. Einzeln nützen die beiden Köpfe nichts, erst zusammen. Olsson und Kollegen fanden diesen Sprung 2022 auch in großen Sprachmodellen.</p>
+      </div></article>
+
+      <article class="step" data-step="gross"><div class="card">
+        <span class="kicker">Im Großen</span>
+        <h3>Und in echten Sprachmodellen?</h3>
+        <p>Induction Heads gibt es in fast allen Sprachmodellen. Sie gelten als ein Grundbaustein dafür, dass Modelle aus Beispielen im Text lernen können.</p>
+        <p>Große Modelle sind aber schwerer zu lesen. Der Hauptgrund ist die <strong>Superposition</strong> aus Kapitel 5: viel mehr Merkmale als Dimensionen, kein Merkmal hat eine eigene Achse, Einheiten werden polysemantisch (Kapitel 11). Darum sucht man heute Merkmale nicht mehr in einzelnen Einheiten, sondern als Richtungen: Dünne Autoencoder (2023, 2024) lernen Millionen solcher Richtungen auf einmal, jede möglichst mit einer einzigen Bedeutung. Attributionsgraphen (2025) verfolgen dann, wie diese Merkmale für eine bestimmte Eingabe zusammenwirken, ganz wie wir es eben mit zwei Köpfen gemacht haben.</p>
+      </div></article>
+
+      <article class="step" data-step="weg"><div class="card">
+        <span class="kicker">Der Weg</span>
+        <h3>Von der Geraden bis hierher</h3>
+        <p>Eine Gerade mit zwei Knöpfen. Viele Knöpfe als Matrix. Eine Grenze mit der Softmax. Ein gefalteter Raum. Viele Dimensionen. Wörter als Richtungen. Mischen nach Relevanz. Fragen, Schilder, Werte. Ein ganzer Transformer, ein eigener, trainiert. Und schließlich Merkmale und Schaltkreise, die wir lesen können, im Bildnetz wie im Transformer.</p>
+        <p>Jeder Schritt hat dem vorigen eine Idee hinzugefügt. Gelernt wurde jedes Mal auf dieselbe Weise: Fehler messen, Gradient, ein kleiner Schritt bergab.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Kopf 0 schreibt „vor mir stand X“ auf das Notizblatt, Kopf 1 sucht diese Notiz mit dem aktuellen Buchstaben und kopiert, was dort steht: ein Induction Head.</li><li>Der OV-Schaltkreis sagt, was ein Kopf weitergibt, der QK-Schaltkreis, wonach er sucht. Beide lassen sich direkt aus den Gewichten lesen.</li><li>Abschalten und der gemeinsame Sprung im Training bestätigen: Die beiden Köpfe arbeiten nur zusammen.</li></ul>
+    <div class="take-f">OV: <b>W</b><sub>V</sub> → <b>W</b><sub>O</sub> &nbsp;&nbsp; QK: Frage · Schild &nbsp;&nbsp; Kopf 0 → Kopf 1 (K-Komposition)</div>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
+    <div class="quiz">
+      <details data-href="#pfade" data-label="„Wer trägt zur Vorhersage bei?“"><summary>Warum trägt Kopf 0 direkt fast nichts zur Vorhersage bei und ist trotzdem unverzichtbar?</summary><p>Seine Notiz „vor mir stand X“ ist das, wonach Kopf 1 sucht. Ohne sie findet Kopf 1 die richtige Stelle nicht.</p></details>
+      <details data-href="#ov" data-label="„Der OV-Schaltkreis“"><summary>Was zeigt eine helle Diagonale in der OV-Tabelle?</summary><p>Schaut der Kopf auf einen Buchstaben, steigt genau die Punktzahl dieses Buchstabens: Er kopiert.</p></details>
+      <details data-href="09-transformer.html#notizblatt" data-label="Kapitel 9, „Ein Notizblatt pro Wort“"><summary>Welche Eigenschaft aus Kapitel 9 macht es möglich, die Vorhersage in Beiträge zu zerlegen?<span class="from">Kapitel 9</span></summary><p>Alles wird auf das Notizblatt addiert. Darum ist die Punktzahl eine Summe aus den Beiträgen von Embedding, Kopf 0 und Kopf 1.</p></details>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>N. Elhage u. a. (2021): <a href="https://transformer-circuits.pub/2021/framework/index.html"><i>A Mathematical Framework for Transformer Circuits</i></a>. Residualstrom, QK- und OV-Schaltkreis, K-Komposition, Induction Heads.</li>
+      <li>C. Olsson u. a. (2022): <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html"><i>In-context Learning and Induction Heads</i></a>.</li>
+      <li>N. Elhage u. a. (2022): <a href="https://transformer-circuits.pub/2022/toy_model/index.html"><i>Toy Models of Superposition</i></a>.</li>
+      <li>T. Bricken u. a. (2023): <a href="https://transformer-circuits.pub/2023/monosemantic-features/index.html"><i>Towards Monosemanticity</i></a>; A. Templeton u. a. (2024): <a href="https://transformer-circuits.pub/2024/scaling-monosemanticity/index.html"><i>Scaling Monosemanticity</i></a>.</li>
+      <li>E. Ameisen u. a. (2025): <a href="https://transformer-circuits.pub/2025/attribution-graphs/methods.html"><i>Circuit Tracing: Revealing Computational Graphs in Language Models</i></a>.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="11-vision.html"><span class="dir">Zurück · Kapitel 11</span><span class="name">Merkmale und Schaltkreise</span></a>
+    <a class="next" href="index.html"><span class="dir">Zur Übersicht</span><span class="name">Alle Kapitel</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script src="transformer.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const LET = TT.LETTERS, STEPS = 1500, { mm, mmT } = TT;
+
+  // the same model as in chapter 10 (same seed, same training), trained here in idle time
+  const REF = TT.create({ seed: 3 });
+  const refDone = () => REF.t >= STEPS;
+  (function bg() {
+    const go = (dl) => { const t0 = performance.now(); while (!refDone() && performance.now() - t0 < (dl && dl.timeRemaining ? Math.max(4, dl.timeRemaining() - 2) : 12)) REF.train(1); if (!refDone()) schedule(); else story && story.redraw(); };
+    const schedule = () => (window.requestIdleCallback ? requestIdleCallback(go, { timeout: 200 }) : setTimeout(go, 16));
+    schedule();
+  })();
+  const waitRef = async (a) => { if (refDone()) return; a.say('Das Modell aus Kapitel 10 trainiert noch im Hintergrund, einen Moment …'); await a.loop(() => !refDone(), 4); };
+
+  const SEQ = REF.sample(TT.rng(31));
+  const st = { toolK: 0, arcH: 0, arcI: 0, arcA: 0, notes: 0, findA: 0, patH: 0, pathA: 0, ovK: 0, ovL: 9, circMode: 'ov', circA: 0, abl: [], ablShown: 0, phaseK: 0, ladK: 0 };
+  let story = null;
+  const fwd = (opt) => REF.forward(SEQ.s, opt || {});
+
+  // ── 1. tools ────────────────────────────────────────────────────
+  const TOOLS = [['Einheit', 'Kopf'], ['Datensatz-Beispiele', 'wohin der Kopf schaut'], ['Gewichtskacheln lesen', 'QK- und OV-Tabellen lesen'], ['Bauteile prüfen', 'Köpfe abschalten']];
+  const toolsV = S.canvas($('#v-tools'), (ctx, W, H) => {
+    const g = W < 560 ? 22 : 40, cw = Math.min(260, (W - 20 - g) / 2), x0 = (W - 2 * cw - g) / 2, rh = Math.min(70, (H - 60) / 5);
+    S.label(ctx, 'Bildnetz (Kapitel 11)', x0 + cw / 2, 22, S.c.grad, S.font(14, 'body', '600'), 'center'); S.label(ctx, 'Transformer (jetzt)', x0 + cw + g + cw / 2, 22, S.c.accent, S.font(14, 'body', '600'), 'center');
+    TOOLS.forEach(([a, b], i) => { const al = clamp(st.toolK - i, 0, 1); if (al <= 0) return; ctx.globalAlpha = al; const y = 46 + i * rh; [[a, x0, S.c.grad], [b, x0 + cw + g, S.c.accent]].forEach(([t, x, c]) => { ctx.fillStyle = S.c['surface-2']; ctx.strokeStyle = c; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, cw, rh - 14, 8) : ctx.rect(x, y, cw, rh - 14); ctx.fill(); ctx.stroke(); S.label(ctx, t, x + cw / 2, y + (rh - 14) / 2, S.c.fg, S.font(W < 560 ? 11 : 13.5, 'body', '600'), 'center'); }); ctx.strokeStyle = S.c['fg-2']; ctx.fillStyle = S.c['fg-2']; S.arrow(ctx, x0 + cw + 4, y + (rh - 14) / 2, x0 + cw + g - 4, y + (rh - 14) / 2, 7, 1.5); ctx.globalAlpha = 1; });
+  });
+
+  // ── 2–5. arcs and matrices ──────────────────────────────────────
+  const arcsV = S.canvas($('#v-arcs'), (ctx, W, H) => {
+    const s = SEQ.s, n = s.length, cw = Math.min(40, (W - 24) / n), x0 = (W - cw * n) / 2, y = H * 0.5, cx = (i) => x0 + (i + 0.5) * cw, f = refDone() ? fwd() : null, i = Math.round(st.arcI);
+    s.forEach((t, j) => { const cur = j === i && st.arcA > 0; ctx.fillStyle = cur ? S.alpha('accent', 0.3) : S.alpha('fg', 0.07); ctx.fillRect(x0 + j * cw + 1, y - cw / 2, cw - 2, cw - 2); S.label(ctx, LET[t], cx(j), y - 1, cur ? S.c.accent : S.c.fg, S.font(Math.min(17, cw * 0.5), 'mono', '600'), 'center'); });
+    if (st.notes > 0) { ctx.globalAlpha = st.notes; s.forEach((t, j) => { if (j === 0) return; const hi = st.findA > 0 && s[j - 1] === s[i] && j <= i; ctx.fillStyle = hi ? S.alpha('grad', 0.3) : S.alpha('grad', 0.1); ctx.fillRect(x0 + j * cw + 2, y + cw / 2 + 6, cw - 4, cw * 0.9); S.label(ctx, `↤${LET[s[j - 1]]}`, cx(j), y + cw / 2 + 6 + cw * 0.45, S.c.grad, S.font(Math.min(13, cw * 0.36), 'mono', '600'), 'center'); }); S.label(ctx, 'Notiz von Kopf 0: „vor mir stand …“', x0, y + cw * 1.75 + 14, S.c.grad, S.font(12, 'body', '600'), 'left'); ctx.globalAlpha = 1; }
+    if (!f || st.arcA <= 0) return;
+    (st.arcH === 2 ? [0, 1] : [st.arcH]).forEach((h) => {
+      const A = f.hc[h].A, up = h === 1, col = h === 0 ? S.c.grad : S.c.accent;
+      for (let j = 0; j <= i; j++) { const w = A[i * n + j]; if (w < 0.04) continue; ctx.globalAlpha = st.arcA * Math.min(1, 0.25 + w); ctx.strokeStyle = col; ctx.lineWidth = 1 + 6 * w; const a = cx(i), b = cx(j), hgt = Math.min(H * 0.32, 14 + Math.abs(a - b) * 0.45), yy = up ? y - cw / 2 - 4 : y + cw / 2 + (st.notes > 0 ? cw + 12 : 4); ctx.beginPath(); ctx.moveTo(a, yy); ctx.bezierCurveTo(a, yy + (up ? -hgt : hgt), b, yy + (up ? -hgt : hgt), b, yy); ctx.stroke(); ctx.globalAlpha = 1; }
+    });
+    if (st.arcH !== 2) S.label(ctx, st.arcH === 0 ? 'grün: wohin Kopf 0 schaut' : 'violett: wohin Kopf 1 schaut', W / 2, H - 14, st.arcH === 0 ? S.c.grad : S.c.accent, S.font(12.5, 'body', '600'), 'center');
+  });
+  const patV = S.canvas($('#v-pat'), (ctx, W, H) => {
+    if (!refDone()) return;
+    const A = fwd().hc[st.patH].A, s = SEQ.s, n = s.length, side = Math.min(W - 60, H - 50), cs = side / n, x0 = (W - side) / 2 + 10, y0 = 30, col = st.patH === 0 ? S.c.grad : S.c.accent;
+    s.forEach((t, j) => { S.label(ctx, LET[t], x0 + (j + 0.5) * cs, y0 - 10, S.c['fg-2'], S.font(Math.min(12, cs * 0.6), 'mono'), 'center'); S.label(ctx, LET[t], x0 - 10, y0 + (j + 0.5) * cs, S.c['fg-2'], S.font(Math.min(12, cs * 0.6), 'mono'), 'center'); });
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { ctx.fillStyle = S.alpha('fg', j > i ? 0.02 : 0.06); ctx.fillRect(x0 + j * cs + 0.5, y0 + i * cs + 0.5, cs - 1, cs - 1); if (j <= i) { ctx.fillStyle = col; ctx.globalAlpha = clamp(A[i * n + j] * 1.3, 0, 1); ctx.fillRect(x0 + j * cs + 0.5, y0 + i * cs + 0.5, cs - 1, cs - 1); ctx.globalAlpha = 1; } }
+    S.label(ctx, `Kopf ${st.patH} · Zeile: aktuelle Stelle · Spalte: wohin sie schaut`, W / 2, H - 8, S.c['fg-2'], S.font(12, 'body'), 'center');
+  });
+
+  // ── 6. decompose the score of the right letter ──────────────────
+  const pathsV = S.canvas($('#v-paths'), (ctx, W, H) => {
+    if (!refDone()) return;
+    const f = fwd(), { D, V: Vn, P } = REF, i = SEQ.m + 3, tgt = SEQ.s[i + 1], u = (k) => P.U[k * Vn + tgt];
+    const dotU = (vec, off) => { let s2 = 0; for (let k = 0; k < D; k++) s2 += vec[off + k] * u(k); return s2; };
+    const parts = [[W < 560 ? 'Wort + Platz' : 'Embedding + Platz', dotU(f.xs[0], i * D), S.c['fg-2']], ['Kopf 0', dotU(f.outs[0], i * D), S.c.grad], ['Kopf 1', dotU(f.outs[1], i * D), S.c.accent]], total = parts.reduce((a, p) => a + p[1], 0);
+    const s = SEQ.s, cw = Math.min(30, (W - 24) / s.length), x0 = (W - cw * s.length) / 2;
+    s.forEach((t, j) => { ctx.fillStyle = j === i ? S.alpha('accent', 0.3) : j === i + 1 ? S.alpha('grad', 0.25) : S.alpha('fg', 0.07); ctx.fillRect(x0 + j * cw + 1, 14, cw - 2, cw - 2); S.label(ctx, LET[t], x0 + (j + 0.5) * cw, 14 + cw / 2, S.c.fg, S.font(Math.min(15, cw * 0.5), 'mono', '600'), 'center'); });
+    S.label(ctx, W < 560 ? `Punktzahl für den richtigen nächsten: „${LET[tgt]}“` : `An der markierten Stelle: Punktzahl für den richtigen nächsten Buchstaben „${LET[tgt]}“`, W / 2, cw + 34, S.c['fg-2'], S.font(12.5, 'body', '600'), 'center');
+    const lab = W < 560 ? 120 : 170, X = lin(Math.min(0, ...parts.map((p) => p[1])) - 1, Math.max(total, ...parts.map((p) => p[1])) + 1, lab, W - 60), rh = Math.min(50, (H - cw - 90) / 4), y0 = cw + 60;
+    ctx.strokeStyle = S.alpha('fg', 0.3); ctx.beginPath(); ctx.moveTo(X(0), y0 - 6); ctx.lineTo(X(0), y0 + 4 * rh); ctx.stroke();
+    [...parts, ['Summe', total, S.c.fg]].forEach(([nm, v, col], r) => { const al = clamp(st.pathA * 4 - r, 0, 1); if (al <= 0) return; ctx.globalAlpha = al; const y = y0 + r * rh; S.label(ctx, nm, lab - 10, y + rh / 2, col, S.font(13, 'body', '600'), 'right'); ctx.fillStyle = col; ctx.fillRect(Math.min(X(0), X(v)), y + 8, Math.abs(X(v) - X(0)), rh - 16); S.label(ctx, fmt(v, 1), Math.max(X(0), X(v)) + 6, y + rh / 2, S.c.fg, S.font(12.5, 'mono', '600'), 'left'); ctx.globalAlpha = 1; });
+  });
+
+  // ── 7. one letter through head 1's OV path ──────────────────────
+  const OVL = 'N';
+  const ovstepV = S.canvas($('#v-ovstep'), (ctx, W, H) => {
+    if (!refDone()) return;
+    const { V: Vn, D, DH, P } = REF, h1 = P.H[1], a = LET.indexOf(OVL), e = P.E.slice(a * D, a * D + D), v = mm(e, h1.V, 1, D, DH), o = mm(v, h1.O, 1, DH, D), sc = mm(o, P.U, 1, D, Vn);
+    const rows = [[e, `„${OVL}“ aus E (16 Zahlen)`], [v, '· W_V (8 Zahlen)'], [o, '· W_O: was auf das Notizblatt kommt (16)'], [sc, '· U: Punktzahl für jeden Buchstaben (16)']], rh = (H - 30) / 4;
+    rows.forEach(([vals, title], r) => {
+      if (st.ovK < r) return; const y = 16 + r * rh, n = vals.length, w = Math.min(W - 40, n * 34), x0 = (W - w) / 2, bw = w / n, mx = Math.max(...Array.from(vals, Math.abs)), mid = y + rh * 0.55, hh = rh * 0.32;
+      S.label(ctx, title, x0, y + 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke();
+      Array.from(vals).forEach((val, j) => { const h = (val / mx) * hh, best = r === 3 && val === Math.max(...Array.from(vals)); ctx.fillStyle = best ? S.c.accent : val >= 0 ? S.c.model : S.c.error; ctx.fillRect(x0 + j * bw + 2, val >= 0 ? mid - h : mid, bw - 4, Math.abs(h)); if (r === 3) S.label(ctx, LET[j], x0 + (j + 0.5) * bw, mid + hh + 12, best ? S.c.accent : S.c['fg-2'], S.font(12, 'mono', '600'), 'center'); });
+    });
+  });
+
+  // ── 8–10. circuits as tables ────────────────────────────────────
+  function circuit(mode) {
+    const { V: Vn, D, DH, P } = REF, [h0, h1] = P.H;
+    if (mode === 'ov') return mm(mm(mm(P.E, h1.V, Vn, D, DH), h1.O, Vn, DH, D), P.U, Vn, D, Vn);
+    const q = mm(P.E, h1.Q, Vn, D, DH);
+    if (mode === 'qk') { const note = mm(mm(P.E, h0.V, Vn, D, DH), h0.O, Vn, DH, D); return mmT(q, mm(note, h1.K, Vn, D, DH), Vn, DH, Vn); }
+    return mmT(q, mm(P.E, h1.K, Vn, D, DH), Vn, DH, Vn);
+  }
+  const circV = S.canvas($('#v-circ'), (ctx, W, H) => {
+    if (!refDone()) return;
+    const C = circuit(st.circMode), n = 16, side = Math.min(W - 120, H - 80), cs = side / n, x0 = (W - side) / 2 + 20, y0 = 44, mx = Math.max(...Array.from(C).map(Math.abs));
+    const [rowT, colT] = st.circMode === 'ov' ? ['Kopf 1 schaut auf …', '… Punktzahl steigt für'] : st.circMode === 'qk' ? ['aktueller Buchstabe', 'Notiz „vor mir stand …“'] : ['aktueller Buchstabe', 'Buchstabe selbst (ohne Notiz)'];
+    S.label(ctx, colT, x0 + side / 2, 12, S.c['fg-2'], S.font(12.5, 'body', '600'), 'center');
+    ctx.save(); ctx.translate(x0 - 30, y0 + side / 2); ctx.rotate(-Math.PI / 2); S.label(ctx, rowT, 0, 0, S.c['fg-2'], S.font(12.5, 'body', '600'), 'center'); ctx.restore();
+    for (let i = 0; i < n; i++) {
+      S.label(ctx, LET[i], x0 - 10, y0 + (i + 0.5) * cs, S.c.fg, S.font(Math.min(12, cs * 0.6), 'mono', '600'), 'center'); S.label(ctx, LET[i], x0 + (i + 0.5) * cs, y0 - 10, S.c.fg, S.font(Math.min(12, cs * 0.6), 'mono', '600'), 'center');
+      for (let j = 0; j < n; j++) { const v = C[i * n + j] / mx; ctx.fillStyle = v >= 0 ? S.c.model : S.c.error; ctx.globalAlpha = st.circA * clamp(Math.abs(v), 0, 1); ctx.fillRect(x0 + j * cs + 0.5, y0 + i * cs + 0.5, cs - 1, cs - 1); ctx.globalAlpha = 1; }
+    }
+    S.label(ctx, 'blau: stark positiv · orange: negativ', W / 2, y0 + side + 18, S.c['fg-2'], S.font(12, 'body'), 'center');
+  });
+
+  // ── 11. ablation ────────────────────────────────────────────────
+  const ABL = [[[], 'beide Köpfe'], [[1], 'ohne Kopf 1'], [[0], 'ohne Kopf 0']], accCache = {};
+  const accOf = (abl) => { const k = abl.join(','); if (!(k in accCache)) accCache[k] = REF.evaluate({ ablate: abl }, 120).acc; return accCache[k]; };
+  const ablV = S.canvas($('#v-abl'), (ctx, W, H) => {
+    if (!refDone()) return;
+    const bx = W < 560 ? 110 : 150, X = lin(0, 1, bx, W - 70), rh = 34;
+    S.label(ctx, 'Treffer in den Wiederholungen', bx, 16, S.c['fg-2'], S.font(12.5, 'body', '600'), 'left');
+    ABL.forEach(([abl, nm], k) => { if (k >= st.ablShown) return; const y = 30 + k * rh, acc = accOf(abl), cur = abl.join() === st.abl.join(); S.label(ctx, nm, bx - 10, y + rh / 2, cur ? S.c.fg : S.c['fg-2'], S.font(13, 'body', cur ? '600' : '400'), 'right'); ctx.fillStyle = k === 0 ? S.c.grad : S.c.error; ctx.fillRect(X(0), y + 6, X(acc) - X(0), rh - 12); S.label(ctx, `${fmt(acc * 100, 0)} %`, X(acc) + 6, y + rh / 2, S.c.fg, S.font(12.5, 'mono', '600'), 'left'); });
+    ctx.strokeStyle = S.alpha('fg', 0.4); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(1 / 16), 26); ctx.lineTo(X(1 / 16), 30 + 3 * rh); ctx.stroke(); ctx.setLineDash([]); S.label(ctx, 'Zufall', X(1 / 16), 30 + 3 * rh + 10, S.c.muted, S.font(11, 'body'), 'center');
+    const s = SEQ.s, n = s.length, cw = Math.min(36, (W - 24) / n), x0 = (W - cw * n) / 2, y = 30 + 3 * rh + 40, f = fwd({ ablate: st.abl }), bh = Math.min(70, H - y - cw - 30);
+    S.label(ctx, `Vorhersagen ${ABL.find(([a]) => a.join() === st.abl.join())[1]}`, x0, y - 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+    s.forEach((t, i) => { const x = x0 + i * cw; ctx.fillStyle = i < SEQ.m ? S.alpha('fg', 0.06) : S.alpha('grad', 0.12); ctx.fillRect(x + 1, y, cw - 2, cw - 2); S.label(ctx, LET[t], x + cw / 2, y + cw / 2 - 1, S.c.fg, S.font(Math.min(15, cw * 0.48), 'mono', '600'), 'center'); if (i > 0) { const p = REF.probsAt(f.logits, i - 1)[t]; ctx.fillStyle = S.alpha('fg', 0.06); ctx.fillRect(x + cw * 0.2, y + cw + 4, cw * 0.6, bh); ctx.fillStyle = p > 0.5 ? S.c.grad : p > 0.15 ? S.c.accent : S.c.error; ctx.fillRect(x + cw * 0.2, y + cw + 4 + bh * (1 - p), cw * 0.6, bh * p); } });
+  });
+
+  // ── 12. the phase change ────────────────────────────────────────
+  const phaseV = S.canvas($('#v-phase'), (ctx, W, H) => {
+    if (!REF.hist.length) return;
+    const X = lin(0, STEPS, 50, W - 20), tr = st.phaseK * STEPS;
+    const panel = (y0, y1, ymax, series, title) => {
+      const Y = lin(0, ymax, y1, y0);
+      S.axes(ctx, { x: X, y: Y, xt: [0, 500, 1000, 1500], yt: [0, ymax], xfmt: String, yfmt: (v) => fmt(v, ymax < 2 ? 1 : 0) });
+      S.label(ctx, title, 54, y0 - 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      series.forEach(([key, col, nm], k) => { ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.beginPath(); let first = true; REF.hist.forEach((h) => { if (h.t > tr) return; const px = X(h.t), py = Y(Math.min(ymax, h[key])); first ? ctx.moveTo(px, py) : ctx.lineTo(px, py); first = false; }); ctx.stroke(); S.label(ctx, nm, W - 24, y1 - 12 - (series.length - 1 - k) * 16, col, S.font(12, 'body', '600'), 'right'); });
+    };
+    panel(30, H * 0.44, 4, [['rep', S.c.grad, 'Verlust, Wiederholungen']], 'Verlust');
+    panel(H * 0.56, H - 30, 1, [['prev', S.c.grad, 'Kopf 0 → voriger Buchstabe'], ['ind', S.c.accent, 'Kopf 1 → nach der letzten Kopie']], 'Anteil der Attention');
+    let best = 0, bt = 0; for (let k = 1; k < REF.hist.length; k++) { const d = REF.hist[k - 1].rep - REF.hist[k].rep; if (d > best) { best = d; bt = REF.hist[k].t; } }
+    if (st.phaseK >= 1 && bt) { ctx.strokeStyle = S.alpha('fg', 0.45); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(bt), 24); ctx.lineTo(X(bt), H - 30); ctx.stroke(); ctx.setLineDash([]); S.label(ctx, `Schritt ≈ ${bt}`, X(bt) + 6, H * 0.5, S.c.fg, S.font(12, 'mono', '600'), 'left'); }
+  });
+
+  // ── 14. the ladder ──────────────────────────────────────────────
+  const LAD = [['1', 'Die Gerade', 'ŷ = w·x + b'], ['2', 'Die Matrix', 'ŷ = W x'], ['3', 'Die Grenze', 'p = softmax(W x)'], ['4', 'Den Raum falten', 'ŷ = W₂ ReLU(W₁ x)'], ['5', 'Viele Dimensionen', 'u · v ≈ 0'], ['6', 'Bedeutung als Richtung', 'x = E[Wort]'], ['7', 'Mischen nach Relevanz', 'x + Σ softmax(x·xⱼ) xⱼ'], ['8', 'Fragen, Schilder, Werte', 'softmax(QKᵀ/√d) V'], ['9', 'Der Transformer', 'x += Attn, x += MLP'], ['10', 'Ein eigener Transformer', '1856 Zahlen, trainiert'], ['11', 'Merkmale und Schaltkreise', 'Kanten → Kurven'], ['12', 'Schaltkreise im Transformer', 'Kopf 0 → Kopf 1']];
+  const ladderV = S.canvas($('#v-ladder'), (ctx, W, H) => {
+    const rh = Math.min(44, (H - 20) / LAD.length), x0 = Math.max(16, W / 2 - 280);
+    LAD.forEach(([n, name, f], i) => { const a = clamp(st.ladK - i, 0, 1); if (a <= 0) return; ctx.globalAlpha = a; const y = 10 + i * rh; S.label(ctx, n, x0, y + rh / 2, S.c.accent, S.font(17, 'math', '600'), 'left'); S.label(ctx, name, x0 + 34, y + rh / 2, S.c.fg, S.font(W < 500 ? 12 : 14.5, 'body', '600'), 'left'); S.label(ctx, f, W - x0, y + rh / 2, S.c['fg-2'], S.font(W < 500 ? 11 : 14, 'math'), 'right'); ctx.globalAlpha = 1; });
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const steps = {
+    werkzeuge: {
+      views: ['tools'],
+      formula: `Merkmale finden · ${T('l', 'Verbindungen lesen', 'c-new', 'jetzt an den Matrizen eines Transformers')} · durch Eingriff prüfen`,
+      setup() { st.toolK = 0; },
+      async play(a) { a.say('Die Werkzeuge aus dem Bildnetz und ihre Entsprechung im Transformer.'); await a.to(st, { toolK: TOOLS.length }, 4000, { ease: (t) => t }); a.hl('l'); a.say('Wir gehen sie der Reihe nach durch, an unserem Modell aus Kapitel 10.'); },
+    },
+    kopf0: {
+      views: ['arcs'],
+      formula: `${T('h', 'Kopf 0', 'c-new', 'die Attention in Schicht 0')}: Stelle <i>i</i> schaut vor allem auf Stelle <i>i</i> − 1`,
+      setup() { Object.assign(st, { arcH: 0, arcI: 1, arcA: 0, notes: 0, findA: 0 }); },
+      async play(a) { await waitRef(a); a.hl('h'); a.say('Grüne Bögen: wohin Kopf 0 von der markierten Stelle aus schaut.'); await a.to(st, { arcA: 1 }, 600); for (let i = 1; i < SEQ.s.length; i++) { a.set(st, { arcI: i }); await a.wait(420); } a.say('Am stärksten jedes Mal auf den Buchstaben direkt davor.'); },
+    },
+    kopf1: {
+      views: ['arcs'],
+      formula: `${T('h', 'Kopf 1', 'c-new', 'die Attention in Schicht 1')}: schaut dorthin, wo es letztes Mal weiterging`,
+      setup() { Object.assign(st, { arcH: 1, arcI: SEQ.m, arcA: 0, notes: 0, findA: 0 }); },
+      async play(a) { await waitRef(a); a.hl('h'); await a.to(st, { arcA: 1 }, 600); const i0 = SEQ.m + 2; a.set(st, { arcI: i0 }); a.say(`Hier steht „${LET[SEQ.s[i0]]}“. Kopf 1 schaut auf die Stelle, die beim letzten Mal nach „${LET[SEQ.s[i0]]}“ kam.`); await a.wait(3600); for (let i = i0 + 1; i < SEQ.s.length; i++) { a.set(st, { arcI: i }); await a.wait(520); } a.say('Bei jeder Stelle: zurück zur Stelle nach der letzten Kopie.'); },
+    },
+    matrizen: {
+      views: ['pat'],
+      formula: `${T('a', 'Kopf 0', '', 'Linie unter der Diagonale')}: einen Platz zurück<span class="sep">·</span>${T('b', 'Kopf 1', 'c-new', 'Streifen im Abstand der Periode')}: nach der letzten Kopie`,
+      setup() { st.patH = 0; },
+      async play(a) { await waitRef(a); a.hl('a'); a.say('Kopf 0: am hellsten direkt unter der Diagonale.'); await a.wait(3200); a.hl('b'); a.set(st, { patH: 1 }); a.say(`Kopf 1: Streifen im Abstand ${SEQ.m}, der Periode dieser Folge.`); },
+    },
+    trick: {
+      views: ['arcs'],
+      formula: `${T('a', 'Kopf 0 schreibt', '', 'an jede Stelle: vor mir stand X')} „vor mir stand X“ → ${T('b', 'Kopf 1 sucht', 'c-new', 'die Notiz mit dem aktuellen Buchstaben und kopiert den Buchstaben dort')} „vor mir stand R“`,
+      setup() { Object.assign(st, { arcH: 0, arcI: SEQ.m + 2, arcA: 0, notes: 0, findA: 0 }); },
+      async play(a) {
+        await waitRef(a); const i0 = SEQ.m + 2, L0 = LET[SEQ.s[i0]];
+        a.hl('a'); a.say('Schritt 1: Kopf 0 schreibt an jede Stelle den vorigen Buchstaben als Notiz.'); await a.to(st, { notes: 1 }, 1400); await a.wait(2400);
+        a.hl('b'); a.say(`Schritt 2: Hier steht „${L0}“. Kopf 1 sucht die Notiz „vor mir stand ${L0}“ …`); await a.to(st, { findA: 1 }, 600); await a.wait(1600);
+        a.set(st, { arcH: 1 }); await a.to(st, { arcA: 1 }, 700); a.say(`… findet sie und kopiert, was dort steht: „${LET[SEQ.s[i0 + 1]]}“. Genau das kommt als Nächstes.`);
+      },
+    },
+    pfade: {
+      views: ['paths'],
+      formula: `${T('p', 'Punktzahl', '', 'für den richtigen nächsten Buchstaben')} = <b>u</b> · (${T('e', 'Embedding', '', '')} + ${T('h0', 'Kopf 0', '', '')} + ${T('h1', 'Kopf 1', 'c-new', 'liefert fast alles')})`,
+      setup() { st.pathA = 0; },
+      async play(a) { await waitRef(a); a.say('Die Punktzahl des richtigen Buchstabens, zerlegt in die drei Teile des Notizblatts …'); await a.to(st, { pathA: 1 }, 2400, { ease: (t) => t }); a.hl('h1'); a.say('Fast alles kommt von Kopf 1. Kopf 0 trägt direkt kaum bei; seine Rolle muss indirekt sein.'); },
+    },
+    ovschritt: {
+      views: ['ovstep'],
+      formula: `${T('e', '<b>E</b>[N]', '', 'der Vektor von N')} · ${T('v', '<b>W</b><sub>V</sub>', '', 'Wert-Matrix von Kopf 1')} · ${T('o', '<b>W</b><sub>O</sub>', '', 'Ausgabe-Matrix von Kopf 1')} · ${T('u', '<b>U</b>', 'c-new', 'Punktzahl für jeden Buchstaben')}`,
+      setup() { st.ovK = 0; },
+      async play(a) { await waitRef(a); const hl = ['e', 'v', 'o', 'u'], t = ['Der Vektor von „N“ aus der Tabelle E.', 'Mal W_V: der Wert, 8 Zahlen.', 'Mal W_O: das, was Kopf 1 auf das Notizblatt schreibt.', 'Mal U: die Punktzahl jedes Buchstabens. Die höchste hat „N“.']; for (let k = 0; k < 4; k++) { a.set(st, { ovK: k }); a.hl(hl[k]); a.say(t[k]); await a.wait(2600); } a.say('Schaut Kopf 1 auf ein „N“, schreibt er „als Nächstes N“. Er kopiert.'); },
+    },
+    ov: {
+      views: ['circ'],
+      formula: `${T('ov', '<b>E</b> <b>W</b><sub>V</sub> <b>W</b><sub>O</sub> <b>U</b>', 'c-new', 'für alle 16 Buchstaben: der OV-Schaltkreis')}`,
+      setup() { st.circMode = 'ov'; st.circA = 0; },
+      async play(a) { await waitRef(a); a.hl('ov'); a.say('Dieselbe Rechnung für alle 16 Buchstaben, eine Zeile pro Buchstabe.'); await a.to(st, { circA: 1 }, 1200); a.say('Eine helle Diagonale: Für jeden Buchstaben steigt genau seine eigene Punktzahl.'); },
+    },
+    qk: {
+      views: ['circ'],
+      formula: `${T('q', 'Frage von Kopf 1', '', 'aus dem aktuellen Buchstaben')} · ${T('k', 'Schild aus der Notiz von Kopf 0', 'c-new', 'die Notiz „vor mir stand b“, gelesen durch W_K von Kopf 1')}`,
+      setup() { st.circMode = 'qk'; st.circA = 0; },
+      async play(a) { await waitRef(a); a.hl('q', 'k'); a.say('Zeilen: aktueller Buchstabe. Spalten: die Notiz „vor mir stand …“ von Kopf 0.'); await a.to(st, { circA: 1 }, 1200); a.say('Wieder eine helle Diagonale: Kopf 1 sucht genau die Notiz mit seinem eigenen Buchstaben.'); },
+    },
+    gegenprobe: {
+      views: ['circ'],
+      formula: `${T('k', 'K-Komposition', 'c-new', 'die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat')}: Kopie meiden, Notiz finden`,
+      setup() { st.circMode = 'qkd'; st.circA = 0; },
+      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.ask('Was zeigt die Tabelle, wenn Kopf 1 die Buchstaben direkt vergleicht?', ['wieder eine helle Diagonale', 'gar kein Muster', 'eine orange Diagonale: er meidet den eigenen Buchstaben'], 2, 'An der früheren Stelle mit demselben Buchstaben steht genau die falsche Antwort. Gesucht ist die Stelle dahinter, also lernt Kopf 1, die Kopie selbst zu meiden.'); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, sondern eine orange: Kopf 1 meidet die Kopie selbst, denn dort steht nur derselbe Buchstabe. Gesucht ist die Stelle dahinter, und die findet er nur über die Notiz von Kopf 0.'); },
+    },
+    abschalten: {
+      views: ['abl'],
+      formula: () => `${T('x', '<b>x</b> += Kopf(<b>x</b>)', 'c-new', 'beim Abschalten fällt dieser Beitrag weg')}<span class="sep">gerade:</span>${V('abl')}`,
+      setup() { st.abl = []; st.ablShown = 0; },
+      async play(a) {
+        await waitRef(a); a.set(st, { ablShown: 1 }); a.say('Mit beiden Köpfen: fast alle Wiederholungen richtig.'); await a.wait(2600);
+        a.hl('x'); a.set(st, { abl: [1], ablShown: 2 }); a.say('Kopf 1 abgeschaltet: Der Kopierer fehlt. Das Modell rät nur noch.'); await a.wait(3200);
+        await a.ask('Kopf 0 trägt direkt fast nichts zur Vorhersage bei. Was passiert, wenn wir ihn abschalten?', ['fast nichts', 'die Trefferquote bricht ein'], 1, 'Kopf 0 schreibt die Notizen, nach denen Kopf 1 sucht. Ohne sie findet Kopf 1 die richtige Stelle nicht, auch wenn Kopf 0 selbst nichts vorhersagt.');
+        a.set(st, { abl: [0], ablShown: 3 }); a.say('Kopf 0 abgeschaltet: Die Notizen fehlen, Kopf 1 sucht ins Leere.'); await a.wait(3200);
+        a.set(st, { abl: [] }); a.say('Beide sind nötig. Das ist der Schaltkreis.');
+      },
+      tryit: () => [{ label: 'Schalte selbst', type: 'choice', get: () => st.abl, set: (v) => (st.abl = v), options: [{ label: 'beide an', value: [] }, { label: 'ohne Kopf 0', value: [0] }, { label: 'ohne Kopf 1', value: [1] }] }],
+    },
+    phase: {
+      views: ['phase'],
+      formula: `${T('p', 'Phasenübergang', 'c-new', 'der Schaltkreis bildet sich in einem kurzen Abschnitt')}: beide Köpfe und der Verlust springen gemeinsam`,
+      setup() { st.phaseK = 0; },
+      async play(a) { await waitRef(a); a.say('Mitgeschrieben während des Trainings.'); await a.to(st, { phaseK: 1 }, 5000, { ease: (t) => t }); a.hl('p'); a.say('Der Verlust stürzt ab, und genau dann entstehen beide Muster gleichzeitig.'); },
+    },
+    gross: {
+      views: ['tools'],
+      formula: `große Modelle: ${T('s', 'Superposition', 'c-new', 'mehr Merkmale als Dimensionen, Kapitel 5')} → Merkmale als Richtungen suchen → Attributionsgraphen`,
+      setup() { st.toolK = TOOLS.length; },
+      async play(a) { a.hl('s'); a.say('Dieselbe Idee, viel größer: Merkmale finden, Verbindungen lesen, durch Eingriffe prüfen.'); },
+    },
+    weg: {
+      views: ['ladder'],
+      formula: `Fehler messen → Gradient → ein kleiner Schritt bergab`,
+      setup() { st.ladK = 0; },
+      async play(a) { a.say('Zwölf Kapitel, jedes mit einer neuen Idee.'); await a.to(st, { ladK: LAD.length }, 7000, { ease: (t) => t }); a.say('Von einer Geraden mit zwei Knöpfen bis zu Schaltkreisen, die wir lesen können.'); },
+    },
+  };
+
+  story = S.story($('#story'), {
+    views: { tools: toolsV, arcs: arcsV, pat: patV, paths: pathsV, ovstep: ovstepV, circ: circV, abl: ablV, phase: phaseV, ladder: ladderV },
+    steps,
+    values: () => ({ abl: st.abl.length ? `ohne Kopf ${st.abl[0]}` : 'beide Köpfe an' }),
+  });
+})();
+</script>
+</body>
+</html>
