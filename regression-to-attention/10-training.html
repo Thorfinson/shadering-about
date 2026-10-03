@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 10 von 12</div>
     <h1>Ein eigener Transformer</h1>
     <p class="lead">Wir bauen einen winzigen Transformer nach dem Bauplan aus Kapitel 9 und trainieren ihn live im Browser. Er ist klein genug, dass wir ihn in Kapitel 12 vollständig lesen können, und er lernt etwas, das jedes große Sprachmodell auch lernt.</p>
+    <ol class="roadmap"><li>Eine kleine Aufgabe</li><li>Der Bauplan</li><li>Live trainieren</li><li>Der Sprung und die Grenzen</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -47,14 +48,14 @@
         <p>Große Sprachmodelle haben Milliarden Zahlen. Um wirklich zu verstehen, was in einem Transformer passiert, brauchen wir einen, den wir vollständig überblicken. Also bauen wir einen eigenen, mit einer Aufgabe, die klein ist, aber dasselbe verlangt wie Sprache.</p>
       </div></article>
 
-      <article class="step" data-step="aufgabe"><div class="card">
+      <article class="step" data-step="aufgabe" data-core><div class="card">
         <span class="kicker">Die Aufgabe</span>
         <h3>Folgen, die sich wiederholen</h3>
         <p>Statt Wörtern bekommt unser Modell 16 Buchstaben. Jede Folge ist 20 Buchstaben lang und wiederholt sich: „K F A R K F A R K F …“. Wie lang das Muster ist (die <strong>Periode</strong>), ist jedes Mal anders, zwischen 3 und 8.</p>
         <p>Grau: die erste Runde. Grün: die Wiederholungen.</p>
       </div></article>
 
-      <article class="step" data-step="zurueck"><div class="card">
+      <article class="step" data-step="zurueck" data-core><div class="card">
         <span class="kicker">Was man dafür braucht</span>
         <h3>Zurückschauen</h3>
         <p>In der ersten Runde kann niemand wissen, was als Nächstes kommt: Jeder Buchstabe ist neu. Ab der Wiederholung aber schon. Die Regel: Suche, wo der aktuelle Buchstabe schon einmal stand, und schau, was danach kam. Das kommt jetzt wieder.</p>
@@ -80,21 +81,21 @@
         <p>Ein Lernschritt läuft wie in Kapitel 1 und 4: 16 neue Beispielfolgen ziehen. Das Modell sagt an jeder Stelle den nächsten Buchstaben vorher. Der Verlust (Kapitel 9) misst, wie schlecht das war. Backpropagation (Kapitel 4) bestimmt für jede der 1856 Zahlen, in welche Richtung sie den Verlust senkt. Ein kleiner Schritt in diese Richtung (mit Adam). Und von vorn.</p>
       </div></article>
 
-      <article class="step" data-step="training"><div class="card">
+      <article class="step" data-step="training" data-core><div class="card">
         <span class="kicker">Live</span>
         <h3>1500 Lernschritte</h3>
         <p>Unten zwei Lernkurven: der Verlust in der ersten Runde, die man nicht vorhersagen kann, und in den Wiederholungen.</p>
         <p>Lange passiert wenig. Dann fällt der Verlust der Wiederholungen plötzlich steil ab.</p>
       </div></article>
 
-      <article class="step" data-step="sprung"><div class="card">
+      <article class="step" data-step="sprung" data-core><div class="card">
         <span class="kicker">Was da passiert ist</span>
         <h3>Ein plötzlicher Sprung</h3>
         <p>Das Zurückschauen braucht zwei Teile, die nur zusammen etwas nützen (welche, sehen wir in Kapitel 12). Solange einer fehlt, bringt der andere nichts, also lernt das Modell lange kaum etwas. Sobald beide in Ansätzen da sind, verstärken sie sich gegenseitig, und der Verlust stürzt ab. Man nennt so etwas einen <strong>Phasenübergang</strong>.</p>
         <p>Nebenbei steigt der Verlust in der ersten Runde etwas: Das Modell tippt jetzt gern auf Buchstaben, die schon vorkamen. In der ersten Runde ist die Antwort aber immer ein neuer.</p>
       </div></article>
 
-      <article class="step" data-step="nachher"><div class="card">
+      <article class="step" data-step="nachher" data-core><div class="card">
         <span class="kicker">Nach dem Training</span>
         <h3>Sicher ab der zweiten Runde</h3>
         <p>In der ersten Runde rät das Modell weiter, das kann niemand besser. Ab der ersten Wiederholung liegt es fast immer richtig, egal ob die Periode 3 oder 8 ist.</p>
@@ -104,9 +105,10 @@
         <span class="kicker">Selbst schreiben lassen</span>
         <h3>Ein Buchstabe nach dem anderen</h3>
         <p>So erzeugen Sprachmodelle Text: Vorhersage für das nächste Zeichen, das wahrscheinlichste anhängen, alles nochmal durch das Modell, nächstes Zeichen. Unser Modell setzt jedes Muster fort, das man ihm zweimal vorgibt.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Das Modell lernt beim Benutzen weiter.“ Nein: Nach dem Training stehen seine 1856 Zahlen fest. Was es hier schreibt, ändert keine davon. Neues lernt es nur durch ein neues Training.</div>
       </div></article>
 
-      <article class="step" data-step="grenzen"><div class="card">
+      <article class="step" data-step="grenzen" data-core><div class="card">
         <span class="kicker">Was es nicht kann</span>
         <h3>Die Grenzen</h3>
         <p>Gibt man dem Modell eine Folge ohne Wiederholung, etwa „A B C D E F“, hat es nichts, worauf es zurückschauen kann. Dann verteilt es seine Wahrscheinlichkeit auf viele Buchstaben, ohne klaren Favoriten. Ein Alphabet setzt es nicht fort: Das hat es nie gelernt.</p>
@@ -118,6 +120,19 @@
         <h3>Wie macht es das?</h3>
         <p>Unser Modell hat einen Mechanismus gelernt, den wir ihm nie einprogrammiert haben. In Kapitel 12 öffnen wir es und lesen ihn ab. Vorher, in Kapitel 11, lernen wir die Werkzeuge dafür kennen, an einem Netz, das Bilder sieht.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Ein winziger Transformer mit 1856 Zahlen lernt, Muster fortzusetzen: Suche den aktuellen Buchstaben weiter vorn und nimm, was danach kam.</li><li>Er lernt das nicht allmählich, sondern in einem Sprung, weil zwei Teile nur zusammen etwas nützen.</li><li>Er kann genau das, was in den Daten steckte: ohne Wiederholung kein Favorit, kein Alphabet, nicht über 20 Zeichen.</li></ul>
+    <div class="take-f">Verlust ↓ &nbsp; ⇐ &nbsp; 1500 × (16 Folgen → vorhersagen → Verlust → Backpropagation → kleiner Schritt)</div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum kann das Modell in der ersten Runde einer Folge nicht besser als raten?</summary><p>Jeder Buchstabe ist dort neu. Es gibt nichts, worauf es zurückschauen könnte.</p></details>
+      <details><summary>Was ist ein Phasenübergang beim Training?</summary><p>Lange passiert wenig, dann fällt der Verlust plötzlich steil ab, weil zwei Teile sich ab einem Punkt gegenseitig verstärken.</p></details>
+      <details><summary>Welcher Trick aus Kapitel 9 verhindert, dass das Modell beim Lernen schummelt?<span class="from">Kapitel 9</span></summary><p>Die kausale Maske: Jede Stelle sieht nur sich und die Stellen davor.</p></details>
     </div>
   </section>
 
@@ -223,6 +238,14 @@
       p.forEach((v, j) => { ctx.fillStyle = j === best ? S.c.accent : S.alpha('fg', 0.35); ctx.fillRect(30 + j * bw + bw * 0.15, by + bh - v * bh, bw * 0.7, v * bh); S.label(ctx, LET[j], 30 + j * bw + bw / 2, by + bh + 12, j === best ? S.c.accent : S.c['fg-2'], S.font(12, 'mono', '600'), 'center'); if (v > 0.04) S.label(ctx, `${fmt(v * 100, 0)}`, 30 + j * bw + bw / 2, by + bh - v * bh - 9, S.c['fg-2'], S.font(10.5, 'mono'), 'center'); });
     }
   });
+  /** the reader's own prompt: keep the known letters, then let the model write greedily up to 20 */
+  function genNow(text) {
+    st.typed = text.toUpperCase();
+    const seq = st.typed.split('').map((c) => LET.indexOf(c)).filter((t) => t >= 0).slice(0, 19);
+    if (!seq.length || !refDone()) return;
+    st.gen = seq.map((t) => [t, false]); st.genP = null;
+    while (st.gen.length < 20) { const s = st.gen.map((g) => g[0]), f = REF.forward(s), p = REF.probsAt(f.logits, s.length - 1); st.genP = p; st.gen.push([p.indexOf(Math.max(...p)), true]); }
+  }
   async function generate(a, start, twice, until) {
     const seq = start.split('').map((c) => LET.indexOf(c)); st.gen = seq.map((t) => [t, false]); if (twice) seq.forEach((t) => st.gen.push([t, false])); st.genP = null; a.set(st, {}); await a.wait(1400);
     while (st.gen.length < until) { const s = st.gen.map((g) => g[0]), f = REF.forward(s), p = REF.probsAt(f.logits, s.length - 1); a.set(st, { genP: p }); await a.wait(520); st.gen.push([p.indexOf(Math.max(...p)), true]); a.set(st, {}); await a.wait(260); }
@@ -283,6 +306,7 @@
       async play(a) {
         const M = st.model; liveRunning = true; let said = false;
         try {
+          await a.ask('Wie wird der Verlust in den Wiederholungen sinken?', ['gleichmäßig, Schritt für Schritt', 'lange kaum, dann plötzlich', 'gar nicht'], 1);
           a.say('Training läuft. Beide Kurven bleiben erst einmal oben …');
           await a.loop(() => { M.train(1); const h = M.hist[M.hist.length - 1]; if (!said && h && h.rep < 1.2) { said = true; a.say(`Schritt ${M.t}: Der Verlust der Wiederholungen stürzt ab.`); } return M.t < STEPS; }, (i) => (i < 200 ? 60 : 180));
         } finally { liveRunning = false; }
@@ -310,13 +334,16 @@
         await waitRef(a); a.hl('g');
         for (const start of ['DHAB', 'KNRSTL']) { a.say(`Vorgabe: ${start.split('').join(' ')}, zweimal hintereinander.`); await generate(a, start, true, 20); a.say('Das Muster wird fortgesetzt.'); await a.wait(2000); }
       },
+      tryit: () => [{ label: `Eigene Vorgabe (nur ${LET.join('')})`, type: 'text', max: 16, go: 'Weiterschreiben', get: () => st.typed || '', set: (v) => genNow(v) }],
     },
     grenzen: {
       views: ['gen'],
       formula: `ohne Wiederholung: ${T('n', 'nichts zum Zurückschauen', 'c-new', 'das Modell kann nur kopieren, was schon da war')}`,
       setup() { st.gen = []; st.genP = null; },
       async play(a) {
-        await waitRef(a); a.hl('n'); a.say('Vorgabe ohne Wiederholung: A B C D E F.');
+        await waitRef(a);
+        await a.ask('Vorgabe ohne Wiederholung: A B C D E F. Was sagt das Modell als Nächstes?', ['„G“: das Alphabet geht weiter', 'keinen klaren Favoriten', 'sicher wieder „A“'], 1);
+        a.hl('n'); a.say('Vorgabe ohne Wiederholung: A B C D E F.');
         await generate(a, 'ABCDEF', false, 7);
         a.say('Kein klarer Favorit, die Wahrscheinlichkeit ist breit verteilt. Ein „G“ als Fortsetzung des Alphabets hat es nie gelernt.');
       },

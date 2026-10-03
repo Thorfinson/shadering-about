@@ -71,6 +71,13 @@ is currently doing the work. The engine lives in `series.js` (`S.story`).
   the weights, K-composition, head ablations, the phase change, and an outlook on
   superposition, sparse autoencoders and attribution graphs.
 
+Each chapter also carries learning aids grounded in instructional research: a short route
+map at the top, prediction prompts that pause the animation at key moments ("Was glaubst
+du?"), try-it controls after many steps (sliders, head switches, typing a sequence, drawing a
+shape for the image net), and at the end three take-aways plus three self-test questions,
+one of them about an earlier chapter. Readers can switch to a fast run of the core steps or
+turn prompts and controls off; both choices are remembered per browser.
+
 Unlike the studies below, the chapters share `series.css` and `series.js`; chapters 6 to 9
 share `wordmodel.js` (the word vectors), chapters 10 and 12 share `transformer.js` (the
 mini transformer with hand-written backpropagation), and chapter 11 uses `cnn.js` (the small

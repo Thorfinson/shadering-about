@@ -578,10 +578,86 @@
     const q = (sel) => stage.querySelector(sel);
     const viewsEl = q('.views'), formulaEl = q('.formula'), explainEl = q('.formula-x'), captionEl = q('.caption'), progEl = q('.prog');
     const btn = (act) => q(`[data-act="${act}"]`);
-    const stepEls = Array.from(root.querySelectorAll('.step'));
+    const allSteps = Array.from(root.querySelectorAll('.step'));
+    let stepEls = allSteps;
     const viewEls = {};
     root.querySelectorAll('.view').forEach((el) => (viewEls[el.dataset.view] = el));
-    let cur = -1, token = 0, paused = false, queued = false, started = false;
+    let cur = -1, token = 0, paused = false, queued = false, started = false, pending = null;
+
+    // reader options, kept per browser: fast run (core steps only) and "think along" (predictions, try-it controls)
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('rta-' + k); return v == null ? d : v === '1'; } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('rta-' + k, v ? '1' : '0'); } catch { /* storage blocked: option lasts for this page only */ } },
+    };
+    const opts = { fast: store.get('fast', false), think: store.get('think', true) };
+    const hasCore = allSteps.some((el) => el.hasAttribute('data-core'));
+    function applyFast() {
+      const fast = opts.fast && hasCore;
+      allSteps.forEach((el) => el.classList.toggle('skip', fast && !el.hasAttribute('data-core')));
+      stepEls = fast ? allSteps.filter((el) => el.hasAttribute('data-core')) : allSteps;
+    }
+    applyFast();
+    const bar = document.createElement('div');
+    bar.className = 'col story-opts';
+    bar.innerHTML = (hasCore ? '<label><input type="checkbox" data-o="fast"> Schnelldurchlauf: nur die Kernschritte</label>' : '') +
+      '<label><input type="checkbox" data-o="think"> Mitdenken: vorher raten, selbst ausprobieren</label>';
+    root.before(bar);
+    bar.querySelectorAll('input').forEach((inp) => {
+      inp.checked = opts[inp.dataset.o];
+      inp.addEventListener('change', () => {
+        opts[inp.dataset.o] = inp.checked; store.set(inp.dataset.o, inp.checked);
+        if (inp.dataset.o === 'fast') { applyFast(); cur = -1; token++; pick(); }
+        else if (cur >= 0) activate(cur, true);
+      });
+    });
+
+    // the action strip between the views and the caption: prediction prompts and try-it controls
+    const actEl = document.createElement('div');
+    actEl.className = 'stage-act';
+    stage.insertBefore(actEl, q('.stage-bar'));
+    function setAct(...nodes) { actEl.replaceChildren(...nodes); stage.classList.toggle('has-act', nodes.length > 0); }
+    function addAct(node) { actEl.append(node); stage.classList.add('has-act'); }
+    const make = (tag, cls, html) => { const el = document.createElement(tag); if (cls) el.className = cls; if (html != null) el.innerHTML = html; return el; };
+    /** controls: [{label, type: 'range' | 'choice' | 'text', get(), set(v), min, max, step, fmt, options: [{label, value}], go}] */
+    function controlBox(list, title) {
+      const box = make('div', 'try');
+      box.append(make('div', 'try-t', title));
+      const row = make('div', 'try-row');
+      box.append(row);
+      for (const c of list) {
+        const get = c.get || (() => c.obj[c.key]), set = c.set || ((v) => (c.obj[c.key] = v)), fmt = c.fmt || ((v) => S.fmt(v, 2));
+        const lab = make('label', 'tc');
+        if (c.label) lab.append(make('span', '', c.label));
+        if (c.type === 'choice') {
+          const btns = c.options.map((o) => { const b = make('button', 'btn', o.label); b.type = 'button'; b.addEventListener('click', () => { set(o.value); mark(); redraw(); }); lab.append(b); return [b, o]; });
+          const mark = () => btns.forEach(([b, o]) => b.classList.toggle('on', JSON.stringify(get()) === JSON.stringify(o.value)));
+          mark();
+        } else if (c.type === 'text') {
+          const inp = make('input'); inp.type = 'text'; inp.value = get() ?? ''; inp.maxLength = c.max || 20; inp.spellcheck = false; inp.autocomplete = 'off';
+          const go = make('button', 'btn', c.go || 'Los'); go.type = 'button';
+          const fire = () => { set(inp.value); redraw(); };
+          go.addEventListener('click', fire); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') fire(); });
+          lab.append(inp, go);
+        } else {
+          const inp = make('input'), out = make('output');
+          Object.assign(inp, { type: 'range', min: c.min, max: c.max, step: c.step ?? 'any' }); inp.value = get();
+          out.textContent = fmt(get());
+          inp.addEventListener('input', () => { set(+inp.value); out.textContent = fmt(+inp.value); redraw(); });
+          lab.append(inp, out);
+        }
+        row.append(lab);
+      }
+      return box;
+    }
+    function reveal(my) {
+      if (!pending || pending.my !== my) return;
+      const { box, choice, correct } = pending;
+      pending = null;
+      const btns = box.querySelectorAll('.ask-o .btn');
+      if (correct != null && btns[correct]) btns[correct].classList.add('right');
+      if (choice >= 0 && choice !== correct && btns[choice]) btns[choice].classList.add('wrong');
+      box.append(make('span', 'ask-r', choice === correct ? 'Gut vermutet.' : choice < 0 ? 'Die Antwort ist grün markiert.' : 'Überrascht? Genau darum geht es in diesem Schritt.'));
+    }
 
     function redraw() {
       if (queued) return;
@@ -646,6 +722,33 @@
           }
         },
         say(html) { check(); captionEl.innerHTML = html; },
+        /** a prediction before the reveal: waits for a choice, the answer is marked when the step has played */
+        async ask(question, options, correct) {
+          check();
+          if (!opts.think) return null;
+          const box = make('div', 'ask', `<div class="ask-q"><b>Was glaubst du?</b> ${question}</div>`), row = make('div', 'ask-o');
+          let choice = null;
+          const btns = options.map((o, i) => { const b = make('button', 'btn', o); b.type = 'button'; b.addEventListener('click', () => { if (choice == null) choice = i; }); row.append(b); return b; });
+          const skip = make('button', 'btn ghost', 'Überspringen'); skip.type = 'button'; skip.addEventListener('click', () => { if (choice == null) choice = -1; });
+          row.append(skip); box.append(row); setAct(box);
+          captionEl.innerHTML = 'Tippe deine Vermutung an, dann geht es weiter.';
+          while (choice == null) { await frame(); check(); }
+          btns.forEach((b, i) => { b.disabled = true; b.classList.toggle('picked', i === choice); });
+          skip.remove();
+          pending = { box, choice, correct, my };
+          return choice;
+        },
+        /** try it yourself before the step goes on: shows controls and waits for "Weiter" */
+        async tryit(list, prompt, done = 'Weiter') {
+          check();
+          if (!opts.think) return false;
+          const box = controlBox(list, `Erst du: ${prompt}`), go = make('button', 'btn primary', done);
+          let ok = false; go.type = 'button'; go.addEventListener('click', () => (ok = true));
+          box.querySelector('.try-row').append(go); setAct(box);
+          while (!ok) { await frame(); check(); }
+          setAct();
+          return true;
+        },
         hl(...keys) { check(); highlight(keys); },
         set(obj, props) { check(); Object.assign(obj, props); redraw(); },
       };
@@ -663,6 +766,7 @@
       formulaEl.innerHTML = typeof def.formula === 'function' ? def.formula() : def.formula || '';
       highlight([]);
       captionEl.innerHTML = '&nbsp;';
+      pending = null; setAct();
       progEl.textContent = `${i + 1} / ${stepEls.length}`;
       if (def.setup) def.setup();
       redraw();
@@ -677,7 +781,12 @@
       stage.classList.add('playing');
       Promise.resolve()
         .then(() => def.play && def.play(makeApi(my)))
-        .then(() => { if (my === token) stage.classList.remove('playing'); })
+        .then(() => {
+          if (my !== token) return;
+          stage.classList.remove('playing');
+          reveal(my);
+          if (def.tryit && opts.think) addAct(controlBox(typeof def.tryit === 'function' ? def.tryit() : def.tryit, 'Jetzt du'));
+        })
         .catch((e) => { if (!(e instanceof Cancel)) console.error(e); });
     }
     function setPaused(v) {

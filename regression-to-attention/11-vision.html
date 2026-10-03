@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 11 von 12</div>
     <h1>Merkmale und Schaltkreise</h1>
     <p class="lead">Chris Olah und Kollegen haben vorgeschlagen, neuronale Netze nicht als Blackbox zu behandeln, sondern sie zu lesen wie eine Schaltung. Ihre Werkzeuge haben sie an Netzen entwickelt, die Bilder erkennen. Wir bauen erst Schritt für Schritt ein solches Netz, trainieren ein kleines live im Browser und wenden dann Olahs Werkzeuge darauf an.</p>
+    <ol class="roadmap"><li>Ein Bild sind Zahlen</li><li>Filter und Faltung</li><li>Ein Netz live trainieren</li><li>Merkmale finden</li><li>Schaltkreise und Universalität</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -30,6 +31,7 @@
         <div class="view" data-view="pool"><div class="vlabel">Verkleinern: das Stärkste behalten</div><div class="plot" id="v-pool" role="img" aria-label="Eine Merkmalskarte wird in Zweierblöcken verkleinert."></div></div>
         <div class="view" data-view="zweite"><div class="vlabel">Die zweite Schicht kombiniert</div><div class="plot" id="v-zweite" role="img" aria-label="Zwei Kantenkarten werden zu einer Eckenkarte kombiniert."></div></div>
         <div class="view" data-view="data"><div class="vlabel" id="l-data">Unsere Bilder</div><div class="plot" id="v-data" role="img" aria-label="Beispielbilder von Kreisen, Quadraten, Dreiecken und Kreuzen; die Entscheidung des Netzes."></div></div>
+        <div class="view" data-view="draw"><div class="vlabel">Selbst malen</div><div class="plot" id="v-draw" role="img" aria-label="Ein Zeichenfeld mit 28 mal 28 Pixeln und daneben die Entscheidung des trainierten Netzes."></div></div>
         <div class="view" data-view="train"><div class="vlabel">Training live</div><div class="plot" id="v-train" role="img" aria-label="Die Filter der ersten Schicht während des Trainings und die Trefferquote."></div></div>
         <div class="view" data-view="units"><div class="vlabel" id="l-units">Merkmale der zweiten Schicht</div><div class="plot" id="v-units" role="img" aria-label="Für Einheiten der zweiten Schicht: sichtbar gemachte Merkmale und die Bildausschnitte, auf die sie am stärksten reagieren."></div></div>
         <div class="view" data-view="circ"><div class="vlabel">Ein Schaltkreis</div><div class="plot" id="v-circ" role="img" aria-label="Welche Kantendetektoren an welcher Stelle zu einem Kurvendetektor beitragen."></div></div>
@@ -49,11 +51,12 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="frage"><div class="card">
+      <article class="step" data-step="frage" data-core><div class="card">
         <span class="kicker">Die Frage</span>
         <h3>Was passiert im Inneren?</h3>
         <p>Ein trainiertes Netz löst seine Aufgabe, aber niemand hat ihm gesagt, wie. Die Zahlen darin sind gelernt, nicht programmiert. Lange galten Netze deshalb als Blackbox: Man sieht, was hineingeht und was herauskommt, nicht aber das Dazwischen.</p>
         <p>Chris Olah und Kollegen (bei Google Brain, OpenAI, später Anthropic) haben gezeigt, dass man trotzdem hineinsehen kann. Ihr Programm heißt <strong>Circuits</strong>: Ein Netz besteht aus erkennbaren Merkmalen, die über lesbare Verbindungen zusammenhängen. Dieses Kapitel baut ihre Werkzeuge nach.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„In ein trainiertes Netz kann man nicht hineinsehen.“ Man kann: Die Zahlen sind gelernt, nicht geheim. Mit den richtigen Werkzeugen lassen sich Merkmale und Verbindungen lesen, wie dieses Kapitel zeigt.</div>
       </div></article>
 
       <article class="step" data-step="bild"><div class="card">
@@ -63,14 +66,14 @@
         <p>Ein Netz sieht nur diese Zahlen. Eine Kante ist für das Netz eine Stelle, an der die Zahlen von klein nach groß springen.</p>
       </div></article>
 
-      <article class="step" data-step="filter"><div class="card">
+      <article class="step" data-step="filter" data-core><div class="card">
         <span class="kicker">Grundlage 2</span>
         <h3>Ein Filter: ein kleines Muster</h3>
         <p>Ein <strong>Filter</strong> ist eine kleine Tabelle aus Gewichten, hier 5 × 5. Dieser hier ist links negativ, rechts positiv. Legt man ihn auf einen Ausschnitt des Bilds, multipliziert Feld für Feld und addiert alles, entsteht eine Zahl: das Skalarprodukt aus Kapitel 5, nur mit 25 Einträgen.</p>
         <p>Die Zahl ist groß, wenn der Ausschnitt dem Muster ähnelt: links dunkel, rechts hell. Dieser Filter erkennt also eine senkrechte Kante.</p>
       </div></article>
 
-      <article class="step" data-step="schieben"><div class="card">
+      <article class="step" data-step="schieben" data-core><div class="card">
         <span class="kicker">Grundlage 3</span>
         <h3>Den Filter über das Bild schieben</h3>
         <p>Jetzt schieben wir den Filter über das ganze Bild, Platz für Platz, und schreiben jede Zahl an ihre Stelle. Es entsteht ein neues Bild, eine <strong>Merkmalskarte</strong>: hell, wo das Muster vorkommt.</p>
@@ -91,35 +94,42 @@
         <p>Die Karten werden halbiert: Von je 2 × 2 Feldern bleibt nur das stärkste übrig (<strong>Max-Pooling</strong>). So wird die Karte kleiner, und es kommt nicht mehr auf das einzelne Pixel an.</p>
       </div></article>
 
-      <article class="step" data-step="zweite"><div class="card">
+      <article class="step" data-step="zweite" data-core><div class="card">
         <span class="kicker">Grundlage 6</span>
         <h3>Die zweite Schicht kombiniert</h3>
         <p>Die zweite Schicht macht dasselbe noch einmal, aber nicht mit dem Bild, sondern mit dem Stapel der Karten. Ihre Filter schauen auf alle Karten gleichzeitig und kombinieren sie.</p>
         <p>Beispiel von Hand: „Senkrechte Kante links“ plus „waagrechte Kante oben“ ergibt „Ecke oben links“. Aus einfachen Mustern werden zusammengesetzte. Das ist der Kern dessen, was Olah einen <strong>Schaltkreis</strong> nennt.</p>
       </div></article>
 
-      <article class="step" data-step="aufgabe"><div class="card">
+      <article class="step" data-step="aufgabe" data-core><div class="card">
         <span class="kicker">Unser Netz</span>
         <h3>Vier Formen erkennen</h3>
         <p>Unser Netz soll vier Formen unterscheiden: Kreis, Quadrat, Dreieck, Kreuz. Jede Form kommt in zufälliger Größe, Lage und Drehung, mal hell auf dunkel, mal dunkel auf hell, mit etwas Rauschen.</p>
         <p>Der Aufbau: 8 Filter 5 × 5, Knick, Verkleinern. Dann 12 Filter der zweiten Schicht. Von jeder der 12 Karten der stärkste Wert, daraus per Softmax (Kapitel 3) eine Wahrscheinlichkeit für jede Form. Zusammen 2672 Zahlen, alle anfangs zufällig, auch die Filter.</p>
       </div></article>
 
-      <article class="step" data-step="training"><div class="card">
+      <article class="step" data-step="training" data-core><div class="card">
         <span class="kicker">Live</span>
         <h3>Training: Die Filter lernen sehen</h3>
         <p>1500 Lernschritte mit je 16 Bildern, Gradientenabstieg mit Adam wie immer. Oben die 8 Filter der ersten Schicht, blau positiv, orange negativ. Sie starten als Rauschen.</p>
         <p>Niemand gibt ihnen Kanten vor. Trotzdem werden aus dem Rauschen nach und nach gerichtete Muster.</p>
       </div></article>
 
-      <article class="step" data-step="kanten"><div class="card">
+      <article class="step" data-step="malen" data-core><div class="card">
+        <span class="kicker">Jetzt du</span>
+        <h3>Male selbst eine Form</h3>
+        <p>Das trainierte Netz steht. Male mit Maus oder Finger in das Feld, oder lade eine Form und verändere sie. Rechts siehst du sofort, was das Netz erkennt.</p>
+        <p>Probier aus, wo es sich täuschen lässt: ein Kreis mit Ecke, ein halbes Kreuz, ein sehr kleines Dreieck. Woran es scheitert, verrät, worauf es achtet.</p>
+      </div></article>
+
+      <article class="step" data-step="kanten" data-core><div class="card">
         <span class="kicker">Die erste Schicht</span>
         <h3>Kantendetektoren, von selbst</h3>
         <p>Nach dem Training sind viele der 8 Filter Kantendetektoren: dunkel auf der einen Seite, hell auf der anderen, in verschiedenen Richtungen. Andere sind unordentlicher.</p>
         <p>Das ist kein Zufall unseres kleinen Netzes. Fast jedes Bildnetz lernt in der ersten Schicht Kanten- und Streifendetektoren, und auch die erste Verarbeitungsstufe im Sehzentrum des Gehirns enthält Zellen für gerichtete Kanten.</p>
       </div></article>
 
-      <article class="step" data-step="beispiele"><div class="card">
+      <article class="step" data-step="beispiele" data-core><div class="card">
         <span class="kicker">Werkzeug 1</span>
         <h3>Wobei feuert eine Einheit?</h3>
         <p>Jeder der 12 Filter der zweiten Schicht liefert eine Karte; ihren stärksten Wert nennen wir eine <strong>Einheit</strong>. Eine Einheit ist ein Neuron wie in Kapitel 1 bis 4: Eingaben mal Gewichte, aufsummiert, nur dass es diese Rechnung an jeder Stelle des Bilds macht.</p>
@@ -134,14 +144,14 @@
         <p>Olah nennt das <strong>Feature Visualization</strong>. Das Bild, das herauskommt, zeigt, worauf die Einheit reagiert.</p>
       </div></article>
 
-      <article class="step" data-step="kurven"><div class="card">
+      <article class="step" data-step="kurven" data-core><div class="card">
         <span class="kicker">Was wir finden</span>
         <h3>Kurvendetektoren</h3>
         <p>Beide Werkzeuge zusammen für alle 12 Einheiten. Mehrere davon sind <strong>Kurvendetektoren</strong>: Jede springt auf einen Bogen an, aber jede auf einen Bogen in einer anderen Lage, etwa oben links, unten links oder oben. Zusammen decken sie die Richtungen eines Kreises ab. Andere Einheiten erkennen Dreiecksecken oder die Arme eines Kreuzes.</p>
         <p>Kurvendetektoren sind Olahs bekanntestes Beispiel. In einem großen Bildnetz (InceptionV1) fanden sie genau so eine Familie: dasselbe Merkmal, für jede Richtung eine eigene Einheit. Unser Netz hat nur 12 Einheiten und braucht deshalb nur wenige davon, aber das Prinzip ist dasselbe.</p>
       </div></article>
 
-      <article class="step" data-step="schaltkreis"><div class="card">
+      <article class="step" data-step="schaltkreis" data-core><div class="card">
         <span class="kicker">Werkzeug 3</span>
         <h3>Den Schaltkreis ablesen</h3>
         <p>Drittes Werkzeug: Wie baut sich ein Kurvendetektor aus der ersten Schicht zusammen? Wir nehmen ein Bild, bei dem er stark anspringt, und zerlegen seinen Wert in die Beiträge der 8 Kantendetektoren.</p>
@@ -156,14 +166,14 @@
         <p>Die ersten beiden haben wir gerade gesehen. Die dritte prüfen wir jetzt.</p>
       </div></article>
 
-      <article class="step" data-step="universell"><div class="card">
+      <article class="step" data-step="universell" data-core><div class="card">
         <span class="kicker">Behauptung 3</span>
         <h3>Ein zweites Netz, dieselben Ideen</h3>
         <p>Wir trainieren ein zweites Netz mit derselben Aufgabe, aber anderen Zufallszahlen am Start. Die Gewichte sind am Ende ganz andere, die Merkmale an anderen Stellen.</p>
         <p>Trotzdem findet es wieder Kantendetektoren in verschiedenen Richtungen, wieder Kurvendetektoren, wieder Dreiecks- und Kreuz-Einheiten. Nicht identisch, aber dieselben Ideen. Im Kleinen genau das, was Olah Universalität nennt.</p>
       </div></article>
 
-      <article class="step" data-step="poly"><div class="card">
+      <article class="step" data-step="poly" data-core><div class="card">
         <span class="kicker">Eine Komplikation</span>
         <h3>Einheiten mit zwei Bedeutungen</h3>
         <p>Nicht jede Einheit ist so sauber. Im zweiten Netz gibt es Einheiten, die auf zwei ganz verschiedene Formen anspringen, zum Beispiel auf Dreiecke <em>und</em> auf Kreuze. Olah nennt solche Einheiten <strong>polysemantisch</strong>. In InceptionV1 fanden sie eine, die auf Katzengesichter, Autofronten und Katzenbeine reagiert.</p>
@@ -175,6 +185,19 @@
         <h3>Vom Bild zum Text</h3>
         <p>Merkmale finden, Verbindungen lesen, durch Vergleich und Eingriff prüfen: Mit genau diesen Werkzeugen öffnen wir in Kapitel 12 unseren eigenen Transformer aus Kapitel 10.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Ein Filter ist ein kleines Muster; über das Bild geschoben, liefert er eine Karte, wo das Muster vorkommt.</li><li>Nach dem Training sind die ersten Filter Kantendetektoren, Einheiten der zweiten Schicht erkennen Bögen, Ecken und Kreuzarme.</li><li>Olahs Werkzeuge: Datensatz-Beispiele, Sichtbarmachen, Schaltkreise an den Gewichten lesen, Netze vergleichen.</li></ul>
+    <div class="take-f">Kanten → Bögen → Formen &nbsp;&nbsp; Merkmale · Schaltkreise · Universalität</div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Was zeigt eine sichtbar gemachte Einheit?</summary><p>Das Bild, das sie am stärksten anspringen lässt, gefunden durch Gradientenaufstieg an den Pixeln.</p></details>
+      <details><summary>Was heißt polysemantisch, und woher kommt es vermutlich?</summary><p>Eine Einheit springt auf mehrere, unabhängige Dinge an. Eine Erklärung ist Superposition: mehr Merkmale als Einheiten.</p></details>
+      <details><summary>Welche Rechnung aus Kapitel 5 macht ein Filter an jeder Stelle?<span class="from">Kapitel 5</span></summary><p>Ein Skalarprodukt: Filter und Ausschnitt Feld für Feld multiplizieren und aufsummieren.</p></details>
     </div>
   </section>
 
@@ -520,11 +543,22 @@
         a.say(`Fertig: ${fmt(M.accuracy(200) * 100, 0)} % der Testbilder richtig. Aus dem Rauschen sind gerichtete Muster geworden.`);
       },
     },
+    malen: {
+      views: ['draw'],
+      formula: `${T('i', 'dein Bild', 'c-new', '28 × 28 Zahlen, von dir gemalt')} → 8 Filter → 12 Einheiten → ${T('p', 'Wahrscheinlichkeiten', '', 'eine pro Form')}`,
+      setup() {},
+      async play(a) { await waitRef(a); a.hl('i'); a.say('Male ins Feld oder lade unten eine Form. Das Netz entscheidet bei jedem Strich neu.'); },
+      tryit: () => [
+        { type: 'choice', label: 'Laden', get: () => null, set: (v) => loadShape(v), options: NAMES.map((nm, k) => ({ label: nm, value: k })) },
+        { type: 'choice', label: 'Stift', get: () => ink, set: (v) => (ink = v), options: [{ label: 'hell', value: 0.5 }, { label: 'dunkel', value: -0.5 }] },
+        { type: 'choice', label: '', get: () => null, set: (v) => canvasImg.fill(v), options: [{ label: 'Feld dunkel leeren', value: -0.5 }, { label: 'Feld hell leeren', value: 0.5 }] },
+      ],
+    },
     kanten: {
       views: ['units'],
       formula: `erste Schicht: ${T('k', 'Kantendetektoren', 'c-new', 'dunkel auf der einen, hell auf der anderen Seite')}`,
       setup() { st.unitMode = 'edges'; st.unitNet = 0; },
-      async play(a) { await waitRef(a); a.set(st, {}); a.hl('k'); a.say('Die 8 gelernten Filter, groß. Viele sind Kanten in verschiedenen Richtungen, darunter die Beschriftung aus ihrer Hauptrichtung.'); },
+      async play(a) { await waitRef(a); a.set(st, { unitMode: 'none', unitList: [] }); await a.ask('Niemand hat den 8 Filtern etwas vorgegeben. Was ist nach dem Training aus ihnen geworden?', ['Kantendetektoren in verschiedenen Richtungen', 'kleine Kreise', 'immer noch Rauschen'], 0); a.set(st, { unitMode: 'edges' }); a.hl('k'); a.say('Die 8 gelernten Filter, groß. Viele sind Kanten in verschiedenen Richtungen, darunter die Beschriftung aus ihrer Hauptrichtung.'); },
     },
     beispiele: {
       views: ['units'],
@@ -595,8 +629,36 @@
     },
   };
 
+  // ── draw your own shape ─────────────────────────────────────────
+  const canvasImg = Float32Array.from(CNN.shape(0, CNN.rng(5)));
+  let drawGeom = null, ink = 0.5;
+  const drawV = S.canvas($('#v-draw'), (ctx, W, H) => {
+    const narrow = W < 560, size = Math.min(H - 16, narrow ? W * 0.55 : W * 0.46), x0 = 8, y0 = (H - size) / 2;
+    drawGeom = { x0, y0, size };
+    drawImg(ctx, canvasImg, N, x0, y0, size);
+    ctx.strokeStyle = S.alpha('fg', 0.35); ctx.lineWidth = 1; ctx.strokeRect(x0 - 0.5, y0 - 0.5, size + 1, size + 1);
+    if (!done(0)) { S.label(ctx, 'Das Netz trainiert noch …', x0 + size + 20, H / 2, S.c['fg-2'], S.font(13, 'body'), 'left'); return; }
+    const f = REF[0].forward(canvasImg), bx = x0 + size + (narrow ? 14 : 34), bw = Math.min(260, W - bx - 60), rh = Math.min(44, H / 6);
+    S.label(ctx, 'Das Netz sagt', bx, y0 + 8, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+    const best = f.p.indexOf(Math.max(...f.p));
+    NAMES.forEach((nm, k) => { const y = y0 + 28 + k * rh; S.label(ctx, nm, bx, y + 8, k === best ? S.c.accent : S.c.fg, S.font(13, 'body', '600'), 'left'); ctx.fillStyle = S.alpha('fg', 0.08); ctx.fillRect(bx, y + 18, bw, 10); ctx.fillStyle = k === best ? S.c.accent : S.c['fg-2']; ctx.fillRect(bx, y + 18, bw * f.p[k], 10); S.label(ctx, `${fmt(f.p[k] * 100, 0)} %`, bx + bw + 8, y + 23, S.c.fg, S.font(12, 'mono'), 'left'); });
+  });
+  const paintAt = (p) => {
+    if (!drawGeom) return; const { x0, y0, size } = drawGeom, cx = ((p.x - x0) / size) * N, cy = ((p.y - y0) / size) * N;
+    for (let y = Math.floor(cy - 3); y <= cy + 3; y++) for (let x = Math.floor(cx - 3); x <= cx + 3; x++) {
+      if (x < 0 || y < 0 || x >= N || y >= N) continue;
+      const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy), a = clamp(2.2 - d, 0, 1); if (a <= 0) continue;
+      canvasImg[y * N + x] = canvasImg[y * N + x] * (1 - a) + ink * a;
+    }
+    drawV.redraw();
+  };
+  S.pointer(drawV, {
+    pick(p) { if (!drawGeom) return null; const { x0, y0, size } = drawGeom; if (p.x < x0 || p.y < y0 || p.x > x0 + size || p.y > y0 + size) return null; paintAt(p); return { move: paintAt, end() {} }; },
+  });
+  const loadShape = (cls) => { canvasImg.set(CNN.shape(cls, CNN.rng(100 + Math.floor(Math.random() * 1000)))); };
+
   story = S.story($('#story'), {
-    views: { box: boxV, pix: pixV, filt: filtV, multi: multiV, pool: poolV, zweite: zweiteV, data: dataV, train: trainV, units: unitsV, circ: circV, claims: claimsV, uni: uniV },
+    views: { box: boxV, pix: pixV, filt: filtV, multi: multiV, pool: poolV, zweite: zweiteV, data: dataV, train: trainV, draw: drawV, units: unitsV, circ: circV, claims: claimsV, uni: uniV },
     steps,
     values: () => ({ t: String(st.live ? st.live.t : 0), acc: st.live && st.live.acc != null ? `${fmt(st.live.acc * 100, 0)} %` : '–' }),
   });

@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 12 von 12</div>
     <h1>Schaltkreise im Transformer</h1>
     <p class="lead">Unser Transformer aus Kapitel 10 setzt Muster fort, ohne dass ihm jemand gesagt hat, wie. Mit den Werkzeugen aus Kapitel 11 öffnen wir ihn: Was sieht jeder Kopf an, was schreibt er auf das Notizblatt, wie arbeiten die beiden zusammen, und was passiert, wenn man einen abschaltet?</p>
+    <ol class="roadmap"><li>Hinschauen: zwei Köpfe</li><li>Die Vermutung: zwei Schritte</li><li>Gewichte lesen: OV und QK</li><li>Prüfen: abschalten, Training</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -46,21 +47,21 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="werkzeuge"><div class="card">
+      <article class="step" data-step="werkzeuge" data-core><div class="card">
         <span class="kicker">Vom Bild zum Text</span>
         <h3>Dieselben Werkzeuge, ein Transformer</h3>
         <p>Im Bildnetz haben wir Merkmale gefunden (Beispiele, Sichtbarmachen), ihre Verbindungen an den Gewichten abgelesen und durch Vergleich geprüft. Nelson Elhage, Chris Olah und Kollegen haben 2021 gezeigt, wie dasselbe Programm für Transformer funktioniert.</p>
         <p>Statt Einheiten untersuchen wir Köpfe. Statt Bildausschnitten schauen wir, wohin ein Kopf schaut. Statt Gewichtskacheln lesen wir zwei Tabellen pro Kopf. Und als Prüfung schalten wir Köpfe ab.</p>
       </div></article>
 
-      <article class="step" data-step="kopf0"><div class="card">
+      <article class="step" data-step="kopf0" data-core><div class="card">
         <span class="kicker">Hinschauen, Kopf 0</span>
         <h3>Kopf 0 schaut zurück</h3>
         <p>Zuerst beobachten: Für jede Stelle der Folge zeigen Bögen, wohin der Kopf in Schicht 0 schaut. Der dickste Bogen geht jedes Mal zum Buchstaben direkt davor. Ein Rest verteilt sich auf weiter zurückliegende Stellen, immer schwächer.</p>
         <p>Kopf 0 holt sich also vor allem den vorigen Buchstaben.</p>
       </div></article>
 
-      <article class="step" data-step="kopf1"><div class="card">
+      <article class="step" data-step="kopf1" data-core><div class="card">
         <span class="kicker">Hinschauen, Kopf 1</span>
         <h3>Kopf 1 sucht die letzte Kopie</h3>
         <p>Kopf 1 in Schicht 1 schaut woanders hin. Steht gerade ein „R“, schaut er auf die Stellen, die früher <em>direkt nach</em> einem „R“ kamen. Genau dort steht die Antwort: die Regel aus Kapitel 10.</p>
@@ -73,7 +74,7 @@
         <p>Dieselben Anteile, als Attention-Matrix wie in Kapitel 7. Kopf 0: am hellsten direkt unter der Diagonale, einen Platz zurück. Kopf 1: schräge Streifen im Abstand der Periode, ab der ersten Wiederholung.</p>
       </div></article>
 
-      <article class="step" data-step="trick"><div class="card">
+      <article class="step" data-step="trick" data-core><div class="card">
         <span class="kicker">Der Algorithmus</span>
         <h3>Zusammenarbeit in zwei Schritten</h3>
         <p>Woher weiß Kopf 1, welche Stelle nach einem „R“ kam? Jede Stelle kennt anfangs nur ihren eigenen Buchstaben und ihren Platz. Hier kommt Kopf 0 ins Spiel.</p>
@@ -95,21 +96,21 @@
         <p>Die höchste Punktzahl hat „N“. Kopf 1 schreibt also: „Der nächste Buchstabe ist N.“ Er kopiert, und das ist genau die richtige Vorhersage nach „R“.</p>
       </div></article>
 
-      <article class="step" data-step="ov"><div class="card">
+      <article class="step" data-step="ov" data-core><div class="card">
         <span class="kicker">Für alle Buchstaben</span>
         <h3>Der OV-Schaltkreis</h3>
         <p>Dasselbe für alle 16 Buchstaben ergibt eine Tabelle: Zeile = worauf Kopf 1 schaut, Spalte = welche Punktzahl steigt. Sie ist eine helle Diagonale: Für jeden Buchstaben steigt genau seine eigene Punktzahl.</p>
         <p>Diesen Weg, erst <b>W</b><sub>V</sub>, dann <b>W</b><sub>O</sub>, nennen Olah und Kollegen den <strong>OV-Schaltkreis</strong> eines Kopfs: was er weitergibt. In ihren Texten steht dafür <b>W</b><sub>O</sub><b>W</b><sub>V</sub>, von rechts gelesen wie in Kapitel 2.</p>
       </div></article>
 
-      <article class="step" data-step="qk"><div class="card">
+      <article class="step" data-step="qk" data-core><div class="card">
         <span class="kicker">Werkzeug: Gewichte lesen</span>
         <h3>Der QK-Schaltkreis: wonach Kopf 1 sucht</h3>
         <p>Die andere Hälfte ist der <strong>QK-Schaltkreis</strong>: Welche Frage passt zu welchem Schild (Kapitel 8)? Wir rechnen die Frage von Kopf 1 für jeden aktuellen Buchstaben <i>a</i> aus, und das Schild, das entsteht, wenn auf dem Notizblatt die Notiz von Kopf 0 „vor mir stand <i>b</i>“ steht.</p>
         <p>Wieder eine helle Diagonale: Kopf 1 sucht genau die Notiz mit seinem eigenen Buchstaben.</p>
       </div></article>
 
-      <article class="step" data-step="gegenprobe"><div class="card">
+      <article class="step" data-step="gegenprobe" data-core><div class="card">
         <span class="kicker">Die Gegenprobe</span>
         <h3>Ohne die Notiz: sogar das Gegenteil</h3>
         <p>Und wenn Kopf 1 die Buchstaben selbst vergleicht, ohne die Notiz von Kopf 0? Dann gibt es keine helle Diagonale. Im Gegenteil: Die Diagonale ist orange, in jeder Zeile ist sie der niedrigste Wert. Kopf 1 <em>meidet</em> Stellen mit seinem eigenen Buchstaben.</p>
@@ -117,14 +118,14 @@
         <p>Die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat. Olah und Kollegen nennen das <strong>K-Komposition</strong>: Zwei Köpfe, hintereinandergeschaltet über das Notizblatt. Damit ist die Vermutung aus dem Trick-Schritt an den Gewichten bestätigt.</p>
       </div></article>
 
-      <article class="step" data-step="abschalten"><div class="card">
+      <article class="step" data-step="abschalten" data-core><div class="card">
         <span class="kicker">Werkzeug: Eingreifen</span>
         <h3>Einen Kopf abschalten</h3>
         <p>Die stärkste Probe: Wir schalten einen Kopf ab, indem wir seinen Beitrag zum Notizblatt weglassen, und messen, wie oft das Modell in den Wiederholungen richtig liegt.</p>
         <p>Ohne Kopf 1 fehlt der Kopierer, das Modell rät nur noch. Ohne Kopf 0 fehlen die Notizen, und Kopf 1 sucht ins Leere. Beide sind nötig, keiner reicht allein.</p>
       </div></article>
 
-      <article class="step" data-step="phase"><div class="card">
+      <article class="step" data-step="phase" data-core><div class="card">
         <span class="kicker">Rückblick aufs Training</span>
         <h3>Der Schaltkreis entsteht auf einen Schlag</h3>
         <p>Während des Trainings haben wir mitgeschrieben, wie stark Kopf 0 auf den vorigen Buchstaben schaut und wie stark Kopf 1 auf die Stelle nach der letzten Kopie.</p>
@@ -144,6 +145,19 @@
         <p>Eine Gerade mit zwei Knöpfen. Viele Knöpfe als Matrix. Eine Grenze mit der Softmax. Ein gefalteter Raum. Viele Dimensionen. Wörter als Richtungen. Mischen nach Relevanz. Fragen, Schilder, Werte. Ein ganzer Transformer, ein eigener, trainiert. Und schließlich Merkmale und Schaltkreise, die wir lesen können, im Bildnetz wie im Transformer.</p>
         <p>Jeder Schritt hat dem vorigen eine Idee hinzugefügt. Gelernt wurde jedes Mal auf dieselbe Weise: Fehler messen, Gradient, ein kleiner Schritt bergab.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Kopf 0 schreibt „vor mir stand X“ auf das Notizblatt, Kopf 1 sucht diese Notiz mit dem aktuellen Buchstaben und kopiert, was dort steht: ein Induction Head.</li><li>Der OV-Schaltkreis sagt, was ein Kopf weitergibt, der QK-Schaltkreis, wonach er sucht. Beide lassen sich direkt aus den Gewichten lesen.</li><li>Abschalten und der gemeinsame Sprung im Training bestätigen: Die beiden Köpfe arbeiten nur zusammen.</li></ul>
+    <div class="take-f">OV: <b>W</b><sub>V</sub> → <b>W</b><sub>O</sub> &nbsp;&nbsp; QK: Frage · Schild &nbsp;&nbsp; Kopf 0 → Kopf 1 (K-Komposition)</div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum trägt Kopf 0 direkt fast nichts zur Vorhersage bei und ist trotzdem unverzichtbar?</summary><p>Seine Notiz „vor mir stand X“ ist das, wonach Kopf 1 sucht. Ohne sie findet Kopf 1 die richtige Stelle nicht.</p></details>
+      <details><summary>Was zeigt eine helle Diagonale in der OV-Tabelle?</summary><p>Schaut der Kopf auf einen Buchstaben, steigt genau die Punktzahl dieses Buchstabens: Er kopiert.</p></details>
+      <details><summary>Welche Eigenschaft aus Kapitel 9 macht es möglich, die Vorhersage in Beiträge zu zerlegen?<span class="from">Kapitel 9</span></summary><p>Alles wird auf das Notizblatt addiert. Darum ist die Punktzahl eine Summe aus den Beiträgen von Embedding, Kopf 0 und Kopf 1.</p></details>
     </div>
   </section>
 
@@ -369,7 +383,7 @@
       views: ['circ'],
       formula: `${T('k', 'K-Komposition', 'c-new', 'die Schilder von Kopf 1 entstehen aus dem, was Kopf 0 geschrieben hat')}: Kopie meiden, Notiz finden`,
       setup() { st.circMode = 'qkd'; st.circA = 0; },
-      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, sondern eine orange: Kopf 1 meidet die Kopie selbst, denn dort steht nur derselbe Buchstabe. Gesucht ist die Stelle dahinter, und die findet er nur über die Notiz von Kopf 0.'); },
+      async play(a) { await waitRef(a); a.say('Gegenprobe: Kopf 1 vergleicht die Buchstaben selbst, ohne die Notiz.'); await a.ask('Was zeigt die Tabelle, wenn Kopf 1 die Buchstaben direkt vergleicht?', ['wieder eine helle Diagonale', 'gar kein Muster', 'eine orange Diagonale: er meidet den eigenen Buchstaben'], 2); await a.to(st, { circA: 1 }, 1200); a.hl('k'); a.say('Keine helle Diagonale, sondern eine orange: Kopf 1 meidet die Kopie selbst, denn dort steht nur derselbe Buchstabe. Gesucht ist die Stelle dahinter, und die findet er nur über die Notiz von Kopf 0.'); },
     },
     abschalten: {
       views: ['abl'],
@@ -378,9 +392,11 @@
       async play(a) {
         await waitRef(a); a.set(st, { ablShown: 1 }); a.say('Mit beiden Köpfen: fast alle Wiederholungen richtig.'); await a.wait(2600);
         a.hl('x'); a.set(st, { abl: [1], ablShown: 2 }); a.say('Kopf 1 abgeschaltet: Der Kopierer fehlt. Das Modell rät nur noch.'); await a.wait(3200);
+        await a.ask('Kopf 0 trägt direkt fast nichts zur Vorhersage bei. Was passiert, wenn wir ihn abschalten?', ['fast nichts', 'die Trefferquote bricht ein'], 1);
         a.set(st, { abl: [0], ablShown: 3 }); a.say('Kopf 0 abgeschaltet: Die Notizen fehlen, Kopf 1 sucht ins Leere.'); await a.wait(3200);
         a.set(st, { abl: [] }); a.say('Beide sind nötig. Das ist der Schaltkreis.');
       },
+      tryit: () => [{ label: 'Schalte selbst', type: 'choice', get: () => st.abl, set: (v) => (st.abl = v), options: [{ label: 'beide an', value: [] }, { label: 'ohne Kopf 0', value: [0] }, { label: 'ohne Kopf 1', value: [1] }] }],
     },
     phase: {
       views: ['phase'],

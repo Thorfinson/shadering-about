@@ -36,6 +36,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 2 von 12</div>
     <h1>Die Matrix</h1>
     <p class="lead">Was eine Matrixmultiplikation mit Daten macht, vom einfachsten Fall zum allgemeinen: strecken, spiegeln, drehen, scheren, plattdrücken, hintereinander ausführen, in andere Räume abbilden. Erst am Ende wird daraus wieder unsere Regression.</p>
+    <ol class="roadmap"><li>Punkte sind Pfeile</li><li>Eine Matrix verformt die Ebene</li><li>Einfache Fälle, dann alles zusammen</li><li>Die Regression als Matrix</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -63,27 +64,27 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="pfeile"><div class="card">
+      <article class="step" data-step="pfeile" data-core><div class="card">
         <span class="kicker">Grundlage</span>
         <h3>Punkte sind Pfeile</h3>
         <p>Ein Punkt mit zwei Zahlen ist ein Pfeil vom Ursprung aus: so weit nach rechts, so weit nach oben. Anders gesagt: eine <strong>Mischung aus zwei Einheitspfeilen</strong>.</p>
         <p>So ein Pfeil heißt <strong>Vektor</strong>. Jede Wohnung aus Kapitel 1, jedes Pixel, jedes Wort in einem Sprachmodell ist so ein Vektor, nur oft mit viel mehr Zahlen.</p>
       </div></article>
 
-      <article class="step" data-step="spalten"><div class="card">
+      <article class="step" data-step="spalten" data-core><div class="card">
         <span class="kicker">Die Idee</span>
         <h3>Eine Matrix verschiebt die Einheitspfeile</h3>
         <p>Eine Matrix ist eine Anweisung: Schicke den rechten Einheitspfeil hierhin, den oberen dorthin. Diese beiden Ziele sind ihre <strong>Spalten</strong>.</p>
         <p>Alles andere folgt von selbst: Gitterlinien bleiben gerade und parallel, der Ursprung bleibt fest. Die ganze Ebene verformt sich auf einmal.</p>
       </div></article>
 
-      <article class="step" data-step="mischen"><div class="card">
+      <article class="step" data-step="mischen" data-core><div class="card">
         <span class="kicker">Formel lesen</span>
         <h3>Wohin geht ein Punkt?</h3>
         <p>Ein Punkt war eine Mischung der Einheitspfeile. Nach der Matrix ist er <strong>dieselbe Mischung der Spalten</strong>. Mehr steckt in <strong>M·x</strong> nicht.</p>
       </div></article>
 
-      <article class="step" data-step="zeilen"><div class="card">
+      <article class="step" data-step="zeilen" data-core><div class="card">
         <span class="kicker">Formel lesen, andersherum</span>
         <h3>Zeile mal Vektor</h3>
         <p>Man kann dasselbe auch zeilenweise rechnen: Jede Zeile der Matrix liefert eine Koordinate des Ergebnisses, als <strong>Skalarprodukt</strong>: Einträge multiplizieren, aufsummieren.</p>
@@ -105,7 +106,7 @@
         <div class="ex"><b>Anderes Beispiel</b>Ein linker und ein rechter Handschuh: Keine Drehung macht aus dem einen den anderen, nur eine Spiegelung.</div>
       </div></article>
 
-      <article class="step" data-step="drehen"><div class="card">
+      <article class="step" data-step="drehen" data-core><div class="card">
         <span class="kicker">Starr bewegen</span>
         <h3>Drehen</h3>
         <p>Bei einer Drehung bleiben alle Längen und Winkel erhalten. Die Spalten sind zwei senkrechte Pfeile der Länge 1, deshalb stehen dort Kosinus und Sinus.</p>
@@ -119,21 +120,21 @@
         <div class="ex"><b>Anderes Beispiel</b>Kursivschrift ist fast genau eine Scherung der normalen Schrift.</div>
       </div></article>
 
-      <article class="step" data-step="platt"><div class="card">
+      <article class="step" data-step="platt" data-core><div class="card">
         <span class="kicker">Information geht verloren</span>
         <h3>Plattdrücken</h3>
         <p>Zeigen beide Spalten in dieselbe Richtung, fällt die ganze Ebene auf eine Gerade, das <strong>Bild</strong>. Eine Richtung, der <strong>Kern</strong>, wird ganz zu null gequetscht. Die Determinante ist null, und man kann nicht mehr zurückrechnen.</p>
         <div class="ex"><b>Anderes Beispiel</b>Ein Schatten an der Wand: Aus dem Schatten allein weiß man nicht mehr, wie tief das Objekt war.</div>
       </div></article>
 
-      <article class="step" data-step="nacheinander"><div class="card">
+      <article class="step" data-step="nacheinander" data-core><div class="card">
         <span class="kicker">Matrizen multiplizieren</span>
         <h3>Hintereinander ausführen</h3>
         <p>Das Produkt zweier Matrizen ist die Verformung, die beide nacheinander ausführt. <strong>AB</strong> liest man von rechts: erst B, dann A.</p>
         <p>Die Reihenfolge zählt: Erst strecken, dann drehen ergibt etwas anderes als erst drehen, dann strecken.</p>
       </div></article>
 
-      <article class="step" data-step="eine"><div class="card">
+      <article class="step" data-step="eine" data-core><div class="card">
         <span class="kicker">Folge davon</span>
         <h3>Viele Schichten sind eine Matrix</h3>
         <p>Egal wie viele Matrizen man hintereinanderschaltet: Heraus kommt wieder genau eine Matrix. Ein Netz aus lauter Matrizen wäre also nicht mächtiger als eine einzige Schicht.</p>
@@ -162,7 +163,7 @@
         <div class="ex"><b>Anderes Beispiel</b>Ein Farbfoto in Graustufen umrechnen ist sogar eine 1×3-Matrix: Grau = 0,30·Rot + 0,59·Grün + 0,11·Blau.</div>
       </div></article>
 
-      <article class="step" data-step="regression"><div class="card">
+      <article class="step" data-step="regression" data-core><div class="card">
         <span class="kicker">Zurück zu Kapitel 1</span>
         <h3>Die Regression ist eine Matrix</h3>
         <p>Schreibt man die 14 Wohnungen untereinander, Zeile für Zeile (Fläche, 1), entsteht eine Matrix <strong>X</strong>. Mal den Parametern <strong>θ = (w, b)</strong> liefert sie alle 14 Vorhersagen auf einmal: Zeile mal Vektor, 14-mal.</p>
@@ -176,12 +177,25 @@
         <div class="ex"><b>Die runde Schüssel, erklärt</b>Zentriert man die Flächen, stehen die beiden Spalten von X senkrecht aufeinander. Dann stören sich w und b nicht mehr, und genau deshalb wurde die Schüssel in Kapitel 1 rund.</div>
       </div></article>
 
-      <article class="step" data-step="grenze"><div class="card">
+      <article class="step" data-step="grenze" data-core><div class="card">
         <span class="kicker">Ausblick</span>
         <h3>Was eine Matrix nicht kann</h3>
         <p>Blaue Punkte innen, orange Punkte im Ring drumherum. Keine Matrix bekommt die inneren aus dem Ring heraus: Geraden bleiben gerade, der Ursprung bleibt, innen bleibt innen.</p>
         <p>Um solche Daten zu trennen, muss man den Raum biegen und falten. Das ist die Idee der neuronalen Netze, Kapitel 4.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Eine Matrix ist eine Anweisung, wohin die Einheitspfeile gehen; ihre Spalten sind die Ziele.</li><li>Zeile mal Vektor ist ein Skalarprodukt: Jede Zeile der Matrix ist ein Neuron.</li><li>Viele Matrizen hintereinander sind wieder eine Matrix. Erst ein Knick dazwischen macht ein Netz mächtiger.</li></ul>
+    <div class="take-f"><b>M</b> · <b>x</b> = <i>x</i><sub>1</sub> · Spalte<sub>1</sub> + <i>x</i><sub>2</sub> · Spalte<sub>2</sub></div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Was sagt eine Determinante von 0?</summary><p>Die Matrix drückt die Ebene platt: Eine Richtung geht ganz verloren, und man kann nicht mehr zurückrechnen.</p></details>
+      <details><summary>Ist „erst strecken, dann drehen“ dasselbe wie „erst drehen, dann strecken“?</summary><p>Nein. Bei Matrizen zählt die Reihenfolge: AB ist im Allgemeinen nicht BA.</p></details>
+      <details><summary>Welche Rechnung aus Kapitel 1 steckt in jeder Zeile einer Matrix?<span class="from">Kapitel 1</span></summary><p>w · x + b: Einträge multiplizieren und aufsummieren, also ein Neuron.</p></details>
     </div>
   </section>
 
@@ -721,7 +735,9 @@
         a.hl('A'); a.say('Dann <b>A</b>: um 45° drehen.');
         await a.to(st, { ang: 45 }, 1500, { update: () => (st.M = mm(rot(st.ang), B)) });
         st.ghost = mm(A, B);
-        a.hl(); a.say('Das ist <b>AB</b>. Jetzt andersherum …');
+        a.hl(); a.say('Das ist <b>AB</b>.');
+        await a.ask('Erst drehen, dann strecken: Kommt dasselbe heraus?', ['ja, dieselbe Form', 'nein, etwas anderes'], 1);
+        a.say('Jetzt andersherum …');
         await a.to(st, { ghostA: 1 }, 400);
         await a.to(st, { M: I2 }, 900);
         a.hl('A'); a.say('Erst drehen …');

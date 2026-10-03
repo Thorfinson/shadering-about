@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 5 von 12</div>
     <h1>Viele Dimensionen</h1>
     <p class="lead">Die verborgenen Räume echter Netze haben Hunderte oder Tausende Dimensionen. Dort gelten dieselben Regeln wie in drei, und trotzdem verhält sich der Raum überraschend. Netze nutzen das aus, um mehr Merkmale zu speichern, als sie Dimensionen haben.</p>
+    <ol class="roadmap"><li>Pfeile mit vielen Zahlen</li><li>Ähnlichkeit als Schatten</li><li>Fast alles steht senkrecht</li><li>Mehr Merkmale als Dimensionen</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -47,7 +48,7 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="lang"><div class="card">
+      <article class="step" data-step="lang" data-core><div class="card">
         <span class="kicker">Ausgangspunkt</span>
         <h3>Ein Punkt aus vielen Zahlen</h3>
         <p>Ein Pfeil in der Ebene ist ein Paar aus zwei Zahlen (Kapitel 2), im Raum sind es drei. Nichts hindert uns, einfach weiterzumachen: 16, 100, 1000 Zahlen in einer Reihe.</p>
@@ -62,7 +63,7 @@
         <p>Teilt man jede Zahl durch die Länge, schrumpft der Pfeil auf Länge 1 und behält seine <strong>Richtung</strong>. Ab jetzt vergleichen wir nur noch Richtungen.</p>
       </div></article>
 
-      <article class="step" data-step="schatten"><div class="card">
+      <article class="step" data-step="schatten" data-core><div class="card">
         <span class="kicker">Werkzeug</span>
         <h3>Ähnlichkeit ist ein Schatten</h3>
         <p>Das Skalarprodukt kennen wir aus Kapitel 2: Einträge paarweise multiplizieren, alles addieren. Für zwei Pfeile der Länge 1 ist es die Länge des <strong>Schattens</strong>, den der eine auf den anderen wirft.</p>
@@ -70,7 +71,7 @@
         <div class="ex"><b>Beispiel</b>Zwei Musikgeschmäcker als Zahlen (Rock, Jazz, Klassik …): Zeigen sie in dieselbe Richtung, ist das Skalarprodukt groß. Suchmaschinen vergleichen Texte auf genau diese Weise.</div>
       </div></article>
 
-      <article class="step" data-step="produkt"><div class="card">
+      <article class="step" data-step="produkt" data-core><div class="card">
         <span class="kicker">Der Kern</span>
         <h3>Viele kleine Produkte</h3>
         <p>Jetzt zwei zufällige Richtungen mit vielen Zahlen. Ihr Skalarprodukt ist eine Summe aus <i>d</i> Produkten. Bei Zufallsrichtungen sind die mal positiv, mal negativ, wie Münzwürfe.</p>
@@ -84,7 +85,7 @@
         <p>In der Ebene wird das Bild flach: Jeder Winkel ist gleich wahrscheinlich, spitz, rechtwinklig oder stumpf.</p>
       </div></article>
 
-      <article class="step" data-step="winkel"><div class="card">
+      <article class="step" data-step="winkel" data-core><div class="card">
         <span class="kicker">Mehr Dimensionen</span>
         <h3>Fast alles steht senkrecht</h3>
         <p>Jetzt dasselbe in 3, 10, 100 und 1000 Dimensionen. Die Stapel rücken immer enger um 90° zusammen.</p>
@@ -105,7 +106,7 @@
         <p>In hohen Dimensionen ist fast nichts „in der Mitte“. Zufällige Punkte liegen fast alle am Rand, also fast alle gleich weit vom Zentrum entfernt.</p>
       </div></article>
 
-      <article class="step" data-step="viele"><div class="card">
+      <article class="step" data-step="viele" data-core><div class="card">
         <span class="kicker">Die Folge</span>
         <h3>Platz für viel mehr Richtungen</h3>
         <p>Jetzt viele Richtungen auf einmal. Eine Tabelle vergleicht jede mit jeder: In Zeile <i>i</i>, Spalte <i>j</i> steht das Skalarprodukt von Richtung <i>i</i> und <i>j</i>. Auf der Diagonale steht jede mit sich selbst, also 1.</p>
@@ -113,14 +114,14 @@
         <p>Exakt senkrecht passen nur <i>d</i> Richtungen in <i>d</i> Dimensionen. <strong>Fast</strong> senkrecht passen viel mehr, mit wachsendem <i>d</i> sogar exponentiell viele.</p>
       </div></article>
 
-      <article class="step" data-step="merkmal"><div class="card">
+      <article class="step" data-step="merkmal" data-core><div class="card">
         <span class="kicker">Was Netze speichern</span>
         <h3>Merkmale sind Richtungen</h3>
         <p>Die Zahlen in einer verborgenen Schicht kodieren Merkmale: „ist ein Hund“, „steht am Satzanfang“, „ist Code“. Eine verbreitete Beobachtung: Jedes Merkmal ist eine <strong>Richtung</strong>. Wie stark es vorhanden ist, liest man mit einem Skalarprodukt ab, als Schatten auf diese Richtung.</p>
         <p>Ein kleines Netz: Fünf Merkmale gehen hinein, werden durch einen Flaschenhals aus zwei Zahlen gepresst (Matrix <b>W</b>) und wieder herausgelesen. Mit zwei Dimensionen passen genau zwei Merkmale sauber senkrecht hinein. Was ist mit den anderen?</p>
       </div></article>
 
-      <article class="step" data-step="drei"><div class="card">
+      <article class="step" data-step="drei" data-core><div class="card">
         <span class="kicker">Von Hand gebaut</span>
         <h3>Mehr Merkmale als Dimensionen</h3>
         <p>Drei Merkmale in zwei Dimensionen: Wir legen ihre Richtungen im Abstand von 120°. Ist Merkmal 1 aktiv, liest es sich als 1 zurück, die anderen bekommen den Schatten cos 120° = −0,5. Das ist <strong>Störung</strong>.</p>
@@ -135,7 +136,7 @@
         <p>In echten Daten sind die meisten Merkmale sehr selten. Ein Satz handelt fast nie von Vulkanen, fast nie von Steuerrecht, und so gut wie nie von beidem.</p>
       </div></article>
 
-      <article class="step" data-step="superposition"><div class="card">
+      <article class="step" data-step="superposition" data-core><div class="card">
         <span class="kicker">Superposition</span>
         <h3>Das Netz findet das Fünfeck selbst</h3>
         <p>Jetzt bauen wir nichts mehr von Hand. Das Netz startet zufällig und lernt <b>W</b> und <i>b</i> per Gradientenabstieg (mit Adam, Kapitel 4) aus Beispielen mit 90 % Sparsity.</p>
@@ -157,7 +158,7 @@
         <p>Je breiter der Schatten streut, desto mehr Unterschiede zwischen den Punkten bleiben sichtbar. Die Richtung mit der größten Streuung heißt <strong>1. Hauptkomponente</strong>, die 2. steht senkrecht darauf. Dasselbe Rezept funktioniert in 50 oder 1000 Dimensionen.</p>
       </div></article>
 
-      <article class="step" data-step="projektion"><div class="card">
+      <article class="step" data-step="projektion" data-core><div class="card">
         <span class="kicker">Vorsicht beim Hinschauen</span>
         <h3>Jedes Bild ist ein Schatten</h3>
         <p>Drei klar getrennte Gruppen in 50 Dimensionen sehen in den meisten zufälligen Schatten wie ein einziger Haufen aus. Die Trennung liegt in Richtungen, die der Schatten verschluckt.</p>
@@ -169,6 +170,19 @@
         <h3>Bedeutung als Richtung</h3>
         <p>Was wir hier mit abstrakten Merkmalen gesehen haben, passiert in Sprachmodellen mit Wörtern: Jedes Wort wird ein Punkt in einem hochdimensionalen Raum, und Richtungen tragen Bedeutung. Das ist Kapitel 6.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Das Skalarprodukt zweier Pfeile der Länge 1 misst ihre Ähnlichkeit: 1 gleich, 0 senkrecht, −1 entgegengesetzt.</li><li>In vielen Dimensionen stehen zufällige Richtungen fast senkrecht. Darum passen fast senkrecht sehr viele Richtungen hinein.</li><li>Netze speichern Merkmale als Richtungen, oft mehr Merkmale als Dimensionen: Superposition, wenn Merkmale selten sind.</li></ul>
+    <div class="take-f">cos ∠(<b>u</b>, <b>v</b>) = <b>u</b> · <b>v</b> / (|<b>u</b>| |<b>v</b>|) &nbsp;&nbsp; Streuung ≈ 1/√<i>d</i></div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Wie ähnlich sind zwei zufällige Richtungen in 1000 Dimensionen?</summary><p>Fast gar nicht: Ihr Skalarprodukt liegt bei etwa ±0,03, sie stehen fast senkrecht.</p></details>
+      <details><summary>Wann lohnt sich Superposition für ein Netz?</summary><p>Wenn Merkmale selten gleichzeitig aktiv sind. Dann stört die kleine Überlappung kaum.</p></details>
+      <details><summary>Woher kommt die Kosinus-Formel? Welche Rechnung aus Kapitel 2 steckt im Zähler?<span class="from">Kapitel 2</span></summary><p>Das Skalarprodukt: Einträge paarweise multiplizieren und aufsummieren, wie „Zeile mal Vektor“.</p></details>
     </div>
   </section>
 
@@ -667,9 +681,11 @@
       formula: () => `${cosF}<span class="sep">Abweichung ≈</span>${FRAC('1', '√<i>d</i>')}<span class="sep">d =</span>${V('d')}`,
       setup() { st.d = 0; st.histN = 1500; },
       async play(a) {
+        await a.ask('Zwei zufällige Richtungen in 1000 Dimensionen: Welcher Winkel ist typisch?', ['irgendein Winkel, alle gleich oft', 'fast genau 90°', 'eher spitz, unter 45°'], 1);
         for (const d of [3, 10, 100, 1000]) { a.say(`${d} Dimensionen …`); await a.to(st, { d: DL.indexOf(d) }, 1400, { ease: (t) => t }); await a.wait(1300); }
         a.hl('dot'); a.say('In 1000 Dimensionen liegen fast alle Winkel zwischen 85° und 95°. Zwei zufällige Richtungen stehen praktisch immer senkrecht.');
       },
+      tryit: () => [{ label: 'Dimensionen', type: 'range', min: 0, max: DL.length - 1, step: 1, get: () => Math.round(st.d), set: (v) => (st.d = v), fmt: (v) => String(DL[Math.round(v)]) }],
     },
     volumen: {
       views: ['vol'],

@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 9 von 12</div>
     <h1>Der Transformer</h1>
     <p class="lead">Aus Embeddings (Kapitel 6) und Attention (Kapitel 7 und 8) wird ein vollständiges Sprachmodell. Es fehlen noch vier Teile: wie Ergebnisse zusammengesetzt werden, eine Verarbeitung pro Wort, die Reihenfolge und eine Aufgabe zum Lernen. Wir nehmen sie uns einzeln vor.</p>
+    <ol class="roadmap"><li>Addieren statt ersetzen</li><li>Das MLP für jedes Wort</li><li>Reihenfolge durch Platzvektoren</li><li>Die Aufgabe: das nächste Wort</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -45,7 +46,7 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="teile"><div class="card">
+      <article class="step" data-step="teile" data-core><div class="card">
         <span class="kicker">Ausgangspunkt</span>
         <h3>Was wir schon haben</h3>
         <p>Aus Kapitel 6: Jedes Wort wird über die Tabelle <b>E</b> zu einem Vektor. Aus Kapitel 7 und 8: Attention lässt jedes Wort die anderen ansehen und mischt Werte nach Fragen und Schildern.</p>
@@ -59,7 +60,7 @@
         <p>Genau so arbeitet jeder Baustein im Transformer: Er liest den Vektor eines Worts, rechnet etwas aus und addiert sein Ergebnis Eintrag für Eintrag dazu.</p>
       </div></article>
 
-      <article class="step" data-step="notizblatt"><div class="card">
+      <article class="step" data-step="notizblatt" data-core><div class="card">
         <span class="kicker">Teil 1, weitergedacht</span>
         <h3>Ein Notizblatt pro Wort</h3>
         <p>Weil jeder Baustein nur dazuaddiert, kann man sich den Vektor eines Worts wie ein Notizblatt vorstellen: Am Anfang steht darauf nur das Embedding. Jede Schicht liest das Blatt und schreibt etwas dazu. Spätere Schichten lesen, was frühere geschrieben haben.</p>
@@ -67,7 +68,7 @@
         <div class="ex"><b>Zur Abbildung</b>Die Balken sind zur Veranschaulichung gewählt, nicht aus einem trainierten Modell.</div>
       </div></article>
 
-      <article class="step" data-step="mlp"><div class="card">
+      <article class="step" data-step="mlp" data-core><div class="card">
         <span class="kicker">Teil 2</span>
         <h3>Jedes Wort für sich: das MLP</h3>
         <p>Attention tauscht Information <em>zwischen</em> den Wörtern aus. Danach wird jedes Wort einzeln weiterverarbeitet, von einem kleinen Netz wie in Kapitel 4: Matrix, Knick (ReLU), Matrix. Es heißt <strong>MLP</strong> (mehrschichtiges Perzeptron).</p>
@@ -81,34 +82,34 @@
         <div class="ex"><b>Eine Faustregel</b>Attention: Wer im Satz ist für mich wichtig? MLP: Was folgt daraus für mich? In großen Modellen steckt im MLP ein großer Teil des gespeicherten Wissens.</div>
       </div></article>
 
-      <article class="step" data-step="block"><div class="card">
+      <article class="step" data-step="block" data-core><div class="card">
         <span class="kicker">Zusammengesetzt</span>
         <h3>Ein Block, viele Blöcke</h3>
         <p>Attention plus MLP, beide dazuaddiert, bilden zusammen einen <strong>Block</strong>. Viele Blöcke werden übereinander gestapelt; das Notizblatt jedes Worts läuft durch alle hindurch.</p>
       </div></article>
 
-      <article class="step" data-step="reihenfolge"><div class="card">
+      <article class="step" data-step="reihenfolge" data-core><div class="card">
         <span class="kicker">Teil 3, das Problem</span>
         <h3>Attention kennt keine Reihenfolge</h3>
         <p>„der Mann füttert den Hund“ und „der Hund füttert den Mann“ bestehen aus denselben Wörtern. Attention vergleicht nur Vektoren miteinander, und die sind in beiden Sätzen gleich. Also bekommt „Hund“ in beiden Sätzen exakt dasselbe Ergebnis.</p>
         <p>Für Attention ist ein Satz ein Haufen Wörter ohne Reihenfolge. Wer wen füttert, geht verloren.</p>
       </div></article>
 
-      <article class="step" data-step="platz"><div class="card">
+      <article class="step" data-step="platz" data-core><div class="card">
         <span class="kicker">Teil 3, die Lösung</span>
         <h3>Jeder Platz bekommt einen Vektor</h3>
         <p>Die Lösung ist eine zweite Tabelle <b>P</b>, wie <b>E</b>, nur mit einer Zeile pro Platz im Satz: Platz 1, Platz 2, Platz 3 und so weiter. Zum Vektor des Worts wird der Vektor seines Platzes addiert.</p>
         <p>„Hund“ auf Platz 2 und „Hund“ auf Platz 5 sind jetzt verschiedene Vektoren. Attention kann damit auch nach Positionen fragen, etwa „Was steht direkt vor mir?“. Auch <b>P</b> wird gelernt.</p>
       </div></article>
 
-      <article class="step" data-step="aufgabe"><div class="card">
+      <article class="step" data-step="aufgabe" data-core><div class="card">
         <span class="kicker">Teil 4</span>
         <h3>Die Aufgabe: das nächste Wort</h3>
         <p>Woran soll das Ganze lernen? Ein Sprachmodell bekommt eine einzige, einfache Aufgabe: an jeder Stelle im Text das <strong>nächste Wort</strong> vorherzusagen. Nach „der“ kommt „König“, nach „der König“ kommt „regiert“, und so weiter.</p>
         <p>Jede Stelle eines Satzes ist eine eigene Übungsaufgabe, alle gleichzeitig. Ein Satz mit 5 Wörtern ergibt 4 Aufgaben, ein Buch Hunderttausende. Niemand muss etwas beschriften: Die Antwort steht im Text selbst.</p>
       </div></article>
 
-      <article class="step" data-step="maske"><div class="card">
+      <article class="step" data-step="maske" data-core><div class="card">
         <span class="kicker">Teil 4, eine Bedingung</span>
         <h3>Nicht spicken</h3>
         <p>Dürfte ein Wort beim Lernen nach rechts schauen, könnte es das nächste Wort einfach ablesen und würde nichts lernen. Darum wird in der Attention-Matrix die obere Hälfte gesperrt: Diese Punktzahlen werden vor der Softmax auf −∞ gesetzt. e hoch −∞ ist 0, ihr Anteil verschwindet.</p>
@@ -120,16 +121,17 @@
         <h3>Vom Vektor zum nächsten Wort</h3>
         <p>Nach dem letzten Block steht an jeder Stelle ein Vektor. Ihn vergleichen wir per Skalarprodukt mit einem Ausgabe-Vektor <b>u</b> pro Wort, dann Softmax: eine Wahrscheinlichkeit für jedes mögliche nächste Wort.</p>
         <p>Das ist das Ratespiel aus Kapitel 6, nur dass der Vektor jetzt alles kennt, was bis zu dieser Stelle im Satz stand. Hier als Beispiel mit den Vektoren aus Kapitel 6.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Ein Sprachmodell schlägt die Antwort in einer Datenbank nach.“ Nein: Es rechnet mit seinen gelernten Zahlen für jede Stelle eine Wahrscheinlichkeit für jedes mögliche nächste Wort aus. Nachgeschlagen wird nur die Zeile des Worts in E.</div>
       </div></article>
 
-      <article class="step" data-step="verlust"><div class="card">
+      <article class="step" data-step="verlust" data-core><div class="card">
         <span class="kicker">Teil 4, die Bewertung</span>
         <h3>Ein Verlust für jede Stelle</h3>
         <p>Für jede Stelle schauen wir, welche Wahrscheinlichkeit das wirklich folgende Wort bekommen hat, und nehmen davon −log (Kapitel 3). Hohe Wahrscheinlichkeit, kleiner Verlust. Der Mittelwert über alle Stellen ist der Verlust des Modells.</p>
         <p>Gradientenabstieg mit Backpropagation (Kapitel 4) verstellt dann alle Zahlen ein kleines Stück, so dass der Verlust sinkt: die Tabellen <b>E</b> und <b>P</b>, alle <b>W</b><sub>Q</sub>, <b>W</b><sub>K</sub>, <b>W</b><sub>V</sub>, <b>W</b><sub>O</sub>, die MLPs und die Ausgabe-Vektoren.</p>
       </div></article>
 
-      <article class="step" data-step="bauplan"><div class="card">
+      <article class="step" data-step="bauplan" data-core><div class="card">
         <span class="kicker">Alles zusammen</span>
         <h3>Der ganze Transformer</h3>
         <p>Wort und Platz nachschlagen, addieren. Dann mehrere Blöcke aus Attention (mit Maske) und MLP, jeweils dazuaddiert. Am Ende Skalarprodukt mit den Ausgabe-Vektoren und Softmax. Gelernt wird mit dem Verlust für das nächste Wort an jeder Stelle. Mehr steckt im Kern nicht dahinter.</p>
@@ -146,6 +148,19 @@
         <h3>Einen eigenen bauen</h3>
         <p>In Kapitel 10 trainieren wir einen eigenen, winzigen Transformer im Browser und sehen ihm beim Lernen zu.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Jeder Baustein liest das Notizblatt eines Worts (den Residualstrom) und addiert sein Ergebnis dazu.</li><li>Attention tauscht zwischen den Wörtern aus, das MLP verarbeitet jedes Wort für sich. Platzvektoren bringen die Reihenfolge hinein.</li><li>Gelernt wird mit einer Aufgabe: an jeder Stelle das nächste Wort vorhersagen, ohne nach rechts zu spicken.</li></ul>
+    <div class="take-f"><b>x</b> = <b>E</b>[Wort] + <b>P</b>[Platz] &nbsp; → &nbsp; (<b>x</b> += Attn(<b>x</b>), <b>x</b> += MLP(<b>x</b>)) × <i>N</i> &nbsp; → &nbsp; softmax(<b>u</b> · <b>x</b>)</div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum braucht ein Transformer Platzvektoren?</summary><p>Attention vergleicht nur Vektoren. Ohne Platz wären „der Mann füttert den Hund“ und „der Hund füttert den Mann“ für sie gleich.</p></details>
+      <details><summary>Was macht die kausale Maske?</summary><p>Sie sperrt alle Wörter rechts: Ihre Punktzahlen werden −∞, ihr Anteil 0. So kann das Modell das nächste Wort nicht ablesen.</p></details>
+      <details><summary>Woher kennen wir die Ausgabe „Skalarprodukt mit u, dann Softmax“?<span class="from">Kapitel 6</span></summary><p>Aus dem Ratespiel in Kapitel 6: Dort sagte der Vektor eines Worts seine Nachbarn vorher.</p></details>
     </div>
   </section>
 
@@ -370,7 +385,8 @@
       formula: `${T('o', 'Attention(Mann, füttert, den, Hund, der)', 'c-new', 'die Reihenfolge kommt in der Rechnung nicht vor')} = Attention(Hund, füttert, den, Mann, der)`,
       setup() { st.ordA = 0; },
       async play(a) {
-        a.say('Zwei Sätze, dieselben Wörter, andere Bedeutung.'); await a.wait(2200);
+        a.say('Zwei Sätze, dieselben Wörter, andere Bedeutung.'); await a.wait(1400);
+        await a.ask('Bekommt „Hund“ nach der Attention in beiden Sätzen dasselbe Ergebnis?', ['ja, exakt dasselbe', 'nein, verschiedene'], 0);
         a.hl('o'); await a.to(st, { ordA: 1 }, 900); a.say('Das Ergebnis für „Hund“ ist in beiden Sätzen exakt gleich. Attention sieht die Reihenfolge nicht.');
       },
     },
@@ -404,6 +420,7 @@
       formula: `${T('p', '<i>p</i>(nächstes = <i>j</i>)', '', 'Wahrscheinlichkeit für Wort j')} = softmax(${T('u', '<b>u</b><sub><i>j</i></sub> · <b>x</b>', 'c-new', 'Skalarprodukt mit dem Ausgabe-Vektor jedes Worts')})`,
       setup() { st.outA = 0; st.lossA = 0; st.outW = 'König'; },
       async play(a) { a.hl('u'); a.say('Der Vektor am Ende wird mit jedem Ausgabe-Vektor u verglichen …'); await a.to(st, { outA: 1 }, 1600); a.hl('p'); a.say('… und die Softmax macht Wahrscheinlichkeiten daraus.'); },
+      tryit: () => [{ label: 'Vektor von', type: 'choice', get: () => st.outW, set: (v) => (st.outW = v), options: ['König', 'Hund', 'Bank', 'Frau', 'isst', 'Garten'].map((w) => ({ label: w, value: w })) }],
     },
     verlust: {
       views: ['out'],

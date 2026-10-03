@@ -592,3 +592,50 @@ table.t td { font-family: var(--font-mono); font-size: 13px; }
 .mat.c-probe { border-color: var(--probe); }
 .mat.c-col1 { border-color: var(--col1); }
 .mat.c-col2 { border-color: var(--col2); }
+
+/* ---------- learning aids: options, predictions, try-it controls, roadmap, recap ---------- */
+.story-opts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 14px; font-size: 13.5px; color: var(--fg-2); }
+.story-opts label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+.story-opts input { accent-color: var(--accent); width: 15px; height: 15px; }
+.step.skip { display: none; }
+.stage.has-act { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.stage-act { display: grid; gap: 6px; }
+.stage-act:empty { display: none; }
+.ask, .try { display: grid; gap: 7px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; font-size: 14px; line-height: 1.4; color: var(--fg); }
+.ask-q b, .try-t { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-right: 6px; }
+.ask-o, .try-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ask .btn, .try .btn { padding: 6px 11px; font-size: 13px; }
+.ask .btn:disabled { cursor: default; opacity: 0.75; }
+.ask .btn.picked { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.ask .btn.right { opacity: 1; border-color: var(--grad); color: var(--grad); box-shadow: 0 0 0 1px var(--grad); }
+.ask .btn.wrong { text-decoration: line-through; }
+.ask-r { font-size: 13px; color: var(--fg-2); }
+button.btn.ghost { background: transparent; color: var(--muted); }
+.try .tc { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; font-size: 13px; color: var(--fg-2); }
+.try input[type="range"] { accent-color: var(--accent); width: min(220px, 42vw); }
+.try output { font-family: var(--font-mono); font-size: 12.5px; min-width: 3.6em; color: var(--fg); }
+.try .btn.on { border-color: var(--accent); color: var(--accent); }
+.try input[type="text"] { font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; width: 13em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); }
+.step .ex.irrtum > b:first-child { color: var(--error); }
+.roadmap { list-style: none; counter-reset: rm; display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 0; padding: 0; font-size: 13.5px; color: var(--fg-2); }
+.roadmap::before { content: 'Wegkarte'; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); align-self: center; margin-right: 4px; }
+.roadmap li { counter-increment: rm; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 11px; }
+.roadmap li::before { content: counter(rm) '  '; font-family: var(--font-mono); color: var(--accent); white-space: pre; }
+.recap { display: grid; gap: 14px; margin-top: 40px; }
+.recap h2 { font-size: clamp(24px, 3vw, 30px); }
+.recap .take { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; color: var(--fg); font-size: 16px; line-height: 1.55; }
+.recap .take-f { font-family: var(--font-math); font-size: clamp(19px, 2.2vw, 24px); line-height: 1.6; color: var(--fg); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; }
+.recap .take-f i { font-style: italic; } .recap .take-f b { font-style: normal; }
+.recap .quiz { display: grid; gap: 8px; }
+.recap details { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; }
+.recap summary { cursor: pointer; color: var(--fg); font-weight: 500; line-height: 1.45; }
+.recap summary .from { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-left: 8px; }
+.recap details p { margin: 8px 0 0; color: var(--fg-2); line-height: 1.55; }
+@media (max-width: 900px) {
+  .ask, .try { font-size: 12.5px; padding: 6px 8px; gap: 5px; }
+  .ask .btn, .try .btn { padding: 5px 8px; font-size: 12px; }
+  .try input[type="range"] { width: 46vw; }
+  .story-opts { font-size: 12.5px; }
+  .stage.has-act { height: 78vh; height: 78dvh; }
+  .ask-q { line-height: 1.3; }
+}

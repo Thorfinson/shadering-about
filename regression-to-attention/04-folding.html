@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 4 von 12</div>
     <h1>Den Raum falten</h1>
     <p class="lead">Eine Matrix kann nur drehen und strecken, eine Grenze nur gerade schneiden. Ein neuronales Netz kann mehr, weil es zwischen die Matrizen eine winzige Knickstelle setzt. Hier trainiert ein Netz live im Browser.</p>
+    <ol class="roadmap"><li>Ein Knick</li><li>Neuronen als Rampen</li><li>Eine Schicht faltet den Raum</li><li>Backpropagation</li><li>Tiefe</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -42,53 +43,54 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="problem"><div class="card">
+      <article class="step" data-step="problem" data-core><div class="card">
         <span class="kicker">Das Problem</span>
         <h3>Innen und außen</h3>
         <p>Blaue Punkte in der Mitte, orange Punkte im Ring drumherum. Aus Kapitel 2 und 3 wissen wir: Keine Matrix bekommt die Mitte aus dem Ring, und keine Gerade trennt die beiden.</p>
         <p>Wir brauchen etwas, das nicht linear ist.</p>
       </div></article>
 
-      <article class="step" data-step="relu"><div class="card">
+      <article class="step" data-step="relu" data-core><div class="card">
         <span class="kicker">Die neue Idee</span>
         <h3>Ein Knick</h3>
         <p>Die einfachste Nichtlinearität heißt <strong>ReLU</strong>: Positive Zahlen bleiben, negative werden null. Ein Knick bei null, sonst nichts.</p>
         <div class="ex"><b>Anderes Beispiel</b>Ein Neuron im Gehirn feuert erst ab einer Schwelle. Ein Heizkörperthermostat heizt erst, wenn es unter die Solltemperatur geht. Beides ist so ein Knick.</div>
       </div></article>
 
-      <article class="step" data-step="neuron"><div class="card">
+      <article class="step" data-step="neuron" data-core><div class="card">
         <span class="kicker">Ein Neuron mit Knick</span>
         <h3>Eine Rampe über der Ebene</h3>
         <p>Ein Neuron rechnet wie in Kapitel 3 eine Punktzahl w · x + b aus, und gibt sie durch den Knick. Auf der einen Seite einer Linie ist die Punktzahl negativ, das Neuron schweigt (0). Auf der anderen Seite wächst seine Ausgabe gleichmäßig an.</p>
         <p>Über der Ebene ist das eine <strong>Rampe</strong>, die an einer Linie beginnt. Die Linie ist genau die Grenze aus Kapitel 3.</p>
       </div></article>
 
-      <article class="step" data-step="dreineuronen"><div class="card">
+      <article class="step" data-step="dreineuronen" data-core><div class="card">
         <span class="kicker">Mehrere Neuronen</span>
         <h3>Drei Rampen umzingeln die Mitte</h3>
         <p>Drei Neuronen, drei Linien, jede Rampe zeigt nach außen. In der Mitte schweigen alle drei. Draußen ist immer mindestens eines aktiv.</p>
         <p>Das ist der Trick: Schweigen alle, ist der Punkt innen. Damit ist das Ring-Problem schon fast gelöst, und zwar mit Bausteinen, die jeder für sich gerade sind.</p>
       </div></article>
 
-      <article class="step" data-step="schicht"><div class="card">
+      <article class="step" data-step="schicht" data-core><div class="card">
         <span class="kicker">Eine Schicht</span>
         <h3>Matrix, dann Falte</h3>
         <p>Die drei Neuronen liefern für jeden Punkt drei Zahlen. Nimmt man sie als Koordinaten, wird jeder Punkt der Ebene ein Punkt im Raum. Das ist eine <strong>Schicht</strong>: Die drei Zeilen w·x + b bilden zusammen eine Matrix (Kapitel 2), die die Ebene schräg in den Raum hebt, und dann klappt der Knick jede negative Koordinate auf null.</p>
         <p>Die Ebene wird dabei zu einer geknickten Fläche, wie ein gefaltetes Blatt im Raum. Die Mitte, wo alle schweigen, landet genau im Ursprung.</p>
       </div></article>
 
-      <article class="step" data-step="trennen"><div class="card">
+      <article class="step" data-step="trennen" data-core><div class="card">
         <span class="kicker">Warum das hilft</span>
         <h3>Im gefalteten Raum reicht eine Ebene</h3>
         <p>Nach der Falte liegen alle blauen Punkte in einer Ecke, die orangen draußen auf den Flügeln. Jetzt trennt sie eine einzige flache Ebene, also wieder eine Grenze wie in Kapitel 3.</p>
         <p>Zurück in der Eingabe ist aus dieser Ebene ein <strong>Dreieck</strong> geworden: drei Knicke, drei Seiten.</p>
       </div></article>
 
-      <article class="step" data-step="training"><div class="card">
+      <article class="step" data-step="training" data-core><div class="card">
         <span class="kicker">Lernen</span>
         <h3>Das Netz findet die Falte selbst</h3>
         <p>Bisher waren die Gewichte von Hand gewählt. Jetzt starten sie zufällig, und das Netz lernt bergab wie in Kapitel 1. Wir benutzen dabei eine verbesserte Form des Gradientenabstiegs (Adam), die jedem Gewicht seine eigene Schrittweite gibt.</p>
         <p>Links sieht man, wie sich die Fläche im verborgenen Raum verbiegt, rechts, wie sich die Entscheidung in der Eingabe formt.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Jemand hat dem Netz die Falte einprogrammiert.“ Nein: Niemand schreibt die Regel hin. Die Gewichte starten zufällig, und die Falte entsteht allein durch Gradientenabstieg aus den Beispielen.</div>
       </div></article>
 
       <article class="step" data-step="kette"><div class="card">
@@ -98,7 +100,7 @@
         <p>Wie bei Zahnrädern: Verdoppelt der erste Schritt jede Änderung und verdreifacht der zweite sie, kommt am Ende das Sechsfache an. Wirkungen in einer Kette <strong>multiplizieren</strong> sich. Ein schweigender Knick ist ein ausgekuppeltes Zahnrad: Faktor 0. Das ist die <strong>Kettenregel</strong>.</p>
       </div></article>
 
-      <article class="step" data-step="rueckwaerts"><div class="card">
+      <article class="step" data-step="rueckwaerts" data-core><div class="card">
         <span class="kicker">Backpropagation</span>
         <h3>Wer ist schuld am Fehler?</h3>
         <p>Jetzt im ganzen Netz: Der Fehler am Ausgang läuft <strong>rückwärts</strong>. An jeder Kante wird er mit dem Gewicht multipliziert (das Zahnrad), an jedem Knick nur durchgelassen, wenn das Neuron aktiv war. Was bei einem Neuron ankommt, nennen wir seinen <strong>Fehleranteil δ</strong>.</p>
@@ -119,7 +121,7 @@
         <p>Darum erzeugen wenige Schichten hintereinander sehr viel mehr Knicke als eine einzige breite Schicht mit derselben Zahl Neuronen.</p>
       </div></article>
 
-      <article class="step" data-step="spirale"><div class="card">
+      <article class="step" data-step="spirale" data-core><div class="card">
         <span class="kicker">Tiefe</span>
         <h3>Zwei Spiralen</h3>
         <p>Zwei ineinander gedrehte Spiralen. Ein Netz mit zwei Schichten zu je 16 Neuronen faltet den Raum, faltet das Ergebnis noch einmal, und am Ende trennt eine Grenze sauber.</p>
@@ -133,6 +135,19 @@
         <p>Unser verborgener Raum hatte drei Dimensionen, den konnten wir zeichnen. Echte Netze haben Hunderte oder Tausende, ein großes Sprachmodell über zehntausend.</p>
         <p>Dort verhält sich der Raum seltsam, und genau das nutzen die Netze aus. Das ist Kapitel 5.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>ReLU ist ein Knick: Negatives wird 0. Erst dieser Knick macht ein Netz mächtiger als eine Matrix.</li><li>Eine Schicht faltet den Raum so, dass am Ende wieder eine gerade Grenze reicht.</li><li>Backpropagation schickt den Fehler rückwärts durch das Netz; jedes Gewicht bekommt „Fehleranteil mal Eingabe“.</li></ul>
+    <div class="take-f"><b>h</b> = ReLU(<b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub>) &nbsp;&nbsp; <i>ŷ</i> = <b>W</b><sub>2</sub> <b>h</b> + <b>b</b><sub>2</sub></div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum braucht ein Netz überhaupt einen Knick?</summary><p>Ohne ihn wären alle Schichten zusammen wieder eine einzige Matrix, und die kann den Raum nicht biegen.</p></details>
+      <details><summary>Was passiert beim Rückwärtsrechnen an einem Neuron, das schweigt?</summary><p>Nichts kommt durch: Ein schweigender Knick ist ein ausgekuppeltes Zahnrad mit Faktor 0.</p></details>
+      <details><summary>Was konnte eine einzelne Grenze in Kapitel 3 nicht trennen?<span class="from">Kapitel 3</span></summary><p>XOR: Blau in zwei gegenüberliegenden Ecken, Orange in den anderen beiden.</p></details>
     </div>
   </section>
 
@@ -569,6 +584,7 @@
       setup() { st.fn = 'tent'; st.tentN = 0; },
       async play(a) {
         a.say('Eine Gerade von −1 bis 1.'); await a.wait(1200);
+        await a.ask('Jede Falte verdoppelt die Stücke. Wie viele gerade Stücke ergeben vier Schichten mit je einer Falte?', ['4', '8', '16'], 2);
         a.hl('T');
         for (const k of [1, 2, 3, 4]) { a.say(`${k}× gefaltet: ${2 ** k} gerade Stücke.`); await a.to(st, { tentN: k }, 1500); await a.wait(1100); }
         a.say('Vier Schichten mit je einer Falte: 16 Stücke. Eine einzige Schicht bräuchte dafür 16 Neuronen.');

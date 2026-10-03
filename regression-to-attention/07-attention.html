@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 7 von 12</div>
     <h1>Mischen nach Relevanz</h1>
     <p class="lead">Ein Wort hat in der Tabelle nur einen Vektor, egal in welchem Satz es steht. In diesem Kapitel bringen wir einem Wort bei, sich die anderen Wörter im Satz anzusehen und etwas von ihnen aufzunehmen. Dafür brauchen wir nur Werkzeuge, die wir schon kennen: Mittelwerte, das Skalarprodukt und die Softmax.</p>
+    <ol class="roadmap"><li>Ein Wort, ein Vektor: das Problem</li><li>Mischen mit Anteilen</li><li>Anteile aus Ähnlichkeit und Softmax</li><li>Die Grenze der Ähnlichkeit</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -44,7 +45,7 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="problem"><div class="card">
+      <article class="step" data-step="problem" data-core><div class="card">
         <span class="kicker">Ausgangspunkt</span>
         <h3>Ein Wort, zwei Sätze, ein Vektor</h3>
         <p>Am Ende von Kapitel 6 stand ein Problem: „Bank“ hat in der Tabelle genau eine Zeile. In „der Mann bringt Geld zur Bank“ und in „der Mann sitzt auf der Bank“ bekommt es dieselben 12 Zahlen.</p>
@@ -58,7 +59,7 @@
         <p>Das wollen wir nachbauen. Zwei Fragen müssen wir beantworten: Wie nimmt ein Wort etwas von anderen Wörtern auf? Und wie entscheidet es, von welchen?</p>
       </div></article>
 
-      <article class="step" data-step="zahlen"><div class="card">
+      <article class="step" data-step="zahlen" data-core><div class="card">
         <span class="kicker">Werkzeug, erste Frage</span>
         <h3>Ein Mittelwert mit Anteilen</h3>
         <p>Etwas von mehreren Dingen aufnehmen heißt: mischen. Das einfachste Mischen ist der Mittelwert. Von 2 und 6 ist er 4, beide zählen gleich viel, je zur Hälfte.</p>
@@ -80,14 +81,14 @@
         <p>Hier die Vektoren von „Geld“ und „Mann“ aus Kapitel 6 und ihre Mischung. Je größer der Anteil von „Geld“, desto ähnlicher sieht die Mischung „Geld“.</p>
       </div></article>
 
-      <article class="step" data-step="handmix"><div class="card">
+      <article class="step" data-step="handmix" data-core><div class="card">
         <span class="kicker">Die Idee</span>
         <h3>„Bank“ nimmt etwas vom Satz auf</h3>
         <p>Jetzt der eigentliche Plan: Wir behalten den Vektor von „Bank“ und <em>addieren</em> eine Mischung der anderen Wörter im Satz dazu.</p>
         <p>Unten sehen wir das Ergebnis als Schatten auf die Richtung von „Stuhl“ zu „Sparkasse“, wie in Kapitel 6. Geben wir „Geld“ den ganzen Anteil, rückt „Bank“ zum Geld. Geben wir es „sitzt“, rückt es zum Sitzen. Damit ist die erste Frage beantwortet. Bleibt die zweite: Wer legt die Anteile fest?</p>
       </div></article>
 
-      <article class="step" data-step="relevanz"><div class="card">
+      <article class="step" data-step="relevanz" data-core><div class="card">
         <span class="kicker">Zweite Frage, Teil 1</span>
         <h3>Relevanz messen</h3>
         <p>Ein erster, einfacher Versuch: Relevant ist, was ähnlich ist. Ähnlichkeit messen wir mit dem Skalarprodukt aus Kapitel 5 und 6. Dafür bringen wir alle Wortvektoren in diesem Kapitel vorher auf Länge 1, wie in Kapitel 5. Dann gilt: 1 bei gleicher Richtung, 0 bei senkrecht, negativ bei entgegengesetzt.</p>
@@ -101,7 +102,7 @@
         <p>e hoch irgendwas ist immer positiv. Und die Reihenfolge bleibt erhalten: Die größte Punktzahl gibt auch den größten Wert.</p>
       </div></article>
 
-      <article class="step" data-step="teilen"><div class="card">
+      <article class="step" data-step="teilen" data-core><div class="card">
         <span class="kicker">Zweite Frage, Teil 3</span>
         <h3>Durch die Summe teilen</h3>
         <p>Dann teilen wir jeden Wert durch die Summe aller Werte. Jetzt ergeben alle zusammen genau 1: Das sind unsere Anteile.</p>
@@ -115,28 +116,28 @@
         <p>Wir nehmen im Folgenden β = 6.</p>
       </div></article>
 
-      <article class="step" data-step="spiegel"><div class="card">
+      <article class="step" data-step="spiegel" data-core><div class="card">
         <span class="kicker">Eine Falle</span>
         <h3>Am ähnlichsten bin ich mir selbst</h3>
         <p>Rechnen wir jetzt die Mischung aus, passiert fast nichts. Der Grund: „Bank“ steht selbst auch im Satz, und mit sich selbst hat es das größte Skalarprodukt überhaupt, nämlich 1.</p>
         <p>Also geht fast der ganze Anteil an „Bank“ selbst. Ähnlichkeit allein schaut vor allem in den Spiegel.</p>
       </div></article>
 
-      <article class="step" data-step="ohneselbst"><div class="card">
+      <article class="step" data-step="ohneselbst" data-core><div class="card">
         <span class="kicker">Erster Erfolg</span>
         <h3>Nur die anderen ansehen</h3>
         <p>Lassen wir „Bank“ für den Moment nur die anderen Wörter ansehen. Jetzt gehen die Anteile an die Wörter, die zu „Bank“ passen: „bringt“ und „Geld“ im ersten Satz, „sitzt“ im zweiten, „Holz“ in einem dritten.</p>
         <p>Und „Bank“ bewegt sich: zum Geld, zum Sitzen, zum Holz. Derselbe Ausgangsvektor, drei verschiedene Ergebnisse, je nach Satz. Das ist der Kern von <strong>Attention</strong> (Aufmerksamkeit), noch ganz ohne neue gelernte Zahlen.</p>
       </div></article>
 
-      <article class="step" data-step="alle"><div class="card">
+      <article class="step" data-step="alle" data-core><div class="card">
         <span class="kicker">Alle auf einmal</span>
         <h3>Jedes Wort schaut sich um</h3>
         <p>Was „Bank“ kann, kann jedes Wort. Schreiben wir die Anteile aller Wörter untereinander, entsteht eine Tabelle: Zeile = welches Wort schaut, Spalte = worauf. Jede Zeile ergibt zusammen 100 %.</p>
         <p>Diese Tabelle heißt <strong>Attention-Matrix</strong>. Wenn jemand sagt, man könne „einem Modell bei der Attention zuschauen“, sind solche Tabellen gemeint.</p>
       </div></article>
 
-      <article class="step" data-step="grenze"><div class="card">
+      <article class="step" data-step="grenze" data-core><div class="card">
         <span class="kicker">Die Grenze</span>
         <h3>Ähnlich ist nicht immer relevant</h3>
         <p>In „die Frau lacht und sie singt“ soll „sie“ herausfinden, wer gemeint ist: „Frau“. Mit unserem Verfahren schaut „sie“ aber vor allem auf „und“ und „singt“. Die stehen in unserem Text oft neben „sie“, also sind ihre Vektoren ähnlich (Kapitel 6).</p>
@@ -148,6 +149,19 @@
         <h3>Was wir jetzt haben</h3>
         <p>Ein Wort mischt sich Vektoren anderer Wörter dazu. Die Anteile kommen aus Punktzahlen und der Softmax. Offen ist nur noch, woher gute Punktzahlen kommen. Kapitel 8 gibt jedem Wort eine eigene Frage.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Attention mischt zu einem Wort die Vektoren der anderen Wörter dazu, mit Anteilen, die zusammen 1 ergeben.</li><li>Die Anteile kommen aus Punktzahlen: hier die Ähnlichkeit (Skalarprodukt), durch eine Softmax geschickt.</li><li>Ähnlichkeit allein schaut in den Spiegel und findet bei Pronomen das Falsche: Ein Wort muss etwas anderes suchen können, als es ist.</li></ul>
+    <div class="take-f"><b>x</b><sub>neu</sub> = <b>x</b> + Σ<sub><i>j</i></sub> <i>a<sub>j</sub></i> <b>x</b><sub><i>j</i></sub> &nbsp;&nbsp; <i>a<sub>j</sub></i> = softmax(β · <b>x</b> · <b>x</b><sub><i>j</i></sub>)</div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Was ist der Unterschied zwischen Anteilen und Gewichten?</summary><p>Gewichte sind gelernte Zahlen, die nach dem Training feststehen. Anteile werden für jeden Satz neu ausgerechnet und ergeben zusammen 1.</p></details>
+      <details><summary>Warum schaut „Bank“ mit reiner Ähnlichkeit fast nur auf sich selbst?</summary><p>Mit sich selbst hat ein Vektor das größte Skalarprodukt, nämlich 1. Die Softmax gibt diesem Wort dann fast alles.</p></details>
+      <details><summary>Wo kam der Regler β schon einmal vor, nur andersherum?<span class="from">Kapitel 3</span></summary><p>Als Temperatur in Kapitel 3: β ist 1 geteilt durch die Temperatur.</p></details>
     </div>
   </section>
 
@@ -366,6 +380,12 @@
       setup() { base({ mode: 'hand', hw: [0, 0, 0, 0, 0, 0], wA: 1 }); },
       async play(a) {
         a.say('Unten die Achse von „Stuhl“ zu „Sparkasse“. Dort liegt „Bank“, etwas näher am Geld.'); await a.wait(2800);
+        let g = 0.5;
+        const setHw = () => { st.hw = [0, 1 - g, 0, g, 0, 0]; st.moveA = 1; };
+        setHw(); a.set(st, {});
+        await a.tryit([{ label: 'Anteil „Geld“ (Rest an „Mann“)', type: 'range', min: 0, max: 1, step: 0.01, get: () => g, set: (v) => { g = v; setHw(); }, fmt: (v) => `${fmt(v * 100, 0)} %` }],
+          'Verteil die Anteile zwischen „Geld“ und „Mann“. Wohin rückt „Bank“?');
+        a.set(st, { hw: [0, 0, 0, 0, 0, 0], moveA: 0 });
         a.hl('s'); a.set(st, { hw: [0, 0, 0, 1, 0, 0] }); a.say('Satz 1: Wir geben „Geld“ den ganzen Anteil …'); await a.wait(1400);
         await a.to(st, { moveA: 1 }, 1400); a.say('… und „Bank“ rückt zum Geld.'); await a.wait(2000);
         a.set(st, { ghosts: [bankShift()], sent: 1, hw: [0, 0, 1, 0, 0, 0], moveA: 0 }); a.say('Satz 2: der ganze Anteil an „sitzt“ …'); await a.wait(1400);
@@ -412,12 +432,14 @@
         await a.to(st, { beta: 25 }, 2400); a.say('β = 25: Fast alles geht an das Wort mit der höchsten Punktzahl.'); await a.wait(2400);
         await a.to(st, { beta: 6 }, 1400); a.say('Wir bleiben bei β = 6.');
       },
+      tryit: () => [{ label: 'β', type: 'range', min: 0.2, max: 25, step: 0.1, get: () => st.beta, set: (v) => (st.beta = v), fmt: (v) => fmt(v, 1) }],
     },
     spiegel: {
       views: ['attn'],
       formula: softF(),
       setup() { base({ scoreA: 1, wA: 1 }); },
       async play(a) {
+        await a.ask('Jetzt rechnet „Bank“ seine Anteile selbst aus. Wer bekommt den größten?', ['„Geld“', '„Bank“ selbst', 'alle etwa gleich viel'], 1);
         a.say(`Wer bekommt den größten Anteil? „Bank“ selbst, mit ${fmt(attend(SENTS[0], { self: true }).wts[5] * 100, 0)} %.`); await a.wait(3000);
         await a.to(st, { moveA: 1 }, 1400); a.say('Darum bewegt sich „Bank“ kaum. Ähnlichkeit allein schaut vor allem in den Spiegel.');
       },
@@ -451,7 +473,8 @@
       formula: `Was ein Wort ${T('s', 'sucht', 'c-new', 'beim Pronomen: ein Nomen')} ≠ was ein Wort ${T('i', 'ist', '', 'sein Vektor, nach dem die Ähnlichkeit fragt')}`,
       setup() { st.grA = 0; },
       async play(a) {
-        a.say('„die Frau lacht und sie singt“: Wer ist „sie“?'); await a.wait(2000);
+        a.say('„die Frau lacht und sie singt“: Wer ist „sie“?'); await a.wait(1200);
+        await a.ask('Worauf schaut „sie“ nach Ähnlichkeit am meisten?', ['auf „Frau“', 'auf „und“ und „singt“', 'auf „lacht“'], 1);
         await a.to(st, { grA: 1 }, 1200); a.say('Nach Ähnlichkeit schaut „sie“ vor allem auf „und“ und „singt“, nur wenig auf „Frau“.'); await a.wait(3400);
         a.hl('s', 'i'); a.say('Ein Pronomen sucht ein Nomen, nicht seinesgleichen. Dafür braucht jedes Wort eine eigene Frage: Kapitel 8.');
       },

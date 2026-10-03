@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 3 von 12</div>
     <h1>Die Grenze</h1>
     <p class="lead">Wenn die Antwort keine Zahl ist, sondern ja oder nein. Aus der Geraden wird eine Wahrscheinlichkeit, aus der Wahrscheinlichkeit eine Grenze, und aus der Grenze die Art, wie ein Sprachmodell sein nächstes Wort wählt.</p>
+    <ol class="roadmap"><li>Ja oder nein statt einer Zahl</li><li>Die S-Kurve aus e hoch z</li><li>Überraschung als Verlust</li><li>Mehr Klassen: Softmax</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -42,7 +43,7 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="frage"><div class="card">
+      <article class="step" data-step="frage" data-core><div class="card">
         <span class="kicker">Die neue Frage</span>
         <h3>Bestanden oder nicht?</h3>
         <p>22 Studierende, jeweils ihre Lernstunden und das Ergebnis einer Prüfung. Die Antwort ist diesmal keine Miete, sondern <strong>ja oder nein</strong>: 1 für bestanden, 0 für durchgefallen.</p>
@@ -56,7 +57,7 @@
         <p>Schlimmer: Kommen ein paar sehr fleißige Studierende dazu, kippt die Gerade, und ihre 50-Prozent-Marke wandert nach rechts. Plötzlich gelten Leute als durchgefallen, die bestanden haben.</p>
       </div></article>
 
-      <article class="step" data-step="anteil"><div class="card">
+      <article class="step" data-step="anteil" data-core><div class="card">
         <span class="kicker">Was heißt Wahrscheinlichkeit?</span>
         <h3>Ein Anteil</h3>
         <p>Was soll „die Wahrscheinlichkeit, mit 5 Lernstunden zu bestehen“ bedeuten? Ganz handfest: Nimm alle, die ungefähr so viel gelernt haben, und zähle, welcher <strong>Anteil</strong> bestanden hat.</p>
@@ -78,14 +79,14 @@
         <p>Bei z = 0 ist e hoch 0 = 1, also 1/(1+1) = <strong>0,5</strong>. Bei großem z wird e hoch −z winzig, also 1/(1+fast 0) ≈ <strong>1</strong>. Bei sehr negativem z wird e hoch −z riesig, also 1/(riesig) ≈ <strong>0</strong>. Dazwischen steigt sie glatt an.</p>
       </div></article>
 
-      <article class="step" data-step="sigmoid"><div class="card">
+      <article class="step" data-step="sigmoid" data-core><div class="card">
         <span class="kicker">Die neue Idee</span>
         <h3>Die Gerade wird gebogen</h3>
         <p>Jetzt setzen wir zusammen: Wir behalten die Rechnung <strong>w·x + b</strong> aus Kapitel 1, lesen das Ergebnis aber als Punktzahl <strong>z</strong>: Wie sehr spricht alles für bestanden? Diese Punktzahl geben wir in die Sigmoidfunktion.</p>
         <p>Die Gerade wird zur S-Kurve, die genau so verläuft wie die Anteile von vorhin.</p>
       </div></article>
 
-      <article class="step" data-step="knoepfe"><div class="card">
+      <article class="step" data-step="knoepfe" data-core><div class="card">
         <span class="kicker">Formel lesen</span>
         <h3>Was w und b jetzt tun</h3>
         <p><strong>w</strong> bestimmt, wie steil die Kurve ist, also wie sicher sich das Modell wird. <strong>b</strong> verschiebt die Stelle, an der es genau 50 % sagt.</p>
@@ -99,7 +100,7 @@
         <p>Der <strong>Logarithmus</strong> macht aus Malnehmen Addieren: log(a · b) = log a + log b. Statt eines winzigen Produkts erhalten wir eine Summe, für jede Person einen Beitrag −log p. Der ist 0, wenn p = 1, und wächst steil, wenn p gegen 0 geht.</p>
       </div></article>
 
-      <article class="step" data-step="ueberraschung"><div class="card">
+      <article class="step" data-step="ueberraschung" data-core><div class="card">
         <span class="kicker">Der Verlust</span>
         <h3>Wie überrascht ist das Modell?</h3>
         <p>Den Beitrag −log p einer Person kann man als ihre <strong>Überraschung</strong> lesen: Hat das Modell ihr Ergebnis erwartet (p nahe 1), ist sie klein. Hielt es das Ergebnis für fast unmöglich, ist sie riesig.</p>
@@ -107,14 +108,14 @@
         <div class="ex"><b>Anderes Beispiel</b>Der Wetterbericht sagt 95 % Sonne, und es regnet: große Überraschung. Er sagt 50 %: Man war auf beides gefasst.</div>
       </div></article>
 
-      <article class="step" data-step="lernen"><div class="card">
+      <article class="step" data-step="lernen" data-core><div class="card">
         <span class="kicker">Lernen</span>
         <h3>Bergab, wie gehabt</h3>
         <p>Gelernt wird wie in Kapitel 1: Die Kugel rollt in der Verlustlandschaft bergab. Rechnet man die Steigung aus, kommt ein schönes Ergebnis heraus: wieder <strong>Fehler mal Eingabe</strong>. Der Fehler ist jetzt p − y, der Abstand zwischen vorhergesagter Wahrscheinlichkeit und dem, was passiert ist.</p>
         <p>Jede Person zieht also an der Kurve: Wer bestanden hat, aber nur 30 % bekam, zieht sie nach oben, mit Kraft 0,7.</p>
       </div></article>
 
-      <article class="step" data-step="zwei"><div class="card">
+      <article class="step" data-step="zwei" data-core><div class="card">
         <span class="kicker">Zwei Merkmale</span>
         <h3>Die Grenze ist eine Linie</h3>
         <p>Mit Lernstunden und Schlaf hat jeder Studierende zwei Zahlen, einen Vektor <strong>x</strong>. Die Punktzahl ist das Skalarprodukt <strong>w · x + b</strong> aus Kapitel 2.</p>
@@ -134,7 +135,7 @@
         <p>Beim Training dreht und verschiebt sich die Grenze, bis die Überraschung insgesamt am kleinsten ist. Ein paar Punkte liegen trotzdem auf der falschen Seite: Nicht jeder, der viel lernt und gut schläft, besteht.</p>
       </div></article>
 
-      <article class="step" data-step="drei"><div class="card">
+      <article class="step" data-step="drei" data-core><div class="card">
         <span class="kicker">Mehr Klassen</span>
         <h3>Drei Pinguinarten</h3>
         <p>Schnabellänge und Flossenlänge von drei Pinguinarten. Jetzt bekommt <strong>jede Klasse ihre eigene Punktzahl</strong>, also ihre eigene Zeile w·x + b.</p>
@@ -142,7 +143,7 @@
         <div class="ex"><b>Daten</b>Nachempfunden dem Palmer-Penguins-Datensatz (Adelie, Zügelpinguin, Eselspinguin).</div>
       </div></article>
 
-      <article class="step" data-step="softmax"><div class="card">
+      <article class="step" data-step="softmax" data-core><div class="card">
         <span class="kicker">Formel lesen</span>
         <h3>Softmax</h3>
         <p>Wie macht man aus drei beliebigen Punktzahlen drei Wahrscheinlichkeiten? Zwei Schritte: <strong>e hoch</strong> macht alles positiv und verstärkt Unterschiede. <strong>Durch die Summe teilen</strong> sorgt dafür, dass alles zusammen 1 ergibt.</p>
@@ -157,12 +158,25 @@
         <div class="ex"><b>Erfundene Zahlen</b>Die Punktzahlen sind zur Anschauung gewählt. Ein echtes Modell verteilt sie auf zehntausende Wörter.</div>
       </div></article>
 
-      <article class="step" data-step="xor"><div class="card">
+      <article class="step" data-step="xor" data-core><div class="card">
         <span class="kicker">Die Grenze der Grenze</span>
         <h3>Wo eine Gerade nicht reicht</h3>
         <p>Blau oben links und unten rechts, orange in den anderen beiden Ecken. Keine einzelne Gerade trennt das, egal wie lange man trainiert: Das Modell bleibt bei etwa 50 % Treffern hängen.</p>
         <p>Dieses Muster heißt <strong>XOR</strong>. An ihm scheiterten 1969 die frühen Neuronen-Modelle, und es führt direkt zu Kapitel 4: Man muss den Raum falten.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Aus einer Punktzahl w · x + b wird mit der Sigmoidfunktion eine Wahrscheinlichkeit zwischen 0 und 1.</li><li>Die Kreuzentropie misst die Überraschung des Modells: −log p für das, was wirklich passiert ist.</li><li>Bei mehreren Klassen bekommt jede ihre Punktzahl; die Softmax macht daraus Wahrscheinlichkeiten. Eine Grenze bleibt aber gerade.</li></ul>
+    <div class="take-f"><i>p</i> = softmax(<b>W</b> <b>x</b> + <b>b</b>) &nbsp;&nbsp; <i>L</i> = −log <i>p</i><sub>richtig</sub></div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Wo liegt die Grenze einer logistischen Regression?</summary><p>Dort, wo die Punktzahl genau 0 ist: Dort sagt die Sigmoidfunktion 50 %.</p></details>
+      <details><summary>Was macht die Softmax in zwei Schritten?</summary><p>Erst e hoch jede Punktzahl, damit alles positiv wird, dann durch die Summe teilen, damit alles zusammen 1 ergibt.</p></details>
+      <details><summary>Gelernt wird wieder mit „Fehler mal Eingabe“. Wo kam diese Regel zuerst vor?<span class="from">Kapitel 1</span></summary><p>In Kapitel 1: Jede Wohnung zieht mit „Fehler mal Fläche“ an w.</p></details>
     </div>
   </section>
 
@@ -794,6 +808,15 @@
       setup() { base2('xor', { heatA: 1, boundA: 1, arrowA: 1 }); st.w2 = [0.8, -0.3]; st.b2 = 0.1; },
       async play(a) {
         a.say('Blau in zwei gegenüberliegenden Ecken, orange in den anderen beiden.'); await a.wait(1800);
+        const xorAcc = () => { const sc = SC2.xor; let ok = 0; for (const p of XOR) { const q = sc.z(p); ok += (sig(st.w2[0] * q[0] + st.w2[1] * q[1] + st.b2) > 0.5) === !!p[2]; } st.acc = ok / XOR.length; };
+        let ang = 30;
+        const setLine = () => { const r = (ang * Math.PI) / 180; st.w2 = [Math.cos(r) * 1.5, Math.sin(r) * 1.5]; xorAcc(); };
+        setLine(); a.set(st, {});
+        if (await a.tryit([
+          { label: 'Richtung', type: 'range', min: 0, max: 180, step: 1, get: () => ang, set: (v) => { ang = v; setLine(); }, fmt: (v) => `${fmt(v, 0)}°` },
+          { label: 'Verschiebung', type: 'range', min: -2, max: 2, step: 0.05, get: () => st.b2, set: (v) => { st.b2 = v; xorAcc(); }, fmt: (v) => fmt(v, 2) },
+        ], 'Dreh und schieb die Grenze. Schaffst du mehr als 75 % Treffer (Formel oben)?')) a.say('Mehr als 3 von 4 Ecken richtig geht nicht. Jetzt versucht es das Training.');
+        await a.ask('Wie viele Treffer schafft das Training mit einer einzigen Geraden?', ['fast 100 %', 'etwa 75 %', 'etwa 50 %'], 2);
         a.say('Training …');
         await a.loop((i) => { train2dStep(0.8); return i < 200; }, (i) => (i < 20 ? 8 : 30));
         a.say(`Nach ${st.steps} Schritten: ${fmt(st.acc * 100, 0)} % Treffer. Eine Gerade kann hier nicht mehr als raten.`); await a.wait(2400);

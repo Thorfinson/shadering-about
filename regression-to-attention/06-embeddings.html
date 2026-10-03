@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 6 von 12</div>
     <h1>Bedeutung als Richtung</h1>
     <p class="lead">Ein Sprachmodell rechnet mit Zahlen, nicht mit Wörtern. Wir bauen die Übersetzung selbst: Jedes Wort bekommt einen Pfeil in einem 12-dimensionalen Raum, gelernt nur aus der Frage, welche Wörter nebeneinander stehen. Am Ende tragen Richtungen Bedeutung.</p>
+    <ol class="roadmap"><li>Wörter brauchen Zahlen</li><li>Nachbarn zählen</li><li>Ein Ratespiel lernt die Karte</li><li>Bedeutung als Richtung</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -53,14 +54,14 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="nummern"><div class="card">
+      <article class="step" data-step="nummern" data-core><div class="card">
         <span class="kicker">Ausgangspunkt</span>
         <h3>Ein Netz braucht Zahlen</h3>
         <p>Alles, was wir bisher gebaut haben, rechnet mit Zahlen: Matrizen, Knicke, Softmax. Ein Satz besteht aber aus Wörtern. Wie macht man aus „Hund“ eine Zahl?</p>
         <p>Die naheliegende Idee: durchnummerieren. Das geht schief, denn Nummern behaupten Nachbarschaften. „Hund“ und „Holz“ liegen alphabetisch nebeneinander, und der Mittelwert aus „Hund“ und „Katze“ ist irgendein drittes Wort.</p>
       </div></article>
 
-      <article class="step" data-step="schalter"><div class="card">
+      <article class="step" data-step="schalter" data-core><div class="card">
         <span class="kicker">Zweiter Versuch</span>
         <h3>Ein Schalter pro Wort</h3>
         <p>Besser: Jedes Wort bekommt einen eigenen Schalter. Mit drei Wörtern sind das drei Zahlen: Hund = (1, 0, 0), Katze = (0, 1, 0), Brot = (0, 0, 1). Man nennt das <strong>One-Hot</strong>.</p>
@@ -74,14 +75,14 @@
         <p>Das Skalarprodukt zweier verschiedener Wörter ist immer 0, denn ihre Einsen treffen nie aufeinander. Alle Wörter stehen senkrecht aufeinander (Kapitel 5). Über Bedeutung sagt das nichts.</p>
       </div></article>
 
-      <article class="step" data-step="karte"><div class="card">
+      <article class="step" data-step="karte" data-core><div class="card">
         <span class="kicker">Was wir eigentlich wollen</span>
         <h3>Eine Karte, von Hand</h3>
         <p>Stellen wir uns eine Landkarte vor, auf der wir jedes Wort von Hand platzieren: Tiere hierhin, Essen dorthin, das Königshaus woandershin.</p>
         <p>Jetzt hat jedes Wort nur zwei Zahlen, seine Koordinaten, und Abstände bedeuten etwas: „Hund“ liegt nah bei „Katze“ und weit weg von „Brot“. So ein Platz heißt <strong>Embedding</strong> (Einbettung): Das Wort wird in einen Raum eingebettet.</p>
       </div></article>
 
-      <article class="step" data-step="tabelle"><div class="card">
+      <article class="step" data-step="tabelle" data-core><div class="card">
         <span class="kicker">Werkzeug</span>
         <h3>Die Karte als Tabelle</h3>
         <p>Die Koordinaten schreiben wir in eine Tabelle: eine Zeile pro Wort, eine Spalte pro Koordinate. Nachschlagen heißt: Schaltervektor mal Tabelle.</p>
@@ -95,7 +96,7 @@
         <p>Von Hand füllen können wir sie nicht. Noch stehen Zufallszahlen darin. Woher soll das Netz wissen, welche Wörter zusammengehören? Es hat ja nur den Text.</p>
       </div></article>
 
-      <article class="step" data-step="nachbarn"><div class="card">
+      <article class="step" data-step="nachbarn" data-core><div class="card">
         <span class="kicker">Die Quelle</span>
         <h3>Wer steht neben wem?</h3>
         <p>Der Text verrät mehr, als man denkt. Wir schieben ein Fenster über einen Satz: ein Wort in der Mitte, dazu die Wörter bis zu zwei Plätze links und rechts. Jedes Mal notieren wir ein Paar: Mitte → Nachbar.</p>
@@ -103,7 +104,7 @@
         <div class="ex"><b>Der Text</b>1200 Sätze, aus Vorlagen gewürfelt: Menschen und Königshaus essen, schlafen, regieren, füttern Tiere, bringen Geld zur Bank oder sitzen auf einer Bank. Klein genug, um hier live zu lernen.</div>
       </div></article>
 
-      <article class="step" data-step="profil"><div class="card">
+      <article class="step" data-step="profil" data-core><div class="card">
         <span class="kicker">Statistik</span>
         <h3>Ein Wort als Zählprofil</h3>
         <p>Für jedes Wort schreiben wir in eine Zeile, wie oft jedes andere Wort in seiner Nähe steht: sein <strong>Zählprofil</strong>. Das ist reines Zählen, ohne jedes Verständnis.</p>
@@ -112,14 +113,14 @@
         <div class="ex"><b>Die Idee dahinter</b>Wer „Der ___ bellt im Garten“ liest, weiß ohne das fehlende Wort, dass ein Tier gemeint ist. Die Umgebung trägt die Bedeutung. Der Linguist J. R. Firth sagte 1957: Man erkennt ein Wort an der Gesellschaft, in der es sich aufhält.</div>
       </div></article>
 
-      <article class="step" data-step="verdichten"><div class="card">
+      <article class="step" data-step="verdichten" data-core><div class="card">
         <span class="kicker">Verdichten</span>
         <h3>Viele Spalten erzählen dasselbe</h3>
         <p>Ein Zählprofil hat 65 Spalten, und vieles darin ist doppelt: Wo „regiert“ häufig ist, sind auch „trägt“ und „wohnt“ häufig. Diese Spalten erzählen eine Geschichte: <em>königlich</em>. „frisst“, „Futter“, „Garten“ erzählen <em>Tier</em>. „der/er“ gegen „die/sie“ erzählen <em>männlich oder weiblich</em>.</p>
         <p>Ein Embedding ist eine <strong>verdichtete Fassung</strong> des Zählprofils: wenige Zahlen, aus denen sich das Profil wieder ablesen lässt, etwa „wie königlich“, „wie tierisch“, „wie weiblich“. Wörter mit gleichem Profil brauchen dann dieselben Zahlen. Darum landen sie nebeneinander.</p>
       </div></article>
 
-      <article class="step" data-step="raten"><div class="card">
+      <article class="step" data-step="raten" data-core><div class="card">
         <span class="kicker">Die Lernaufgabe</span>
         <h3>Ein Ratespiel</h3>
         <p>Wie findet ein Netz diese Verdichtung? Durch ein Ratespiel: Es sieht nur die 12 Zahlen eines Worts, etwa von „König“, und soll daraus das Zählprofil wiederherstellen, also für jedes der 65 Wörter raten, wie wahrscheinlich es daneben steht.</p>
@@ -141,18 +142,19 @@
         <p>Was dabei passiert, kann man sehen: <b>e</b> von „König“ dreht sich zu <b>u</b> von „regiert“, und <b>u</b> von „regiert“ dreht sich zu <b>e</b> von „König“. Jedes Paar im Text ist ein kleiner Zug, der zwei Pfeile zueinander zieht.</p>
       </div></article>
 
-      <article class="step" data-step="gleich"><div class="card">
+      <article class="step" data-step="gleich" data-core><div class="card">
         <span class="kicker">Der Kern</span>
         <h3>Gleiche Nachbarn, gleicher Platz</h3>
         <p>Jetzt alle Paare dieser kleinen Welt, viele Schritte lang. „König“ und „Königin“ werden von denselben Nachbarn gezogen: regiert, Krone, Schloss. Also landen sie in derselben Hälfte, näher beieinander als bei „Hund“. „Hund“ und „Katze“ landen gemeinsam in der anderen Hälfte, bei Futter und Fell.</p>
         <p>Nur ein Zug ist verschieden: „der“ zieht König und Hund, „die“ zieht Königin und Katze. Darum liegen die Pfeile König → Königin und Hund → Katze am Ende fast parallel. Häufiges Nebeneinander wird zu Nähe, ein gleicher Unterschied wird zu einer gleichen Richtung.</p>
       </div></article>
 
-      <article class="step" data-step="training"><div class="card">
+      <article class="step" data-step="training" data-core><div class="card">
         <span class="kicker">Live, in groß</span>
         <h3>Alle 65 Wörter</h3>
         <p>Jetzt dasselbe mit allen 65 Wörtern und 12 Zahlen pro Wort, 3000 Schritte (mit Adam, Kapitel 4). In 12 Dimensionen ist Platz für viele Unterschiede gleichzeitig.</p>
         <p>Anschauen können wir 12 Dimensionen nur als Schatten auf die zwei Hauptkomponenten (Kapitel 5). Niemand hat dem Netz gesagt, was ein Tier oder ein König ist. Die Gruppen entstehen allein aus den gezählten Nachbarschaften.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Das Modell speichert die Sätze, aus denen es gelernt hat.“ Nein: Übrig bleiben nur 12 Zahlen pro Wort. Die 1200 Sätze stehen nirgends im Modell, nur ihre Statistik hat die Zahlen geformt.</div>
       </div></article>
 
       <article class="step" data-step="aehnlich"><div class="card">
@@ -169,7 +171,7 @@
         <p>Diesen Pfeil kann man an einen anderen Punkt anlegen. <b>c</b> + (<b>b</b> − <b>a</b>) heißt: Gehe von <b>c</b> aus denselben Weg wie von <b>a</b> nach <b>b</b>.</p>
       </div></article>
 
-      <article class="step" data-step="achse"><div class="card">
+      <article class="step" data-step="achse" data-core><div class="card">
         <span class="kicker">Eine Richtung</span>
         <h3>Der Schatten auf Frau − Mann</h3>
         <p>Der Pfeil Frau − Mann ist eine Richtung im 12-dimensionalen Raum. Auf sie werfen wir den Schatten aller Personenwörter: das Skalarprodukt mit dem auf Länge 1 gebrachten Pfeil (Kapitel 5).</p>
@@ -190,14 +192,14 @@
         <p>Ein beliebiger Punkt im Raum ist meist kein Wort. Um ihn zu lesen, suchen wir das Wort mit dem größten Kosinus zu ihm, gemessen in allen 12 Dimensionen. Hier suchen wir der Übersicht halber nur unter den zehn Personenwörtern. Wandert der Punkt, wechselt das nächste Wort.</p>
       </div></article>
 
-      <article class="step" data-step="analogie"><div class="card">
+      <article class="step" data-step="analogie" data-core><div class="card">
         <span class="kicker">Rechnen mit Bedeutung</span>
         <h3>König − Mann + Frau</h3>
         <p>Jetzt rechnen wir: Starte bei „König“ und gehe den Weg von „Mann“ zu „Frau“. Der Punkt, an dem man landet, liest sich als „Königin“.</p>
         <p>Mit der Richtung Vater − Sohn (jung → alt) klappt es genauso: Prinz + (Vater − Sohn) landet bei „König“. Diese Rechnung machte word2vec 2013 berühmt, an Milliarden Wörtern statt 1200 Sätzen.</p>
       </div></article>
 
-      <article class="step" data-step="bank"><div class="card">
+      <article class="step" data-step="bank" data-core><div class="card">
         <span class="kicker">Die Grenze</span>
         <h3>Ein Wort, zwei Bedeutungen</h3>
         <p>„Bank“ kommt in unserem Text in zwei Bedeutungen vor: als Geldinstitut und als Sitzgelegenheit. Die Tabelle hat für „Bank“ aber nur eine einzige Zeile, und ihr Zählprofil ist eine Mischung aus beiden Umgebungen.</p>
@@ -209,6 +211,19 @@
         <h3>In echten Modellen</h3>
         <p>Große Sprachmodelle zerlegen Text in Wortteile (Tokens), etwa 50 000 bis 200 000 verschiedene. Ihre Tabelle <b>E</b> hat für jedes Token eine Zeile mit Tausenden Zahlen. Sie ist die erste Schicht jedes Transformers und wird mit allem anderen zusammen gelernt, aus demselben Grundsignal: Was steht neben was?</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Ein Embedding ist eine Zeile der Tabelle E: ein Wort als Pfeil mit wenigen Zahlen.</li><li>Die Zahlen kommen aus der Statistik: Wörter, die neben denselben Wörtern stehen, landen nebeneinander.</li><li>Ein gleicher Unterschied in den Nachbarschaften wird eine gleiche Richtung, darum König − Mann + Frau ≈ Königin.</li></ul>
+    <div class="take-f"><b>x</b> = <b>E</b>[Wort] &nbsp;&nbsp; <i>p</i>(Nachbar) = softmax(<b>u</b> · <b>e</b>)</div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum reicht Durchnummerieren der Wörter nicht?</summary><p>Nummern behaupten Nachbarschaften, die es nicht gibt, etwa zwischen „Hund“ und „Holz“, und Mittelwerte zweier Nummern ergeben irgendein drittes Wort.</p></details>
+      <details><summary>Warum liegen „König“ und „Königin“ am Ende nah beieinander?</summary><p>Sie werden von denselben Nachbarwörtern gezogen: regiert, Krone, Schloss. Nur der/die unterscheidet sie, und das wird zu einer eigenen Richtung.</p></details>
+      <details><summary>Welcher Verlust aus Kapitel 3 bewertet das Ratespiel?<span class="from">Kapitel 3</span></summary><p>Die Kreuzentropie: −log der Wahrscheinlichkeit für den Nachbarn, der wirklich vorkam.</p></details>
     </div>
   </section>
 
@@ -1030,6 +1045,10 @@
         for (const [x, y] of [[0.35, 0.3], [0.35, -0.3], [-0.3, -0.35], [0.4, 0.05]]) { await a.to(st, { prX: x, prY: y }, 1800); await a.wait(1000); }
         a.say('Wandert der Punkt, wechselt das nächste Wort.');
       },
+      tryit: () => [
+        { label: '← →', type: 'range', min: -0.5, max: 0.5, step: 0.01, get: () => st.prX, set: (v) => (st.prX = v) },
+        { label: '↓ ↑', type: 'range', min: -0.5, max: 0.5, step: 0.01, get: () => st.prY, set: (v) => (st.prY = v) },
+      ],
     },
     analogie: {
       views: ['plane'],
@@ -1037,6 +1056,7 @@
       setup() { fin(); Object.assign(st, { plAge: 0, plPairs: 0, plAna: 0, plAnaK: 0, plRead: 0, prA: 0 }); },
       async play(a) {
         const M = fin(), best = (w0, w1, w2) => M.nearest(add(M.vec(w0), sub(M.vec(w2), M.vec(w1))), [w0, w1, w2], 1)[0][0];
+        await a.ask('König + (Frau − Mann): Wo landet man?', ['bei „Königin“', 'bei „Frau“', 'irgendwo, ohne passendes Wort'], 0);
         a.hl('k'); a.say('Wir starten bei „König“ …'); await a.wait(1400);
         a.hl('d'); a.say('… und gehen den Weg von „Mann“ zu „Frau“.');
         await a.to(st, { plAna: 1 }, 1800); await a.wait(600);

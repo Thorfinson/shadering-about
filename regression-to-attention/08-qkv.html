@@ -17,6 +17,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 8 von 12</div>
     <h1>Fragen, Schilder, Werte</h1>
     <p class="lead">In Kapitel 7 hat jedes Wort nach Ähnlichem gesucht. Jetzt bekommt jedes Wort drei neue Vektoren: eine Frage, was es sucht, ein Schild, was es anbietet, und einen Wert, was es weitergibt. Alle drei entstehen durch Matrizen aus Kapitel 2. Am Ende steht die Formel aus „Attention Is All You Need“, und jedes Zeichen darin hat seinen eigenen Schritt bekommen.</p>
+    <ol class="roadmap"><li>Ein Wort, drei Rollen</li><li>Frage trifft Schild</li><li>Alles als Tabellen</li><li>Die ganze Formel, Köpfe</li></ol>
   </header>
 
   <section class="story" id="story">
@@ -44,14 +45,14 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="rueckblick"><div class="card">
+      <article class="step" data-step="rueckblick" data-core><div class="card">
         <span class="kicker">Ausgangspunkt</span>
         <h3>Ähnlichkeit sucht das Falsche</h3>
         <p>Am Ende von Kapitel 7: In „die Frau lacht und sie singt“ schaut „sie“ nach Ähnlichkeit vor allem auf „und“ und „singt“. Gesucht wäre „Frau“.</p>
         <p>Das Problem: Bisher war die Punktzahl einfach Wort mal Wort. Ein Wort konnte nur nach seinesgleichen suchen.</p>
       </div></article>
 
-      <article class="step" data-step="rollen"><div class="card">
+      <article class="step" data-step="rollen" data-core><div class="card">
         <span class="kicker">Die Idee</span>
         <h3>Suchen und gefunden werden</h3>
         <p>Ein Vergleich: In einer Kontaktbörse beschreibt jeder, wen er sucht, und hängt ein Schild auf, wie er selbst ist. Ein Treffer ist, wenn eine Suche zu einem Schild passt. Wer man ist und wen man sucht, sind zwei verschiedene Dinge.</p>
@@ -65,14 +66,14 @@
         <p>Ausgerechnet: Die Matrix mit den Zeilen (0, 1) und (−1, 0) macht aus (<i>x</i><sub>1</sub>, <i>x</i><sub>2</sub>) den Vektor (<i>x</i><sub>2</sub>, −<i>x</i><sub>1</sub>). Aus dem Pfeil von „sie“, (0,15; 1), wird (1; −0,15).</p>
       </div></article>
 
-      <article class="step" data-step="frage"><div class="card">
+      <article class="step" data-step="frage" data-core><div class="card">
         <span class="kicker">Die Frage</span>
         <h3>Was „sie“ sucht</h3>
         <p>Diese Matrix nennen wir <b>W</b><sub>Q</sub> (Q für englisch <i>query</i>, die Anfrage). Angewendet auf den Vektor von „sie“ entsteht seine <strong>Frage</strong> <b>q</b>.</p>
         <p>Die Frage zeigt nicht mehr nach oben zu den Funktionswörtern, sondern nach rechts, zu den Inhaltswörtern. Genau dort, wo ein Pronomen sein Nomen suchen sollte.</p>
       </div></article>
 
-      <article class="step" data-step="punktzahl"><div class="card">
+      <article class="step" data-step="punktzahl" data-core><div class="card">
         <span class="kicker">Frage trifft Wort</span>
         <h3>Neue Punktzahlen</h3>
         <p>Die Punktzahl ist jetzt das Skalarprodukt der Frage von „sie“ mit dem Vektor jedes Worts: <b>q</b> · <b>x</b>. Groß, wenn das Wort in die Richtung der Frage zeigt.</p>
@@ -85,21 +86,21 @@
         <p>Aus den Punktzahlen werden wie gehabt per Softmax Anteile, hier mit der Schärfe β = 3. Der größte Teil geht an „Frau“.</p>
       </div></article>
 
-      <article class="step" data-step="schild"><div class="card">
+      <article class="step" data-step="schild" data-core><div class="card">
         <span class="kicker">Das Schild</span>
         <h3>Auch das Angebot wird umgerechnet</h3>
         <p>Bisher hat die Frage direkt mit dem Wortvektor verglichen. Genauso bekommt jedes Wort eine zweite Matrix <b>W</b><sub>K</sub> (K für <i>key</i>, der Schlüssel): Sie macht aus dem Wortvektor sein <strong>Schild</strong> <b>k</b>, das, was es anderen anbietet.</p>
         <p>Im Beispiel streckt <b>W</b><sub>K</sub> die Inhalts-Richtung und staucht die Funktionswort-Richtung (Kapitel 2, strecken). Die Schilder der Nomen ragen dadurch weiter heraus, „Frau“ wird noch klarer gefunden. Die Punktzahl ist ab jetzt <b>q</b> · <b>k</b>: Frage trifft Schild.</p>
       </div></article>
 
-      <article class="step" data-step="wert"><div class="card">
+      <article class="step" data-step="wert" data-core><div class="card">
         <span class="kicker">Der Wert</span>
         <h3>Was weitergegeben wird</h3>
         <p>Die dritte Matrix <b>W</b><sub>V</sub> (V für <i>value</i>) bestimmt, was beim Mischen tatsächlich weitergegeben wird: der <strong>Wert</strong> <b>v</b>. „sie“ soll von „Frau“ den Inhalt übernehmen, nicht die Wortart.</p>
         <p>Im Beispiel drückt <b>W</b><sub>V</sub> alle Pfeile auf die waagrechte Achse (Kapitel 2, plattdrücken): Weitergegeben wird nur der Inhalt.</p>
       </div></article>
 
-      <article class="step" data-step="ergebnis"><div class="card">
+      <article class="step" data-step="ergebnis" data-core><div class="card">
         <span class="kicker">Zusammengesetzt</span>
         <h3>„sie“ weiß jetzt, wer gemeint ist</h3>
         <p>Wie in Kapitel 7 wird die Mischung dazuaddiert: <b>sie</b><sub>neu</sub> = <b>sie</b> + Σ Anteil · Wert. Weil fast der ganze Anteil bei „Frau“ liegt, nimmt „sie“ den Inhalt von „Frau“ auf.</p>
@@ -114,7 +115,7 @@
         <div class="ex"><b>Schreibweise</b>In Büchern steht dafür <b>Q</b> = <b>X</b> <b>W</b><sub>Q</sub>. Weil die Wörter hier Zeilen sind, steht die Matrix rechts. Gemeint ist dieselbe Rechnung wie <b>M</b> · <b>x</b> in Kapitel 2, nur andersherum aufgeschrieben.</div>
       </div></article>
 
-      <article class="step" data-step="kreuz"><div class="card">
+      <article class="step" data-step="kreuz" data-core><div class="card">
         <span class="kicker">Alle Wörter auf einmal, Teil 2</span>
         <h3>Jede Frage mit jedem Schild</h3>
         <p>Jetzt brauchen wir alle Punktzahlen: Frage von Wort <i>i</i> mal Schild von Wort <i>j</i>, für alle Paare. Das ergibt eine Tabelle mit 5 × 5 Feldern.</p>
@@ -133,7 +134,7 @@
         <p>Zuletzt mischt jede Zeile die Werte: Ergebnis für Wort <i>i</i> = Anteil von Wort 1 mal Wert von Wort 1 plus Anteil von Wort 2 mal Wert von Wort 2 und so weiter. Für alle Zeilen auf einmal heißt das: Attention-Matrix mal <b>V</b>.</p>
       </div></article>
 
-      <article class="step" data-step="formel"><div class="card">
+      <article class="step" data-step="formel" data-core><div class="card">
         <span class="kicker">Die Formel</span>
         <h3>Attention Is All You Need</h3>
         <p>Alles zusammen ist die berühmte Formel: softmax(<b>Q</b><b>K</b><sup>⊤</sup> / √<i>d</i>) <b>V</b>. Jedes Zeichen haben wir jetzt einzeln gesehen, bis auf eines: das √<i>d</i>. Es ersetzt unseren frei gewählten Schärfe-Regler β.</p>
@@ -146,7 +147,7 @@
         <p>Riesige Punktzahlen machen die Softmax extrem scharf: Eines bekommt alles, und das Lernen kommt kaum voran. Teilen durch √<i>d</i> bringt die Punktzahlen zurück in einen festen Bereich, egal wie groß <i>d</i> ist.</p>
       </div></article>
 
-      <article class="step" data-step="koepfe"><div class="card">
+      <article class="step" data-step="koepfe" data-core><div class="card">
         <span class="kicker">Mehr Fragen gleichzeitig</span>
         <h3>Mehrere Köpfe</h3>
         <p>Ein Wort hat oft mehrere Fragen gleichzeitig: Worauf beziehe ich mich? Was ist mir ähnlich? Was stand direkt vor mir? Eine einzige Frage reicht dafür nicht.</p>
@@ -165,6 +166,19 @@
         <h3>Ein Baustein</h3>
         <p>Attention mischt Information zwischen den Wörtern. Für ein vollständiges Sprachmodell fehlen noch: die Reihenfolge der Wörter, die Verarbeitung jedes einzelnen Worts, das Stapeln vieler Schichten und eine Aufgabe zum Lernen. Das ist Kapitel 9.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Drei gelernte Matrizen geben jedem Wort drei Rollen: W_Q macht die Frage, W_K das Schild, W_V den Wert.</li><li>Die Punktzahl ist Frage mal Schild. Die Softmax macht daraus Anteile, mit denen die Werte gemischt werden.</li><li>Für alle Wörter auf einmal: softmax(QKᵀ/√d) V. Mehrere Köpfe stellen mehrere Fragen gleichzeitig.</li></ul>
+    <div class="take-f">Attention(<b>Q</b>, <b>K</b>, <b>V</b>) = softmax(<b>Q</b><b>K</b><sup>⊤</sup> / √<i>d</i>) <b>V</b></div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum findet „sie“ mit einer Frage-Matrix plötzlich „Frau“?</summary><p>W_Q dreht den Vektor von „sie“ in eine neue Richtung: zu den Inhaltswörtern. Was ein Wort sucht, muss nicht mehr dasselbe sein wie das, was es ist.</p></details>
+      <details><summary>Wofür steht das √d in der Formel?</summary><p>Skalarprodukte aus d Zahlen werden mit d immer größer. Teilen durch √d hält die Punktzahlen in einem festen Bereich, damit die Softmax nicht alles auf ein Wort legt.</p></details>
+      <details><summary>Welche Matrix-Wirkung aus Kapitel 2 nutzt W_V im Beispiel?<span class="from">Kapitel 2</span></summary><p>Plattdrücken: Alle Pfeile landen auf der waagrechten Achse, weitergegeben wird nur der Inhalt.</p></details>
     </div>
   </section>
 
@@ -404,6 +418,7 @@
       formula: `Punktzahl = ${T('q', '<b>q</b>', '', 'Frage von sie')} · ${T('x', '<b>x</b>', 'c-new', 'der Vektor jedes Worts')}`,
       setup() { ex({ rot: 1, qA: 1 }); },
       async play(a) {
+        await a.ask('Mit der gedrehten Frage: Welche Punktzahl bekommt „sie“ mit sich selbst?', ['die höchste von allen', 'etwa 0', 'eine stark negative'], 1);
         a.hl('q', 'x'); await a.to(st, { scA: 1 }, 900);
         a.say('Frage mal Wort: „Frau“ hat jetzt die höchste Punktzahl.'); await a.wait(2600);
         a.say('„sie“ selbst bekommt 0: Seine Frage steht senkrecht auf seinem eigenen Pfeil. Kein Spiegel mehr.');
@@ -414,6 +429,7 @@
       formula: `Anteil = softmax(${T('b', 'β', '', 'Schärfe, hier 3')} · <b>q</b> · <b>x</b>)`,
       setup() { ex({ rot: 1, qA: 1, scA: 1 }); },
       async play(a) { await a.wait(800); await a.to(st, { wA: 1 }, 800); a.say('Softmax: Der größte Anteil geht an „Frau“.'); },
+      tryit: () => [{ label: 'Drehung von W_Q', type: 'range', min: 0, max: 1, step: 0.01, get: () => st.rot, set: (v) => (st.rot = v), fmt: (v) => `${fmt(v * 90, 0)}°` }],
     },
     schild: {
       views: ['qk'],

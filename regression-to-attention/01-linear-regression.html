@@ -20,6 +20,7 @@
     <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 1 von 12</div>
     <h1>Die Gerade</h1>
     <p class="lead">Wie eine Maschine aus Beispielen eine Regel lernt, am einfachsten Fall: zwei Zahlen, eine Gerade. Scrolle einfach weiter; jeder Schritt spielt seine Animation selbst ab.</p>
+    <ol class="roadmap"><li>Eine Regel aus Daten</li><li>Fehler messen</li><li>Bergab zur besten Geraden</li><li>Vom Modell zum Neuron</li></ol>
     <div class="dates">Methode der kleinsten Quadrate: Legendre 1805, Gauß 1809 · Gradientenabstieg: Cauchy 1847</div>
   </header>
 
@@ -49,14 +50,14 @@
     </div>
 
     <div class="steps">
-      <article class="step" data-step="daten"><div class="card">
+      <article class="step" data-step="daten" data-core><div class="card">
         <span class="kicker">Die Frage</span>
         <h3>Vierzehn Wohnungen</h3>
         <p>Jeder Punkt ist eine Wohnung: nach rechts ihre Fläche, nach oben ihre Kaltmiete. Größere Wohnungen kosten meist mehr, aber nicht genau nach Regel.</p>
         <p>Wir wollen eine <strong>Regel</strong>, die aus der Fläche eine Miete macht, auch für Wohnungen, die wir noch nie gesehen haben.</p>
       </div></article>
 
-      <article class="step" data-step="gerade"><div class="card">
+      <article class="step" data-step="gerade" data-core><div class="card">
         <span class="kicker">Das Modell</span>
         <h3>Eine Gerade mit zwei Knöpfen</h3>
         <p>Die einfachste Regel ist eine Gerade. Sie hat genau zwei Zahlen, an denen man drehen kann: <strong>w</strong> macht sie steiler oder flacher, <strong>b</strong> schiebt sie hoch oder runter.</p>
@@ -70,20 +71,20 @@
         <div class="ex"><b>So rechnet man auch</b>Taxi: Preis pro Kilometer mal Strecke plus Grundgebühr. Handyvertrag: Preis pro Gigabyte mal Verbrauch plus Grundgebühr. Immer dieselbe Form <strong>w · x + b</strong>.</div>
       </div></article>
 
-      <article class="step" data-step="fehler"><div class="card">
+      <article class="step" data-step="fehler" data-core><div class="card">
         <span class="kicker">Wie falsch?</span>
         <h3>Der Fehler jeder Wohnung</h3>
         <p>Für jede Wohnung vergleichen wir: Was sagt die Gerade, was ist die echte Miete? Die Differenz ist ihr <strong>Fehler e</strong>. Liegt die Wohnung über der Geraden, ist er positiv, darunter negativ.</p>
       </div></article>
 
-      <article class="step" data-step="quadrate"><div class="card">
+      <article class="step" data-step="quadrate" data-core><div class="card">
         <span class="kicker">Eine Zahl für alles</span>
         <h3>Fehler werden Flächen</h3>
         <p>Wir quadrieren jeden Fehler: Aus dem Strich wird ein Quadrat. Der Mittelwert aller Quadratflächen ist der <strong>Verlust L</strong>, eine einzige Zahl dafür, wie schlecht die Gerade ist.</p>
         <p>Quadrate haben zwei Vorteile: Plus und Minus heben sich nicht auf, und große Fehler zählen überproportional.</p>
       </div></article>
 
-      <article class="step" data-step="landschaft"><div class="card">
+      <article class="step" data-step="landschaft" data-core><div class="card">
         <span class="kicker">Die Suche</span>
         <h3>Jede Gerade ist ein Punkt</h3>
         <p>Eine Gerade ist durch w und b festgelegt, also ist sie ein Punkt in einer Ebene. Färbt man jeden Punkt nach seinem Verlust, entsteht eine <strong>Landschaft</strong>.</p>
@@ -104,7 +105,7 @@
         <p>Trotzdem nimmt man meist Quadrate: Sie sind überall glatt, und das braucht der nächste Schritt.</p>
       </div></article>
 
-      <article class="step" data-step="schuessel"><div class="card">
+      <article class="step" data-step="schuessel" data-core><div class="card">
         <span class="kicker">Lernen</span>
         <h3>Bergab rollen</h3>
         <p>Ein großes Netz hat Milliarden Parameter; seine Landschaft kann niemand absuchen. Man kann nur an der eigenen Stelle fühlen, wo es bergab geht, und einen kleinen Schritt machen. Das heißt <strong>Gradientenabstieg</strong>.</p>
@@ -119,7 +120,7 @@
         <div class="ex"><b>Überall im Einsatz</b>Moderne Netze normalisieren ihre Daten vor dem Training, und der Transformer tut es sogar zwischen allen Schichten (Kapitel 9). Warum „runde Koordinaten“ so helfen, sehen wir in Kapitel 2 genauer.</div>
       </div></article>
 
-      <article class="step" data-step="zugross"><div class="card">
+      <article class="step" data-step="zugross" data-core><div class="card">
         <span class="kicker">Vorsicht</span>
         <h3>Zu große Schritte</h3>
         <p>Die Schrittweite <strong>η</strong> ist der wichtigste Regler beim Training. Zu klein, und es dauert ewig. Zu groß, und jeder Schritt springt über das Tal hinaus und landet höher als vorher.</p>
@@ -139,12 +140,25 @@
         <div class="ex"><b>Nachgestellt</b>Die Punkte sind Hubbles Daten nachempfunden. Er kam auf etwa 500 km/s pro Megaparsec; heute weiß man, dass es rund 70 sind, weil seine Entfernungen zu klein gemessen waren. Die Methode war dieselbe wie hier.</div>
       </div></article>
 
-      <article class="step" data-step="neuron"><div class="card">
+      <article class="step" data-step="neuron" data-core><div class="card">
         <span class="kicker">Ausblick</span>
         <h3>Ein Neuron</h3>
         <p>Zeichnet man die Rechnung als Fluss, heißt sie <strong>Neuron</strong>: Eingaben mal Gewichte, aufsummiert. Mehr Merkmale bedeuten nur mehr Pfeile.</p>
         <p>Viele Neuronen nebeneinander rechnen mit einer ganzen Tabelle von Gewichten, einer <strong>Matrix</strong>. Was eine Matrix mit Daten macht, zeigt Kapitel 2.</p>
       </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Ein Modell ist eine Rechenregel mit Knöpfen (Parametern); Lernen heißt, die Knöpfe gut einzustellen.</li><li>Der Verlust fasst alle Fehler in einer Zahl zusammen. Jede Einstellung der Knöpfe ist ein Punkt in einer Landschaft.</li><li>Gradientenabstieg: an der eigenen Stelle fühlen, wo es bergab geht, und einen kleinen Schritt machen.</li></ul>
+    <div class="take-f"><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i> &nbsp;&nbsp; <i>L</i> = mittel(<i>e</i>²) &nbsp;&nbsp; <i>w</i> ← <i>w</i> − η · ∂<i>L</i>/∂<i>w</i></div>
+    <h3>Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen. Eine Frage greift auf ein früheres Kapitel zurück.</p>
+    <div class="quiz">
+      <details><summary>Warum quadriert man die Fehler, statt sie einfach zu addieren?</summary><p>Plus und Minus würden sich sonst gegenseitig aufheben. Außerdem zählen große Fehler stärker, und der Verlust wird eine glatte Schüssel, auf der man bergab rollen kann.</p></details>
+      <details><summary>Was passiert, wenn die Schrittweite η zu groß ist?</summary><p>Jeder Schritt springt über das Tal hinaus und landet höher als vorher. Der Verlust wird größer statt kleiner.</p></details>
+      <details><summary>Bei 0 °C sagt die Eisdielen-Gerade negative Kugeln voraus. Was lernt man daraus?</summary><p>Eine gelernte Regel gilt nur dort, wo es Beispiele gab. Außerhalb der Daten kann sie Unsinn liefern.</p></details>
     </div>
   </section>
 
@@ -733,6 +747,7 @@
       async play(a) {
         a.say('Zwei beste Geraden: eine für Quadrate, eine für Beträge. Fast gleich.');
         await a.to(st, { l1A: 1 }, 700); await a.wait(1200);
+        await a.ask('Wohnung 1 wird plötzlich sehr teuer. Welche der beiden Geraden bewegt sich stärker?', ['die Quadrat-Gerade', 'die Betrags-Gerade', 'beide gleich'], 0);
         a.set(st, { hlPt: 0 }); a.say('Jetzt wird Wohnung 1 sehr teuer …');
         await a.to(st, { pts: FLATS.map((p, i) => (i === 0 ? [30, 1460] : p.slice())) }, 2000);
         a.hl('sq'); a.say('Die Quadrat-Gerade wird kräftig mitgezogen …'); await a.wait(1800);
