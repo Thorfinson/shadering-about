@@ -44,12 +44,12 @@
     <div class="stage" aria-label="Bühne der Geschichte">
       <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
       <div class="views">
-        <div class="view" data-view="plane"><div class="vlabel">Die Ebene nach der Matrix (blasses Gitter: vorher)</div><div class="plot" id="v-plane" role="img" aria-label="Die Ebene mit Gitter, Buchstabe F und Daten, verformt durch eine Matrix."></div></div>
-        <div class="view" data-view="lift"><div class="vlabel">Ausgabe im Raum (ziehen zum Drehen)</div><div class="plot" id="v-lift" role="img" aria-label="Die Ebene, durch eine 3×2-Matrix in den Raum gehoben."></div></div>
-        <div class="view" data-view="helix3"><div class="vlabel">Eine Spirale im Raum (ziehen zum Drehen)</div><div class="plot" id="v-helix3" role="img" aria-label="Eine Spirale im Raum und die Blickrichtung der Projektion."></div></div>
+        <div class="view" data-view="plane" data-touch="die Spitzen der beiden Spaltenpfeile ziehen"><div class="vlabel">Die Ebene nach der Matrix (blasses Gitter: vorher)</div><div class="plot" id="v-plane" role="img" aria-label="Die Ebene mit Gitter, Buchstabe F und Daten, verformt durch eine Matrix."></div></div>
+        <div class="view" data-view="lift" data-touch="ziehen zum Drehen"><div class="vlabel">Ausgabe im Raum (ziehen zum Drehen)</div><div class="plot" id="v-lift" role="img" aria-label="Die Ebene, durch eine 3×2-Matrix in den Raum gehoben."></div></div>
+        <div class="view" data-view="helix3" data-touch="ziehen zum Drehen"><div class="vlabel">Eine Spirale im Raum (ziehen zum Drehen)</div><div class="plot" id="v-helix3" role="img" aria-label="Eine Spirale im Raum und die Blickrichtung der Projektion."></div></div>
         <div class="view" data-view="helix2"><div class="vlabel">Was die 2×3-Matrix daraus macht</div><div class="plot" id="v-helix2" role="img" aria-label="Die Spirale nach der Projektion."></div></div>
         <div class="view html" data-view="table"><div class="vlabel">Alle 14 Wohnungen auf einmal</div><div class="mx-wrap"><div class="mx" id="v-table"></div></div></div>
-        <div class="view" data-view="space3"><div class="vlabel">Der Datenraum: eine Achse pro Wohnung (ziehen zum Drehen)</div><div class="plot" id="v-space3" role="img" aria-label="Der Mietvektor y wird senkrecht auf die Ebene aller Vorhersagen projiziert."></div></div>
+        <div class="view" data-view="space3" data-touch="ziehen zum Drehen"><div class="vlabel">Der Datenraum: eine Achse pro Wohnung (ziehen zum Drehen)</div><div class="plot" id="v-space3" role="img" aria-label="Der Mietvektor y wird senkrecht auf die Ebene aller Vorhersagen projiziert."></div></div>
         <div class="view" data-view="mini3"><div class="vlabel">Dieselben drei Wohnungen, klassisch</div><div class="plot" id="v-mini3" role="img" aria-label="Streudiagramm der drei Wohnungen mit der besten Geraden."></div></div>
       </div>
       <div class="stage-bar">
@@ -635,6 +635,7 @@
         a.say('Noch einmal am Stück:');
         await a.to(st, { M: I2 }, 900); await a.wait(300);
         await a.to(st, { M: M0 }, 2000);
+        a.say('Jeder Punkt geht dorthin, wohin seine Mischung der Spalten zeigt. Das ist die ganze Matrix.');
       },
     },
     mischen: {
@@ -699,6 +700,7 @@
         a.hl('det'); a.say('Längen, Winkel und Flächen bleiben gleich. Der Kreis bleibt ein Kreis.'); await a.wait(1600);
         a.hl(); a.say('Eine volle Umdrehung:');
         await a.to(st, { ang: 360 }, 3000, { update: () => (st.M = rot(st.ang)) });
+        a.say('Nach 360° ist alles wieder am Anfang: Drehen verformt nichts, es bewegt nur.');
       },
     },
     scheren: {

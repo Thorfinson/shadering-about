@@ -463,7 +463,7 @@
       if (!visible || !cam.auto) return;
       const dt = prev ? Math.min(50, t - prev) : 16;
       prev = t;
-      cam.yaw += dt * 0.00012;
+      if (!S.paused) cam.yaw += dt * 0.00012;
       st.paint();
       requestAnimationFrame(spin);
     }
@@ -578,10 +578,22 @@
     const q = (sel) => stage.querySelector(sel);
     const viewsEl = q('.views'), formulaEl = q('.formula'), explainEl = q('.formula-x'), captionEl = q('.caption'), progEl = q('.prog');
     const btn = (act) => q(`[data-act="${act}"]`);
+    // a chapter always opens at its top (unless a link points at a step); the browser would otherwise restore an old position
+    try { history.scrollRestoration = 'manual'; } catch { /* not supported */ }
+    if (!location.hash) scrollTo(0, 0);
     const allSteps = Array.from(root.querySelectorAll('.step'));
     let stepEls = allSteps;
     const viewEls = {};
     root.querySelectorAll('.view').forEach((el) => (viewEls[el.dataset.view] = el));
+    // cards say up front where the reader gets to do something
+    allSteps.forEach((el) => {
+      const def = cfg.steps[el.dataset.step] || {}, src = def.play ? def.play.toString() : '', tags = [];
+      if (src.includes('a.ask(')) tags.push('Vorhersage');
+      if (def.tryit || src.includes('a.tryit(')) tags.push('Ausprobieren');
+      if (def.touch || (def.views || []).some((n) => viewEls[n] && viewEls[n].dataset.touch)) tags.push('Zum Anfassen');
+      const kick = el.querySelector('.kicker');
+      if (tags.length && kick) kick.insertAdjacentHTML('afterend', `<span class="tags">${tags.map((t) => `<span>${t}</span>`).join('')}</span>`);
+    });
     let cur = -1, token = 0, paused = false, queued = false, started = false, pending = null;
 
     // reader options, kept per browser: fast run (core steps only) and "think along" (predictions, try-it controls)
@@ -614,6 +626,19 @@
     });
 
     // the action strip between the views and the caption: prediction prompts and try-it controls
+    // status next to the buttons: is the step running, waiting for the reader, or done?
+    const statusEl = document.createElement('span');
+    statusEl.className = 'status'; statusEl.setAttribute('aria-live', 'polite');
+    q('.stage-ctl').insertBefore(statusEl, progEl);
+    const STATUS = { wait: 'Startet, sobald die Bühne ganz zu sehen ist', run: 'läuft …', ask: 'deine Vermutung?', try: 'du bist dran', pause: 'pausiert', own: 'du steuerst', done: 'fertig ✓', last: 'Kapitel fertig ✓' };
+    function status(k) {
+      statusEl.textContent = STATUS[k] || '';
+      stage.dataset.status = k;
+    }
+    // views the reader can drag or rotate say so
+    const touchEl = document.createElement('div');
+    touchEl.className = 'touch-hint';
+    viewsEl.after(touchEl);
     const actEl = document.createElement('div');
     actEl.className = 'stage-act';
     stage.insertBefore(actEl, q('.stage-bar'));
@@ -737,9 +762,10 @@
           let choice = null;
           const btns = options.map((o, i) => { const b = make('button', 'btn', o); b.type = 'button'; b.addEventListener('click', () => { if (choice == null) choice = i; }); row.append(b); return b; });
           const skip = make('button', 'btn ghost', 'Überspringen'); skip.type = 'button'; skip.addEventListener('click', () => { if (choice == null) choice = -1; });
-          row.append(skip); box.append(row); setAct(box);
+          row.append(skip); box.append(row); setAct(box); status('ask');
           captionEl.innerHTML = 'Tippe deine Vermutung an, dann geht es weiter.';
           while (choice == null) { await frame(); check(); }
+          status('run');
           btns.forEach((b, i) => { b.disabled = true; b.classList.toggle('picked', i === choice); });
           skip.remove();
           pending = { box, choice, correct, explain, my };
@@ -751,9 +777,9 @@
           if (!opts.think) return false;
           const box = controlBox(list, `Erst du: ${prompt}`), go = make('button', 'btn primary', done);
           let ok = false; go.type = 'button'; go.addEventListener('click', () => (ok = true));
-          box.querySelector('.try-row').append(go); setAct(box);
+          box.querySelector('.try-row').append(go); setAct(box); status('try');
           while (!ok) { await frame(); check(); }
-          setAct();
+          setAct(); status('run');
           return true;
         },
         hl(...keys) { check(); highlight(keys); },
@@ -765,6 +791,9 @@
       for (const [name, el] of Object.entries(viewEls)) el.hidden = !names.includes(name);
       viewsEl.style.setProperty('--cols', def.cols || `repeat(${Math.max(1, names.length)}, minmax(0, 1fr))`);
       viewsEl.dataset.n = names.length;
+      const hint = def.touch ?? names.map((n) => viewEls[n] && viewEls[n].dataset.touch).filter(Boolean)[0];
+      touchEl.textContent = hint ? `Zum Anfassen: ${hint}` : '';
+      touchEl.hidden = !hint;
     }
     function prepare(i) {
       const def = cfg.steps[stepEls[i].dataset.step] || {};
@@ -775,6 +804,7 @@
       captionEl.innerHTML = '&nbsp;';
       pending = null; setAct();
       progEl.textContent = `${i + 1} / ${stepEls.length}`;
+      stage.classList.remove('is-last');
       if (def.setup) def.setup();
       redraw();
       return def;
@@ -788,12 +818,15 @@
       const my = ++token;
       const def = prepare(i);
       setPaused(false);
-      stage.classList.add('playing');
+      stage.classList.add('playing'); status('run');
       Promise.resolve()
         .then(() => def.play && def.play(makeApi(my)))
         .then(() => {
           if (my !== token) return;
           stage.classList.remove('playing');
+          const last = i === stepEls.length - 1;
+          status(last ? 'last' : 'done'); stage.classList.toggle('is-last', last);
+          if (last && captionEl.textContent.trim()) captionEl.innerHTML += ' <span class="cap-next">Unten folgen die Zusammenfassung und Fragen zum Selbsttest.</span>';
           reveal(my);
           if (def.tryit && opts.think) addAct(controlBox(typeof def.tryit === 'function' ? def.tryit() : def.tryit, 'Jetzt du'));
         })
@@ -803,6 +836,8 @@
       paused = v;
       const b = btn('pause');
       if (b) { b.textContent = v ? 'Weiter' : 'Pause'; b.setAttribute('aria-pressed', String(v)); }
+      S.paused = v;
+      if (stage.classList.contains('playing')) status(v ? 'pause' : 'run');
     }
     const mobile = () => matchMedia('(max-width: 900px)').matches;
     function scrollToStep(i) {
@@ -813,7 +848,12 @@
     }
     function pick() {
       const r = root.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > innerHeight * 0.7) return;
+      if (r.bottom < 0) return;
+      // the stage sticks at the top; until then its buttons and caption are partly below the window
+      if (r.top > (mobile() ? 2 : 16)) {
+        if (!started) { status('wait'); captionEl.innerHTML = 'Scroll weiter: Die Animation startet, sobald die Bühne ganz zu sehen ist.'; }
+        return;
+      }
       const line = innerHeight * (mobile() ? 0.8 : 0.52);
       let idx = 0;
       stepEls.forEach((el, k) => { if (el.getBoundingClientRect().top < line) idx = k; });
@@ -862,6 +902,7 @@
         token++;
         stage.classList.remove('playing');
         captionEl.innerHTML = 'Du steuerst selbst. „Nochmal“ spielt den Schritt wieder ab.';
+        status('own');
       },
       get step() { return cur; },
       get started() { return started; },

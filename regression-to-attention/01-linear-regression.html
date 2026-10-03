@@ -29,9 +29,9 @@
     <div class="stage" aria-label="Bühne der Geschichte">
       <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
       <div class="views">
-        <div class="view" data-view="scatter"><div class="vlabel">Daten und Gerade</div><div class="plot" id="v-scatter" role="img" aria-label="Streudiagramm der Daten mit der aktuellen Geraden."></div></div>
-        <div class="view" data-view="land"><div class="vlabel">Jede Gerade ist ein Punkt (w, b) · Farbe = Verlust</div><div class="plot" id="v-land" role="img" aria-label="Verlustlandschaft über Steigung und Grundbetrag."></div></div>
-        <div class="view" data-view="bowl"><div class="vlabel">Die Verlustfläche (ziehen zum Drehen)</div><div class="plot" id="v-bowl" role="img" aria-label="Dreidimensionale Verlustfläche mit einer rollenden Kugel."></div></div>
+        <div class="view" data-view="scatter" data-touch="Punkte oder Gerade mit der Maus ziehen"><div class="vlabel">Daten und Gerade</div><div class="plot" id="v-scatter" role="img" aria-label="Streudiagramm der Daten mit der aktuellen Geraden."></div></div>
+        <div class="view" data-view="land" data-touch="in die Landschaft klicken und ziehen"><div class="vlabel">Jede Gerade ist ein Punkt (w, b) · Farbe = Verlust</div><div class="plot" id="v-land" role="img" aria-label="Verlustlandschaft über Steigung und Grundbetrag."></div></div>
+        <div class="view" data-view="bowl" data-touch="ziehen zum Drehen"><div class="vlabel">Die Verlustfläche (ziehen zum Drehen)</div><div class="plot" id="v-bowl" role="img" aria-label="Dreidimensionale Verlustfläche mit einer rollenden Kugel."></div></div>
         <div class="view split" data-view="gdside">
           <div class="vlabel">Von oben</div><div class="plot" id="v-gdmap" role="img" aria-label="Die Landschaft von oben mit dem Weg der Kugel."></div>
           <div class="vlabel">Verlust je Schritt (logarithmisch)</div><div class="plot" id="v-curve" role="img" aria-label="Verlust über die Schritte."></div>

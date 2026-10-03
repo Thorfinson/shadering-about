@@ -598,7 +598,7 @@ table.t td { font-family: var(--font-mono); font-size: 13px; }
 .story-opts label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
 .story-opts input { accent-color: var(--accent); width: 15px; height: 15px; }
 .step.skip { display: none; }
-.stage.has-act { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.stage, .stage.has-act { grid-template-rows: auto minmax(0, 1fr); grid-auto-rows: auto; }
 .stage-act { display: grid; gap: 6px; }
 .stage-act:empty { display: none; }
 .ask, .try { display: grid; gap: 7px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; font-size: 14px; line-height: 1.4; color: var(--fg); }
@@ -653,3 +653,28 @@ button.btn.ghost { background: transparent; color: var(--muted); }
   .stage.has-act { height: 78vh; height: 78dvh; }
   .ask-q { line-height: 1.3; }
 }
+
+/* ---------- step state: running, waiting for the reader, done ---------- */
+.stage-ctl .status { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.04em; color: var(--muted); white-space: nowrap; padding-inline: 4px; }
+.stage[data-status="run"] .status { color: var(--fg-2); }
+.stage[data-status="ask"] .status, .stage[data-status="try"] .status { color: var(--accent); }
+.stage[data-status="done"] .status, .stage[data-status="last"] .status { color: var(--grad); }
+.stage[data-status="wait"] .status { color: var(--muted); white-space: normal; max-width: 15em; }
+.stage-bar { position: relative; }
+.stage-bar::before { content: ''; position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: var(--accent); opacity: 0; }
+.stage[data-status="run"] .stage-bar::before { opacity: 1; animation: run-bar 1.6s linear infinite; }
+@keyframes run-bar { from { left: 0; width: 0; } 50% { left: 25%; width: 50%; } to { left: 100%; width: 0; } }
+.stage[data-status="done"] [data-act="next"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.cap-next { color: var(--grad); }
+.touch-hint { justify-self: start; font-size: 12.5px; color: var(--accent); background: var(--accent-wash); border-radius: 999px; padding: 3px 10px; }
+.touch-hint::before { content: '✋ '; }
+.step .card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
+.step .card .tags span { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-wash); background: var(--accent-wash); border-radius: 999px; padding: 2px 8px; }
+@media (prefers-reduced-motion: reduce) { .stage[data-status="run"] .stage-bar::before { animation: none; left: 0; width: 100%; opacity: 0.5; } }
+@media (max-width: 900px) {
+  .stage-ctl .status { font-size: 10.5px; }
+  .stage[data-status="wait"] .status { display: none; }
+  .touch-hint { font-size: 11.5px; padding: 2px 8px; }
+}
+.stage[data-status="wait"]::after { content: 'Weiter scrollen ↓  Die Animation startet, sobald die Bühne ganz zu sehen ist.'; position: absolute; top: 72px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); text-align: center; font-size: 14px; color: var(--fg); background: var(--surface-2); border: 1px solid var(--accent); border-radius: 999px; padding: 7px 16px; z-index: 2; }
+@media (max-width: 900px) { .stage[data-status="wait"]::after { top: 52px; font-size: 12.5px; white-space: normal; } }

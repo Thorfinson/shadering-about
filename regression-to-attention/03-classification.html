@@ -27,7 +27,7 @@
       <div class="views">
         <div class="view" data-view="line1d"><div class="vlabel" id="l-line1d">Lernstunden und Ergebnis</div><div class="plot" id="v-line1d" role="img" aria-label="Lernstunden gegen Ergebnis der Prüfung, mit dem Modell als Kurve."></div></div>
         <div class="view" data-view="plane2d"><div class="vlabel" id="l-plane2d">Zwei Merkmale</div><div class="plot" id="v-plane2d" role="img" aria-label="Daten mit zwei Merkmalen, eingefärbt nach der Wahrscheinlichkeit des Modells, mit der Entscheidungsgrenze."></div></div>
-        <div class="view" data-view="sheet3d"><div class="vlabel">Die Wahrscheinlichkeit als Rampe (ziehen zum Drehen)</div><div class="plot" id="v-sheet3d" role="img" aria-label="Die Wahrscheinlichkeit des Modells als Fläche über der Ebene der Merkmale."></div></div>
+        <div class="view" data-view="sheet3d" data-touch="ziehen zum Drehen"><div class="vlabel">Die Wahrscheinlichkeit als Rampe (ziehen zum Drehen)</div><div class="plot" id="v-sheet3d" role="img" aria-label="Die Wahrscheinlichkeit des Modells als Fläche über der Ebene der Merkmale."></div></div>
         <div class="view" data-view="fn3"><div class="vlabel" id="l-fn3">Eine Funktion</div><div class="plot" id="v-fn3" role="img" aria-label="Graph einer Funktion mit einem wandernden Messpunkt."></div></div>
         <div class="view" data-view="bars"><div class="vlabel" id="l-bars">Wahrscheinlichkeiten</div><div class="plot" id="v-bars" role="img" aria-label="Balken mit Punktzahlen oder Wahrscheinlichkeiten."></div></div>
       </div>
@@ -763,6 +763,7 @@
     drei: {
       views: ['plane2d', 'bars'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
       formula: () => `${T('z', '<b>z</b>', '', 'drei Punktzahlen, eine pro Art')} = ${T('W', '<b>W</b>', 'c-new', 'eine Zeile pro Art: drei Neuronen, eine Matrix')} <b>x</b> + <b>b</b><span class="sep">→</span>${T('sm', 'softmax', 'c-new', 'macht aus den Punktzahlen Wahrscheinlichkeiten')}<span class="sep">Treffer</span>${V('acc')}`,
+      touch: 'den Ring auf einen anderen Pinguin ziehen',
       setup() { base2('peng', { pts2A: 0, bars: 'peng', probe: [45, 205] }); st.Ws = [[0, 0], [0, 0], [0, 0]]; st.bs = [0, 0, 0]; },
       async play(a) {
         a.say('Drei Pinguinarten, gemessen an Schnabel und Flosse.');
@@ -779,6 +780,7 @@
     softmax: {
       views: ['bars', 'plane2d'], cols: 'minmax(0, 3fr) minmax(0, 2fr)',
       formula: `${T('p', '<i>p<sub>k</sub></i>', 'c-model', 'Wahrscheinlichkeit für Klasse k')} = ${FRAC(T('e', '<i>e</i><sup><i>z<sub>k</sub></i></sup>', 'c-new', 'e hoch: alles wird positiv, große Werte werden noch größer'), T('sum', '∑<sub><i>j</i></sub> <i>e</i><sup><i>z<sub>j</sub></i></sup>', '', 'durch die Summe teilen: zusammen ergibt es 1'))}`,
+      touch: 'den Ring auf einen anderen Pinguin ziehen',
       setup() { base2('peng', { heatA: 1, probeA: 1, bars: 'peng-stages', probe: [44, 203] }); trainedSoft(); },
       async play(a) {
         a.say('Die rohen Punktzahlen am Ring: beliebige Zahlen, auch negative.'); await a.wait(2400);

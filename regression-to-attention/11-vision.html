@@ -32,7 +32,7 @@
         <div class="view" data-view="pool"><div class="vlabel">Verkleinern: das Stärkste behalten</div><div class="plot" id="v-pool" role="img" aria-label="Eine Merkmalskarte wird in Zweierblöcken verkleinert."></div></div>
         <div class="view" data-view="zweite"><div class="vlabel">Die zweite Schicht kombiniert</div><div class="plot" id="v-zweite" role="img" aria-label="Zwei Kantenkarten werden zu einer Eckenkarte kombiniert."></div></div>
         <div class="view" data-view="data"><div class="vlabel" id="l-data">Unsere Bilder</div><div class="plot" id="v-data" role="img" aria-label="Beispielbilder von Kreisen, Quadraten, Dreiecken und Kreuzen; die Entscheidung des Netzes."></div></div>
-        <div class="view" data-view="draw"><div class="vlabel">Selbst malen</div><div class="plot" id="v-draw" role="img" aria-label="Ein Zeichenfeld mit 28 mal 28 Pixeln und daneben die Entscheidung des trainierten Netzes."></div></div>
+        <div class="view" data-view="draw" data-touch="mit Maus oder Finger ins Feld malen"><div class="vlabel">Selbst malen</div><div class="plot" id="v-draw" role="img" aria-label="Ein Zeichenfeld mit 28 mal 28 Pixeln und daneben die Entscheidung des trainierten Netzes."></div></div>
         <div class="view" data-view="train"><div class="vlabel">Training live</div><div class="plot" id="v-train" role="img" aria-label="Die Filter der ersten Schicht während des Trainings und die Trefferquote."></div></div>
         <div class="view" data-view="units"><div class="vlabel" id="l-units">Merkmale der zweiten Schicht</div><div class="plot" id="v-units" role="img" aria-label="Für Einheiten der zweiten Schicht: sichtbar gemachte Merkmale und die Bildausschnitte, auf die sie am stärksten reagieren."></div></div>
         <div class="view" data-view="circ"><div class="vlabel">Ein Schaltkreis</div><div class="plot" id="v-circ" role="img" aria-label="Welche Kantendetektoren an welcher Stelle zu einem Kurvendetektor beitragen."></div></div>
@@ -547,7 +547,7 @@
     malen: {
       views: ['draw'],
       formula: `${T('i', 'dein Bild', 'c-new', '28 × 28 Zahlen, von dir gemalt')} → 8 Filter → 12 Einheiten → ${T('p', 'Wahrscheinlichkeiten', '', 'eine pro Form')}`,
-      setup() {},
+      setup() { canvasImg.set(START_IMG); ink = 0.5; },
       async play(a) { await waitRef(a); a.hl('i'); a.say('Male ins Feld oder lade unten eine Form. Das Netz entscheidet bei jedem Strich neu.'); },
       tryit: () => [
         { type: 'choice', label: 'Laden', get: () => null, set: (v) => loadShape(v), options: NAMES.map((nm, k) => ({ label: nm, value: k })) },
@@ -631,7 +631,7 @@
   };
 
   // ── draw your own shape ─────────────────────────────────────────
-  const canvasImg = Float32Array.from(CNN.shape(0, CNN.rng(5)));
+  const START_IMG = CNN.shape(0, CNN.rng(5)), canvasImg = Float32Array.from(START_IMG);
   let drawGeom = null, ink = 0.5;
   const drawV = S.canvas($('#v-draw'), (ctx, W, H) => {
     const narrow = W < 560, size = Math.min(H - 16, narrow ? W * 0.55 : W * 0.46), x0 = 8, y0 = (H - size) / 2;
