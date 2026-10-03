@@ -772,9 +772,12 @@
       redraw();
       return def;
     }
+    const page = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
     function activate(i, force) {
       if (i === cur && !force) return;
       cur = i;
+      // reading progress for the overview page: started, and reached the last step
+      if (page) { store.set('seen-' + page, true); if (i === stepEls.length - 1) store.set('done-' + page, true); }
       const my = ++token;
       const def = prepare(i);
       setPaused(false);

@@ -9,376 +9,260 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
 <link rel="stylesheet" href="series.css" />
 <style>
-  .hub-head { display: grid; gap: 20px; padding-block: 12px 36px; }
-  .hub-head h1 { font-size: clamp(46px, 9vw, 104px); max-width: 12ch; }
-  .hub-head .lead { max-width: 40rem; }
+  /* Layout: one axis for everything (the series' wide measure); chapters grouped into four parts as card grids. Tokens come from series.css. */
+  .hub { width: 100%; max-width: var(--wide); margin-inline: auto; display: grid; gap: 64px; padding-block: 8px 72px; }
+  .hub h1, .hub h2, .hub h3 { text-wrap: balance; }
 
-  .ladder { display: grid; gap: 18px; }
-  .ladder-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; }
-  .ladder-intro p { margin: 0; color: var(--fg-2); font-size: 16px; max-width: 46rem; }
-  .ladder-intro p .hl-new { font-weight: 600; }
+  .hero { display: grid; gap: 22px; }
+  .hero h1 { font-size: clamp(44px, 8.4vw, 96px); line-height: 0.98; max-width: 11ch; }
+  .hero .lead { max-width: 40rem; margin: 0; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+  .facts b { color: var(--fg); font-weight: 500; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .cta .go { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); text-decoration: none; font-weight: 600; font-size: 15.5px; }
+  .cta .go:hover { filter: brightness(1.08); }
+  .cta .go:focus-visible, .ch:focus-visible, .seg:focus-visible, .cta .all:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .cta .all { color: var(--fg-2); font-size: 15px; text-underline-offset: 3px; }
 
-  ol.rungs { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
-  .rung {
-    display: grid;
-    grid-template-columns: 64px minmax(0, 1.05fr) minmax(0, 1fr);
-    gap: 10px 32px;
-    padding-block: 26px;
-    border-bottom: 1px solid var(--rule);
-    align-items: start;
-  }
-  .rung .num {
-    font-family: var(--font-display);
-    font-size: 44px;
-    line-height: 0.9;
-    color: var(--muted);
-    font-variant-numeric: lining-nums;
-  }
-  .rung.ready .num { color: var(--accent); }
-  .rung .body { display: grid; gap: 8px; min-width: 0; }
-  .rung .top { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
-  .rung h2 { font-size: clamp(26px, 3.2vw, 34px); line-height: 1.08; }
-  .rung h2 a { color: var(--fg); text-decoration: none; background-image: linear-gradient(var(--accent), var(--accent)); background-size: 0 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.25s; }
-  .rung h2 a:hover { background-size: 100% 1px; }
-  .rung .sub { font-size: 15px; color: var(--fg-2); }
-  .rung .new { font-size: 15px; color: var(--fg-2); margin: 0; line-height: 1.55; }
-  .rung .new b { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
-  .rung details { font-size: 14px; color: var(--fg-2); }
-  .rung summary { cursor: pointer; color: var(--muted); width: fit-content; }
-  .rung summary:hover { color: var(--fg); }
-  .rung details ul { margin: 8px 0 0; padding-left: 1.2em; display: grid; gap: 4px; }
-  .rung .formula {
-    font-family: var(--font-math);
-    font-size: clamp(20px, 2.4vw, 27px);
-    line-height: 1.5;
-    color: var(--fg);
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-    padding-block: 4px;
-    display: grid;
-    gap: 2px;
-    align-self: center;
-    min-width: 0;
-  }
-  .rung .formula i { font-style: italic; }
-  .rung .formula b { font-weight: 700; font-style: normal; }
-  .rung .formula sub, .rung .formula sup { font-size: 0.62em; line-height: 0; }
-  .rung .formula .small { font-size: 0.7em; color: var(--fg-2); }
-  .rung:not(.ready) .formula { color: var(--fg-2); }
+  .top { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px 56px; align-items: end; }
+  .path { display: grid; gap: 12px; padding: 20px 22px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
+  .path h2 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .path-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: baseline; padding-block: 8px; border-top: 1px solid var(--rule); }
+  .path-part { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.08em; color: var(--accent); }
+  .path-name { font-size: 14.5px; color: var(--fg); }
+  .path .seg-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .seg { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; border: 1px solid var(--rule); background: var(--bg); color: var(--fg-2); font-family: var(--font-mono); font-size: 12.5px; text-decoration: none; font-variant-numeric: tabular-nums; }
+  .seg:hover { border-color: var(--accent); color: var(--fg); }
+  .seg.seen { border-color: var(--accent); color: var(--accent); }
+  .seg.done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .path p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 
-  .chip.ready { background: var(--accent-wash); color: var(--accent); border-color: var(--accent-wash); }
-  .chip.planned { color: var(--muted); border: 1px dashed var(--axis); }
-  .open-link { font-size: 14px; color: var(--accent); text-decoration: none; width: fit-content; }
-  .open-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .legend { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 24px; border-bottom: 1px solid var(--rule); padding-bottom: 12px; margin-bottom: -28px; }
+  .legend h2 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .legend p { margin: 0; font-size: 15px; color: var(--fg-2); }
+  .legend .hl-new { font-weight: 600; }
 
-  @media (max-width: 760px) {
-    .rung { grid-template-columns: 40px minmax(0, 1fr); gap: 8px 16px; }
-    .rung .num { font-size: 32px; }
-    .rung .formula { grid-column: 2; }
-  }
+  .part { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 20px 40px; align-items: start; }
+  .part-head { display: grid; gap: 8px; position: sticky; top: 16px; }
+  .part-no { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .part-head h2 { font-size: clamp(26px, 2.6vw, 32px); line-height: 1.1; }
+  .part-head p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--fg-2); }
 
-  .threads { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px 28px; margin-top: 4px; }
-  .threads div { display: grid; gap: 6px; align-content: start; }
-  .threads h3 { font-size: 21px; }
+  .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .ch { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 18px 20px 16px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); color: inherit; text-decoration: none; transition: border-color 0.2s, transform 0.2s; }
+  .ch:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ch-top { display: flex; justify-content: space-between; align-items: center; }
+  .ch-num { font-family: var(--font-display); font-size: 40px; line-height: 0.9; color: var(--accent); font-variant-numeric: lining-nums; }
+  .ch-state { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .ch.seen .ch-state::after { content: 'begonnen'; color: var(--accent); }
+  .ch.done .ch-state::after { content: 'gelesen ✓'; color: var(--grad); }
+  .ch h3 { font-size: 25px; line-height: 1.12; color: var(--fg); }
+  .ch-sub { margin: -4px 0 0; font-size: 14px; color: var(--muted); }
+  .ch-new { margin: 0; font-size: 15px; line-height: 1.55; color: var(--fg-2); }
+  .ch-f { margin-top: auto; display: grid; gap: 2px; padding: 12px 0 2px; border-top: 1px solid var(--rule); font-family: var(--font-math); font-size: clamp(19px, 1.9vw, 23px); line-height: 1.5; color: var(--fg); overflow-x: auto; overflow-y: hidden; white-space: nowrap; }
+  .ch-f i { font-style: italic; } .ch-f b { font-weight: 700; font-style: normal; }
+  .ch-f sub, .ch-f sup { font-size: 0.62em; line-height: 0; }
+  .ch-f .small { font-size: 0.68em; color: var(--muted); white-space: normal; }
+  .ch-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .ch-meta .live { color: var(--grad); }
+  .ch-meta .live::before { content: '● '; }
+
+  .extra { display: grid; gap: 22px; border-top: 1px solid var(--rule); padding-top: 40px; }
+  .extra > h2 { font-size: clamp(26px, 2.6vw, 32px); }
+  .threads { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 26px 32px; }
+  .threads div { display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .threads h3 { font-size: 20px; }
   .threads p { margin: 0; font-size: 15px; color: var(--fg-2); line-height: 1.55; }
   .threads .m { font-size: 1.05em; }
+  .about { max-width: 46rem; margin: 0; font-size: 16px; line-height: 1.6; color: var(--fg-2); }
+  .refs { max-width: 52rem; }
   .refs a { color: var(--fg); text-decoration-color: var(--axis); text-underline-offset: 3px; }
   .refs a:hover { text-decoration-color: var(--accent); }
+
+  @media (max-width: 980px) {
+    .top { grid-template-columns: minmax(0, 1fr); }
+    .path { max-width: 34rem; }
+    .part { grid-template-columns: minmax(0, 1fr); }
+    .part-head { position: static; max-width: 40rem; }
+  }
+  @media (max-width: 680px) {
+    .hub { gap: 48px; }
+    .cards { grid-template-columns: minmax(0, 1fr); }
+    .legend { margin-bottom: -16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ch { transition: none; } .ch:hover { transform: none; } }
 </style>
 </head>
 <body>
 <main class="page">
+  <div class="hub">
 
-  <header class="col hub-head">
-    <div class="eyebrow">Interaktive Visualisierungen · 12 Kapitel</div>
+  <div class="top">
+  <header class="hero">
+    <div class="eyebrow">Interaktive Reihe · 12 Kapitel</div>
     <h1>Von der Geraden zur Attention</h1>
-    <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann. Zum Anfassen statt zum Lesen.</p>
-  </header>
-
-  <section class="wide ladder" aria-labelledby="ladder-title">
-    <div class="ladder-intro">
-      <h2 id="ladder-title" class="eyebrow" style="font-family: var(--font-mono); font-size: 12px; font-weight: 400;">Die Formel wächst</h2>
-      <p>Jedes Kapitel fügt der Formel des vorigen genau eine Idee hinzu. <span class="hl-new">Violett</span> ist, was neu ist.</p>
+    <p class="lead">Wie aus einer Ausgleichsgeraden ein Transformer wird, was dabei mit den Daten im hochdimensionalen Raum passiert und wie man ein trainiertes Netz wieder lesen kann. Jeder Schritt ist eine Animation, die du anhalten, vorhersagen und selbst ausprobieren kannst.</p>
+    <ul class="facts"><li><b>193</b> Schritte</li><li><b>5</b> Netze, live im Browser trainiert</li><li><b>36</b> Fragen zum Selbsttest</li><li>ohne Anmeldung, ohne Server</li></ul>
+    <div class="cta">
+      <a class="go" id="go" href="01-linear-regression.html">Mit Kapitel 1 beginnen <span aria-hidden="true">→</span></a>
+      <a class="all" href="#kapitel">Alle Kapitel ansehen</a>
     </div>
-    <ol class="rungs">
+  </header>
+  <aside class="path" aria-label="Dein Weg durch die Reihe">
+    <h2>Dein Weg</h2>
+    <div class="path-row"><span class="path-part">Teil I</span><span class="path-name">Lernen aus Daten</span><div class="seg-group"><a class="seg" href="01-linear-regression.html" data-page="01-linear-regression" aria-label="Kapitel 1: Die Gerade">1</a><a class="seg" href="02-matrix.html" data-page="02-matrix" aria-label="Kapitel 2: Die Matrix">2</a><a class="seg" href="03-classification.html" data-page="03-classification" aria-label="Kapitel 3: Die Grenze">3</a><a class="seg" href="04-folding.html" data-page="04-folding" aria-label="Kapitel 4: Den Raum falten">4</a></div></div><div class="path-row"><span class="path-part">Teil II</span><span class="path-name">Räume und Bedeutung</span><div class="seg-group"><a class="seg" href="05-dimensions.html" data-page="05-dimensions" aria-label="Kapitel 5: Viele Dimensionen">5</a><a class="seg" href="06-embeddings.html" data-page="06-embeddings" aria-label="Kapitel 6: Bedeutung als Richtung">6</a></div></div><div class="path-row"><span class="path-part">Teil III</span><span class="path-name">Attention und Transformer</span><div class="seg-group"><a class="seg" href="07-attention.html" data-page="07-attention" aria-label="Kapitel 7: Mischen nach Relevanz">7</a><a class="seg" href="08-qkv.html" data-page="08-qkv" aria-label="Kapitel 8: Fragen, Schilder, Werte">8</a><a class="seg" href="09-transformer.html" data-page="09-transformer" aria-label="Kapitel 9: Der Transformer">9</a><a class="seg" href="10-training.html" data-page="10-training" aria-label="Kapitel 10: Ein eigener Transformer">10</a></div></div><div class="path-row"><span class="path-part">Teil IV</span><span class="path-name">Ins Netz hineinsehen</span><div class="seg-group"><a class="seg" href="11-vision.html" data-page="11-vision" aria-label="Kapitel 11: Merkmale und Schaltkreise">11</a><a class="seg" href="12-circuits.html" data-page="12-circuits" aria-label="Kapitel 12: Schaltkreise im Transformer">12</a></div></div>
+    <p id="progress-note">Noch nichts begonnen. Dein Fortschritt wird nur in diesem Browser gespeichert.</p>
+  </aside>
+  </div>
 
-      <li class="rung ready">
-        <div class="num">1</div>
-        <div class="body">
-          <div class="top"><h2><a href="01-linear-regression.html">Die Gerade</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Lineare Regression, Verlust, Gradientenabstieg</div>
-          <p class="new"><b>Neue Idee</b>Einen Fehler mit einer Zahl messen und die Parameter bergab schieben, bis er nicht mehr kleiner wird.</p>
-          <details>
-            <summary>Die Geschichte in 14 Schritten</summary>
-            <ul>
-              <li>Daten, eine Gerade mit zwei Knöpfen, die Formel lesen</li>
-              <li>Fehler, Quadrate, der Verlust als eine Zahl</li>
-              <li>Die Landschaft aller Geraden, die Gerade an Federn, Ausreißer</li>
-              <li>Bergab rollen, rund machen, zu große Schritte</li>
-              <li>Andere Beispiele: Eisdiele, Hubbles Universum; Ausblick: das Neuron</li>
-            </ul>
-          </details>
-          <a class="open-link" href="01-linear-regression.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula">
-          <span><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i></span>
-          <span class="small hl-new"><i>θ</i> ← <i>θ</i> − <i>η</i> ∇<i>L</i></span>
-        </div>
-      </li>
+  <div class="legend" id="kapitel">
+    <h2>Die Formel wächst</h2>
+    <p>Jedes Kapitel fügt der Formel des vorigen eine Idee hinzu. <span class="hl-new">Violett</span> ist, was neu ist.</p>
+  </div>
 
-      <li class="rung ready">
-        <div class="num">2</div>
-        <div class="body">
-          <div class="top"><h2><a href="02-matrix.html">Die Matrix</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Was eine Matrixmultiplikation mit den Daten macht</div>
-          <p class="new"><b>Neue Idee</b>Eine Matrix verformt den ganzen Raum auf einmal: drehen, spiegeln, strecken, scheren, plattdrücken. Wohin die Einheitspfeile gehen, bestimmt alles.</p>
-          <details>
-            <summary>Die Geschichte in 17 Schritten</summary>
-            <ul>
-              <li>Punkte sind Pfeile; eine Matrix verschiebt die Einheitspfeile</li>
-              <li>M·x lesen: Spalten mischen oder Zeile mal Vektor</li>
-              <li>Vom Einfachen zum Allgemeinen: strecken, spiegeln, drehen, scheren, plattdrücken</li>
-              <li>Hintereinander ausführen, viele Schichten sind eine Matrix, drehen–strecken–drehen</li>
-              <li>Andere Räume: 2D → 3D (Spaltenraum), 3D → 2D (Kern, Kamera)</li>
-              <li>Erst dann: die Regression als Matrix und als Lot im Datenraum</li>
-            </ul>
-          </details>
-          <a class="open-link" href="02-matrix.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula">
-          <span><b>y</b> = <span class="hl-new"><b>W</b></span> <b>x</b></span>
-          <span class="small">viele Neuronen auf einmal</span>
-        </div>
-      </li>
+    <section class="part" aria-labelledby="teil-I">
+      <header class="part-head">
+        <span class="part-no">Teil I · Kapitel 1–4</span>
+        <h2 id="teil-I">Lernen aus Daten</h2>
+        <p>Wie ein Modell aus Beispielen eine Regel lernt, und warum es dafür Matrizen, Wahrscheinlichkeiten und Knicke braucht.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="01-linear-regression.html" data-page="01-linear-regression">
+          <div class="ch-top"><span class="ch-num">1</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Die Gerade</h3>
+          <p class="ch-sub">Lineare Regression, Verlust, Gradientenabstieg</p>
+          <p class="ch-new">Einen Fehler mit einer Zahl messen und die Parameter bergab schieben, bis er nicht mehr kleiner wird.</p>
+          <div class="ch-f"><span><i>ŷ</i> = <i>w</i> · <i>x</i> + <i>b</i></span>
+          <span class="small hl-new"><i>θ</i> ← <i>θ</i> − <i>η</i> ∇<i>L</i></span></div>
+          <div class="ch-meta"><span>14 Schritte</span></div>
+        </a>
+        <a class="ch" href="02-matrix.html" data-page="02-matrix">
+          <div class="ch-top"><span class="ch-num">2</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Die Matrix</h3>
+          <p class="ch-sub">Was eine Matrixmultiplikation mit den Daten macht</p>
+          <p class="ch-new">Eine Matrix verformt den ganzen Raum auf einmal: drehen, spiegeln, strecken, scheren, plattdrücken. Wohin die Einheitspfeile gehen, bestimmt alles.</p>
+          <div class="ch-f"><span><b>y</b> = <span class="hl-new"><b>W</b></span> <b>x</b></span>
+          <span class="small">viele Neuronen auf einmal</span></div>
+          <div class="ch-meta"><span>17 Schritte</span></div>
+        </a>
+        <a class="ch" href="03-classification.html" data-page="03-classification">
+          <div class="ch-top"><span class="ch-num">3</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Die Grenze</h3>
+          <p class="ch-sub">Logistische Regression, Wahrscheinlichkeit, Softmax</p>
+          <p class="ch-new">Eine Nichtlinearität am Ausgang macht aus einer Zahl eine Wahrscheinlichkeit. Die Gerade wird zur Grenze zwischen zwei Klassen.</p>
+          <div class="ch-f"><span><i>p</i> = <span class="hl-new">σ(</span><i>w</i> · <i>x</i> + <i>b</i><span class="hl-new">)</span></span></div>
+          <div class="ch-meta"><span>17 Schritte</span></div>
+        </a>
+        <a class="ch" href="04-folding.html" data-page="04-folding">
+          <div class="ch-top"><span class="ch-num">4</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Den Raum falten</h3>
+          <p class="ch-sub">Neuronale Netze und Backpropagation</p>
+          <p class="ch-new">Eine Nichtlinearität zwischen zwei Matrizen lässt das Netz den Raum falten, bis die Daten durch eine einzige Grenze trennbar sind.</p>
+          <div class="ch-f"><span><i>ŷ</i> = <b>W</b><sub>2</sub> <span class="hl-new">σ(</span><b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub><span class="hl-new">)</span> + <b>b</b><sub>2</sub></span></div>
+          <div class="ch-meta"><span>13 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+      </div>
+    </section>
 
-      <li class="rung ready">
-        <div class="num">3</div>
-        <div class="body">
-          <div class="top"><h2><a href="03-classification.html">Die Grenze</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Logistische Regression, Wahrscheinlichkeit, Softmax</div>
-          <p class="new"><b>Neue Idee</b>Eine Nichtlinearität am Ausgang macht aus einer Zahl eine Wahrscheinlichkeit. Die Gerade wird zur Grenze zwischen zwei Klassen.</p>
-          <details>
-            <summary>Die Geschichte in 17 Schritten</summary>
-            <ul>
-              <li>Bestanden oder nicht: Wahrscheinlichkeit als Anteil, warum die Gerade scheitert</li>
-              <li>e hoch z, daraus Schritt für Schritt die Sigmoidfunktion</li>
-              <li>Was w und b jetzt tun; der Logarithmus, Kreuzentropie als Überraschung, Lernen mit „Fehler mal Eingabe“</li>
-              <li>Zwei Merkmale: die Grenze steht senkrecht auf w, die Rampe in 3D</li>
-              <li>Drei Pinguinarten: eine Zeile pro Klasse, Softmax; Temperatur am nächsten Wort; XOR als Grenze der Grenze</li>
-            </ul>
-          </details>
-          <a class="open-link" href="03-classification.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span><i>p</i> = <span class="hl-new">σ(</span><i>w</i> · <i>x</i> + <i>b</i><span class="hl-new">)</span></span></div>
-      </li>
+    <section class="part" aria-labelledby="teil-II">
+      <header class="part-head">
+        <span class="part-no">Teil II · Kapitel 5–6</span>
+        <h2 id="teil-II">Räume und Bedeutung</h2>
+        <p>Was in vielen Dimensionen passiert, und wie Wörter dort zu Richtungen werden.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="05-dimensions.html" data-page="05-dimensions">
+          <div class="ch-top"><span class="ch-num">5</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Viele Dimensionen</h3>
+          <p class="ch-sub">Geometrie in ℝ<sup>d</sup> und Superposition</p>
+          <p class="ch-new">In vielen Dimensionen stehen fast alle Richtungen fast senkrecht aufeinander. Deshalb passen mehr Merkmale hinein, als es Dimensionen gibt.</p>
+          <div class="ch-f"><span><b>u</b> · <b>v</b> <span class="hl-new">≈ 0</span></span>
+          <span class="small">für zufällige <b>u</b>, <b>v</b> ∈ ℝ<sup><i>d</i></sup>, <i>d</i> groß</span></div>
+          <div class="ch-meta"><span>17 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+        <a class="ch" href="06-embeddings.html" data-page="06-embeddings">
+          <div class="ch-top"><span class="ch-num">6</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Bedeutung als Richtung</h3>
+          <p class="ch-sub">Embeddings</p>
+          <p class="ch-new">Wörter werden zu Vektoren, und Bedeutung wird zu Geometrie: Ähnlichkeit ist ein Skalarprodukt, Beziehungen sind Richtungen.</p>
+          <div class="ch-f"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
+          <div class="ch-meta"><span>22 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+      </div>
+    </section>
 
-      <li class="rung ready">
-        <div class="num">4</div>
-        <div class="body">
-          <div class="top"><h2><a href="04-folding.html">Den Raum falten</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Neuronale Netze und Backpropagation</div>
-          <p class="new"><b>Neue Idee</b>Eine Nichtlinearität zwischen zwei Matrizen lässt das Netz den Raum falten, bis die Daten durch eine einzige Grenze trennbar sind.</p>
-          <details>
-            <summary>Die Geschichte in 13 Schritten</summary>
-            <ul>
-              <li>Innen und außen: keine Gerade reicht</li>
-              <li>ReLU als Knick; ein Neuron als Rampe über der Ebene, drei Neuronen, drei Rampen</li>
-              <li>Eine Schicht = Matrix + Knick: die Ebene als geknickte Fläche in 3D, dort trennt eine Ebene</li>
-              <li>Das Netz trainiert live; Wirkungen in einer Kette multiplizieren sich; Backpropagation</li>
-              <li>Jede Kurve aus Knicken; Falten auf Falten verdoppeln die Stücke; zwei Spiralen</li>
-            </ul>
-          </details>
-          <a class="open-link" href="04-folding.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span><i>ŷ</i> = <b>W</b><sub>2</sub> <span class="hl-new">σ(</span><b>W</b><sub>1</sub> <b>x</b> + <b>b</b><sub>1</sub><span class="hl-new">)</span> + <b>b</b><sub>2</sub></span></div>
-      </li>
+    <section class="part" aria-labelledby="teil-III">
+      <header class="part-head">
+        <span class="part-no">Teil III · Kapitel 7–10</span>
+        <h2 id="teil-III">Attention und Transformer</h2>
+        <p>Wie Wörter einander ansehen, wie daraus ein Transformer wird, und einer, der live im Browser lernt.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="07-attention.html" data-page="07-attention">
+          <div class="ch-top"><span class="ch-num">7</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Mischen nach Relevanz</h3>
+          <p class="ch-sub">Attention I: die Idee ohne neue Matrizen</p>
+          <p class="ch-new">Ein Wort wird zum gewichteten Mittel der Wörter um es herum. Die Anteile kommen aus der Ähnlichkeit, Softmax macht sie zu Anteilen.</p>
+          <div class="ch-f"><span><b>x</b>′ = <span class="hl-new">Σ softmax(<b>x</b>·<b>x</b><sub><i>j</i></sub>)</span> <b>x</b><sub><i>j</i></sub></span></div>
+          <div class="ch-meta"><span>15 Schritte</span></div>
+        </a>
+        <a class="ch" href="08-qkv.html" data-page="08-qkv">
+          <div class="ch-top"><span class="ch-num">8</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Fragen, Schilder, Werte</h3>
+          <p class="ch-sub">Attention II: Query, Key, Value</p>
+          <p class="ch-new">Drei gelernte Matrizen geben jedem Wort drei Rollen: eine Frage, ein Schild und einen Inhalt. So kann „sie“ nach einem Nomen suchen, statt nach sich selbst.</p>
+          <div class="ch-f"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
+          <div class="ch-meta"><span>18 Schritte</span></div>
+        </a>
+        <a class="ch" href="09-transformer.html" data-page="09-transformer">
+          <div class="ch-top"><span class="ch-num">9</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Der Transformer</h3>
+          <p class="ch-sub">Residualstrom, MLP, Positionen, nächstes Wort</p>
+          <p class="ch-new">Alle Schichten lesen aus einem gemeinsamen Notizblatt und addieren ihr Ergebnis zurück. Am Ende steht eine Wahrscheinlichkeit für das nächste Wort.</p>
+          <div class="ch-f"><span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> Attn(<b>x</b>)</span>
+          <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> MLP(<b>x</b>)</span></div>
+          <div class="ch-meta"><span>15 Schritte</span></div>
+        </a>
+        <a class="ch" href="10-training.html" data-page="10-training">
+          <div class="ch-top"><span class="ch-num">10</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Ein eigener Transformer</h3>
+          <p class="ch-sub">Live im Browser trainiert</p>
+          <p class="ch-new">Ein winziger Transformer mit zwei Köpfen lernt vor unseren Augen, Muster fortzusetzen, und zwar nicht allmählich, sondern mit einem plötzlichen Sprung.</p>
+          <div class="ch-f"><span><b>θ</b> ← <b>θ</b> − <span class="hl-new">η ∇<i>L</i></span></span><span class="small">1856 Zahlen, live trainiert</span></div>
+          <div class="ch-meta"><span>12 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+      </div>
+    </section>
 
-      <li class="rung ready">
-        <div class="num">5</div>
-        <div class="body">
-          <div class="top"><h2><a href="05-dimensions.html">Viele Dimensionen</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Geometrie in ℝ<sup>d</sup> und Superposition</div>
-          <p class="new"><b>Neue Idee</b>In vielen Dimensionen stehen fast alle Richtungen fast senkrecht aufeinander. Deshalb passen mehr Merkmale hinein, als es Dimensionen gibt.</p>
-          <details>
-            <summary>Die Geschichte in 17 Schritten</summary>
-            <ul>
-              <li>Ein Punkt aus vielen Zahlen; Länge und Richtung; Ähnlichkeit als Schatten (Skalarprodukt)</li>
-              <li>Viele kleine Produkte heben sich auf: Zufallsrichtungen stehen fast senkrecht</li>
-              <li>Etwas kleiner, viel weniger drin: 0,9 hoch d, eine Orange ist fast nur Schale</li>
-              <li>Die Tabelle aller Paare: viel Platz für fast senkrechte Richtungen</li>
-              <li>Merkmale als Richtungen, erst von Hand (120°, Fünfeck), dann Sparsity, dann live trainiert (Toy Models, 2022)</li>
-              <li>Der beste Schatten in der Ebene, dann Hauptkomponenten in 50 Dimensionen</li>
-            </ul>
-          </details>
-          <a class="open-link" href="05-dimensions.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula">
-          <span><b>u</b> · <b>v</b> <span class="hl-new">≈ 0</span></span>
-          <span class="small">für zufällige <b>u</b>, <b>v</b> ∈ ℝ<sup><i>d</i></sup>, <i>d</i> groß</span>
-        </div>
-      </li>
+    <section class="part" aria-labelledby="teil-IV">
+      <header class="part-head">
+        <span class="part-no">Teil IV · Kapitel 11–12</span>
+        <h2 id="teil-IV">Ins Netz hineinsehen</h2>
+        <p>Olahs Werkzeuge: Merkmale finden, Schaltkreise lesen, erst im Bildnetz, dann im Transformer.</p>
+      </header>
+      <div class="cards">
+        <a class="ch" href="11-vision.html" data-page="11-vision">
+          <div class="ch-top"><span class="ch-num">11</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Merkmale und Schaltkreise</h3>
+          <p class="ch-sub">Olah I: ein eigenes Bildnetz, live trainiert</p>
+          <p class="ch-new">Ein Netz lässt sich lesen: Einheiten erkennen Merkmale, Gewichte verbinden sie zu Schaltkreisen, und verschiedene Netze lernen ähnliche Dinge.</p>
+          <div class="ch-f"><span>Kanten <span class="hl-new">→</span> Kurven <span class="hl-new">→</span> Formen</span></div>
+          <div class="ch-meta"><span>19 Schritte</span><span class="live">live trainiert</span></div>
+        </a>
+        <a class="ch" href="12-circuits.html" data-page="12-circuits">
+          <div class="ch-top"><span class="ch-num">12</span><span class="ch-state" aria-hidden="true"></span></div>
+          <h3>Schaltkreise im Transformer</h3>
+          <p class="ch-sub">Olah II: unseren Transformer aus Kapitel 10 lesen</p>
+          <p class="ch-new">Dieselben Werkzeuge im Transformer: Zwei Köpfe bilden zusammen einen Induction Head, und das steht direkt in den Gewichten.</p>
+          <div class="ch-f"><span><b>W</b><sub>QK</sub> = <span class="hl-new"><b>W</b><sub>Q</sub><sup>⊤</sup><b>W</b><sub>K</sub></span></span>
+          <span><b>W</b><sub>OV</sub> = <span class="hl-new"><b>W</b><sub>O</sub><b>W</b><sub>V</sub></span></span></div>
+          <div class="ch-meta"><span>14 Schritte</span></div>
+        </a>
+      </div>
+    </section>
 
-      <li class="rung ready">
-        <div class="num">6</div>
-        <div class="body">
-          <div class="top"><h2><a href="06-embeddings.html">Bedeutung als Richtung</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Embeddings</div>
-          <p class="new"><b>Neue Idee</b>Wörter werden zu Vektoren, und Bedeutung wird zu Geometrie: Ähnlichkeit ist ein Skalarprodukt, Beziehungen sind Richtungen.</p>
-          <details>
-            <summary>Die Geschichte in 22 Schritten</summary>
-            <ul>
-              <li>Warum Nummern nicht reichen; ein Schalter pro Wort, erst mit 3, dann mit 65 Wörtern</li>
-              <li>Eine Karte von Hand; die Karte als Tabelle, Nachschlagen als Matrixmultiplikation</li>
-              <li>Paare zählen, Zählprofile vergleichen: Bedeutung steckt schon in der Statistik; Embedding als verdichtetes Profil</li>
-              <li>Das Ratespiel; in einer Welt aus 4 Wörtern: Punktzahl, Schubsen, gleiche Nachbarn ⇒ gleicher Platz</li>
-              <li>Alle 65 Wörter live trainiert; Kosinus-Nachbarn; Differenzpfeile</li>
-              <li>Die Richtung Frau − Mann, eine gewählte Ebene, das nächste Wort, König − Mann + Frau ≈ Königin</li>
-              <li>„Bank“: eine Zeile, zwei Bedeutungen, der Grund für Attention</li>
-            </ul>
-          </details>
-          <a class="open-link" href="06-embeddings.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span><b>x</b><sub><i>t</i></sub> = <span class="hl-new"><b>E</b>[ <i>t</i> ]</span></span><span class="small">eine Zeile der Embedding-Matrix pro Token <i>t</i></span></div>
-      </li>
-
-      <li class="rung ready">
-        <div class="num">7</div>
-        <div class="body">
-          <div class="top"><h2><a href="07-attention.html">Mischen nach Relevanz</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Attention I: die Idee ohne neue Matrizen</div>
-          <p class="new"><b>Neue Idee</b>Ein Wort wird zum gewichteten Mittel der Wörter um es herum. Die Anteile kommen aus der Ähnlichkeit, Softmax macht sie zu Anteilen.</p>
-          <details>
-            <summary>Die Geschichte in 15 Schritten</summary>
-            <ul>
-              <li>„Bank“ hat nur einen Vektor; wie wir selbst lesen: der Blick springt zu den wichtigen Wörtern</li>
-              <li>Mittelwert mit Anteilen erst mit Zahlen, dann mit Punkten, dann mit Vektoren; Mischen von Hand</li>
-              <li>Relevanz als Skalarprodukt; e hoch, teilen, Schärfe: die Softmax entsteht Schritt für Schritt</li>
-              <li>Die Falle: jedes Wort ist sich selbst am ähnlichsten; ohne sich selbst rückt „Bank“ zu Geld, Sitzen, Holz</li>
-              <li>Alle Wörter auf einmal als Tabelle; die Grenze: Wer ist „sie“?</li>
-            </ul>
-          </details>
-          <a class="open-link" href="07-attention.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span><b>x</b>′ = <span class="hl-new">Σ softmax(<b>x</b>·<b>x</b><sub><i>j</i></sub>)</span> <b>x</b><sub><i>j</i></sub></span></div>
-      </li>
-
-      <li class="rung ready">
-        <div class="num">8</div>
-        <div class="body">
-          <div class="top"><h2><a href="08-qkv.html">Fragen, Schilder, Werte</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Attention II: Query, Key, Value</div>
-          <p class="new"><b>Neue Idee</b>Drei gelernte Matrizen geben jedem Wort drei Rollen: eine Frage, ein Schild und einen Inhalt. So kann „sie“ nach einem Nomen suchen, statt nach sich selbst.</p>
-          <details>
-            <summary>Die Geschichte in 18 Schritten</summary>
-            <ul>
-              <li>Ein Wort, drei Rollen; eine Matrix dreht einen Vektor (Kapitel 2)</li>
-              <li>Die Frage von „sie“, Punktzahlen, Anteile: „Frau“ bekommt 91 %</li>
-              <li>Schilder und Werte als eigene Matrizen; das Ergebnis</li>
-              <li>Alles als Tabellen: X → Q, das Kreuz QKᵀ, Softmax zeilenweise, mal V</li>
-              <li>Die ganze Formel; warum durch √d geteilt wird; mehrere Köpfe; alles gelernt</li>
-            </ul>
-          </details>
-          <a class="open-link" href="08-qkv.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span><span class="hl-new">softmax(</span><span class="frac"><span><b>Q</b><b>K</b><sup>⊤</sup></span><span>√<i>d</i></span></span><span class="hl-new">)</span> <b>V</b></span></div>
-      </li>
-
-      <li class="rung ready">
-        <div class="num">9</div>
-        <div class="body">
-          <div class="top"><h2><a href="09-transformer.html">Der Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Residualstrom, MLP, Positionen, nächstes Wort</div>
-          <p class="new"><b>Neue Idee</b>Alle Schichten lesen aus einem gemeinsamen Notizblatt und addieren ihr Ergebnis zurück. Am Ende steht eine Wahrscheinlichkeit für das nächste Wort.</p>
-          <details>
-            <summary>Die Geschichte in 15 Schritten</summary>
-            <ul>
-              <li>Die Teile; addieren statt ersetzen; das Notizblatt (Residualstrom)</li>
-              <li>Das MLP aus Kapitel 4, an Zahlen vorgerechnet, für jedes Wort einzeln; ein Block</li>
-              <li>Attention kennt keine Reihenfolge; Positionsvektoren</li>
-              <li>Die Aufgabe: das nächste Wort; die Maske; die Ausgabe; der Verlust</li>
-              <li>Der Bauplan im Ganzen, und wie groß echte Modelle sind</li>
-            </ul>
-          </details>
-          <a class="open-link" href="09-transformer.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula">
-          <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> Attn(<b>x</b>)</span>
-          <span><b>x</b> ← <span class="hl-new"><b>x</b> +</span> MLP(<b>x</b>)</span>
-        </div>
-      </li>
-
-      <li class="rung ready">
-        <div class="num">10</div>
-        <div class="body">
-          <div class="top"><h2><a href="10-training.html">Ein eigener Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Live im Browser trainiert</div>
-          <p class="new"><b>Neue Idee</b>Ein winziger Transformer mit zwei Köpfen lernt vor unseren Augen, Muster fortzusetzen, und zwar nicht allmählich, sondern mit einem plötzlichen Sprung.</p>
-          <details>
-            <summary>Die Geschichte in 12 Schritten</summary>
-            <ul>
-              <li>Warum ein kleines Modell; die Aufgabe: Folgen, die sich wiederholen</li>
-              <li>Lernen rückwärts durch alle Teile; der Bauplan: 1856 Zahlen</li>
-              <li>Vorher raten; ein Lernschritt; das Training live</li>
-              <li>Der Sprung im Verlust; nachher; das Modell schreibt Muster weiter; die Grenzen</li>
-            </ul>
-          </details>
-          <a class="open-link" href="10-training.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span><b>θ</b> ← <b>θ</b> − <span class="hl-new">η ∇<i>L</i></span></span><span class="small">1856 Zahlen, live trainiert</span></div>
-      </li>
-
-      <li class="rung ready">
-        <div class="num">11</div>
-        <div class="body">
-          <div class="top"><h2><a href="11-vision.html">Merkmale und Schaltkreise</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Olah I: ein eigenes Bildnetz, live trainiert</div>
-          <p class="new"><b>Neue Idee</b>Ein Netz lässt sich lesen: Einheiten erkennen Merkmale, Gewichte verbinden sie zu Schaltkreisen, und verschiedene Netze lernen ähnliche Dinge.</p>
-          <details>
-            <summary>Die Geschichte in 18 Schritten</summary>
-            <ul>
-              <li>Ein Bild sind Zahlen; ein Filter, über das Bild geschoben; mehrere Filter, ReLU, verkleinern</li>
-              <li>Eine zweite Schicht von Hand: Ecke = senkrechte Kante + waagrechte Kante</li>
-              <li>Vier Formen erkennen, live trainiert; die ersten Filter werden zu Kantendetektoren</li>
-              <li>Beispiele pro Einheit; sichtbar machen durch Optimieren; Kurven- und Kreisdetektoren</li>
-              <li>Ein Schaltkreis aus Gewichten gelesen; die drei Thesen aus „Zoom In“</li>
-              <li>Universalität: ein zweites Netz lernt ähnliche Merkmale; polysemantische Einheiten</li>
-            </ul>
-          </details>
-          <a class="open-link" href="11-vision.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula"><span>Kanten <span class="hl-new">→</span> Kurven <span class="hl-new">→</span> Formen</span></div>
-      </li>
-
-      <li class="rung ready">
-        <div class="num">12</div>
-        <div class="body">
-          <div class="top"><h2><a href="12-circuits.html">Schaltkreise im Transformer</a></h2><span class="chip ready">Als Geschichte</span></div>
-          <div class="sub">Olah II: unseren Transformer aus Kapitel 10 lesen</div>
-          <p class="new"><b>Neue Idee</b>Dieselben Werkzeuge im Transformer: Zwei Köpfe bilden zusammen einen Induction Head, und das steht direkt in den Gewichten.</p>
-          <details>
-            <summary>Die Geschichte in 14 Schritten</summary>
-            <ul>
-              <li>Dieselben Werkzeuge wie im Bildnetz; Kopf 0 schaut einen Platz zurück, Kopf 1 nach der letzten Kopie</li>
-              <li>Der Algorithmus: Notiz schreiben, Notiz suchen, kopieren</li>
-              <li>Wer zur Vorhersage beiträgt; ein Buchstabe läuft durch Kopf 1</li>
-              <li>OV- und QK-Schaltkreis direkt aus den Gewichten; K-Komposition (Mathematical Framework, 2021)</li>
-              <li>Köpfe abschalten; der Schaltkreis entsteht im Phasenübergang (Induction Heads, 2022)</li>
-              <li>Ausblick: Superposition, dünne Autoencoder, Attributionsgraphen</li>
-            </ul>
-          </details>
-          <a class="open-link" href="12-circuits.html">Kapitel öffnen →</a>
-        </div>
-        <div class="formula">
-          <span><b>W</b><sub>QK</sub> = <span class="hl-new"><b>W</b><sub>Q</sub><sup>⊤</sup><b>W</b><sub>K</sub></span></span>
-          <span><b>W</b><sub>OV</sub> = <span class="hl-new"><b>W</b><sub>O</sub><b>W</b><sub>V</sub></span></span>
-        </div>
-      </li>
-    </ol>
-  </section>
-
-  <section class="col prose" style="margin-top: 40px">
-    <h2>So lernst du mit der Reihe</h2>
+  <section class="extra" aria-labelledby="lernen">
+    <h2 id="lernen">So lernst du mit der Reihe</h2>
     <div class="threads">
       <div>
         <h3>Erst raten</h3>
@@ -397,8 +281,10 @@
         <p>Über jeder Geschichte: „Schnelldurchlauf“ zeigt nur die Kernschritte, „Mitdenken“ schaltet Fragen und Regler ab, wenn du nur zuschauen willst.</p>
       </div>
     </div>
+  </section>
 
-    <h2>Drei rote Fäden</h2>
+  <section class="extra" aria-labelledby="faeden">
+    <h2 id="faeden">Drei rote Fäden</h2>
     <div class="threads">
       <div>
         <h3>Das Skalarprodukt</h3>
@@ -413,11 +299,12 @@
         <p>Ein einziger Lernalgorithmus trägt die ganze Reihe. Gradientenabstieg passt die Gerade in Kapitel 1 an und trainiert den Mini-Transformer in Kapitel 10 und das Bildnetz in Kapitel 11.</p>
       </div>
     </div>
+  </section>
 
-    <h2>Arbeitsstand</h2>
-    <p>Alle zwölf Kapitel sind als durchgehende Geschichten gebaut: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, die Formel oben erklärt ihre Teile synchron dazu. An Schlüsselstellen fragt die Geschichte nach einer Vermutung, danach lässt sie dich selbst ausprobieren, und jedes Kapitel endet mit Fragen zum Selbsttest. Die Reihenfolge folgt dem, was aufeinander aufbaut. Alles läuft im Browser, ohne Bibliotheken und ohne Server, auch das Training der Wortvektoren, des Mini-Transformers und des Bildnetzes.</p>
-
-    <h2>Quellen der Reihe</h2>
+  <section class="extra" aria-labelledby="ueber">
+    <h2 id="ueber">Über die Reihe</h2>
+    <p class="about">Jedes Kapitel ist eine durchgehende Geschichte: eine feste Bühne, jeder Schritt spielt seine Animation beim Scrollen selbst ab, und die Formel oben erklärt ihre Teile synchron dazu. Die Reihenfolge folgt dem, was aufeinander aufbaut. Alles läuft im Browser, ohne Bibliotheken und ohne Server, auch das Training der Wortvektoren, des Mini-Transformers und des Bildnetzes.</p>
+    <h3>Quellen</h3>
     <ol class="refs">
       <li>C. Olah (2014): <a href="https://colah.github.io/posts/2014-03-NN-Manifolds-Topology/"><i>Neural Networks, Manifolds, and Topology</i></a>.</li>
       <li>A. Vaswani u. a. (2017): <a href="https://arxiv.org/abs/1706.03762"><i>Attention Is All You Need</i></a>.</li>
@@ -428,6 +315,28 @@
       <li>T. Bricken u. a. (2023): <a href="https://transformer-circuits.pub/2023/monosemantic-features/index.html"><i>Towards Monosemanticity</i></a>.</li>
     </ol>
   </section>
+
+  </div>
 </main>
+<script>
+  (() => {
+    const get = (k) => { try { return localStorage.getItem('rta-' + k) === '1'; } catch { return false; } };
+    const pages = [...document.querySelectorAll('.ch')].map((a) => [a.dataset.page, a.querySelector('h3').textContent, a.querySelector('.ch-num').textContent, a.getAttribute('href')]);
+    let started = 0, finished = 0, next = null;
+    for (const [p, title, n, href] of pages) {
+      const seen = get('seen-' + p), done = get('done-' + p);
+      document.querySelectorAll(`[data-page="${p}"]`).forEach((el) => { el.classList.toggle('seen', seen && !done); el.classList.toggle('done', done); });
+      if (seen) started++; if (done) finished++;
+      if (!done && !next && (seen || started)) next = [n, title, href];
+    }
+    if (started) {
+      const firstOpen = pages.find(([p]) => !get('done-' + p));
+      const go = document.getElementById('go');
+      if (firstOpen) { go.href = firstOpen[3]; go.firstChild.textContent = `Weiter mit Kapitel ${firstOpen[2]}: ${firstOpen[1]} `; }
+      else { go.firstChild.textContent = 'Alle Kapitel gelesen. Von vorn beginnen '; }
+      document.getElementById('progress-note').textContent = `${finished} von 12 Kapiteln bis zum Ende gelesen, ${started - finished} begonnen. Gespeichert nur in diesem Browser.`;
+    }
+  })();
+</script>
 </body>
 </html>
