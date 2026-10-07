@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Bedeutung als Richtung · Kapitel 6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 6 von 12</div>
+    <h1>Bedeutung als Richtung</h1>
+    <p class="lead">Ein Sprachmodell rechnet mit Zahlen, nicht mit Wörtern. Wir bauen die Übersetzung selbst: Jedes Wort bekommt einen Pfeil in einem 12-dimensionalen Raum, gelernt nur aus der Frage, welche Wörter nebeneinander stehen. Am Ende tragen Richtungen Bedeutung.</p>
+    <ol class="roadmap"><li>Wörter brauchen Zahlen</li><li>Nachbarn zählen</li><li>Ein Ratespiel lernt die Karte</li><li>Bedeutung als Richtung</li></ol>
+    <ul class="goals"><li>erklären, woher die Zahlen eines Wortvektors kommen</li><li>ähnliche Wörter mit dem Kosinus finden</li><li>König − Mann + Frau ≈ Königin begründen</li></ul>
+    <p class="calm">Dieses Kapitel ist das längste der Reihe und enthält die wichtigste Idee: Bedeutung als Richtung. Es ist normal, einzelne Schritte zweimal anzusehen; „Nochmal“ und „Pause“ sind dafür da.</p>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="ids"><div class="vlabel">Wörter, alphabetisch nummeriert</div><div class="plot" id="v-ids" role="img" aria-label="Zahlenstrahl mit Wörtern an ihrer alphabetischen Nummer."></div></div>
+        <div class="view" data-view="oh3" data-touch="ziehen zum Drehen"><div class="vlabel">Drei Wörter, drei Schalter, drei Achsen</div><div class="plot" id="v-oh3" role="img" aria-label="Drei One-Hot-Vektoren als senkrechte Pfeile im Raum."></div></div>
+        <div class="view" data-view="onehot"><div class="vlabel">Ein Schalter pro Wort</div><div class="plot" id="v-onehot" role="img" aria-label="Zeilen aus Nullen mit einer einzigen Eins pro Wort."></div></div>
+        <div class="view" data-view="karte"><div class="vlabel">Eine Karte, von Hand gelegt</div><div class="plot" id="v-karte" role="img" aria-label="Wörter als Punkte auf einer Ebene; ähnliche liegen nah beieinander."></div></div>
+        <div class="view" data-view="tab3"><div class="vlabel">Nachschlagen in einer kleinen Tabelle</div><div class="plot" id="v-tab3" role="img" aria-label="Ein Schaltervektor mal eine Tabelle aus drei Zeilen ergibt eine Zeile."></div></div>
+        <div class="view" data-view="lookup"><div class="vlabel">Die Tabelle E mit allen Wörtern</div><div class="plot" id="v-lookup" role="img" aria-label="Ein Schaltervektor wählt eine Zeile der Embedding-Tabelle aus."></div></div>
+        <div class="view" data-view="corpus"><div class="vlabel">Wer steht neben wem?</div><div class="plot" id="v-corpus" role="img" aria-label="Ein Fenster gleitet über einen Satz; die Paare werden notiert und gezählt."></div></div>
+        <div class="view" data-view="cooc"><div class="vlabel">Zählprofile: Anteil jedes Nachbarworts</div><div class="plot" id="v-cooc" role="img" aria-label="Tabelle: Zeilen sind Wörter, Spalten Nachbarwörter, Zellen ihre Häufigkeit."></div></div>
+        <div class="view" data-view="task"><div class="vlabel">Welches Wort steht neben „König“?</div><div class="plot" id="v-task" role="img" aria-label="Balken: geratene Wahrscheinlichkeiten für Nachbarwörter, verglichen mit den gezählten Anteilen."></div></div>
+        <div class="view" data-view="mini"><div class="vlabel">Eine kleine Welt in zwei Dimensionen</div><div class="plot" id="v-mini" role="img" aria-label="Pfeile für vier Wörter und acht Nachbarwörter in einer Ebene, daneben Punktzahlen und Wahrscheinlichkeiten."></div></div>
+        <div class="view" data-view="map"><div class="vlabel" id="l-map">Die Wortvektoren, als Schatten auf zwei Dimensionen</div><div class="plot" id="v-map" role="img" aria-label="Wörter als Punkte in einer zweidimensionalen Projektion des Embedding-Raums."></div></div>
+        <div class="view" data-view="near"><div class="vlabel">Die ähnlichsten Wörter (Kosinus in 12 Dimensionen)</div><div class="plot" id="v-near" role="img" aria-label="Balken: die ähnlichsten Wörter zu einem Wort."></div></div>
+        <div class="view" data-view="vsub"><div class="vlabel">Pfeile zwischen Punkten</div><div class="plot" id="v-vsub" role="img" aria-label="Die Differenz zweier Punkte als Pfeil, verschoben an einen dritten Punkt."></div></div>
+        <div class="view" data-view="axis"><div class="vlabel">Schatten auf die Richtung Frau − Mann</div><div class="plot" id="v-axis" role="img" aria-label="Personenwörter auf einer Achse von männlich nach weiblich."></div></div>
+        <div class="view" data-view="plane"><div class="vlabel" id="l-plane">Schatten auf zwei gewählte Richtungen</div><div class="plot" id="v-plane" role="img" aria-label="Personenwörter in einer gewählten Ebene; parallele Pfeile von männlich zu weiblich."></div></div>
+        <div class="view" data-view="bank"><div class="vlabel">Schatten auf die Richtung Stuhl → Sparkasse</div><div class="plot" id="v-bank" role="img" aria-label="Wörter auf einer Achse von Sitzmöbeln zu Geldinstituten; Bank liegt bei den Geldwörtern."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="nummern" data-core><div class="card">
+        <span class="kicker">Ausgangspunkt</span>
+        <h3>Ein Netz braucht Zahlen</h3>
+        <p>Alles, was wir bisher gebaut haben, rechnet mit Zahlen: Matrizen, Knicke, Softmax. Ein Satz besteht aber aus Wörtern. Wie macht man aus „Hund“ eine Zahl?</p>
+        <p>Die naheliegende Idee: durchnummerieren. Das geht schief, denn Nummern behaupten Nachbarschaften. „Hund“ und „Holz“ liegen alphabetisch nebeneinander, und der Mittelwert aus „Hund“ und „Katze“ ist irgendein drittes Wort.</p>
+      </div></article>
+
+      <article class="step" data-step="schalter" data-core><div class="card">
+        <span class="kicker">Zweiter Versuch</span>
+        <h3>Ein Schalter pro Wort</h3>
+        <p>Besser: Jedes Wort bekommt einen eigenen Schalter. Mit drei Wörtern sind das drei Zahlen: Hund = (1, 0, 0), Katze = (0, 1, 0), Brot = (0, 0, 1). Man nennt das <strong>One-Hot</strong>.</p>
+        <p>Als Pfeile liegt jedes Wort auf seiner eigenen Achse. Alle drei stehen senkrecht aufeinander und sind gleich weit voneinander entfernt. Keine falsche Nähe mehr, aber auch keine richtige: Hund ist Katze genauso fern wie Brot.</p>
+      </div></article>
+
+      <article class="step" data-step="schalter65"><div class="card">
+        <span class="kicker">Mit dem ganzen Wortschatz</span>
+        <h3>65 Wörter, 65 Schalter</h3>
+        <p>Unser Text hat 65 verschiedene Wörter, also 65 Schalter. Jedes Wort ist eine Reihe aus 64 Nullen und einer Eins, ein Pfeil in 65 Dimensionen.</p>
+        <p>Das Skalarprodukt zweier verschiedener Wörter ist immer 0, denn ihre Einsen treffen nie aufeinander. Alle Wörter stehen senkrecht aufeinander (Kapitel 5). Über Bedeutung sagt das nichts.</p>
+      </div></article>
+
+      <article class="step" data-step="karte" data-core><div class="card">
+        <span class="kicker">Was wir eigentlich wollen</span>
+        <h3>Eine Karte, von Hand</h3>
+        <p>Stellen wir uns eine Landkarte vor, auf der wir jedes Wort von Hand platzieren: Tiere hierhin, Essen dorthin, das Königshaus woandershin.</p>
+        <p>Jetzt hat jedes Wort nur zwei Zahlen, seine Koordinaten, und Abstände bedeuten etwas: „Hund“ liegt nah bei „Katze“ und weit weg von „Brot“. So ein Platz heißt <strong>Embedding</strong> (Einbettung): Das Wort wird in einen Raum eingebettet.</p>
+      </div></article>
+
+      <article class="step" data-step="tabelle" data-core><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Die Karte als Tabelle</h3>
+        <p>Die Koordinaten schreiben wir in eine Tabelle: eine Zeile pro Wort, eine Spalte pro Koordinate. Nachschlagen heißt: Schaltervektor mal Tabelle.</p>
+        <p>Wie in Kapitel 2 mischt das Produkt die Zeilen, gewichtet mit den Einträgen des Schaltervektors: 0 · Hund + 1 · Katze + 0 · Brot. Übrig bleibt genau die Zeile von „Katze“.</p>
+      </div></article>
+
+      <article class="step" data-step="tabelle65"><div class="card">
+        <span class="kicker">Die echte Tabelle</span>
+        <h3>65 Zeilen, 12 Spalten</h3>
+        <p>Für unsere 65 Wörter nehmen wir statt 2 gleich 12 Koordinaten: mehr Platz, damit mehr Unterschiede hineinpassen. Die Tabelle <b>E</b> hat 65 Zeilen und 12 Spalten.</p>
+        <p>Von Hand füllen können wir sie nicht. Noch stehen Zufallszahlen darin. Woher soll das Netz wissen, welche Wörter zusammengehören? Es hat ja nur den Text.</p>
+      </div></article>
+
+      <article class="step" data-step="nachbarn" data-core><div class="card">
+        <span class="kicker">Die Quelle</span>
+        <h3>Wer steht neben wem?</h3>
+        <p>Der Text verrät mehr, als man denkt. Wir schieben ein Fenster über einen Satz: ein Wort in der Mitte, dazu die Wörter bis zu zwei Plätze links und rechts. Jedes Mal notieren wir ein Paar: Mitte → Nachbar.</p>
+        <p>Das machen wir für alle 1200 Sätze und zählen, wie oft welches Paar vorkommt. Mehr Information bekommt das Netz nicht.</p>
+        <div class="ex"><b>Der Text</b>1200 Sätze, aus Vorlagen gewürfelt: Menschen und Königshaus essen, schlafen, regieren, füttern Tiere, bringen Geld zur Bank oder sitzen auf einer Bank. Klein genug, um hier live zu lernen.</div>
+      </div></article>
+
+      <article class="step" data-step="profil" data-core><div class="card">
+        <span class="kicker">Statistik</span>
+        <h3>Ein Wort als Zählprofil</h3>
+        <p>Für jedes Wort schreiben wir in eine Zeile, wie oft jedes andere Wort in seiner Nähe steht: sein <strong>Zählprofil</strong>. Das ist reines Zählen, ohne jedes Verständnis.</p>
+        <p>Vergleicht man ganze Zeilen mit dem Kosinus (Kapitel 5), gibt es erst eine Überraschung: „König“ wirkt „Hund“ ähnlicher als „Königin“. Schuld ist „der“. Es steht neben fast allem, was männlich ist, und überdeckt den Rest.</p>
+        <p>Lässt man die Artikel beim Vergleich weg, wird es klar: König und Königin, Hund und Katze, Brot und Käse haben fast gleiche Zeilen, König und Hund kaum. Die Artikel sind aber nicht nutzlos: Genau in der/die steckt der Unterschied zwischen König und Königin.</p>
+        <div class="ex"><b>Die Idee dahinter</b>Wer „Der ___ bellt im Garten“ liest, weiß ohne das fehlende Wort, dass ein Tier gemeint ist. Die Umgebung trägt die Bedeutung. Der Linguist J. R. Firth sagte 1957: Man erkennt ein Wort an der Gesellschaft, in der es sich aufhält.</div>
+      </div></article>
+
+      <article class="step" data-step="verdichten" data-core><div class="card">
+        <span class="kicker">Verdichten</span>
+        <h3>Viele Spalten erzählen dasselbe</h3>
+        <p>Ein Zählprofil hat 65 Spalten, und vieles darin ist doppelt: Wo „regiert“ häufig ist, sind auch „trägt“ und „wohnt“ häufig. Diese Spalten erzählen eine Geschichte: <em>königlich</em>. „frisst“, „Futter“, „Garten“ erzählen <em>Tier</em>. „der/er“ gegen „die/sie“ erzählen <em>männlich oder weiblich</em>.</p>
+        <p>Ein Embedding ist eine <strong>verdichtete Fassung</strong> des Zählprofils: wenige Zahlen, aus denen sich das Profil wieder ablesen lässt, etwa „wie königlich“, „wie tierisch“, „wie weiblich“. Wörter mit gleichem Profil brauchen dann dieselben Zahlen. Darum landen sie nebeneinander.</p>
+      </div></article>
+
+      <article class="step" data-step="raten" data-core><div class="card">
+        <span class="kicker">Die Lernaufgabe</span>
+        <h3>Ein Ratespiel</h3>
+        <p>Wie findet ein Netz diese Verdichtung? Durch ein Ratespiel: Es sieht nur die 12 Zahlen eines Worts, etwa von „König“, und soll daraus das Zählprofil wiederherstellen, also für jedes der 65 Wörter raten, wie wahrscheinlich es daneben steht.</p>
+        <p>Gut geraten heißt: Die Wahrscheinlichkeiten passen zu den gezählten Anteilen. Wie gut, misst die Kreuzentropie aus Kapitel 3. Sie ist klein, wenn die wirklich vorkommenden Nachbarn hohe Wahrscheinlichkeit bekommen.</p>
+      </div></article>
+
+      <article class="step" data-step="punktzahl"><div class="card">
+        <span class="kicker">Im Kleinen</span>
+        <h3>Woher die Wahrscheinlichkeiten kommen</h3>
+        <p>Erst eine winzige Welt: vier Wörter in der Mitte (König, Königin, Hund, Katze), acht mögliche Nachbarn, alles in zwei Dimensionen. Jedes Wort in der Mitte hat seinen Pfeil <b>e</b>, seine Zeile aus der Tabelle. Jeder mögliche Nachbar bekommt einen zweiten Pfeil <b>u</b>.</p>
+        <p>Die Punktzahl eines Nachbarn ist das Skalarprodukt <b>u</b> · <b>e</b>: groß, wenn beide Pfeile in dieselbe Richtung zeigen (Kapitel 5). Die Softmax (Kapitel 3) macht aus den Punktzahlen Wahrscheinlichkeiten.</p>
+        <div class="ex"><b>Warum zwei Pfeile?</b>Ein Wort spielt zwei Rollen: Mal steht es in der Mitte, mal ist es der Nachbar. Für jede Rolle gibt es einen eigenen Pfeil.</div>
+      </div></article>
+
+      <article class="step" data-step="schubsen"><div class="card">
+        <span class="kicker">Lernen</span>
+        <h3>Lernen heißt schubsen</h3>
+        <p>Ein Paar aus dem Text: König → regiert. Gradientenabstieg (Kapitel 1) ändert die Pfeile so, dass „regiert“ wahrscheinlicher wird.</p>
+        <p>Was dabei passiert, kann man sehen: <b>e</b> von „König“ dreht sich zu <b>u</b> von „regiert“, und <b>u</b> von „regiert“ dreht sich zu <b>e</b> von „König“. Jedes Paar im Text ist ein kleiner Zug, der zwei Pfeile zueinander zieht.</p>
+      </div></article>
+
+      <article class="step" data-step="gleich" data-core><div class="card">
+        <span class="kicker">Der Kern</span>
+        <h3>Gleiche Nachbarn, gleicher Platz</h3>
+        <p>Jetzt alle Paare dieser kleinen Welt, viele Schritte lang. „König“ und „Königin“ werden von denselben Nachbarn gezogen: regiert, Krone, Schloss. Also landen sie in derselben Hälfte, näher beieinander als bei „Hund“. „Hund“ und „Katze“ landen gemeinsam in der anderen Hälfte, bei Futter und Fell.</p>
+        <p>Nur ein Zug ist verschieden: „der“ zieht König und Hund, „die“ zieht Königin und Katze. Darum liegen die Pfeile König → Königin und Hund → Katze am Ende fast parallel. Häufiges Nebeneinander wird zu Nähe, ein gleicher Unterschied wird zu einer gleichen Richtung.</p>
+      </div></article>
+
+      <article class="step" data-step="training" data-core><div class="card">
+        <span class="kicker">Live, in groß</span>
+        <h3>Alle 65 Wörter</h3>
+        <p>Jetzt dasselbe mit allen 65 Wörtern und 12 Zahlen pro Wort, 3000 Schritte (mit Adam, Kapitel 4). In 12 Dimensionen ist Platz für viele Unterschiede gleichzeitig.</p>
+        <p>Anschauen können wir 12 Dimensionen nur als Schatten auf die zwei Hauptkomponenten (Kapitel 5). Niemand hat dem Netz gesagt, was ein Tier oder ein König ist. Die Gruppen entstehen allein aus den gezählten Nachbarschaften.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Das Modell speichert die Sätze, aus denen es gelernt hat.“ Nein: Übrig bleiben nur 12 Zahlen pro Wort. Die 1200 Sätze stehen nirgends im Modell, nur ihre Statistik hat die Zahlen geformt.</div>
+      </div></article>
+
+      <article class="step" data-step="aehnlich"><div class="card">
+        <span class="kicker">Nachgemessen</span>
+        <h3>Ähnlich heißt: ähnliche Umgebung</h3>
+        <p>Das Bild ist nur ein Schatten. Gemessen wird in allen 12 Dimensionen, mit dem Kosinus aus Kapitel 5.</p>
+        <p>Die nächsten Nachbarn von „König“ sind „Prinz“ und „Königin“, die von „Hund“ sind Tiere, die von „Brot“ Essen. Genau so suchen Suchmaschinen ähnliche Texte.</p>
+      </div></article>
+
+      <article class="step" data-step="differenz"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Ein Pfeil von Wort zu Wort</h3>
+        <p>Zieht man zwei Punkte voneinander ab, Eintrag für Eintrag, entsteht der Pfeil vom einen zum anderen: <b>b</b> − <b>a</b> führt von <b>a</b> nach <b>b</b>.</p>
+        <p>Diesen Pfeil kann man an einen anderen Punkt anlegen. <b>c</b> + (<b>b</b> − <b>a</b>) heißt: Gehe von <b>c</b> aus denselben Weg wie von <b>a</b> nach <b>b</b>.</p>
+      </div></article>
+
+      <article class="step" data-step="achse" data-core><div class="card">
+        <span class="kicker">Eine Richtung</span>
+        <h3>Der Schatten auf Frau − Mann</h3>
+        <p>Der Pfeil Frau − Mann ist eine Richtung im 12-dimensionalen Raum. Auf sie werfen wir den Schatten aller Personenwörter: das Skalarprodukt mit dem auf Länge 1 gebrachten Pfeil (Kapitel 5).</p>
+        <p>Gebaut haben wir die Richtung nur aus „Mann“ und „Frau“. Trotzdem landen alle weiblichen Wörter rechts und alle männlichen links, auch Königin und König, Prinzessin und Prinz.</p>
+        <p>Warum? Die Zählprofile von „Frau“ und „Mann“ unterscheiden sich fast nur bei der/er gegenüber die/sie, die von „Königin“ und „König“ genau darin auch. Ein gleicher Unterschied in der Statistik wird ein gleicher Pfeil im Raum. So speichert das Netz Bedeutung: als <strong>Richtung</strong>.</p>
+      </div></article>
+
+      <article class="step" data-step="richtung"><div class="card">
+        <span class="kicker">Zwei Richtungen</span>
+        <h3>Eine selbst gewählte Ebene</h3>
+        <p>Eine zweite Richtung: König − Mann, also „königlich“. Den Anteil, der schon in Frau − Mann steckt, ziehen wir ab, damit beide Achsen senkrecht stehen. Zusammen ergeben sie eine Ebene, auf die wir den Schatten werfen.</p>
+        <p>Die Pfeile Mann → Frau, Vater → Mutter, Sohn → Tochter, König → Königin und Prinz → Prinzessin sind fast parallel, wie vorhin in der kleinen Welt.</p>
+      </div></article>
+
+      <article class="step" data-step="naechstes"><div class="card">
+        <span class="kicker">Werkzeug</span>
+        <h3>Welches Wort liegt am nächsten?</h3>
+        <p>Ein beliebiger Punkt im Raum ist meist kein Wort. Um ihn zu lesen, suchen wir das Wort mit dem größten Kosinus zu ihm, gemessen in allen 12 Dimensionen. Hier suchen wir der Übersicht halber nur unter den zehn Personenwörtern. Wandert der Punkt, wechselt das nächste Wort.</p>
+      </div></article>
+
+      <article class="step" data-step="analogie" data-core><div class="card">
+        <span class="kicker">Rechnen mit Bedeutung</span>
+        <h3>König − Mann + Frau</h3>
+        <p>Jetzt rechnen wir: Starte bei „König“ und gehe den Weg von „Mann“ zu „Frau“. Der Punkt, an dem man landet, liest sich als „Königin“.</p>
+        <p>Mit der Richtung Vater − Sohn (jung → alt) klappt es genauso: Prinz + (Vater − Sohn) landet bei „König“. Diese Rechnung machte word2vec 2013 berühmt, an Milliarden Wörtern statt 1200 Sätzen.</p>
+      </div></article>
+
+      <article class="step" data-step="bank" data-core><div class="card">
+        <span class="kicker">Die Grenze</span>
+        <h3>Ein Wort, zwei Bedeutungen</h3>
+        <p>„Bank“ kommt in unserem Text in zwei Bedeutungen vor: als Geldinstitut und als Sitzgelegenheit. Die Tabelle hat für „Bank“ aber nur eine einzige Zeile, und ihr Zählprofil ist eine Mischung aus beiden Umgebungen.</p>
+        <p>Entsprechend ist der Pfeil „Sparkasse“ ähnlich (0,86) und „Stuhl“ (0,69), viel mehr als die beiden einander (0,41). Welche Bank gemeint ist, verrät erst der Satz: „sitzt auf der Bank“ oder „bringt Geld zur Bank“. Das Embedding müsste sich nach den Nachbarwörtern im Satz richten. Genau das tut <strong>Attention</strong>, Kapitel 7.</p>
+      </div></article>
+
+      <article class="step" data-step="ausblick"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>In echten Modellen</h3>
+        <p>Große Sprachmodelle zerlegen Text in Wortteile (Tokens), etwa 50 000 bis 200 000 verschiedene. Ihre Tabelle <b>E</b> hat für jedes Token eine Zeile mit Tausenden Zahlen. Sie ist die erste Schicht jedes Transformers und wird mit allem anderen zusammen gelernt, aus demselben Grundsignal: Was steht neben was?</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Ein Embedding ist eine Zeile der Tabelle E: ein Wort als Pfeil mit wenigen Zahlen.</li><li>Die Zahlen kommen aus der Statistik: Wörter, die neben denselben Wörtern stehen, landen nebeneinander.</li><li>Ein gleicher Unterschied in den Nachbarschaften wird eine gleiche Richtung, darum König − Mann + Frau ≈ Königin.</li></ul>
+    <div class="take-f"><b>x</b> = <b>E</b>[Wort] &nbsp;&nbsp; <i>p</i>(Nachbar) = softmax(<b>u</b> · <b>e</b>)</div>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
+    <div class="quiz">
+      <details data-href="#nummern" data-label="„Ein Netz braucht Zahlen“"><summary>Warum reicht Durchnummerieren der Wörter nicht?</summary><p>Nummern behaupten Nachbarschaften, die es nicht gibt, etwa zwischen „Hund“ und „Holz“, und Mittelwerte zweier Nummern ergeben irgendein drittes Wort.</p></details>
+      <details data-href="#gleich" data-label="„Gleiche Nachbarn, gleicher Platz“"><summary>Warum liegen „König“ und „Königin“ am Ende nah beieinander?</summary><p>Sie werden von denselben Nachbarwörtern gezogen: regiert, Krone, Schloss. Nur der/die unterscheidet sie, und das wird zu einer eigenen Richtung.</p></details>
+      <details data-href="03-classification.html#ueberraschung" data-label="Kapitel 3, „Wie überrascht ist das Modell?“"><summary>Welcher Verlust aus Kapitel 3 bewertet das Ratespiel?<span class="from">Kapitel 3</span></summary><p>Die Kreuzentropie: −log der Wahrscheinlichkeit für den Nachbarn, der wirklich vorkam.</p></details>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>J. R. Firth (1957): „You shall know a word by the company it keeps.“ <i>A synopsis of linguistic theory 1930–1955</i>.</li>
+      <li>T. Mikolov u. a. (2013): <a href="https://arxiv.org/abs/1301.3781"><i>Efficient Estimation of Word Representations in Vector Space</i></a> (word2vec).</li>
+      <li>T. Mikolov, W. Yih, G. Zweig (2013): <a href="https://aclanthology.org/N13-1090/"><i>Linguistic Regularities in Continuous Space Word Representations</i></a>. NAACL.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="05-dimensions.html"><span class="dir">Zurück · Kapitel 5</span><span class="name">Viele Dimensionen</span></a>
+    <a class="next" href="07-attention.html"><span class="dir">Weiter · Kapitel 7</span><span class="name">Mischen nach Relevanz</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script src="wordmodel.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const FRAC = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+  const { rng, gauss, dotN, unit, sub, add, corpus, makeModel, D, SEED, STEPS } = WM;
+  const fin = WM.fin;
+  const BASE = makeModel();
+
+  // word groups for colour and for the map
+  const GROUPS = [
+    { name: 'Menschen', col: () => S.c.model, words: ['Mann', 'Frau', 'Vater', 'Mutter', 'Sohn', 'Tochter'] },
+    { name: 'Königshaus', col: () => S.c.accent, words: ['König', 'Königin', 'Prinz', 'Prinzessin', 'Krone', 'Schloss'] },
+    { name: 'Tiere', col: () => S.c.grad, words: ['Hund', 'Katze', 'Pferd', 'Vogel', 'Futter'] },
+    { name: 'Essen', col: () => S.c.error, words: ['Brot', 'Käse', 'Suppe', 'Kuchen'] },
+    { name: 'Geld und Sitzen', col: () => S.c['fg-2'], words: ['Geld', 'Sparkasse', 'Konto', 'Zinsen', 'Stuhl', 'Sofa', 'Holz', 'Bank'] },
+  ];
+  const CONTENT = GROUPS.flatMap((g) => g.words);
+  const colOf = (w) => { const g = GROUPS.find((g) => g.words.includes(w)); return g ? g.col() : S.c.muted; };
+
+  const st = {
+    idsA: 0, avgA: 0,
+    oh3N: 0, oh3D: 0, ohN: 0, ohDot: 0,
+    karN: 0, karD: 0, karXY: 0, tabW: 1, tabK: 0,
+    lkW: 'König', lkA: 0, lkM: null,
+    winI: 0, winOn: 0, cntA: 0, pairsN: 0,
+    coN: 0, coSim: 0, coGrp: 0, coStop: 0,
+    guessT: 0, guessA: 0,
+    toy: null, miniSel: 'König', eDemo: null, ghost: null, hiU: -1, miniU: 1, miniAll: 0, miniPar: 0, miniDist: 0, barsA: 0, probA: 0,
+    mapM: null, mapHi: null,
+    nearW: 'König',
+    vsT: 0, vsMove: 0,
+    axN: 0, plPairs: 0, plAna: 0, plAnaK: 0, plAge: 0, plRead: 0, prA: 0, prX: 0, prY: 0,
+    bankA: 0,
+  };
+  let story = null;
+
+  // ── 1. alphabetical ids ─────────────────────────────────────────
+  const ALPHA = (() => [...new Set(corpus(rng(SEED)).join(' ').split(' '))].sort((a, b) => a.localeCompare(b, 'de')))();
+  const idsV = S.canvas($('#v-ids'), (ctx, W, H) => {
+    const m = { l: 24, r: 24 }, n = ALPHA.length, X = lin(0, n - 1, m.l, W - m.r), y = H * 0.5;
+    ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(W - m.r, y); ctx.stroke();
+    const show = ['Brot', 'Hund', 'Holz', 'Katze', 'König', 'Kuchen', 'Vogel', 'Vater'];
+    ALPHA.forEach((w, i) => { const on = show.includes(w); ctx.fillStyle = on ? colOf(w) : S.alpha('fg', 0.3); ctx.fillRect(X(i) - 1, y - (on ? 8 : 4), 2, on ? 16 : 8); });
+    let k = 0;
+    ALPHA.forEach((w, i) => {
+      if (!show.includes(w)) return; const up = k++ % 2 === 0, a = clamp(st.idsA * show.length - (k - 1), 0, 1); if (a <= 0) return;
+      ctx.globalAlpha = a;
+      S.label(ctx, w, X(i), y + (up ? -30 : 30), colOf(w), S.font(14, 'body', '600'), 'center');
+      S.label(ctx, String(i), X(i), y + (up ? -14 : 14), S.c.muted, S.font(11, 'mono'), 'center');
+      ctx.globalAlpha = 1;
+    });
+    if (st.avgA > 0) {
+      const ih = ALPHA.indexOf('Hund'), ik = ALPHA.indexOf('Katze'), mid = (ih + ik) / 2, w = ALPHA[Math.round(mid)];
+      ctx.globalAlpha = st.avgA;
+      ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(ih), y + 46); ctx.quadraticCurveTo(X(mid), y + 80, X(ik), y + 46); ctx.stroke();
+      S.dot(ctx, X(Math.round(mid)), y, 5, S.c.accent);
+      S.label(ctx, `(Hund + Katze) / 2 = ${fmt(mid, 1)} → „${w}“`, X(mid), y + 100, S.c.accent, S.font(15, 'body', '600'), 'center');
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 2. one-hot rows ─────────────────────────────────────────────
+  const OH = ['Hund', 'Katze', 'Brot', 'König', 'Königin', 'Bank'];
+  const ohV = S.canvas($('#v-onehot'), (ctx, W, H) => {
+    const M = BASE, n = M.V, lab = 72, cw = (W - lab - 16) / n, rh = Math.min(34, (H - 90) / OH.length), y0 = 22;
+    S.label(ctx, `${n} Plätze, einer pro Wort`, lab, 8, S.c['fg-2'], S.font(12, 'body'), 'left');
+    OH.forEach((w, r) => {
+      const a = clamp(st.ohN - r, 0, 1); if (a <= 0) return;
+      ctx.globalAlpha = a; const y = y0 + r * rh, j = M.id[w];
+      S.label(ctx, w, lab - 10, y + rh / 2, colOf(w), S.font(14, 'body', '600'), 'right');
+      for (let i = 0; i < n; i++) { ctx.fillStyle = i === j ? colOf(w) : S.alpha('fg', 0.08); ctx.fillRect(lab + i * cw + 0.5, y + 3, Math.max(1, cw - 1), rh - 6); }
+      ctx.globalAlpha = 1;
+    });
+    if (st.ohDot > 0) {
+      ctx.globalAlpha = st.ohDot; const y = y0 + OH.length * rh + 30;
+      S.label(ctx, 'Hund · Katze = 0      Hund · Brot = 0      Hund · Hund = 1', W / 2, y, S.c.fg, S.font(15, 'mono', '600'), 'center');
+      S.label(ctx, 'Alle Wörter stehen senkrecht aufeinander: gleich unähnlich.', W / 2, y + 26, S.c['fg-2'], S.font(13, 'body'), 'center');
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 2a. three switches as three axes in 3D ──────────────────────
+  const OH3 = ['Hund', 'Katze', 'Brot'];
+  const oh3 = S.orbit($('#v-oh3'), {
+    yaw: -0.65, pitch: 0.45, zoom: 0.5, cz: 0.3, dist: 6,
+    draw(ctx, W, H, cam) {
+      const P = cam.P;
+      S.axes3(ctx, P, 1.25, OH3.map((w) => `${w}-Schalter`));
+      const tips = OH3.map((_, k) => { const e = [0, 0, 0]; e[k] = 1; return e; });
+      OH3.forEach((w, k) => {
+        const a = clamp(st.oh3N - k, 0, 1); if (a <= 0) return;
+        ctx.globalAlpha = a; S.arrow3(ctx, P, [0, 0, 0], tips[k].map((x) => x * a), colOf(w), 3.5, 12);
+        const q = P(tips[k].map((x) => x * 0.55)); S.label(ctx, `${w} = (${tips[k].join(', ')})`, q[0] + 10, q[1] - 12, colOf(w), S.font(13.5, 'body', '600'), 'left');
+        ctx.globalAlpha = 1;
+      });
+      if (st.oh3D > 0) {
+        ctx.globalAlpha = st.oh3D; ctx.setLineDash([5, 4]); ctx.strokeStyle = S.c['fg-2']; ctx.lineWidth = 1.5;
+        [[0, 1], [1, 2], [0, 2]].forEach(([i, j]) => { S.seg3(ctx, P, tips[i], tips[j]); const m = P(tips[i].map((x, k) => (x + tips[j][k]) / 2)); S.label(ctx, '√2 ≈ 1,41', m[0], m[1] + 14, S.c['fg-2'], S.font(12, 'mono'), 'center'); });
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+    },
+  });
+
+  // ── 4. a map placed by hand ─────────────────────────────────────
+  const KARTE = { Hund: [-2.3, 1.2], Katze: [-1.6, 1.9], Pferd: [-2.7, 2.3], Brot: [2.0, 1.0], Käse: [2.7, 0.5], Kuchen: [1.8, 1.8], König: [-0.4, -1.9], Königin: [0.5, -2.3] };
+  const KW = Object.keys(KARTE);
+  const karteV = S.canvas($('#v-karte'), (ctx, W, H) => {
+    const k = Math.min(W / 7.6, (H - 30) / 6.4), cx = W / 2, cy = H / 2, P = (p) => [cx + p[0] * k, cy - p[1] * k];
+    S.axes(ctx, { x: Object.assign((v) => cx + v * k, { r: [cx - 3.4 * k, cx + 3.4 * k] }), y: Object.assign((v) => cy - v * k, { r: [cy + 3 * k, cy - 3 * k] }), xt: [-3, -2, -1, 0, 1, 2, 3], yt: [-3, -2, -1, 0, 1, 2, 3], xfmt: String, yfmt: String, grid: true });
+    if (st.karD > 0) {
+      ctx.globalAlpha = st.karD;
+      [['Hund', 'Katze', S.c.grad], ['Hund', 'Brot', S.c.error]].forEach(([a, b, c]) => {
+        const pa = P(KARTE[a]), pb = P(KARTE[b]), d = Math.hypot(KARTE[a][0] - KARTE[b][0], KARTE[a][1] - KARTE[b][1]);
+        ctx.setLineDash([5, 4]); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(...pa); ctx.lineTo(...pb); ctx.stroke(); ctx.setLineDash([]);
+        S.label(ctx, `Abstand ${fmt(d, 1)}`, (pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2 - 12, c, S.font(13, 'mono', '600'), 'center');
+      });
+      ctx.globalAlpha = 1;
+    }
+    KW.forEach((w, i) => {
+      const a = clamp(st.karN - i, 0, 1); if (a <= 0) return;
+      const from = [0, -3.4], p = P(KARTE[w].map((x, j) => S.lerp(from[j], x, S.ease(a))));
+      S.dot(ctx, p[0], p[1], 6, colOf(w), S.c.surface, 2);
+      S.label(ctx, w, p[0] + 10, p[1] - 4, colOf(w), S.font(14, 'body', '600'), 'left');
+      if (st.karXY > 0 && a >= 1) { ctx.globalAlpha = st.karXY; S.label(ctx, `(${fmt(KARTE[w][0], 1)}; ${fmt(KARTE[w][1], 1)})`, p[0] + 10, p[1] + 13, S.c['fg-2'], S.font(11.5, 'mono'), 'left'); ctx.globalAlpha = 1; }
+    });
+  });
+
+  // ── 5. the map as a table, looked up with a one-hot vector ──────
+  const TAB = ['Hund', 'Katze', 'Brot'];
+  const tab3V = S.canvas($('#v-tab3'), (ctx, W, H) => {
+    const sel = st.tabW, x = TAB.map((_, i) => (i === sel ? 1 : 0)), fs = W < 560 ? 13 : 16, rh = Math.min(54, H / 7), cw = W < 560 ? 56 : 80;
+    const y0 = H * 0.2, tx = W < 560 ? 92 : W / 2 - 200, xx = tx - (W < 560 ? 40 : 70);
+    S.label(ctx, 'x', xx + 14, y0 - 22, S.c.fg, S.font(18, 'math', 'italic'), 'center');
+    S.label(ctx, 'Tabelle', tx + cw, y0 - 22, S.c.fg, S.font(15, 'body', '600'), 'center');
+    TAB.forEach((w, i) => {
+      const y = y0 + i * rh, on = i === sel, done = st.tabK > i;
+      ctx.fillStyle = on ? S.alpha('accent', 0.25) : S.alpha('fg', 0.06); ctx.fillRect(xx, y + 4, 28, rh - 8);
+      S.label(ctx, String(x[i]), xx + 14, y + rh / 2, on ? S.c.accent : S.c.muted, S.font(fs, 'mono', '600'), 'center');
+      ctx.fillStyle = done && on ? S.alpha('accent', 0.2) : S.alpha('fg', 0.05); ctx.fillRect(tx, y + 4, 2 * cw, rh - 8);
+      KARTE[w].forEach((v, j) => S.label(ctx, fmt(v, 1), tx + (j + 0.5) * cw, y + rh / 2, done && !on ? S.c.muted : S.c.fg, S.font(fs, 'mono', '600'), 'center'));
+      S.label(ctx, w, tx + 2 * cw + 10, y + rh / 2, colOf(w), S.font(fs - 1, 'body', '600'), 'left');
+    });
+    S.label(ctx, '·', xx + 28 + (tx - xx - 28) / 2, y0 + 1.5 * rh, S.c.fg, S.font(22, 'math'), 'center');
+    // the sum, term by term
+    const ly = y0 + 3 * rh + 30, n = Math.min(3, Math.floor(st.tabK));
+    if (n > 0) {
+      const terms = TAB.slice(0, n).map((w, i) => `${x[i]} · (${fmt(KARTE[w][0], 1)}; ${fmt(KARTE[w][1], 1)})`);
+      ctx.font = S.font(fs - 1, 'mono', '500'); const lw = W - 24;
+      let line = '', yy = ly; const out = [];
+      terms.forEach((t, i) => { const piece = (i ? ' + ' : '') + t; if (ctx.measureText(line + piece).width > lw) { out.push(line); line = piece.trim(); } else line += piece; });
+      out.push(line);
+      out.forEach((l) => { S.label(ctx, l, W / 2, yy, S.c.fg, S.font(fs - 1, 'mono', '500'), 'center'); yy += 24; });
+      if (st.tabK >= 3) { const w = TAB[sel]; S.label(ctx, `= (${fmt(KARTE[w][0], 1)}; ${fmt(KARTE[w][1], 1)})  =  Zeile von „${w}“`, W / 2, yy + 8, S.c.accent, S.font(fs, 'mono', '600'), 'center'); }
+    }
+  });
+
+  // ── 9–11. a tiny world in two dimensions ────────────────────────
+  const TC = ['König', 'Königin', 'Hund', 'Katze'], TO = ['der', 'die', 'regiert', 'Krone', 'Schloss', 'frisst', 'Futter', 'Fell'];
+  const TNB = { König: ['der', 'regiert', 'Krone', 'Schloss'], Königin: ['die', 'regiert', 'Krone', 'Schloss'], Hund: ['der', 'frisst', 'Futter', 'Fell'], Katze: ['die', 'frisst', 'Futter', 'Fell'] };
+  function toyNew() { const r = rng(5); return { E: TC.map(() => [gauss(r) * 0.5, gauss(r) * 0.5]), U: TO.map(() => [gauss(r) * 0.5, gauss(r) * 0.5]), t: 0 }; }
+  const toyP = (T, e) => { const z = T.U.map((u) => u[0] * e[0] + u[1] * e[1]), m = Math.max(...z), x = z.map((v) => Math.exp(v - m)), s = x.reduce((a, b) => a + b); return x.map((v) => v / s); };
+  // full-batch gradient step; q = target distribution per centre word (or one single pair)
+  function toyStep(T, lr, only = null) {
+    const gE = T.E.map(() => [0, 0]), gU = T.U.map(() => [0, 0]);
+    TC.forEach((w, i) => {
+      if (only && only[0] !== i) return;
+      const p = toyP(T, T.E[i]), q = TO.map((o, j) => (only ? (j === only[1] ? 1 : 0) : TNB[w].includes(o) ? 1 / 4 : 0));
+      TO.forEach((_, j) => { const g = p[j] - q[j]; gE[i][0] += g * T.U[j][0]; gE[i][1] += g * T.U[j][1]; gU[j][0] += g * T.E[i][0]; gU[j][1] += g * T.E[i][1]; });
+    });
+    return { E: T.E.map((e, i) => [e[0] - lr * gE[i][0], e[1] - lr * gE[i][1]]), U: T.U.map((u, j) => [u[0] - lr * gU[j][0], u[1] - lr * gU[j][1]]) };
+  }
+  const TOYF = (() => { const T = toyNew(); for (let s = 0; s < 600; s++) Object.assign(T, toyStep(T, 0.3)); return T; })();
+  const tcol = (w) => (w === 'König' || w === 'Königin' ? S.c.accent : S.c.grad);
+  const miniV = S.canvas($('#v-mini'), (ctx, W, H) => {
+    const T = st.toy; if (!T) return;
+    const wide = W > H * 1.25, nar = W < 560, pw = wide ? W * (nar ? 0.46 : 0.56) : W, ph = wide ? H : H * 0.58, cx = pw / 2, cy = ph / 2, lf = nar ? 10 : 11.5;
+    const sel = TC.indexOf(st.miniSel), E = T.E.map((e, i) => (i === sel && st.eDemo != null ? [1.7 * Math.cos(st.eDemo), 1.7 * Math.sin(st.eDemo)] : e));
+    const R = Math.max(0.6, ...E.filter((_, i) => st.miniAll > 0.5 || i === sel).map((e) => Math.hypot(...e)), ...(st.miniU > 0 ? T.U.map((u) => Math.hypot(...u)) : [])), k = Math.min(pw, ph) / (2.6 * R), P = (p) => [cx + p[0] * k, cy - p[1] * k];
+    ctx.strokeStyle = S.alpha('fg', 0.1); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - 1.25 * R * k, cy); ctx.lineTo(cx + 1.25 * R * k, cy); ctx.moveTo(cx, cy - 1.25 * R * k); ctx.lineTo(cx, cy + 1.25 * R * k); ctx.stroke();
+    if (st.ghost) { ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2; st.ghost.U.forEach((u, j) => { if (j === st.hiU) { ctx.strokeStyle = S.alpha('fg', 0.45); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(...P(u)); ctx.stroke(); } }); if (sel >= 0) { ctx.strokeStyle = S.alpha('accent', 0.6); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(...P(st.ghost.E[sel])); ctx.stroke(); } ctx.setLineDash([]); }
+    if (st.miniU > 0) {
+      ctx.globalAlpha = st.miniU;
+      const done = new Set();
+      TO.forEach((w, j) => {
+        const u = T.U[j], hi = j === st.hiU; ctx.strokeStyle = hi ? S.c.fg : S.alpha('fg', 0.45); ctx.fillStyle = ctx.strokeStyle; S.arrow(ctx, cx, cy, ...P(u), 8, hi ? 2.5 : 1.3);
+        if (done.has(j)) return;
+        // arrows that (almost) coincide share one label
+        const grp = TO.map((_, i) => i).filter((i) => !done.has(i) && Math.hypot(T.U[i][0] - u[0], T.U[i][1] - u[1]) < 0.12 * R); grp.forEach((i) => done.add(i));
+        const q = P(u.map((x) => x * 1.1)), any = grp.includes(st.hiU);
+        S.label(ctx, `u ${grp.map((i) => TO[i]).join(nar ? ',' : ', ')}`, q[0] + (u[0] >= 0 ? 4 : -4), q[1] + (u[1] >= 0 ? -6 : 8), any ? S.c.fg : S.c['fg-2'], S.font(lf, 'body', any ? '600' : '400'), u[0] >= 0 ? 'left' : 'right');
+      });
+      ctx.globalAlpha = 1;
+    }
+    TC.forEach((w, i) => {
+      if (st.miniAll < 0.5 && i !== sel) return;
+      const e = E[i]; ctx.strokeStyle = tcol(w); ctx.fillStyle = tcol(w); S.arrow(ctx, cx, cy, ...P(e), 12, 3.2);
+      const q = P(e.map((x) => x * 1.2)); S.label(ctx, `e ${w}`, q[0], q[1] + (e[1] >= 0 ? -8 : 10), tcol(w), S.font(13.5, 'body', '600'), 'center');
+    });
+    if (st.miniDist > 0) {
+      ctx.globalAlpha = st.miniDist;
+      [[0, 1, S.c.accent], [0, 2, S.c['fg-2']]].forEach(([a, b, c]) => { const pa = P(E[a]), pb = P(E[b]); ctx.setLineDash([5, 4]); ctx.strokeStyle = c; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(...pa); ctx.lineTo(...pb); ctx.stroke(); ctx.setLineDash([]); S.label(ctx, `Abstand ${fmt(Math.hypot(E[a][0] - E[b][0], E[a][1] - E[b][1]), 1)}`, (pa[0] + pb[0]) / 2 + 8, (pa[1] + pb[1]) / 2, c, S.font(12.5, 'mono', '600'), 'left'); });
+      ctx.globalAlpha = 1;
+    }
+    if (st.miniPar > 0) {
+      ctx.globalAlpha = st.miniPar; ctx.setLineDash([6, 4]); ctx.lineWidth = 2.5; ctx.strokeStyle = S.c.error; ctx.fillStyle = S.c.error;
+      [[0, 1], [2, 3]].forEach(([a, b]) => S.arrow(ctx, ...P(E[a]), ...P(E[b]), 11, 2.5));
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
+    // bars: scores and probabilities for the selected word
+    if (sel >= 0 && st.barsA > 0) {
+      ctx.globalAlpha = st.barsA;
+      const e = E[sel], sc = T.U.map((u) => u[0] * e[0] + u[1] * e[1]), p = toyP(T, e);
+      const bx = wide ? pw + (nar ? 58 : 70) : 74, by = wide ? H * 0.14 : ph + 22, bw = (wide ? W - pw - 90 : W - 96), rh = Math.min(26, (wide ? H * 0.78 : H - ph - 30) / TO.length);
+      const half = bw * 0.48, mid = bx + half, smax = Math.max(4, ...sc.map(Math.abs));
+      S.label(ctx, st.probA > 0.5 ? `Wahrscheinlichkeit neben „${TC[sel]}“` : `Punktzahl u · e für „${TC[sel]}“`, bx + bw / 2 - 30, by - 12, S.c['fg-2'], S.font(12, 'body', '600'), 'center');
+      TO.forEach((w, j) => {
+        const y = by + j * rh, hi = j === st.hiU, true_ = TNB[TC[sel]].includes(w);
+        S.label(ctx, w, bx - 8, y + rh / 2, hi ? S.c.fg : true_ ? S.c.fg : S.c['fg-2'], S.font(12, 'body', hi || true_ ? '600' : '400'), 'right');
+        // score bar (centred) fades into probability bar (from the left)
+        const sw = (sc[j] / smax) * half, pwid = p[j] * bw;
+        const x0 = S.lerp(sc[j] >= 0 ? mid : mid + sw, bx, st.probA), wd = S.lerp(Math.abs(sw), pwid, st.probA);
+        ctx.fillStyle = st.probA > 0.5 ? (true_ ? tcol(TC[sel]) : S.alpha('fg', 0.35)) : sc[j] >= 0 ? S.c.model : S.c.error;
+        ctx.fillRect(x0, y + 4, Math.max(1, wd), rh - 8);
+        S.label(ctx, st.probA > 0.5 ? `${fmt(p[j] * 100, 0)} %` : fmt(sc[j], 1), Math.max(x0 + wd, st.probA > 0.5 ? bx : mid) + 5, y + rh / 2, S.c['fg-2'], S.font(11, 'mono'), 'left');
+      });
+      if (st.probA < 0.5) { ctx.strokeStyle = S.alpha('fg', 0.3); ctx.beginPath(); ctx.moveTo(mid, by); ctx.lineTo(mid, by + TO.length * rh); ctx.stroke(); }
+      if (st.probA > 0.5) S.label(ctx, 'farbig: echte Nachbarn', bx, by + TO.length * rh + 12, S.c['fg-2'], S.font(11.5, 'body'), 'left');
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 6. lookup: one-hot × E picks a row ──────────────────────────
+  const heat = (v, mx) => { const a = clamp(Math.abs(v) / mx, 0, 1); return [v >= 0 ? S.c.model : S.c.error, a]; };
+  const lookV = S.canvas($('#v-lookup'), (ctx, W, H) => {
+    const M = st.lkM || fin(), n = M.V, j = M.id[st.lkW], top = 26, rh = (H - top - 12) / n;
+    const xw = 16, gap = W < 560 ? 14 : 30, lab = W < 560 ? 52 : 70, ew = Math.min(D * 22, (W - lab - xw - 3 * gap) * 0.5), cw = ew / D, outW = Math.min(D * 22, W - lab - xw - ew - 3 * gap);
+    const x0 = Math.max(lab, (W - (xw + ew + outW + 2 * gap)) / 2), ex0 = x0 + xw + gap, ox = ex0 + ew + gap;
+    const mx = Math.max(...M.E.flat().map(Math.abs));
+    S.label(ctx, 'x', x0 + xw / 2, 10, S.c.fg, S.font(16, 'math', 'italic'), 'center');
+    S.label(ctx, `E  (${n} × ${D})`, ex0 + ew / 2, 10, S.c.fg, S.font(15, 'math', 'italic'), 'center');
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = i === j ? S.c.accent : S.alpha('fg', 0.08); ctx.fillRect(x0, top + i * rh + 0.5, xw, Math.max(1, rh - 1));
+      for (let k = 0; k < D; k++) { const [c, a] = heat(M.E[i][k], mx); ctx.fillStyle = c; ctx.globalAlpha = i === j ? 0.25 + 0.75 * a : 0.12 + 0.5 * a; ctx.fillRect(ex0 + k * cw, top + i * rh, cw - 0.5, Math.max(1, rh - 0.5)); }
+    }
+    ctx.globalAlpha = 1;
+    const yj = top + j * rh;
+    ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2; ctx.strokeRect(ex0 - 1, yj - 1, ew + 1, rh + 1);
+    S.label(ctx, `${st.lkW}: 1`, x0 - 6, yj + rh / 2, S.c.accent, S.font(W < 560 ? 11 : 13, 'body', '600'), 'right');
+    S.label(ctx, '·', x0 + xw + gap / 2, top + (H - top) / 2, S.c.fg, S.font(22, 'math'), 'center');
+    S.label(ctx, '= Zeile', ex0 + ew + gap / 2 + 4, yj + rh / 2 - 16, S.c.accent, S.font(12, 'body'), 'center');
+    // the picked row, enlarged, slides out
+    if (st.lkA > 0) {
+      ctx.globalAlpha = st.lkA; const bw = outW / D, bh = Math.min(120, H * 0.3), cy = clamp(yj + rh / 2, top + bh / 2 + 18, H - bh / 2 - 22);
+      ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ox, cy); ctx.lineTo(ox + outW, cy); ctx.stroke();
+      M.E[j].forEach((v, k) => { ctx.fillStyle = v >= 0 ? S.c.model : S.c.error; const h = (v / mx) * (bh / 2); ctx.fillRect(ox + k * bw + 1, v >= 0 ? cy - h : cy, bw - 2, Math.abs(h)); });
+      S.label(ctx, W < 560 ? `„${st.lkW}“` : `Embedding von „${st.lkW}“`, ox + outW / 2, cy - bh / 2 - 10, S.c.fg, S.font(13, 'body', '600'), 'center');
+      S.label(ctx, `${D} Zahlen`, ox + outW / 2, cy + bh / 2 + 12, S.c['fg-2'], S.font(12, 'body'), 'center');
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 7. neighbours in a window ───────────────────────────────────
+  const DEMO_SENT = (() => { const s = corpus(rng(SEED)); return (s.find((x) => /König wohnt im Schloss/.test(x)) || s.find((x) => x.includes('König ')) || s[0]).split(' '); })();
+  const DEMO_PAIRS = (() => { const out = []; DEMO_SENT.forEach((c, i) => { for (let k = -2; k <= 2; k++) if (k && DEMO_SENT[i + k]) out.push([i, c, DEMO_SENT[i + k]]); }); return out; })();
+  const countsOf = (M, w, n = 6) => { const c = {}; let tot = 0; M.pairs.forEach(([a, b]) => { if (a === M.id[w]) { c[b] = (c[b] || 0) + 1; tot++; } }); return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, n).map(([b, k]) => [M.vocab[b], k / tot]); };
+  const corpV = S.canvas($('#v-corpus'), (ctx, W, H) => {
+    const M = BASE, words = DEMO_SENT, fs = Math.min(20, W / 26);
+    ctx.font = S.font(fs, 'body', '500');
+    const gapW = fs * 0.45, widths = words.map((w) => ctx.measureText(w).width), tot = widths.reduce((a, b) => a + b, 0) + gapW * (words.length - 1);
+    let x = Math.max(10, (W - tot) / 2); const y = 44, c = Math.round(st.winI);
+    words.forEach((w, i) => {
+      const d = Math.abs(i - c), inWin = st.winOn > 0 && d <= 2;
+      if (inWin) { ctx.fillStyle = d === 0 ? S.alpha('accent', 0.28) : S.alpha('grad', 0.22); ctx.fillRect(x - 3, y - fs * 0.85, widths[i] + 6, fs * 1.6); }
+      S.label(ctx, w, x, y, inWin ? (d === 0 ? S.c.accent : S.c.grad) : S.c.fg, S.font(fs, 'body', inWin ? '600' : '500'), 'left');
+      x += widths[i] + gapW;
+    });
+    // the pairs written down so far
+    const np = Math.round(st.pairsN);
+    if (np > 0 && st.cntA < 1) {
+      ctx.globalAlpha = 1 - st.cntA;
+      const cols = W < 560 ? 3 : 4, cw = (W - 20) / cols, rh = 22, y0 = y + 46;
+      S.label(ctx, `notierte Paare: ${np}`, 10, y0 - 16, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      DEMO_PAIRS.slice(0, np).forEach(([, a, b], i) => S.label(ctx, `${a} → ${b}`, 10 + (i % cols) * cw, y0 + 8 + Math.floor(i / cols) * rh, i === np - 1 ? S.c.accent : S.c.fg, S.font(W < 560 ? 11.5 : 13, 'mono'), 'left'));
+      ctx.globalAlpha = 1;
+    }
+    if (st.cntA > 0) {
+      ctx.globalAlpha = st.cntA;
+      const cols = ['König', 'Königin', 'Hund'], cw = (W - 20) / 3, y0 = y + 50, rh = Math.min(30, (H - y0 - 10) / 7);
+      cols.forEach((w, k) => {
+        const x0 = 10 + k * cw, list = countsOf(M, w), narrow = cw < 180, lx = x0 + cw * 0.42, fs2 = narrow ? 11 : 12.5;
+        S.label(ctx, narrow ? `„${w}“` : `neben „${w}“`, x0 + cw / 2, y0, colOf(w), S.font(narrow ? 12.5 : 14, 'body', '600'), 'center');
+        list.forEach(([nb, f], i) => {
+          const yy = y0 + 20 + i * rh, bwid = cw * (narrow ? 0.3 : 0.38) * clamp(f / 0.4, 0, 1);
+          S.label(ctx, nb, lx - 5, yy + rh / 2, S.c.fg, S.font(fs2, 'body'), 'right');
+          ctx.fillStyle = colOf(w); ctx.fillRect(lx, yy + 4, Math.max(1, bwid), rh - 8);
+          S.label(ctx, `${fmt(f * 100, 0)}${narrow ? '' : ' %'}`, lx + bwid + 4, yy + rh / 2, S.c['fg-2'], S.font(narrow ? 10 : 11, 'mono'), 'left');
+        });
+      });
+      S.label(ctx, 'Anteil an allen Nachbarn dieses Worts, über alle 1200 Sätze', W / 2, H - 12, S.c['fg-2'], S.font(12, 'body'), 'center');
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 8. the guessing game: a guess vs. reality ───────────────────
+  const REAL_K = countsOf(BASE, 'König', 99);
+  const guessOf = () => { const M = BASE, p0 = M.probs(M.id['König']), q = Object.fromEntries(REAL_K); return M.vocab.map((w, i) => S.lerp(p0[i], q[w] || 0.0005, st.guessT)); };
+  const taskV = S.canvas($('#v-task'), (ctx, W, H) => {
+    const M = BASE, p = guessOf(), real = Object.fromEntries(REAL_K);
+    const list = Object.keys(real).slice(0, 11), rest = M.vocab.filter((w) => !list.includes(w));
+    const rows = [...list.map((w) => [w, real[w], p[M.id[w]]]), [`übrige ${rest.length} Wörter`, rest.reduce((s, w) => s + (real[w] || 0), 0), rest.reduce((s, w) => s + p[M.id[w]], 0)]];
+    const lab = W < 500 ? 100 : 130, X = lin(0, 0.85, lab, W - 50), rh = Math.min(32, (H - 40) / rows.length), y0 = 30;
+    S.label(ctx, 'Rahmen: wie oft wirklich daneben · gefüllt: geraten', lab, 12, S.c['fg-2'], S.font(12, 'body'), 'left');
+    rows.forEach(([w, q, pp], i) => {
+      const y = y0 + i * rh;
+      S.label(ctx, w, lab - 10, y + rh / 2, i === rows.length - 1 ? S.c.muted : S.c.fg, S.font(W < 500 ? 11.5 : 13, 'body'), 'right');
+      if (st.guessA > 0) { ctx.globalAlpha = st.guessA; ctx.fillStyle = S.c.accent; ctx.fillRect(X(0), y + 5, Math.max(1, X(pp) - X(0)), rh - 10); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = S.c.fg; ctx.lineWidth = 1.5; ctx.strokeRect(X(0), y + 3, X(q) - X(0), rh - 6);
+      S.label(ctx, `${fmt((st.guessA > 0 ? pp : q) * 100, 0)} %`, Math.max(X(pp), X(q)) + 6, y + rh / 2, S.c['fg-2'], S.font(11.5, 'mono'), 'left');
+    });
+  });
+  const taskCE = () => { const p = guessOf(); return -REAL_K.reduce((s, [w, f]) => s + f * Math.log(p[BASE.id[w]]), 0); };
+
+  // ── 8–9. count profiles: who stands next to whom, as a table ────
+  const PROF = (() => { const M = BASE, P = M.vocab.map(() => Array(M.V).fill(0)); M.pairs.forEach(([a, b]) => (P[a][b] += 1)); return P.map((row) => { const s = row.reduce((x, y) => x + y, 0) || 1; return row.map((x) => x / s); }); })();
+  const STOPW = ['der', 'die', 'das', 'den', 'dem'];
+  const profCos = (a, b, stop = 0) => { const f = (w) => unit(PROF[BASE.id[w]].map((x, j) => (STOPW.includes(BASE.vocab[j]) ? x * (1 - stop) : x))); return dotN(f(a), f(b)); };
+  const CO_R = ['König', 'Königin', 'Prinz', 'Mann', 'Frau', 'Hund', 'Katze', 'Brot', 'Käse'];
+  const CO_C = ['der', 'die', 'regiert', 'trägt', 'wohnt', 'isst', 'lacht', 'schläft', 'frisst', 'Futter', 'Garten', 'füttert'].filter((w) => w in BASE.id);
+  const CO_G = [
+    { name: 'Artikel', words: ['der', 'die'], col: () => S.c['fg-2'] },
+    { name: 'königlich', words: ['regiert', 'trägt', 'wohnt'], col: () => S.c.accent },
+    { name: 'Tier', words: ['frisst', 'Futter', 'Garten', 'füttert'], col: () => S.c.grad },
+  ];
+  const coocV = S.canvas($('#v-cooc'), (ctx, W, H) => {
+    const nar = W < 500, lab = nar ? 62 : 84, top = nar ? 64 : 86, nC = CO_C.length, cw = (W - lab - 12) / nC;
+    const rh = Math.min(30, (H - top - (nar ? 96 : 130)) / CO_R.length), mx = 0.3;
+    if (st.coGrp > 0) {
+      CO_G.forEach((g) => {
+        const idx = g.words.map((w) => CO_C.indexOf(w)).filter((i) => i >= 0); if (!idx.length) return;
+        const x0 = lab + Math.min(...idx) * cw, x1 = lab + (Math.max(...idx) + 1) * cw;
+        ctx.globalAlpha = st.coGrp * 0.16; ctx.fillStyle = g.col(); ctx.fillRect(x0, top - 6, x1 - x0, CO_R.length * rh + 8); ctx.globalAlpha = st.coGrp;
+        ctx.fillStyle = g.col(); ctx.fillRect(x0 + 2, 6, x1 - x0 - 4, 3);
+        S.label(ctx, g.name, (x0 + x1) / 2, 18, g.col(), S.font(W < 500 ? 10.5 : 12, 'body', '600'), 'center'); ctx.globalAlpha = 1;
+      });
+    }
+    CO_C.forEach((w, j) => { ctx.save(); ctx.translate(lab + (j + 0.5) * cw, top - 10); ctx.rotate(-0.9); S.label(ctx, w, 0, 0, S.c['fg-2'], S.font(W < 500 ? 10.5 : 12, 'body'), 'left'); ctx.restore(); });
+    CO_R.forEach((w, i) => {
+      const a = clamp(st.coN - i, 0, 1); if (a <= 0) return;
+      ctx.globalAlpha = a; const y = top + i * rh, row = PROF[BASE.id[w]];
+      S.label(ctx, w, lab - 8, y + rh / 2, colOf(w), S.font(W < 500 ? 11.5 : 13, 'body', '600'), 'right');
+      CO_C.forEach((c, j) => {
+        const v = row[BASE.id[c]], x = lab + j * cw, dim = STOPW.includes(c) ? 1 - 0.75 * st.coStop : 1;
+        ctx.globalAlpha = a * dim;
+        ctx.fillStyle = S.alpha('fg', 0.05); ctx.fillRect(x + 1, y + 1, cw - 2, rh - 2);
+        if (v > 0) { ctx.fillStyle = colOf(w); ctx.globalAlpha = a * dim * (0.15 + 0.85 * clamp(v / mx, 0, 1)); ctx.fillRect(x + 1, y + 1, cw - 2, rh - 2); ctx.globalAlpha = a * dim; }
+        if (cw > 34 && v >= 0.01) S.label(ctx, fmt(v * 100, 0), x + cw / 2, y + rh / 2, S.c.fg, S.font(11, 'mono'), 'center');
+        ctx.globalAlpha = a;
+      });
+      ctx.globalAlpha = 1;
+    });
+    if (st.coSim > 0) {
+      ctx.globalAlpha = st.coSim;
+      const pairs = [['König', 'Königin'], ['Hund', 'Katze'], ['Mann', 'Frau'], ['Brot', 'Käse'], ['König', 'Hund'], ['Hund', 'Brot']];
+      const y0 = top + CO_R.length * rh + (nar ? 18 : 26), colsN = nar ? 2 : 3, pw = (W - 20) / colsN;
+      S.label(ctx, st.coStop > 0.5 ? (nar ? 'Kosinus ohne Artikel:' : 'Ähnlichkeit der Zeilen ohne der, die, das, den, dem (Kosinus):') : (nar ? 'Kosinus der ganzen Zeilen:' : 'Ähnlichkeit der ganzen Zeilen (Kosinus über alle 65 Spalten):'), 10, y0 - 4, S.c['fg-2'], S.font(12, 'body', '600'), 'left');
+      pairs.forEach(([a, b], i) => { const c = profCos(a, b, st.coStop); S.label(ctx, `${a} · ${b} = ${fmt(c, 2)}`, 10 + (i % colsN) * pw, y0 + (nar ? 16 : 20) + Math.floor(i / colsN) * (nar ? 18 : 22), c > 0.6 ? S.c.fg : S.c['fg-2'], S.font(W < 500 ? 11.5 : 13, 'mono', c > 0.6 ? '600' : '400'), 'left'); });
+      ctx.globalAlpha = 1;
+    }
+    if (!nar) S.label(ctx, 'Prozent: Anteil an allen Nachbarn des Worts in der Zeile', W - 8, H - 8, S.c.muted, S.font(11, 'body'), 'right');
+  });
+
+  // ── 6. the map: PCA of content words, aligned frame to frame ────
+  let prevP = null;
+  function pca2(M, words) {
+    const X = words.map((w) => M.vec(w)), mean = Array(D).fill(0); X.forEach((x) => x.forEach((v, i) => (mean[i] += v / X.length)));
+    const C = X.map((x) => sub(x, mean)), comps = [];
+    for (let k = 0; k < 2; k++) {
+      let v = Array.from({ length: D }, (_, i) => (i === k ? 1 : 0.3));
+      for (let it = 0; it < 60; it++) { let w = Array(D).fill(0); C.forEach((x) => { const s = dotN(x, v); x.forEach((xi, i) => (w[i] += s * xi)); }); comps.forEach((u) => { const d = dotN(w, u); w = w.map((x, i) => x - d * u[i]); }); v = unit(w); }
+      comps.push(v);
+    }
+    let P = C.map((x) => [dotN(x, comps[0]), dotN(x, comps[1])]);
+    const rms = Math.sqrt(P.reduce((s, p) => s + p[0] ** 2 + p[1] ** 2, 0) / P.length) || 1; P = P.map((p) => [p[0] / rms, p[1] / rms]);
+    if (prevP && prevP.length === P.length) {
+      const fit = (Q) => { let a = 0, b = 0; Q.forEach((p, i) => { a += p[0] * prevP[i][0] + p[1] * prevP[i][1]; b += p[0] * prevP[i][1] - p[1] * prevP[i][0]; }); return [Math.atan2(b, a), Math.hypot(a, b)]; };
+      const R = P.map((p) => [p[0], -p[1]]), [t1, s1] = fit(P), [t2, s2] = fit(R), [Q, t] = s2 > s1 ? [R, t2] : [P, t1];
+      P = Q.map((p) => [p[0] * Math.cos(t) - p[1] * Math.sin(t), p[0] * Math.sin(t) + p[1] * Math.cos(t)]);
+    }
+    prevP = P;
+    return P;
+  }
+  const mapV = S.canvas($('#v-map'), (ctx, W, H) => {
+    const M = st.mapM || fin(), P = pca2(M, CONTENT), cx = W / 2, cy = H / 2 - 10, k = Math.min(W, H) / 5.4;
+    ctx.strokeStyle = S.alpha('fg', 0.07); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+    if (st.mapHi) { const i = CONTENT.indexOf(st.mapHi.w); st.mapHi.n.forEach((nw) => { const j = CONTENT.indexOf(nw); if (j < 0) return; ctx.strokeStyle = S.alpha('accent', 0.6); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx + P[i][0] * k, cy - P[i][1] * k); ctx.lineTo(cx + P[j][0] * k, cy - P[j][1] * k); ctx.stroke(); }); }
+    CONTENT.forEach((w, i) => {
+      const x = cx + P[i][0] * k, y = cy - P[i][1] * k, hot = st.mapHi && (st.mapHi.w === w);
+      S.dot(ctx, x, y, hot ? 6 : 4.5, colOf(w), S.c.surface, 1.5);
+      S.label(ctx, w, x + 8, y - 1, hot ? S.c.fg : colOf(w), S.font(hot ? 14 : 12.5, 'body', hot ? '600' : '500'), 'left');
+    });
+    // legend + loss
+    let lx = 8; GROUPS.forEach((g) => { S.dot(ctx, lx + 4, H - 12, 4, g.col(), S.c.surface, 1); S.label(ctx, g.name, lx + 12, H - 12, S.c['fg-2'], S.font(11.5, 'body'), 'left'); ctx.font = S.font(11.5, 'body'); lx += ctx.measureText(g.name).width + 26; });
+    if (M.loss.length > 1) {
+      const lw = Math.min(160, W * 0.3), lh = 46, x0 = W - lw - 10, y0 = 8, mx = Math.max(...M.loss), mn = 2.0;
+      ctx.strokeStyle = S.alpha('fg', 0.2); ctx.strokeRect(x0, y0, lw, lh);
+      ctx.strokeStyle = S.c.error; ctx.lineWidth = 1.5; ctx.beginPath();
+      M.loss.forEach((v, i) => { const px = x0 + (i / (STEPS / 10)) * lw, py = y0 + lh - ((v - mn) / (mx - mn)) * lh; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+      S.label(ctx, `Verlust ${fmt(M.L, 2)} · Schritt ${M.t}`, x0 + lw, y0 + lh + 12, S.c['fg-2'], S.font(11.5, 'mono'), 'right');
+    }
+  });
+
+  // ── 7. nearest neighbours as bars ───────────────────────────────
+  const nearV = S.canvas($('#v-near'), (ctx, W, H) => {
+    const M = fin(), w = st.nearW, list = M.nearest(M.E[M.id[w]], [w], 6, CONTENT), lab = 120, X = lin(0, 1, lab, W - 70), rh = Math.min(40, (H - 70) / 6), y0 = 52;
+    S.label(ctx, `„${w}“`, W / 2, 20, colOf(w), S.font(22, 'body', '600'), 'center');
+    list.forEach(([nw, c], i) => {
+      const y = y0 + i * rh;
+      S.label(ctx, nw, lab - 10, y + rh / 2, colOf(nw), S.font(14, 'body', '600'), 'right');
+      ctx.fillStyle = colOf(nw); ctx.fillRect(X(0), y + 6, Math.max(1, X(Math.max(0, c)) - X(0)), rh - 12);
+      S.label(ctx, fmt(c, 2), X(Math.max(0, c)) + 6, y + rh / 2, S.c['fg-2'], S.font(12.5, 'mono'), 'left');
+    });
+  });
+
+  // ── 8. vector differences in a toy plane ────────────────────────
+  const VA = [1, 1], VB = [3.2, 1.6], VC = [1.4, 3.2];
+  const vsubV = S.canvas($('#v-vsub'), (ctx, W, H) => {
+    const m = { l: 40, r: 20, t: 16, b: 34 }, span = 5.2, k = Math.min((W - m.l - m.r) / span, (H - m.t - m.b) / span), X = (x) => m.l + x * k, Y = (y) => H - m.b - y * k;
+    S.axes(ctx, { x: Object.assign((v) => X(v), { r: [X(0), X(span)] }), y: Object.assign((v) => Y(v), { r: [Y(0), Y(span)] }), xt: [0, 1, 2, 3, 4, 5], yt: [0, 1, 2, 3, 4, 5], xfmt: String, yfmt: String });
+    const d = sub(VB, VA), pt = (p, name, col) => { S.dot(ctx, X(p[0]), Y(p[1]), 6, col); S.label(ctx, `${name} (${fmt(p[0], 1)}; ${fmt(p[1], 1)})`, X(p[0]) + 10, Y(p[1]) + 14, col, S.font(13, 'body', '600'), 'left'); };
+    pt(VA, 'a', S.c.model); pt(VB, 'b', S.c.model); if (st.vsMove > 0) pt(VC, 'c', S.c.accent);
+    if (st.vsT > 0) {
+      const e = add(VA, d.map((x) => x * st.vsT)); ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad; S.arrow(ctx, X(VA[0]), Y(VA[1]), X(e[0]), Y(e[1]), 12, 3);
+      if (st.vsT > 0.95) S.label(ctx, `b − a = (${fmt(d[0], 1)}; ${fmt(d[1], 1)})`, X((VA[0] + VB[0]) / 2), Y((VA[1] + VB[1]) / 2) - 16, S.c.grad, S.font(13.5, 'mono', '600'), 'center');
+    }
+    if (st.vsMove > 0) {
+      const s = add(VA, sub(VC, VA).map((x) => x * st.vsMove)), e = add(s, d);
+      ctx.globalAlpha = Math.min(1, st.vsMove * 3); ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad; S.arrow(ctx, X(s[0]), Y(s[1]), X(e[0]), Y(e[1]), 12, 3);
+      if (st.vsMove > 0.98) { S.dot(ctx, X(e[0]), Y(e[1]), 6, S.c.accent, S.c.surface, 2); S.label(ctx, `c + (b − a) = (${fmt(e[0], 1)}; ${fmt(e[1], 1)})`, X(e[0]) - 8, Y(e[1]) - 16, S.c.accent, S.font(13.5, 'mono', '600'), 'right'); }
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── 15–18. chosen directions, built from single word pairs ──────
+  const PAIRS = [['Mann', 'Frau'], ['Vater', 'Mutter'], ['Sohn', 'Tochter'], ['König', 'Königin'], ['Prinz', 'Prinzessin']];
+  const PW = ['Mann', 'Frau', 'Vater', 'Mutter', 'Sohn', 'Tochter', 'König', 'Königin', 'Prinz', 'Prinzessin'];
+  const orth = (v, b) => unit(sub(v, b.map((x) => x * dotN(v, b))));
+  let AX = null;
+  function axes() {
+    if (AX) return AX;
+    const M = fin(), g = unit(sub(M.vec('Frau'), M.vec('Mann')));
+    const r = orth(sub(M.vec('König'), M.vec('Mann')), g);
+    const a = orth(sub(M.vec('Vater'), M.vec('Sohn')), r);
+    return (AX = { g, r, a });
+  }
+  const axisV = S.canvas($('#v-axis'), (ctx, W, H) => {
+    const M = fin(), { g } = axes(), xs = PW.map((w) => dotN(M.vec(w), g)), X = lin(-0.55, 0.55, 40, W - 40), y = H * 0.48;
+    ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(W - 30, y); ctx.stroke();
+    ctx.strokeStyle = S.alpha('fg', 0.3); ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(0), y - 90); ctx.lineTo(X(0), y + 90); ctx.stroke(); ctx.setLineDash([]);
+    S.label(ctx, '← in Richtung Mann', 30, y + 110, S.c['fg-2'], S.font(13, 'body', '600'), 'left');
+    S.label(ctx, 'in Richtung Frau →', W - 30, y + 110, S.c['fg-2'], S.font(13, 'body', '600'), 'right');
+    const order = PW.map((w, i) => [w, xs[i], i]).sort((a, b) => a[1] - b[1]);
+    order.forEach(([w, x, i], r) => {
+      const a = clamp(st.axN - i, 0, 1); if (a <= 0) return;
+      const base = w === 'Mann' || w === 'Frau', up = r % 2 === 0, lane = Math.floor(r / 2) % 2, yy = y + (up ? -1 : 1) * (26 + lane * 26);
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(x), y); ctx.lineTo(X(x), yy); ctx.stroke();
+      S.dot(ctx, X(x), y, base ? 7 : 5, colOf(w), S.c.surface, base ? 2.5 : 1.5);
+      S.label(ctx, w, X(x), yy + (up ? -8 : 8), colOf(w), S.font(W < 500 ? 11.5 : 13.5, 'body', base ? '700' : '600'), 'center');
+      ctx.globalAlpha = 1;
+    });
+    S.label(ctx, 'große Punkte: daraus ist die Richtung gebaut · kleine: Prüfung', W / 2, 16, S.c['fg-2'], S.font(12, 'body'), 'center');
+  });
+
+  const anaOf = (k) => (k === 0 ? ['König', 'Mann', 'Frau'] : ['Prinz', 'Sohn', 'Vater']);
+  const planeV = S.canvas($('#v-plane'), (ctx, W, H) => {
+    const M = fin(), { g, r, a } = axes(), t = st.plAge;
+    const hx = (v) => S.lerp(dotN(v, g), dotN(v, a), t), hy = (v) => dotN(v, r);
+    const pts = PW.map((w) => [hx(M.vec(w)), hy(M.vec(w))]), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const xr = [Math.min(...xs) - 0.25, Math.max(...xs) + 0.35], yr = [Math.min(...ys) - 0.2, Math.max(...ys) + 0.25];
+    const X = lin(xr[0], xr[1], 30, W - 30), Y = lin(yr[0], yr[1], H - 40, 34), fs = W < 500 ? 11.5 : 13.5;
+    S.label(ctx, t < 0.5 ? '← Mann' : '← Sohn (jung)', 30, H - 14, S.c['fg-2'], S.font(12.5, 'body', '600'), 'left');
+    S.label(ctx, t < 0.5 ? 'Frau →' : '(alt) Vater →', W - 30, H - 14, S.c['fg-2'], S.font(12.5, 'body', '600'), 'right');
+    S.label(ctx, '↑ König − Mann („königlich“)', 30, 14, S.c['fg-2'], S.font(12.5, 'body', '600'), 'left');
+    if (st.plPairs > 0) {
+      const prs = t < 0.5 ? PAIRS : [['Sohn', 'Vater'], ['Tochter', 'Mutter'], ['Prinz', 'König'], ['Prinzessin', 'Königin']];
+      prs.forEach(([p, q], i) => {
+        const al = clamp(st.plPairs * prs.length - i, 0, 1); if (al <= 0) return;
+        const A = pts[PW.indexOf(p)], B = pts[PW.indexOf(q)], e = [S.lerp(A[0], B[0], al), S.lerp(A[1], B[1], al)];
+        ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad; S.arrow(ctx, X(A[0]), Y(A[1]), X(e[0]), Y(e[1]), 10, 2.5);
+      });
+    }
+    PW.forEach((w, i) => { const [x, y] = pts[i]; S.dot(ctx, X(x), Y(y), 5, colOf(w), S.c.surface, 1.5); S.label(ctx, w, X(x) + 8, Y(y) - 9, colOf(w), S.font(fs, 'body', '600'), 'left'); });
+    const listAt = (v, ex, title, among = null) => {
+      const list = M.nearest(v, ex, 3, among), bx = W - 16;
+      S.label(ctx, title, bx, 40, S.c.accent, S.font(13.5, 'body', '600'), 'right');
+      list.forEach(([w, c], i) => S.label(ctx, `${w}  ${fmt(c, 2)}`, bx, 62 + i * 19, i === 0 ? S.c.fg : S.c['fg-2'], S.font(12.5, 'mono', i === 0 ? '600' : '400'), 'right'));
+      return list[0][0];
+    };
+    if (st.prA > 0) {
+      // a free point in the plane, read by its nearest word (cosine in all 12 dimensions)
+      ctx.globalAlpha = st.prA;
+      const v = add(add(g.map((x) => x * st.prX * (1 - t)), a.map((x) => x * st.prX * t)), r.map((x) => x * st.prY)), px = X(st.prX), py = Y(st.prY);
+      const best = listAt(v, [], 'nächste Personenwörter', PW), j = PW.indexOf(best);
+      if (j >= 0) { ctx.setLineDash([4, 4]); ctx.strokeStyle = S.c.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(X(pts[j][0]), Y(pts[j][1])); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, 9, 0, Math.PI * 2); ctx.moveTo(px - 14, py); ctx.lineTo(px + 14, py); ctx.moveTo(px, py - 14); ctx.lineTo(px, py + 14); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (st.plAna > 0) {
+      const [w0, w1, w2] = anaOf(st.plAnaK), A = M.vec(w0), d = sub(M.vec(w2), M.vec(w1)), tgt = add(A, d);
+      const s = [hx(A), hy(A)], e = [hx(add(A, d.map((x) => x * st.plAna))), hy(add(A, d.map((x) => x * st.plAna)))];
+      ctx.strokeStyle = S.c.accent; ctx.fillStyle = S.c.accent; S.arrow(ctx, X(s[0]), Y(s[1]), X(e[0]), Y(e[1]), 11, 2.5);
+      if (st.plAna > 0.98) {
+        ctx.strokeStyle = S.c.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X(e[0]), Y(e[1]), 9, 0, Math.PI * 2); ctx.stroke();
+        if (st.plRead > 0) listAt(tgt, [w0, w1, w2], `${w0} − ${w1} + ${w2} ≈`);
+      }
+    }
+  });
+
+  // ── 11. the two meanings of "Bank" on one axis ──────────────────
+  const BW = ['Stuhl', 'Sofa', 'Holz', 'Bank', 'Sparkasse', 'Konto', 'Geld', 'Zinsen'];
+  const bankV = S.canvas($('#v-bank'), (ctx, W, H) => {
+    const M = fin(), s = unit(sub(M.vec('Sparkasse'), M.vec('Stuhl'))), xs = BW.map((w) => dotN(M.vec(w), s));
+    const X = lin(Math.min(...xs) - 0.15, Math.max(...xs) + 0.15, 40, W - 40), y = H * 0.48;
+    ctx.strokeStyle = S.c.axis; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(W - 30, y); ctx.stroke();
+    S.label(ctx, '← Sitzen', 30, y + 70, S.c['fg-2'], S.font(13, 'body', '600'), 'left');
+    S.label(ctx, 'Geld →', W - 30, y + 70, S.c['fg-2'], S.font(13, 'body', '600'), 'right');
+    const order = BW.map((w, i) => [w, xs[i]]).sort((a, b) => a[1] - b[1]);
+    order.forEach(([w, x], i) => {
+      const bank = w === 'Bank', up = i % 2 === 0, yy = y + (up ? -1 : 1) * (bank ? 46 : 24);
+      ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(x), y); ctx.lineTo(X(x), yy); ctx.stroke();
+      S.dot(ctx, X(x), y, bank ? 7 : 5, bank ? S.c.accent : S.c['fg-2']);
+      S.label(ctx, w, X(x), yy + (up ? -8 : 8), bank ? S.c.accent : S.c.fg, S.font(bank ? 16 : 13, 'body', '600'), 'center');
+    });
+    if (st.bankA > 0) {
+      ctx.globalAlpha = st.bankA;
+      const cs = (x, y) => fmt(M.cos(M.E[M.id[x]], M.E[M.id[y]]), 2);
+      [['Bank', 'Sparkasse'], ['Bank', 'Stuhl'], ['Sparkasse', 'Stuhl']].forEach(([x, z], i) => S.label(ctx, `cos(${x}, ${z}) = ${cs(x, z)}`, W / 2, H - 70 + i * 22, i < 2 ? S.c.fg : S.c['fg-2'], S.font(13.5, 'mono', '600'), 'center'));
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const lookF = `${T('e', '<b>e</b>', '', 'das Embedding: die Zeile des Worts')} = ${T('x', '<b>x</b>', '', 'One-Hot: eine 1 an der Stelle des Worts, sonst 0')} · ${T('E', '<b>E</b>', 'c-new', 'die Tabelle: eine Zeile pro Wort, eine Spalte pro Koordinate')}`;
+  const toyF = `${T('s', 'Punktzahl<sub><i>j</i></sub> = <b>u</b><sub><i>j</i></sub> · <b>e</b>', 'c-new', 'Skalarprodukt: groß, wenn beide Pfeile in dieselbe Richtung zeigen')}<span class="sep">→</span>${T('p', 'softmax', '', 'macht aus Punktzahlen Wahrscheinlichkeiten (Kapitel 3)')}`;
+  const toyCopy = (T) => ({ E: T.E.map((e) => e.slice()), U: T.U.map((u) => u.slice()) });
+  const toyReset = (T) => Object.assign(st, { toy: T, miniSel: 'König', eDemo: null, ghost: null, hiU: -1, miniU: 1, miniAll: 0, miniPar: 0, miniDist: 0, barsA: 0, probA: 0 });
+  const steps = {
+    nummern: {
+      views: ['ids'],
+      formula: `Wort → ${T('n', 'Nummer', 'c-new', 'alphabetische Position im Wortschatz')}?`,
+      setup() { st.idsA = 0; st.avgA = 0; },
+      async play(a) {
+        a.say(`Unser Text hat ${ALPHA.length} verschiedene Wörter. Wir nummerieren sie alphabetisch.`);
+        await a.to(st, { idsA: 1 }, 3000, { ease: (t) => t });
+        a.hl('n'); a.say('„Hund“ steht neben „Holz“, „Katze“ neben „König“. Das sagt nichts über ihre Bedeutung.'); await a.wait(2800);
+        await a.to(st, { avgA: 1 }, 900);
+        a.say('Und das Netz würde mit diesen Zahlen rechnen: Der Mittelwert aus Hund und Katze wäre ein ganz anderes Wort.');
+      },
+    },
+    schalter: {
+      views: ['oh3'],
+      formula: `${T('h', 'Hund = (1, 0, 0)', '', 'nur der Hund-Schalter ist an')}<span class="sep">·</span>Katze = (0, 1, 0)<span class="sep">·</span>Brot = (0, 0, 1)`,
+      setup() { st.oh3N = 0; st.oh3D = 0; },
+      async play(a) {
+        a.hl('h'); a.say('Drei Wörter, drei Schalter. Jedes Wort ist ein Pfeil entlang seiner eigenen Achse.');
+        await a.to(st, { oh3N: 3 }, 3000, { ease: (t) => t }); await a.wait(800);
+        await a.to(st, { oh3D: 1 }, 800);
+        a.say('Alle Abstände sind gleich: √2. Hund ist Katze genauso fern wie Brot.');
+      },
+    },
+    schalter65: {
+      views: ['onehot'],
+      formula: `${T('x', '<b>x</b><sub>Hund</sub>', '', 'One-Hot-Vektor von „Hund“')} = (0, …, 0, ${T('one', '1', 'c-new', 'der einzige Schalter, der an ist')}, 0, …, 0)`,
+      setup() { st.ohN = 0; st.ohDot = 0; },
+      async play(a) {
+        a.hl('one'); a.say('65 Wörter, 65 Plätze. Bei jedem Wort ist genau ein Schalter an.');
+        await a.to(st, { ohN: OH.length }, 3000, { ease: (t) => t }); await a.wait(800);
+        await a.to(st, { ohDot: 1 }, 800);
+        a.say('Das Skalarprodukt zweier verschiedener Wörter ist immer 0. Jedes Wort steht senkrecht auf jedem anderen.');
+      },
+    },
+    karte: {
+      views: ['karte'],
+      formula: `${T('e', 'Wort → (<i>x</i>; <i>y</i>)', 'c-new', 'ein Platz auf der Karte: zwei Zahlen')}<span class="sep">·</span>nah = ähnlich`,
+      setup() { st.karN = 0; st.karD = 0; st.karXY = 0; },
+      async play(a) {
+        a.say('Wir legen die Wörter von Hand auf eine Karte: Tiere oben links, Essen rechts, Königshaus unten.');
+        await a.to(st, { karN: KW.length }, 4000, { ease: (t) => t }); await a.wait(600);
+        a.hl('e'); await a.to(st, { karXY: 1 }, 700);
+        a.say('Jedes Wort hat jetzt zwei Zahlen: seine Koordinaten.'); await a.wait(2400);
+        await a.to(st, { karD: 1 }, 800);
+        a.say('Und Abstände bedeuten etwas: Hund und Katze liegen nah, Hund und Brot weit auseinander.');
+      },
+    },
+    tabelle: {
+      views: ['tab3'],
+      formula: lookF,
+      setup() { st.tabW = 1; st.tabK = 0; },
+      async play(a) {
+        a.hl('E'); a.say('Die Koordinaten von drei Wörtern als Tabelle: eine Zeile pro Wort.'); await a.wait(2400);
+        a.hl('x'); a.say('Wir schlagen „Katze“ nach: Schaltervektor (0, 1, 0) mal Tabelle.'); await a.wait(2000);
+        for (let k = 1; k <= 3; k++) { a.set(st, { tabK: k }); a.say(['Erste Zeile mal 0: fällt weg.', 'Zweite Zeile mal 1: bleibt.', 'Dritte Zeile mal 0: fällt weg.'][k - 1]); await a.wait(1800); }
+        a.hl('e'); a.say('Übrig bleibt genau die Zeile von „Katze“. Nachschlagen ist eine Matrixmultiplikation.'); await a.wait(2600);
+        a.set(st, { tabW: 0, tabK: 0 }); await a.wait(400); a.set(st, { tabK: 3 }); a.say('Für „Hund“ entsprechend die erste Zeile.');
+      },
+    },
+    tabelle65: {
+      views: ['lookup'],
+      formula: lookF,
+      setup() { st.lkM = makeModel(); st.lkW = 'König'; st.lkA = 0; },
+      async play(a) {
+        a.hl('E'); a.say(`Die echte Tabelle: ${st.lkM.V} Zeilen, 12 Spalten. Blau positiv, orange negativ, noch zufällig.`); await a.wait(2800);
+        a.hl('x'); a.say('Nachschlagen funktioniert genauso: Der Schalter von „König“ wählt seine Zeile aus.');
+        await a.to(st, { lkA: 1 }, 900); await a.wait(2200);
+        for (const w of ['Hund', 'Brot']) { a.set(st, { lkW: w, lkA: 0 }); await a.to(st, { lkA: 1 }, 600); a.hl('e'); a.say(`„${w}“: eine andere Zeile, andere 12 Zahlen.`); await a.wait(1600); }
+        a.say('Gute Zahlen gibt es noch nicht. Woraus soll das Netz sie lernen?');
+      },
+    },
+    nachbarn: {
+      views: ['corpus'],
+      formula: `Paar = (${T('w', 'Mitte', 'c-new', 'das Wort in der Mitte des Fensters')} → ${T('n', 'Nachbar', '', 'ein Wort höchstens 2 Plätze links oder rechts')})`,
+      setup() { st.winI = 0; st.winOn = 0; st.cntA = 0; st.pairsN = 0; },
+      async play(a) {
+        a.say('Ein Satz aus unserem Text. Wir schieben ein Fenster darüber und notieren Paare.');
+        a.set(st, { winOn: 1 }); a.hl('w', 'n');
+        let n = 0;
+        for (let i = 0; i < DEMO_SENT.length; i++) {
+          a.set(st, { winI: i });
+          for (const p of DEMO_PAIRS.filter((q) => q[0] === i)) { n++; a.set(st, { pairsN: n }); await a.wait(260); }
+          await a.wait(350);
+        }
+        a.say(`Ein einziger Satz ergibt schon ${n} Paare. Das machen wir für alle 1200 Sätze und zählen.`); await a.wait(2400);
+        await a.to(st, { cntA: 1 }, 900);
+        a.say('Die häufigsten Nachbarn dreier Wörter. „König“ und „Königin“ haben fast dieselben, bis auf der/die. „Hund“ hat ganz andere.');
+      },
+    },
+    profil: {
+      views: ['cooc'],
+      formula: `${T('p', 'Zählprofil(Wort)', 'c-new', 'eine Zeile: Anteil jedes anderen Worts unter den Nachbarn')} = (Anteil der, Anteil die, Anteil regiert, …)`,
+      setup() { st.coN = 0; st.coSim = 0; st.coGrp = 0; st.coStop = 0; },
+      async play(a) {
+        a.hl('p'); a.say('Jede Zeile ist das Zählprofil eines Worts: Wie oft steht welches Wort daneben? Hier ein Ausschnitt der Spalten.');
+        await a.to(st, { coN: CO_R.length }, 4500, { ease: (t) => t }); await a.wait(1200);
+        a.say('König, Königin und Prinz: fast dieselben Zeilen. Hund und Katze: auch. Brot und Käse: auch.'); await a.wait(3000);
+        await a.to(st, { coSim: 1 }, 900);
+        a.say(`Mit dem Kosinus nachgemessen eine Überraschung: König · Königin = ${fmt(profCos('König', 'Königin'), 2)}, aber König · Hund = ${fmt(profCos('König', 'Hund'), 2)}.`); await a.wait(3600);
+        a.say('Schuld ist „der“: Es steht neben König und neben Hund, ein Drittel aller Nachbarn. Allerweltswörter überdecken den Rest.'); await a.wait(3600);
+        await a.to(st, { coStop: 1 }, 1400);
+        a.say(`Ohne die Artikel: König · Königin = ${fmt(profCos('König', 'Königin', 1), 2)}, Hund · Katze = ${fmt(profCos('Hund', 'Katze', 1), 2)}, König · Hund = ${fmt(profCos('König', 'Hund', 1), 2)}. Bedeutung, nur durch Zählen.`);
+      },
+    },
+    verdichten: {
+      views: ['cooc'],
+      formula: `${T('p', 'Zählprofil', '', '65 Zahlen, viele davon doppelt')} → ${T('e', 'Embedding', 'c-new', 'wenige Zahlen, aus denen sich das Profil wieder ablesen lässt')}`,
+      setup() { st.coN = CO_R.length; st.coSim = 0; st.coGrp = 0; st.coStop = 0; },
+      async play(a) {
+        a.hl('p'); a.say('Viele Spalten bewegen sich gemeinsam.'); await a.wait(1600);
+        await a.to(st, { coGrp: 1 }, 1200);
+        a.say('regiert, trägt, wohnt: immer zusammen, das ist „königlich“. frisst, Futter, Garten: „Tier“. der/er gegen die/sie: „männlich oder weiblich“.'); await a.wait(4200);
+        a.hl('e'); a.say('Statt 65 Spalten reichen wenige Zahlen: wie königlich, wie tierisch, wie weiblich. Gleiches Profil, gleiche Zahlen, also derselbe Platz.');
+      },
+    },
+    raten: {
+      views: ['task'],
+      formula: () => `${T('p', '<i>p</i>(Nachbar | König)', 'c-new', 'die geratene Wahrscheinlichkeit für jedes Wort')} ≈ ${T('q', 'gezählter Anteil', '', 'das Zählprofil von „König“')}<span class="sep">Kreuzentropie</span>${V('ce')}`,
+      setup() { st.guessT = 0; st.guessA = 0; },
+      async play(a) {
+        a.hl('q'); a.say('Die Rahmen: das Zählprofil von „König“, die gezählten Anteile seiner Nachbarn.'); await a.wait(2600);
+        a.hl('p'); await a.to(st, { guessA: 1 }, 700);
+        a.say(`Ein Netz mit zufälligen Zahlen rät fast gleichmäßig: jedem der ${BASE.V} Wörter ungefähr 1,5 %. Die Kreuzentropie ist hoch.`); await a.wait(3400);
+        a.say('Ziel des Lernens: die Füllung an die Rahmen heranbringen …');
+        await a.to(st, { guessT: 1 }, 2600);
+        a.say('… dann ist das Profil aus den 12 Zahlen wiederhergestellt, und die Kreuzentropie ist so klein wie möglich.');
+      },
+    },
+    punktzahl: {
+      views: ['mini'],
+      formula: toyF,
+      setup() { toyReset(toyCopy(TOYF)); st.eDemo = Math.atan2(TOYF.E[0][1], TOYF.E[0][0]); st.miniU = 0; },
+      async play(a) {
+        a.say('Eine winzige Welt in zwei Dimensionen. Der Pfeil e von „König“: seine Zeile aus der Tabelle.'); await a.wait(2400);
+        await a.to(st, { miniU: 1 }, 900);
+        a.say('Grau: die Nachbar-Pfeile u aller acht möglichen Nachbarn.'); await a.wait(2200);
+        a.hl('s'); await a.to(st, { barsA: 1 }, 700);
+        a.say('Punktzahl = u · e. Wer in dieselbe Richtung zeigt wie e, bekommt viel. regiert, Krone, Schloss liegen vorn.'); await a.wait(3200);
+        a.hl('p'); await a.to(st, { probA: 1 }, 1000);
+        a.say('Die Softmax macht daraus Wahrscheinlichkeiten.'); await a.wait(2200);
+        a.say('Dreht sich e, ändern sich Punktzahlen und Wahrscheinlichkeiten mit.');
+        const e0 = st.eDemo; await a.to(st, { eDemo: e0 + Math.PI }, 3500); await a.to(st, { eDemo: e0 + 2 * Math.PI }, 3500);
+        a.say('Die Richtung von e entscheidet, welche Nachbarn erwartet werden.');
+      },
+    },
+    schubsen: {
+      views: ['mini'],
+      formula: toyF,
+      setup() { toyReset(toyNew()); st.barsA = 1; st.probA = 1; st.hiU = TO.indexOf('regiert'); },
+      async play(a) {
+        const j = TO.indexOf('regiert'), T = st.toy;
+        a.say(`Neu und zufällig gestartet. Paar aus dem Text: König → regiert. Geraten: ${fmt(toyP(T, T.E[0])[j] * 100, 0)} %.`); await a.wait(2800);
+        for (let k = 0; k < 5; k++) {
+          a.set(st, { ghost: toyCopy(T) });
+          const nx = toyStep(T, 0.9, [0, j]);
+          await a.to(T, { E: nx.E, U: nx.U }, 900);
+          a.say(`Schubs ${k + 1}: e von König und u von regiert drehen sich aufeinander zu. regiert jetzt ${fmt(toyP(T, T.E[0])[j] * 100, 0)} %.`);
+          await a.wait(1100);
+        }
+        a.set(st, { ghost: null });
+        a.say('Jedes Paar im Text zieht zwei Pfeile zueinander. Nachbarn, die zu viel bekommen hatten, werden ein wenig weggeschoben.');
+      },
+    },
+    gleich: {
+      views: ['mini'],
+      formula: `alle Paare<span class="sep">→</span>${T('g', 'gleiche Nachbarn ⇒ gleicher Platz', 'c-new', 'wer von denselben u gezogen wird, landet in derselben Gegend')}`,
+      setup() { toyReset(toyNew()); st.miniAll = 1; st.miniSel = ''; },
+      async play(a) {
+        const T = st.toy;
+        a.say('Alle vier Wörter, zufällig verteilt. Jetzt ziehen alle Paare gleichzeitig.'); await a.wait(2400);
+        a.hl('g'); a.say('Training: Jedes Paar zieht seine zwei Pfeile zueinander …');
+        await a.loop(() => { Object.assign(T, toyStep(T, 0.3)); T.t++; return T.t < 600; }, (i) => (i < 40 ? 12 : 90));
+        a.say('König und Königin werden beide von regiert, Krone und Schloss gezogen: Sie landen in derselben Hälfte. Hund und Katze, von Futter und Fell gezogen, in der anderen.'); await a.wait(3800);
+        await a.to(st, { miniDist: 1 }, 800);
+        a.say('König liegt näher bei Königin als bei Hund. Gemeinsame Nachbarn machen Nähe.'); await a.wait(3000);
+        a.set(st, { miniDist: 0 });
+        await a.to(st, { miniPar: 1 }, 900);
+        a.say('Nur der/die zieht verschieden: nach links oder rechts. Darum sind König → Königin und Hund → Katze fast parallel. Derselbe Unterschied wird dieselbe Richtung.');
+      },
+    },
+    training: {
+      views: ['map'],
+      formula: () => `${T('L', 'Verlust', '', 'Kreuzentropie, gemittelt über alle Wortpaare')} = −log <i>p</i>(Nachbar | Wort)<span class="sep">Schritt</span>${V('t')}`,
+      setup() { st.mapM = makeModel(); prevP = null; st.mapHi = null; },
+      async play(a) {
+        const M = st.mapM;
+        a.say('Alle Wörter, 12 Zahlen pro Wort, zufällig. Die Farben sind nur für uns, das Netz kennt keine Gruppen.'); await a.wait(2600);
+        a.hl('L'); a.say('Training: jedes gezählte Paar zieht …');
+        await a.loop(() => { M.step(); return M.t < STEPS; }, (i) => (i < 60 ? 25 : 420));
+        WM.setFin(M);
+        a.say('Tiere bei Tieren, Essen bei Essen, Königshaus neben Menschen. Gelernt nur aus: Wer steht neben wem?');
+      },
+    },
+    aehnlich: {
+      views: ['near'],
+      formula: `${T('c', 'cos(<b>e</b><sub><i>a</i></sub>, <b>e</b><sub><i>b</i></sub>)', 'c-new', 'Skalarprodukt der auf Länge 1 gebrachten Embeddings (Kapitel 5)')}<span class="sep">in allen 12 Dimensionen</span>`,
+      setup() { fin(); st.nearW = 'König'; },
+      async play(a) {
+        a.hl('c');
+        for (const [w, txt] of [['König', 'Prinz und Königin zuerst, dann die Menschen.'], ['Hund', 'Lauter Tiere.'], ['Brot', 'Lauter Essen.'], ['Stuhl', 'Sofa, Holz, und auch: Bank.']]) {
+          a.set(st, { nearW: w }); a.say(`„${w}“: ${txt}`); await a.wait(2800);
+        }
+        a.set(st, { nearW: 'Sparkasse' }); a.say('„Sparkasse“: Bank steht auch hier ganz oben. Merken wir uns.');
+      },
+    },
+    differenz: {
+      views: ['vsub'],
+      formula: `${T('d', '<b>b</b> − <b>a</b>', 'c-new', 'Eintrag für Eintrag abziehen: der Pfeil von a nach b')} = (<i>b</i><sub>1</sub> − <i>a</i><sub>1</sub>; <i>b</i><sub>2</sub> − <i>a</i><sub>2</sub>)<span class="sep">·</span>${T('c', '<b>c</b> + (<b>b</b> − <b>a</b>)', '', 'denselben Weg von c aus gehen')}`,
+      setup() { st.vsT = 0; st.vsMove = 0; },
+      async play(a) {
+        a.say('Zwei Punkte a und b.'); await a.wait(1400);
+        a.hl('d'); await a.to(st, { vsT: 1 }, 1200);
+        a.say('b − a: 3,2 − 1 = 2,2 nach rechts, 1,6 − 1 = 0,6 nach oben. Der Pfeil von a nach b.'); await a.wait(3000);
+        a.hl('c'); a.say('Diesen Pfeil legen wir an einen dritten Punkt c an …');
+        await a.to(st, { vsMove: 1 }, 1600);
+        a.say('c + (b − a): von c aus derselbe Weg wie von a nach b. In 12 Dimensionen genauso, nur mit 12 Einträgen.');
+      },
+    },
+    achse: {
+      views: ['axis'],
+      formula: `${T('s', 'Schatten(Wort)', '', 'wie weit das Wort in Richtung „weiblich“ liegt')} = <b>e</b><sub>Wort</sub> · ${T('g', '<b>g</b>', 'c-new', 'Richtung Frau − Mann, auf Länge 1 gebracht')}`,
+      setup() { fin(); st.axN = 0; },
+      async play(a) {
+        a.hl('g'); a.say('Die Richtung g: von „Mann“ zu „Frau“, in allen 12 Dimensionen.');
+        await a.to(st, { axN: 2 }, 1200); await a.wait(1600);
+        a.hl('s'); a.say('Jetzt die Schatten der anderen Wörter, die wir für g nicht benutzt haben …');
+        await a.to(st, { axN: PW.length }, 4000, { ease: (t) => t }); await a.wait(800);
+        a.say('Alle weiblichen rechts, alle männlichen links. Der Unterschied der/die, er/sie aus den Zählprofilen ist zu einer Richtung geworden.');
+      },
+    },
+    richtung: {
+      views: ['plane'],
+      formula: `${T('f1', 'Frau − Mann', 'c-new', 'Pfeil von Mann zu Frau')} ≈ ${T('f2', 'Königin − König', '', '')} ≈ ${T('f3', 'Mutter − Vater', '', '')}`,
+      setup() { fin(); Object.assign(st, { plAge: 0, plPairs: 0, plAna: 0, plRead: 0, prA: 0 }); },
+      async play(a) {
+        a.say('Zehn Personenwörter als Schatten auf zwei gewählte Richtungen: rechts Frau − Mann, oben König − Mann.'); await a.wait(3000);
+        a.hl('f1', 'f2', 'f3'); a.say('Jetzt die Pfeile von jedem männlichen Wort zu seinem weiblichen Gegenstück …');
+        await a.to(st, { plPairs: 1 }, 3500, { ease: (t) => t });
+        a.say('Alle fast parallel, wie König → Königin und Hund → Katze in der kleinen Welt.');
+      },
+    },
+    naechstes: {
+      views: ['plane'],
+      formula: `${T('q', 'nächstes Wort', 'c-new', 'das Wort mit dem größten Kosinus zum Punkt')} = Wort mit größtem cos(Punkt, <b>e</b><sub>Wort</sub>)`,
+      setup() { fin(); Object.assign(st, { plAge: 0, plPairs: 0, plAna: 0, plRead: 0, prA: 1, prX: -0.3, prY: 0.3 }); },
+      async play(a) {
+        a.hl('q'); a.say('Ein Punkt, der kein Wort ist. Das nächste Wort finden wir per Kosinus, in allen 12 Dimensionen.'); await a.wait(2600);
+        for (const [x, y] of [[0.35, 0.3], [0.35, -0.3], [-0.3, -0.35], [0.4, 0.05]]) { await a.to(st, { prX: x, prY: y }, 1800); await a.wait(1000); }
+        a.say('Wandert der Punkt, wechselt das nächste Wort.');
+      },
+      tryit: () => [
+        { label: '← →', type: 'range', min: -0.5, max: 0.5, step: 0.01, get: () => st.prX, set: (v) => (st.prX = v) },
+        { label: '↓ ↑', type: 'range', min: -0.5, max: 0.5, step: 0.01, get: () => st.prY, set: (v) => (st.prY = v) },
+      ],
+    },
+    analogie: {
+      views: ['plane'],
+      formula: () => `${T('k', 'König', '', 'Startpunkt')} + ${T('d', '(Frau − Mann)', 'c-new', 'der Weg von Mann zu Frau')} ≈ ${T('q', '?', '', 'das nächste Wort, in allen 12 Dimensionen gesucht')}`,
+      setup() { fin(); Object.assign(st, { plAge: 0, plPairs: 0, plAna: 0, plAnaK: 0, plRead: 0, prA: 0 }); },
+      async play(a) {
+        const M = fin(), best = (w0, w1, w2) => M.nearest(add(M.vec(w0), sub(M.vec(w2), M.vec(w1))), [w0, w1, w2], 1)[0][0];
+        await a.ask('König + (Frau − Mann): Wo landet man?', ['bei „Königin“', 'bei „Frau“', 'irgendwo, ohne passendes Wort'], 0, '„Frau“ und „Mann“ unterscheiden sich in ihren Nachbarn fast nur bei der/er gegenüber die/sie, „Königin“ und „König“ genauso. Ein gleicher Unterschied ist eine gleiche Richtung.');
+        a.hl('k'); a.say('Wir starten bei „König“ …'); await a.wait(1400);
+        a.hl('d'); a.say('… und gehen den Weg von „Mann“ zu „Frau“.');
+        await a.to(st, { plAna: 1 }, 1800); await a.wait(600);
+        a.hl('q'); a.set(st, { plRead: 1 }); a.say(`Das nächste Wort, außer den drei Zutaten: „${best('König', 'Mann', 'Frau')}“.`); await a.wait(3200);
+        a.set(st, { plAna: 0, plRead: 0 }); a.say('Jetzt eine andere Richtung: Vater − Sohn, von jung nach alt.');
+        await a.to(st, { plAge: 1 }, 1600);
+        await a.to(st, { plPairs: 1 }, 2400, { ease: (t) => t }); await a.wait(800);
+        a.set(st, { plPairs: 0, plAnaK: 1 }); a.say('Prinz + (Vater − Sohn): von „Prinz“ aus den Weg von jung nach alt …');
+        await a.to(st, { plAna: 1 }, 1800); a.set(st, { plRead: 1 });
+        a.say(`… landet bei „${best('Prinz', 'Sohn', 'Vater')}“.`);
+      },
+    },
+    bank: {
+      views: ['bank'],
+      formula: `${T('one', 'eine Zeile', 'c-new', 'die Tabelle kennt nur eine Zeile pro Wort')} für „Bank“<span class="sep">·</span>zwei Bedeutungen`,
+      setup() { fin(); st.bankA = 0; },
+      async play(a) {
+        a.say('Ein Schatten auf die Richtung von „Stuhl“ zu „Sparkasse“.'); await a.wait(2200);
+        a.hl('one'); a.say('„Bank“ liegt bei den Geldwörtern, ist aber auch „Stuhl“ ähnlich: Ihr Zählprofil mischt beide Umgebungen.');
+        await a.to(st, { bankA: 1 }, 800); await a.wait(2600);
+        a.say('Welche Bank gemeint ist, steht im Satz. Das Embedding müsste sich nach den Nachbarwörtern richten. Dafür braucht es Attention.');
+      },
+    },
+    ausblick: {
+      views: ['map'],
+      formula: `${T('E', '<b>E</b>', 'c-new', 'in großen Modellen: 50 000 bis 200 000 Zeilen, Tausende Spalten')}: die erste Schicht jedes Transformers`,
+      setup() { st.mapM = fin(); prevP = null; st.mapHi = null; },
+      async play(a) { a.hl('E'); a.say('Unser Raum hat 12 Dimensionen und 65 Wörter. Große Modelle haben Tausende Dimensionen und Hunderttausende Tokens, aber dieselbe Idee.'); },
+    },
+  };
+
+  // train the reference model once the page is idle, so later steps never wait
+  (window.requestIdleCallback || ((f) => setTimeout(f, 1200)))(() => fin());
+
+  story = S.story($('#story'), {
+    views: { ids: idsV, oh3: { redraw: oh3.redraw }, onehot: ohV, karte: karteV, tab3: tab3V, lookup: lookV, corpus: corpV, cooc: coocV, task: taskV, mini: miniV, map: mapV, near: nearV, vsub: vsubV, axis: axisV, plane: planeV, bank: bankV },
+    steps,
+    values: () => ({ ce: fmt(taskCE(), 2), t: String(st.mapM ? st.mapM.t : 0) }),
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Der Transformer · Kapitel 9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&display=swap" />
+<link rel="stylesheet" href="series.css" />
+<style>.chapter-head { display: grid; gap: 18px; padding-block: 8px 4px; }</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="col chapter-head">
+    <div class="eyebrow"><a href="index.html">Von der Geraden zur Attention</a> · Kapitel 9 von 12</div>
+    <h1>Der Transformer</h1>
+    <p class="lead">Aus Embeddings (Kapitel 6) und Attention (Kapitel 7 und 8) wird ein vollständiges Sprachmodell. Es fehlen noch vier Teile: wie Ergebnisse zusammengesetzt werden, eine Verarbeitung pro Wort, die Reihenfolge und eine Aufgabe zum Lernen. Wir nehmen sie uns einzeln vor.</p>
+    <ol class="roadmap"><li>Addieren statt ersetzen</li><li>Das MLP für jedes Wort</li><li>Reihenfolge durch Platzvektoren</li><li>Die Aufgabe: das nächste Wort</li></ol>
+    <ul class="goals"><li>den Residualstrom als gemeinsames Notizblatt beschreiben</li><li>erklären, wozu Platzvektoren und Maske da sind</li><li>den Bauplan eines Transformers aufzählen</li></ul>
+  </header>
+
+  <section class="story" id="story">
+    <div class="stage" aria-label="Bühne der Geschichte">
+      <div class="formula-box"><div class="formula" aria-live="polite"></div><div class="formula-x"></div></div>
+      <div class="views">
+        <div class="view" data-view="block"><div class="vlabel">Der Bauplan</div><div class="plot" id="v-block" role="img" aria-label="Blockdiagramm eines Transformers."></div></div>
+        <div class="view" data-view="stream"><div class="vlabel" id="l-stream">Addieren statt ersetzen</div><div class="plot" id="v-stream" role="img" aria-label="Ein Vektor als Balkenreihe und was nacheinander dazuaddiert wird."></div></div>
+        <div class="view" data-view="mlp"><div class="vlabel" id="l-mlp">Ein kleines Netz für jedes Wort</div><div class="plot" id="v-mlp" role="img" aria-label="Ein Wortvektor mit zwei Zahlen läuft durch Matrix, Knick und Matrix."></div></div>
+        <div class="view" data-view="order"><div class="vlabel">Zwei Sätze, dieselben Wörter</div><div class="plot" id="v-order" role="img" aria-label="Zwei Sätze mit vertauschten Wörtern und dem gleichen Ergebnis für Hund."></div></div>
+        <div class="view" data-view="pos"><div class="vlabel">Wort plus Platz</div><div class="plot" id="v-pos" role="img" aria-label="Der Vektor eines Worts plus der Vektor seines Platzes."></div></div>
+        <div class="view" data-view="next"><div class="vlabel" id="l-next">Die Aufgabe: das nächste Wort</div><div class="plot" id="v-next" role="img" aria-label="Ein Satz; an jeder Stelle ist das nächste Wort das Ziel."></div></div>
+        <div class="view" data-view="mask"><div class="vlabel">Nicht spicken</div><div class="plot" id="v-mask" role="img" aria-label="Attention-Matrix mit gesperrter oberer Hälfte."></div></div>
+        <div class="view" data-view="out"><div class="vlabel">Vom Vektor zum nächsten Wort</div><div class="plot" id="v-out" role="img" aria-label="Wahrscheinlichkeiten für das nächste Wort."></div></div>
+      </div>
+      <div class="stage-bar">
+        <p class="caption" aria-live="polite"></p>
+        <div class="stage-ctl">
+          <button class="btn" type="button" data-act="prev" aria-label="Voriger Schritt">↑</button>
+          <button class="btn" type="button" data-act="replay">Nochmal</button>
+          <button class="btn" type="button" data-act="pause" aria-pressed="false">Pause</button>
+          <span class="prog"></span>
+          <button class="btn" type="button" data-act="next" aria-label="Nächster Schritt">↓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <article class="step" data-step="teile" data-core><div class="card">
+        <span class="kicker">Ausgangspunkt</span>
+        <h3>Was wir schon haben</h3>
+        <p>Aus Kapitel 6: Jedes Wort wird über die Tabelle <b>E</b> zu einem Vektor. Aus Kapitel 7 und 8: Attention lässt jedes Wort die anderen ansehen und mischt Werte nach Fragen und Schildern.</p>
+        <p>Für ein Sprachmodell fehlen noch vier Dinge: wie die Ergebnisse zusammengesetzt werden, eine Verarbeitung pro Wort, die Reihenfolge der Wörter und eine Aufgabe, an der das Ganze lernt.</p>
+      </div></article>
+
+      <article class="step" data-step="addieren"><div class="card">
+        <span class="kicker">Teil 1</span>
+        <h3>Addieren statt ersetzen</h3>
+        <p>In Kapitel 7 und 8 haben wir die Mischung zum Vektor <em>dazuaddiert</em>, nicht ihn ersetzt: <b>Bank</b><sub>neu</sub> = <b>Bank</b> + Mischung. So geht nichts verloren, was vorher da war.</p>
+        <p>Genau so arbeitet jeder Baustein im Transformer: Er liest den Vektor eines Worts, rechnet etwas aus und addiert sein Ergebnis Eintrag für Eintrag dazu.</p>
+      </div></article>
+
+      <article class="step" data-step="notizblatt" data-core><div class="card">
+        <span class="kicker">Teil 1, weitergedacht</span>
+        <h3>Ein Notizblatt pro Wort</h3>
+        <p>Weil jeder Baustein nur dazuaddiert, kann man sich den Vektor eines Worts wie ein Notizblatt vorstellen: Am Anfang steht darauf nur das Embedding. Jede Schicht liest das Blatt und schreibt etwas dazu. Spätere Schichten lesen, was frühere geschrieben haben.</p>
+        <p>Dieses Blatt, das durch alle Schichten wandert, heißt <strong>Residualstrom</strong>. In Kapitel 12 lesen wir genau ab, was auf dem Blatt steht.</p>
+        <div class="ex"><b>Zur Abbildung</b>Die Balken sind zur Veranschaulichung gewählt, nicht aus einem trainierten Modell.</div>
+      </div></article>
+
+      <article class="step" data-step="mlp" data-core><div class="card">
+        <span class="kicker">Teil 2</span>
+        <h3>Jedes Wort für sich: das MLP</h3>
+        <p>Attention tauscht Information <em>zwischen</em> den Wörtern aus. Danach wird jedes Wort einzeln weiterverarbeitet, von einem kleinen Netz wie in Kapitel 4: Matrix, Knick (ReLU), Matrix. Es heißt <strong>MLP</strong> (mehrschichtiges Perzeptron).</p>
+        <p>Hier im Kleinen, zum Nachrechnen: ein Vektor mit 2 Zahlen, eine Matrix macht 3 Zahlen daraus, der Knick setzt Negatives auf 0, eine zweite Matrix macht wieder 2 Zahlen. Das Ergebnis wird addiert.</p>
+      </div></article>
+
+      <article class="step" data-step="jedes"><div class="card">
+        <span class="kicker">Teil 2, weitergedacht</span>
+        <h3>Dasselbe Netz für jedes Wort</h3>
+        <p>Das MLP ist für alle Wörter dasselbe, mit denselben Zahlen. Es schaut nicht nach links oder rechts, jedes Wort wird für sich gerechnet.</p>
+        <div class="ex"><b>Eine Faustregel</b>Attention: Wer im Satz ist für mich wichtig? MLP: Was folgt daraus für mich? In großen Modellen steckt im MLP ein großer Teil des gespeicherten Wissens.</div>
+      </div></article>
+
+      <article class="step" data-step="block" data-core><div class="card">
+        <span class="kicker">Zusammengesetzt</span>
+        <h3>Ein Block, viele Blöcke</h3>
+        <p>Attention plus MLP, beide dazuaddiert, bilden zusammen einen <strong>Block</strong>. Viele Blöcke werden übereinander gestapelt; das Notizblatt jedes Worts läuft durch alle hindurch.</p>
+      </div></article>
+
+      <article class="step" data-step="reihenfolge" data-core><div class="card">
+        <span class="kicker">Teil 3, das Problem</span>
+        <h3>Attention kennt keine Reihenfolge</h3>
+        <p>„der Mann füttert den Hund“ und „der Hund füttert den Mann“ bestehen aus denselben Wörtern. Attention vergleicht nur Vektoren miteinander, und die sind in beiden Sätzen gleich. Also bekommt „Hund“ in beiden Sätzen exakt dasselbe Ergebnis.</p>
+        <p>Für Attention ist ein Satz ein Haufen Wörter ohne Reihenfolge. Wer wen füttert, geht verloren.</p>
+      </div></article>
+
+      <article class="step" data-step="platz" data-core><div class="card">
+        <span class="kicker">Teil 3, die Lösung</span>
+        <h3>Jeder Platz bekommt einen Vektor</h3>
+        <p>Die Lösung ist eine zweite Tabelle <b>P</b>, wie <b>E</b>, nur mit einer Zeile pro Platz im Satz: Platz 1, Platz 2, Platz 3 und so weiter. Zum Vektor des Worts wird der Vektor seines Platzes addiert.</p>
+        <p>„Hund“ auf Platz 2 und „Hund“ auf Platz 5 sind jetzt verschiedene Vektoren. Attention kann damit auch nach Positionen fragen, etwa „Was steht direkt vor mir?“. Auch <b>P</b> wird gelernt.</p>
+      </div></article>
+
+      <article class="step" data-step="aufgabe" data-core><div class="card">
+        <span class="kicker">Teil 4</span>
+        <h3>Die Aufgabe: das nächste Wort</h3>
+        <p>Woran soll das Ganze lernen? Ein Sprachmodell bekommt eine einzige, einfache Aufgabe: an jeder Stelle im Text das <strong>nächste Wort</strong> vorherzusagen. Nach „der“ kommt „König“, nach „der König“ kommt „regiert“, und so weiter.</p>
+        <p>Jede Stelle eines Satzes ist eine eigene Übungsaufgabe, alle gleichzeitig. Ein Satz mit 5 Wörtern ergibt 4 Aufgaben, ein Buch Hunderttausende. Niemand muss etwas beschriften: Die Antwort steht im Text selbst.</p>
+      </div></article>
+
+      <article class="step" data-step="maske" data-core><div class="card">
+        <span class="kicker">Teil 4, eine Bedingung</span>
+        <h3>Nicht spicken</h3>
+        <p>Dürfte ein Wort beim Lernen nach rechts schauen, könnte es das nächste Wort einfach ablesen und würde nichts lernen. Darum wird in der Attention-Matrix die obere Hälfte gesperrt: Diese Punktzahlen werden vor der Softmax auf −∞ gesetzt. e hoch −∞ ist 0, ihr Anteil verschwindet.</p>
+        <p>Jedes Wort sieht nur sich und die Wörter davor. Das heißt <strong>kausale Maske</strong>.</p>
+      </div></article>
+
+      <article class="step" data-step="ausgabe"><div class="card">
+        <span class="kicker">Teil 4, die Antwort</span>
+        <h3>Vom Vektor zum nächsten Wort</h3>
+        <p>Nach dem letzten Block steht an jeder Stelle ein Vektor. Ihn vergleichen wir per Skalarprodukt mit einem Ausgabe-Vektor <b>u</b> pro Wort, dann Softmax: eine Wahrscheinlichkeit für jedes mögliche nächste Wort.</p>
+        <p>Das ist das Ratespiel aus Kapitel 6, nur dass der Vektor jetzt alles kennt, was bis zu dieser Stelle im Satz stand. Hier als Beispiel mit den Vektoren aus Kapitel 6.</p>
+        <div class="ex irrtum"><b>Häufiger Irrtum</b>„Ein Sprachmodell schlägt die Antwort in einer Datenbank nach.“ Nein: Es rechnet mit seinen gelernten Zahlen für jede Stelle eine Wahrscheinlichkeit für jedes mögliche nächste Wort aus. Nachgeschlagen wird nur die Zeile des Worts in E.</div>
+      </div></article>
+
+      <article class="step" data-step="verlust" data-core><div class="card">
+        <span class="kicker">Teil 4, die Bewertung</span>
+        <h3>Ein Verlust für jede Stelle</h3>
+        <p>Für jede Stelle schauen wir, welche Wahrscheinlichkeit das wirklich folgende Wort bekommen hat, und nehmen davon −log (Kapitel 3). Hohe Wahrscheinlichkeit, kleiner Verlust. Der Mittelwert über alle Stellen ist der Verlust des Modells.</p>
+        <p>Gradientenabstieg mit Backpropagation (Kapitel 4) verstellt dann alle Zahlen ein kleines Stück, so dass der Verlust sinkt: die Tabellen <b>E</b> und <b>P</b>, alle <b>W</b><sub>Q</sub>, <b>W</b><sub>K</sub>, <b>W</b><sub>V</sub>, <b>W</b><sub>O</sub>, die MLPs und die Ausgabe-Vektoren.</p>
+      </div></article>
+
+      <article class="step" data-step="bauplan" data-core><div class="card">
+        <span class="kicker">Alles zusammen</span>
+        <h3>Der ganze Transformer</h3>
+        <p>Wort und Platz nachschlagen, addieren. Dann mehrere Blöcke aus Attention (mit Maske) und MLP, jeweils dazuaddiert. Am Ende Skalarprodukt mit den Ausgabe-Vektoren und Softmax. Gelernt wird mit dem Verlust für das nächste Wort an jeder Stelle. Mehr steckt im Kern nicht dahinter.</p>
+      </div></article>
+
+      <article class="step" data-step="gross"><div class="card">
+        <span class="kicker">Im Großen</span>
+        <h3>Was bei echten Modellen dazukommt</h3>
+        <p>Dutzende bis über hundert Blöcke, jeweils mit vielen Köpfen und großen MLPs. Vor jedem Baustein wird der Vektor auf eine feste Länge gebracht (LayerNorm), damit die Zahlen im Rahmen bleiben. Ein Wortschatz von 100 000 Wortteilen, Vektoren mit Tausenden Zahlen. Und Training auf Billionen Wörtern, mit derselben Aufgabe: das nächste Wort.</p>
+      </div></article>
+
+      <article class="step" data-step="ausblick"><div class="card">
+        <span class="kicker">Ausblick</span>
+        <h3>Einen eigenen bauen</h3>
+        <p>In Kapitel 10 trainieren wir einen eigenen, winzigen Transformer im Browser und sehen ihm beim Lernen zu.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <section class="col prose recap" aria-label="Zusammenfassung">
+    <h2>Das nimmst du mit</h2>
+    <ul class="take"><li>Jeder Baustein liest das Notizblatt eines Worts (den Residualstrom) und addiert sein Ergebnis dazu.</li><li>Attention tauscht zwischen den Wörtern aus, das MLP verarbeitet jedes Wort für sich. Platzvektoren bringen die Reihenfolge hinein.</li><li>Gelernt wird mit einer Aufgabe: an jeder Stelle das nächste Wort vorhersagen, ohne nach rechts zu spicken.</li></ul>
+    <div class="take-f"><b>x</b> = <b>E</b>[Wort] + <b>P</b>[Platz] &nbsp; → &nbsp; (<b>x</b> += Attn(<b>x</b>), <b>x</b> += MLP(<b>x</b>)) × <i>N</i> &nbsp; → &nbsp; softmax(<b>u</b> · <b>x</b>)</div>
+    <h3 id="teste-dich">Teste dich</h3>
+    <p>Erst selbst antworten, dann aufklappen und kurz einschätzen, wie gut du es wusstest. Die Einschätzung bleibt in deinem Browser; die Übersicht zeigt dir dann, was sich zu wiederholen lohnt.</p>
+    <div class="quiz">
+      <details data-href="#reihenfolge" data-label="„Attention kennt keine Reihenfolge“"><summary>Warum braucht ein Transformer Platzvektoren?</summary><p>Attention vergleicht nur Vektoren. Ohne Platz wären „der Mann füttert den Hund“ und „der Hund füttert den Mann“ für sie gleich.</p></details>
+      <details data-href="#maske" data-label="„Nicht spicken“"><summary>Was macht die kausale Maske?</summary><p>Sie sperrt alle Wörter rechts: Ihre Punktzahlen werden −∞, ihr Anteil 0. So kann das Modell das nächste Wort nicht ablesen.</p></details>
+      <details data-href="06-embeddings.html#punktzahl" data-label="Kapitel 6, „Woher die Wahrscheinlichkeiten kommen“"><summary>Woher kennen wir die Ausgabe „Skalarprodukt mit u, dann Softmax“?<span class="from">Kapitel 6</span></summary><p>Aus dem Ratespiel in Kapitel 6: Dort sagte der Vektor eines Worts seine Nachbarn vorher.</p></details>
+    </div>
+  </section>
+
+  <section class="col prose" style="margin-top: 24px">
+    <h3>Quellen</h3>
+    <ol class="refs">
+      <li>A. Vaswani u. a. (2017): <a href="https://arxiv.org/abs/1706.03762"><i>Attention Is All You Need</i></a>.</li>
+      <li>N. Elhage u. a. (2021): <a href="https://transformer-circuits.pub/2021/framework/index.html"><i>A Mathematical Framework for Transformer Circuits</i></a>. Das Bild vom Residualstrom stammt von hier.</li>
+    </ol>
+  </section>
+
+  <nav class="col chapnav" aria-label="Kapitel">
+    <a href="08-qkv.html"><span class="dir">Zurück · Kapitel 8</span><span class="name">Fragen, Schilder, Werte</span></a>
+    <a class="next" href="10-training.html"><span class="dir">Weiter · Kapitel 10</span><span class="name">Ein eigener Transformer</span></a>
+  </nav>
+</main>
+
+<script src="series.js"></script>
+<script src="wordmodel.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { $, fmt, lin, clamp } = S;
+  const T = S.formulaTerm, V = S.formulaValue;
+  const { dotN, unit, add } = WM;
+  const fin = WM.fin, vec = (w) => unit(fin().E[fin().id[w]]);
+  const st = { blkHi: [], stA: 0, stB: 0, stL: 0, mlpK: 0, mlpN: 1, ordA: 0, posA: 0, nxK: 0, mkA: 0, mkMask: 0, outW: 'König', outA: 0, lossA: 0 };
+  let story = null;
+  const sign = (a) => (a >= 0 ? S.c.model : S.c.error);
+  const barRow = (ctx, v, x0, y, w, h, col, mx) => { const bw = w / v.length; ctx.strokeStyle = S.alpha('fg', 0.25); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y); ctx.stroke(); v.forEach((a, j) => { const hh = (a / mx) * h; ctx.fillStyle = typeof col === 'function' ? col(a) : col; ctx.fillRect(x0 + j * bw + 1, a >= 0 ? y - hh : y, bw - 2, Math.abs(hh)); }); };
+
+  // ── the block diagram ───────────────────────────────────────────
+  const BOX = [['tok', 'Wörter', 'der König regiert …'], ['emb', 'Tabelle E + Platz P', 'Wort + Position'], ['att', 'Attention (mit Maske)', 'zwischen den Wörtern'], ['mlp', 'MLP', 'jedes Wort für sich'], ['out', 'Ausgabe', '· u, Softmax'], ['next', 'nächstes Wort', 'Wahrscheinlichkeiten']];
+  const blockV = S.canvas($('#v-block'), (ctx, W, H) => {
+    const bw = Math.min(300, W * 0.66), bh = Math.min(50, (H - 30) / 8.6), x = Math.max(28, (W - bw) / 2), gap = bh * 0.5, ys = {};
+    let y = 16;
+    BOX.forEach(([id, a, b], i) => {
+      const inBlock = id === 'att' || id === 'mlp', hi = st.blkHi.includes(id), y0 = y; ys[id] = y0;
+      ctx.globalAlpha = st.blkHi.length && !hi ? 0.45 : 1;
+      ctx.fillStyle = hi ? S.alpha('accent', 0.22) : S.c['surface-2']; ctx.strokeStyle = hi ? S.c.accent : S.c['fg-2']; ctx.lineWidth = hi ? 2 : 1;
+      const bx = inBlock ? x + 46 : x, bww = inBlock ? bw - 46 : bw, two = bh >= 40;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y0, bww, bh, 8) : ctx.rect(bx, y0, bww, bh); ctx.fill(); ctx.stroke();
+      S.label(ctx, a, bx + bww / 2, y0 + bh * (two ? 0.38 : 0.5), hi ? S.c.accent : S.c.fg, S.font(two ? 14 : 12.5, 'body', '600'), 'center');
+      if (two) S.label(ctx, b, bx + bww / 2, y0 + bh * 0.72, S.c['fg-2'], S.font(11.5, 'body'), 'center');
+      if (inBlock) { const sx = x + 18; ctx.strokeStyle = S.c.grad; ctx.lineWidth = 2; S.label(ctx, '+', sx, y0 + bh + gap / 2, S.c.grad, S.font(18, 'mono', '600'), 'center'); ctx.beginPath(); ctx.moveTo(bx, y0 + bh / 2); ctx.lineTo(sx + 8, y0 + bh + gap / 2 - 2); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      if (i < BOX.length - 1) { ctx.strokeStyle = S.c['fg-2']; ctx.fillStyle = S.c['fg-2']; S.arrow(ctx, x + bw / 2 + 23, y0 + bh + 1, x + bw / 2 + 23, y0 + bh + gap - 1, 6, 1.5); }
+      y += bh + gap;
+    });
+    const top = ys.att - gap * 0.4, bot = ys.mlp + bh + gap * 0.6;
+    ctx.strokeStyle = S.c.grad; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 18, ys.emb + bh); ctx.lineTo(x + 18, ys.out); ctx.stroke();
+    if (x > 100) S.label(ctx, 'Residualstrom', x + 10, (top + bot) / 2, S.c.grad, S.font(11.5, 'body', '600'), 'right');
+    ctx.strokeStyle = S.alpha('fg', 0.35); ctx.setLineDash([5, 4]); ctx.lineWidth = 1.2; ctx.strokeRect(x + 36, top, bw - 30, bot - top); ctx.setLineDash([]);
+    S.label(ctx, '× N Blöcke', x + bw - 4, top - 8, S.c['fg-2'], S.font(12.5, 'body', '600'), 'right');
+  });
+
+  // ── residual stream ─────────────────────────────────────────────
+  function bankMix() {
+    const ws = 'der Mann bringt Geld zur Bank'.split(' '), q = vec('Bank'), z = ws.slice(0, 5).map((w) => 6 * dotN(q, vec(w))), m = Math.max(...z), e = z.map((x) => Math.exp(x - m)), s = e.reduce((a, b) => a + b);
+    const mix = Array(WM.D).fill(0); ws.slice(0, 5).forEach((w, j) => vec(w).forEach((x, k) => (mix[k] += (e[j] / s) * x)));
+    return { x: q, a: mix, y: add(q, mix) };
+  }
+  const CONTRIB = (() => { const r = WM.rng(13); return Array.from({ length: 4 }, () => Array.from({ length: WM.D }, () => WM.gauss(r) * 0.18)); })();
+  const streamV = S.canvas($('#v-stream'), (ctx, W, H) => {
+    if (st.stL > 0) {
+      // several layers writing on the same sheet
+      const x0v = vec('Bank'), names = ['Embedding', '+ Attention 1', '+ MLP 1', '+ Attention 2', '+ MLP 2'], cols = [S.c.model, S.c.accent, S.c.grad, S.c.accent, S.c.grad], n = 1 + Math.round(st.stL * 4), w = Math.min(380, W - 160), x0 = (W - w) / 2 + 50, bw = w / WM.D, mx = 1.2, base = H * 0.55, hh = H * 0.36;
+      ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x0 + w, base); ctx.stroke();
+      for (let j = 0; j < WM.D; j++) {
+        let pos = 0, neg = 0;
+        const parts = [x0v[j], ...CONTRIB.map((c) => c[j])].slice(0, n);
+        parts.forEach((v, k) => { const h = (Math.abs(v) / mx) * hh; ctx.fillStyle = cols[k]; if (v >= 0) { ctx.fillRect(x0 + j * bw + 2, base - pos - h, bw - 4, h); pos += h; } else { ctx.fillRect(x0 + j * bw + 2, base + neg, bw - 4, h); neg += h; } });
+      }
+      names.slice(0, n).forEach((nm, k) => S.label(ctx, nm, x0 - 12, 30 + k * 20, cols[k], S.font(12.5, 'body', '600'), 'right'));
+      S.label(ctx, 'jeder Eintrag: die Beiträge aller Schichten übereinander', W / 2, H - 14, S.c['fg-2'], S.font(12, 'body'), 'center');
+      return;
+    }
+    const { x, a, y } = bankMix(), mx = Math.max(...y.map(Math.abs)), w = Math.min(420, W - 170), x0 = (W - w) / 2 + 50, h = Math.min(50, H / 9);
+    [[x, 'Bank (aus E)', sign, 1], [a, '+ Mischung', () => S.c.accent, st.stA], [y, '= Bank neu', sign, st.stB]].forEach(([v, name, col, al], i) => { if (al <= 0) return; ctx.globalAlpha = al; const yy = H * (0.2 + 0.3 * i); barRow(ctx, v, x0, yy, w, h, col, mx); S.label(ctx, name, x0 - 12, yy, i === 1 ? S.c.accent : S.c.fg, S.font(13, 'body', '600'), 'right'); ctx.globalAlpha = 1; });
+    if (st.stB > 0.5) S.label(ctx, W < 560 ? 'Eintrag für Eintrag addiert.' : 'Eintrag für Eintrag addiert: Was vorher da war, bleibt erhalten.', W / 2, H - 14, S.c['fg-2'], S.font(12.5, 'body'), 'center');
+  });
+
+  // ── the MLP, with numbers ───────────────────────────────────────
+  const W1 = [[1.0, -0.5], [-0.8, 1.2], [0.6, 0.6]], B1 = [0, -0.2, -0.5], W2 = [[0.5, -0.4, 0.3], [-0.3, 0.6, 0.2]];
+  const MW = [['Katze', [1.0, 0.2]], ['sie', [0.15, 1.0]], ['schläft', [0.3, -0.8]]];
+  const mlpRun = (x) => { const z = W1.map((r, i) => r[0] * x[0] + r[1] * x[1] + B1[i]), h = z.map((v) => Math.max(0, v)), o = W2.map((r) => r.reduce((s, w, j) => s + w * h[j], 0)); return { z, h, o, y: [x[0] + o[0], x[1] + o[1]] }; };
+  const mlpV = S.canvas($('#v-mlp'), (ctx, W, H) => {
+    const n = st.mlpN, rowH = H / n, fs = W < 560 ? 11.5 : 14;
+    for (let r = 0; r < n; r++) {
+      const nar = W < 560, bw = nar ? 50 : 74, [name, x] = MW[r], R = mlpRun(x), cy = rowH * (r + 0.5);
+      const cols = nar ? [0, 1, 2, 3, 4].map((i) => 8 + bw / 2 + (i * (W - 16 - bw)) / 4) : [W * 0.1 + (n > 1 ? 30 : 0), W * 0.32, W * 0.52, W * 0.72, W * 0.9];
+      const stage = n > 1 ? 5 : st.mlpK, box = (cx, vals, title, col, on, ttl) => { if (!on) return; const bh = 22 * vals.length + 10; ctx.fillStyle = S.c['surface-2']; ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx - bw / 2, cy - bh / 2, bw, bh, 6) : ctx.rect(cx - bw / 2, cy - bh / 2, bw, bh); ctx.fill(); ctx.stroke(); vals.forEach((v, i) => S.label(ctx, fmt(v, 2), cx, cy - bh / 2 + 16 + i * 22, v < 0 ? S.c.error : S.c.fg, S.font(fs, 'mono', '600'), 'center')); if (ttl ?? (n === 1 || (r === 0 && !nar))) S.label(ctx, title, cx, cy - bh / 2 - 12, ttl ? S.c.accent : S.c['fg-2'], S.font(11.5, 'body', '600'), 'center'); };
+      if (n > 1 && !nar) S.label(ctx, `„${name}“`, 8, cy, S.c.accent, S.font(13, 'body', '600'), 'left');
+      box(cols[0], x, n > 1 && nar ? `„${name}“` : nar ? 'Wort' : 'Wortvektor', S.c.accent, stage >= 0, n > 1 && nar ? true : undefined);
+      const ar = (a, b, lbl, on) => { if (!on) return; ctx.strokeStyle = S.c['fg-2']; ctx.fillStyle = S.c['fg-2']; S.arrow(ctx, a + bw / 2 + 3, cy, b - bw / 2 - 3, cy, 7, 1.5); if (n === 1 || (r === 0 && !nar)) S.label(ctx, lbl, (a + b) / 2, nar ? cy + 48 : cy + 18, S.c['fg-2'], S.font(11.5, 'mono'), 'center'); };
+      ar(cols[0], cols[1], nar ? 'W₁' : 'Matrix', stage >= 1); box(cols[1], R.z, '3 Zahlen', S.c['fg-2'], stage >= 1);
+      ar(cols[1], cols[2], 'ReLU', stage >= 2); box(cols[2], R.h, nar ? 'Knick' : 'nach dem Knick', S.c.grad, stage >= 2);
+      ar(cols[2], cols[3], nar ? 'W₂' : 'Matrix', stage >= 3); box(cols[3], R.o, '2 Zahlen', S.c['fg-2'], stage >= 3);
+      ar(cols[3], cols[4], nar ? '+x' : '+ Original', stage >= 4); box(cols[4], R.y, 'neu', S.c.accent, stage >= 4);
+    }
+    if (n > 1) S.label(ctx, 'dieselben Matrizen für jedes Wort, jedes für sich', W / 2, H - 10, S.c['fg-2'], S.font(12, 'body'), 'center');
+  });
+
+  // ── word order is invisible to attention ────────────────────────
+  const ORD = ['der Mann füttert den Hund', 'der Hund füttert den Mann'].map((s) => s.split(' '));
+  function attnOut(ws, i) { const q = vec(ws[i]), others = ws.filter((_, j) => j !== i), z = others.map((w) => 6 * dotN(q, vec(w))), m = Math.max(...z), e = z.map((x) => Math.exp(x - m)), s = e.reduce((a, b) => a + b), mix = Array(WM.D).fill(0); others.forEach((w, j) => vec(w).forEach((x, k) => (mix[k] += (e[j] / s) * x))); return add(q, mix); }
+  const orderV = S.canvas($('#v-order'), (ctx, W, H) => {
+    ORD.forEach((ws, k) => {
+      const y = H * (0.16 + 0.42 * k), fs = Math.min(20, W / 24); ctx.font = S.font(fs, 'body', '500');
+      const wd = ws.map((w) => ctx.measureText(w).width), tot = wd.reduce((p, c) => p + c, 0) + fs * 0.5 * (ws.length - 1); let x = (W - tot) / 2;
+      ws.forEach((w, i) => { S.label(ctx, w, x, y, w === 'Hund' ? S.c.grad : S.c.fg, S.font(fs, 'body', w === 'Hund' ? '600' : '500'), 'left'); x += wd[i] + fs * 0.5; });
+      if (st.ordA > 0) { ctx.globalAlpha = st.ordA; const v = attnOut(ws, ws.indexOf('Hund')), bw = Math.min(240, W - 80); S.label(ctx, '„Hund“ nach der Attention', W / 2, y + 30, S.c['fg-2'], S.font(12, 'body'), 'center'); barRow(ctx, v, (W - bw) / 2, y + 80, bw, 36, sign, 1.6); ctx.globalAlpha = 1; }
+    });
+    if (st.ordA > 0.9) S.label(ctx, 'genau dieselben Zahlen', W / 2, H - 14, S.c.error, S.font(13, 'body', '600'), 'center');
+  });
+
+  // ── word + position ─────────────────────────────────────────────
+  const PV = (() => { const r = WM.rng(5); return Array.from({ length: 6 }, () => Array.from({ length: WM.D }, () => WM.gauss(r) * 0.25)); })();
+  const posV = S.canvas($('#v-pos'), (ctx, W, H) => {
+    const e = vec('Hund'), w = Math.min(200, (W - 100) / 2), h = Math.min(34, H / 12);
+    [[1, 'Platz 2'], [4, 'Platz 5']].forEach(([p, name], k) => {
+      const narrow = W < 560, x0 = narrow ? (W - w) / 2 : W / 4 - w / 2 + k * (W / 2), off = narrow ? k * H * 0.48 : 0, al = k === 0 ? 1 : st.posA; if (al <= 0) return;
+      ctx.globalAlpha = al;
+      [[e, '„Hund“ aus E', sign], [PV[p], `+ ${name} aus P`, () => S.c.grad], [add(e, PV[p]), '= Eingabe', sign]].forEach(([v, nm, col], i) => { const y = off + (narrow ? h + 24 + i * (H * 0.14) : H * (0.22 + 0.25 * i)); S.label(ctx, nm, x0 + w / 2, y - h - 10, i === 1 ? S.c.grad : S.c.fg, S.font(12.5, 'body', '600'), 'center'); barRow(ctx, v, x0, y, w, h, col, 1); });
+      ctx.globalAlpha = 1;
+    });
+  });
+
+  // ── the task: the next word, at every position ──────────────────
+  const NS = 'der König regiert das Land'.split(' ');
+  const nextV = S.canvas($('#v-next'), (ctx, W, H) => {
+    const n = NS.length, cw = Math.min(130, (W - 20) / n), x0 = (W - cw * n) / 2, y = H * 0.3, fs = Math.min(19, cw / 4.3), k = Math.round(st.nxK);
+    NS.forEach((w, i) => { const known = i < k, target = i === k; ctx.fillStyle = target ? S.alpha('grad', 0.25) : known ? S.alpha('accent', 0.16) : S.alpha('fg', 0.05); ctx.fillRect(x0 + i * cw + 4, y - 22, cw - 8, 44); S.label(ctx, w, x0 + (i + 0.5) * cw, y, target ? S.c.grad : S.c.fg, S.font(fs, 'body', '600'), 'center'); });
+    if (k >= 1 && k < n) { const a = x0 + (k - 0.5) * cw, b = x0 + (k + 0.5) * cw; ctx.strokeStyle = S.c.grad; ctx.fillStyle = S.c.grad; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(a, y + 26); ctx.quadraticCurveTo((a + b) / 2, y + 70, b, y + 30); ctx.stroke(); S.label(ctx, `bekannt: „${NS.slice(0, k).join(' ')}“ → Ziel: „${NS[k]}“`, W / 2, y + 96, S.c.fg, S.font(W < 560 ? 11.5 : 14, 'body', '600'), 'center'); }
+    if (st.nxK >= n) S.label(ctx, `${n - 1} Übungsaufgaben aus einem einzigen Satz, alle gleichzeitig`, W / 2, y + 96, S.c.grad, S.font(14, 'body', '600'), 'center');
+    S.label(ctx, W < 560 ? 'violett: sichtbar · grün: vorhersagen' : 'violett: was das Modell sehen darf · grün: was es vorhersagen soll', W / 2, H - 14, S.c['fg-2'], S.font(12, 'body'), 'center');
+  });
+
+  // ── the causal mask ─────────────────────────────────────────────
+  const maskV = S.canvas($('#v-mask'), (ctx, W, H) => {
+    const n = NS.length, lab = W < 500 ? 60 : 80, side = Math.min(W - lab - 20, H - lab - 30), cs = side / n, x0 = lab + (W - lab - side) / 2 - 10, y0 = lab;
+    NS.forEach((w, j) => { ctx.save(); ctx.translate(x0 + (j + 0.5) * cs, y0 - 8); ctx.rotate(-0.8); S.label(ctx, w, 0, 0, S.c['fg-2'], S.font(12, 'body', '600'), 'left'); ctx.restore(); });
+    NS.forEach((wi, i) => {
+      S.label(ctx, wi, x0 - 8, y0 + (i + 0.5) * cs, S.c.fg, S.font(12.5, 'body', '600'), 'right');
+      const allowed = NS.map((_, j) => j <= i), z = NS.map((wj, j) => (allowed[j] || st.mkMask < 0.5 ? 4 * dotN(vec(wi), vec(wj)) : -Infinity)), m = Math.max(...z), e = z.map((x) => (x === -Infinity ? 0 : Math.exp(x - m))), s = e.reduce((a, b) => a + b);
+      NS.forEach((_, j) => { const x = x0 + j * cs, y = y0 + i * cs, v = e[j] / s, blocked = j > i; ctx.fillStyle = S.alpha('fg', 0.05); ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2); if (blocked && st.mkMask > 0) { ctx.fillStyle = S.alpha('error', 0.2 * st.mkMask); ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2); S.label(ctx, '−∞', x + cs / 2, y + cs / 2, S.alpha('error', st.mkMask), S.font(Math.min(13, cs * 0.25), 'mono'), 'center'); } else { ctx.fillStyle = S.c.accent; ctx.globalAlpha = st.mkA * clamp(v * 1.4, 0, 1); ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2); ctx.globalAlpha = 1; } });
+    });
+    S.label(ctx, 'Zeile: wer schaut · Spalte: worauf', W / 2, H - 10, S.c['fg-2'], S.font(11.5, 'body'), 'center');
+  });
+
+  // ── the output layer and the loss (with the chapter-6 model) ────
+  const outV = S.canvas($('#v-out'), (ctx, W, H) => {
+    const M = fin();
+    if (st.lossA > 0) {
+      const n = NS.length - 1, cw = Math.min(130, (W - 40) / n), x0 = (W - cw * n) / 2, base = H * 0.72, hh = H * 0.5;
+      S.label(ctx, '−log p(wirklich folgendes Wort), an jeder Stelle', W / 2, 20, S.c['fg-2'], S.font(13, 'body', '600'), 'center');
+      let sum = 0;
+      for (let i = 0; i < n; i++) { const p = M.probs(M.id[NS[i]])[M.id[NS[i + 1]]], l = -Math.log(p); sum += l; const h = (l / 6) * hh * st.lossA, x = x0 + i * cw; ctx.fillStyle = S.c.error; ctx.fillRect(x + cw * 0.3, base - h, cw * 0.4, h); S.label(ctx, fmt(l, 2), x + cw / 2, base - h - 10, S.c.fg, S.font(12, 'mono', '600'), 'center'); S.label(ctx, `${NS[i]} → ${NS[i + 1]}`, x + cw / 2, base + 16, S.c['fg-2'], S.font(W < 560 ? 10.5 : 12, 'body'), 'center'); S.label(ctx, `p = ${fmt(p * 100, 0)} %`, x + cw / 2, base + 34, S.c['fg-2'], S.font(11, 'mono'), 'center'); }
+      ctx.strokeStyle = S.alpha('fg', 0.25); ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x0 + n * cw, base); ctx.stroke();
+      if (st.lossA > 0.9) S.label(ctx, `Verlust = Mittelwert = ${fmt(sum / n, 2)}`, W / 2, H - 16, S.c.error, S.font(14, 'body', '600'), 'center');
+      return;
+    }
+    const p = M.probs(M.id[st.outW]), top = M.vocab.map((w, i) => [w, p[i]]).sort((a, b) => b[1] - a[1]).slice(0, 8), lab = 110, X = lin(0, 0.4, lab, W - 60), rh = Math.min(34, (H - 70) / 8);
+    S.label(ctx, W < 560 ? `nach „${st.outW}“: u · x, dann Softmax` : `nach „${st.outW}“: Skalarprodukt mit jedem u, dann Softmax`, W / 2, 18, S.c['fg-2'], S.font(13, 'body', '600'), 'center');
+    top.forEach(([w, v], i) => { const y = 44 + i * rh; ctx.globalAlpha = clamp(st.outA * 8 - i, 0, 1); S.label(ctx, w, lab - 10, y + rh / 2, S.c.fg, S.font(14, 'body', '600'), 'right'); ctx.fillStyle = S.c.accent; ctx.fillRect(X(0), y + 6, X(Math.min(v, 0.4)) - X(0), rh - 12); S.label(ctx, `${fmt(v * 100, 0)} %`, X(Math.min(v, 0.4)) + 6, y + rh / 2, S.c['fg-2'], S.font(12, 'mono'), 'left'); ctx.globalAlpha = 1; });
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Steps
+  // ════════════════════════════════════════════════════════════════
+  const steps = {
+    teile: {
+      views: ['block'],
+      formula: `Wörter → ${T('e', 'Embedding', '', 'Kapitel 6')} → ${T('a', 'Attention', '', 'Kapitel 7 und 8')} → ${T('q', '?', 'c-new', 'was fehlt noch')} → nächstes Wort`,
+      setup() { st.blkHi = []; },
+      async play(a) {
+        a.hl('e'); a.set(st, { blkHi: ['tok', 'emb'] }); a.say('Wörter werden über die Tabelle E zu Vektoren.'); await a.wait(2400);
+        a.hl('a'); a.set(st, { blkHi: ['att'] }); a.say('Attention mischt sie untereinander.'); await a.wait(2400);
+        a.hl('q'); a.set(st, { blkHi: ['mlp', 'out', 'next'] }); a.say('Was noch fehlt: Zusammensetzen, Verarbeitung pro Wort, Reihenfolge, eine Aufgabe.');
+      },
+    },
+    addieren: {
+      views: ['stream'],
+      formula: `${T('x', '<b>x</b>', '', 'der Vektor eines Worts')} ← <b>x</b> + ${T('a', 'Attention(<b>x</b>)', 'c-new', 'das Ergebnis wird dazuaddiert')}`,
+      setup() { st.stA = 0; st.stB = 0; st.stL = 0; },
+      async play(a) {
+        a.hl('x'); a.say('Der Vektor von „Bank“ aus der Tabelle.'); await a.wait(1800);
+        a.hl('a'); await a.to(st, { stA: 1 }, 900); a.say('Die Mischung aus der Attention.'); await a.wait(1800);
+        await a.to(st, { stB: 1 }, 900); a.say('Eintrag für Eintrag addiert. Das Original bleibt erhalten.');
+      },
+    },
+    notizblatt: {
+      views: ['stream'],
+      formula: `${T('x', '<b>x</b>', 'c-new', 'das Notizblatt eines Worts: der Residualstrom')} = Embedding + Beitrag<sub>1</sub> + Beitrag<sub>2</sub> + …`,
+      setup() { st.stL = 0.001; },
+      async play(a) { a.hl('x'); a.say('Am Anfang steht nur das Embedding auf dem Blatt.'); await a.wait(1800); for (let k = 1; k <= 4; k++) { await a.to(st, { stL: k / 4 }, 700); a.say(['Attention 1 schreibt etwas dazu.', 'MLP 1 schreibt etwas dazu.', 'Attention 2 liest alles und schreibt dazu.', 'MLP 2 ebenso. Nichts wird gelöscht, alles wird addiert.'][k - 1]); await a.wait(1600); } },
+    },
+    mlp: {
+      views: ['mlp'],
+      formula: `${T('m', 'MLP(<b>x</b>)', 'c-new', 'Matrix, ReLU, Matrix: Kapitel 4')} = <b>W</b><sub>2</sub> · ReLU(<b>W</b><sub>1</sub> <b>x</b> + <b>b</b>)<span class="sep">dann</span><b>x</b> ← <b>x</b> + MLP(<b>x</b>)`,
+      setup() { st.mlpN = 1; st.mlpK = 0; },
+      async play(a) {
+        a.hl('m'); a.say('Der Vektor von „Katze“ aus dem Beispiel von Kapitel 8: zwei Zahlen.'); await a.wait(2000);
+        const t = ['Eine Matrix macht 3 Zahlen daraus.', 'Der Knick setzt Negatives auf 0, wie in Kapitel 4.', 'Eine zweite Matrix macht wieder 2 Zahlen.', 'Und die werden zum Original addiert.'];
+        for (let k = 1; k <= 4; k++) { a.set(st, { mlpK: k }); a.say(t[k - 1]); await a.wait(2400); }
+      },
+    },
+    jedes: {
+      views: ['mlp'],
+      formula: `${T('m', 'dasselbe MLP', 'c-new', 'gleiche Zahlen für jedes Wort')} für jedes Wort, jedes für sich`,
+      setup() { st.mlpN = 3; },
+      async play(a) { a.hl('m'); a.say('Drei Wörter, dasselbe Netz, dieselben Zahlen. Kein Wort schaut zu einem anderen.'); },
+    },
+    block: {
+      views: ['block'],
+      formula: `${T('b', 'Block', 'c-new', 'Attention, dann MLP, beide dazuaddiert')} = (<b>x</b> += Attention, <b>x</b> += MLP)<span class="sep">×</span>N`,
+      setup() { st.blkHi = ['att', 'mlp']; },
+      async play(a) { a.hl('b'); a.say('Attention plus MLP sind ein Block. Viele davon übereinander, der grüne Strom links läuft durch alle.'); },
+    },
+    reihenfolge: {
+      views: ['order'],
+      formula: `${T('o', 'Attention(Mann, füttert, den, Hund, der)', 'c-new', 'die Reihenfolge kommt in der Rechnung nicht vor')} = Attention(Hund, füttert, den, Mann, der)`,
+      setup() { st.ordA = 0; },
+      async play(a) {
+        a.say('Zwei Sätze, dieselben Wörter, andere Bedeutung.'); await a.wait(1400);
+        await a.ask('Bekommt „Hund“ nach der Attention in beiden Sätzen dasselbe Ergebnis?', ['ja, exakt dasselbe', 'nein, verschiedene'], 0, 'Attention vergleicht und mischt nur Vektoren. In beiden Sätzen sind es dieselben Vektoren, und ihre Reihenfolge kommt in der Rechnung nicht vor.');
+        a.hl('o'); await a.to(st, { ordA: 1 }, 900); a.say('Das Ergebnis für „Hund“ ist in beiden Sätzen exakt gleich. Attention sieht die Reihenfolge nicht.');
+      },
+    },
+    platz: {
+      views: ['pos'],
+      formula: `${T('x', '<b>x</b><sub><i>i</i></sub>', '', 'Eingabe an Platz i')} = <b>E</b>[Wort] + ${T('p', '<b>P</b>[<i>i</i>]', 'c-new', 'eine zweite Tabelle: eine Zeile pro Platz')}`,
+      setup() { st.posA = 0; },
+      async play(a) { a.hl('p'); a.say('„Hund“ auf Platz 2: sein Vektor plus der Vektor von Platz 2.'); await a.wait(2600); await a.to(st, { posA: 1 }, 900); a.say('„Hund“ auf Platz 5: ein anderer Platzvektor, eine andere Eingabe. Jetzt zählt die Reihenfolge.'); },
+    },
+    aufgabe: {
+      views: ['next'],
+      formula: `${T('t', 'Ziel an Stelle <i>i</i>', 'c-new', 'das Wort, das im Text wirklich als Nächstes kommt')} = Wort<sub><i>i</i>+1</sub>`,
+      setup() { st.nxK = 0; },
+      async play(a) {
+        a.say('Ein Satz aus dem Text von Kapitel 6.'); await a.wait(1600);
+        a.hl('t'); for (let k = 1; k < NS.length; k++) { a.set(st, { nxK: k }); a.say(`Gegeben „${NS.slice(0, k).join(' ')}“: Was kommt als Nächstes? „${NS[k]}“.`); await a.wait(2200); }
+        a.set(st, { nxK: NS.length }); a.say('Jede Stelle ist eine Übungsaufgabe. Die Antworten stehen im Text selbst.');
+      },
+    },
+    maske: {
+      views: ['mask'],
+      formula: `Punktzahl<sub><i>ij</i></sub> = ${T('m', '−∞', 'c-new', 'für j > i: e hoch −∞ ist 0, der Anteil verschwindet')} für <i>j</i> > <i>i</i>`,
+      setup() { st.mkA = 1; st.mkMask = 0; },
+      async play(a) {
+        a.say('Ohne Maske könnte „der“ schon auf „König“ schauen, die Antwort also ablesen.'); await a.wait(2600);
+        a.hl('m'); await a.to(st, { mkMask: 1 }, 1600); a.say('Die obere Hälfte ist gesperrt. Jedes Wort sieht nur sich und die Wörter davor.');
+      },
+    },
+    ausgabe: {
+      views: ['out'],
+      formula: `${T('p', '<i>p</i>(nächstes = <i>j</i>)', '', 'Wahrscheinlichkeit für Wort j')} = softmax(${T('u', '<b>u</b><sub><i>j</i></sub> · <b>x</b>', 'c-new', 'Skalarprodukt mit dem Ausgabe-Vektor jedes Worts')})`,
+      setup() { st.outA = 0; st.lossA = 0; st.outW = 'König'; },
+      async play(a) { a.hl('u'); a.say('Der Vektor am Ende wird mit jedem Ausgabe-Vektor u verglichen …'); await a.to(st, { outA: 1 }, 1600); a.hl('p'); a.say('… und die Softmax macht Wahrscheinlichkeiten daraus.'); },
+      tryit: () => [{ label: 'Vektor von', type: 'choice', get: () => st.outW, set: (v) => (st.outW = v), options: ['König', 'Hund', 'Bank', 'Frau', 'isst', 'Garten'].map((w) => ({ label: w, value: w })) }],
+    },
+    verlust: {
+      views: ['out'],
+      formula: () => `${T('L', 'Verlust', 'c-new', 'Mittelwert über alle Stellen')} = Mittelwert über <i>i</i> von −log <i>p</i>(Wort<sub><i>i</i>+1</sub>)`,
+      setup() { st.lossA = 0; },
+      async play(a) { a.say('An jeder Stelle: Welche Wahrscheinlichkeit bekam das Wort, das wirklich folgt?'); await a.to(st, { lossA: 1 }, 1600); a.hl('L'); a.say('−log davon, gemittelt: der Verlust. Gradientenabstieg verstellt alle Zahlen so, dass er sinkt.'); },
+    },
+    bauplan: {
+      views: ['block'],
+      formula: `<b>x</b> = <b>E</b>[Wort] + <b>P</b>[Platz] → (<b>x</b> += Attention, <b>x</b> += MLP) × N → ${T('o', 'softmax(<b>x</b> · <b>u</b>)', 'c-new', 'Wahrscheinlichkeiten für das nächste Wort')}`,
+      setup() { st.blkHi = []; },
+      async play(a) { for (const [ids, txt] of [[['tok', 'emb'], 'Wort und Platz nachschlagen, addieren.'], [['att', 'mlp'], 'N Blöcke aus Attention und MLP.'], [['out', 'next'], 'Ausgabe-Vektoren und Softmax.']]) { a.set(st, { blkHi: ids }); a.say(txt); await a.wait(2400); } a.hl('o'); a.set(st, { blkHi: [] }); a.say('Gelernt mit dem Verlust für das nächste Wort.'); },
+    },
+    gross: {
+      views: ['block'],
+      formula: `dieselbe Aufgabe: ${T('n', 'das nächste Wort', 'c-new', 'bei kleinen wie bei großen Modellen')}`,
+      setup() { st.blkHi = []; },
+      async play(a) { a.hl('n'); a.say('Mehr Blöcke, mehr Köpfe, große MLPs, LayerNorm, riesige Datenmengen. Der Bauplan bleibt.'); },
+    },
+    ausblick: {
+      views: ['block'],
+      formula: `Kapitel 10: ein eigener Transformer`,
+      setup() { st.blkHi = []; },
+      async play(a) { a.say('Als Nächstes trainieren wir einen.'); },
+    },
+  };
+
+  (window.requestIdleCallback || ((f) => setTimeout(f, 600)))(() => fin());
+  story = S.story($('#story'), {
+    views: { block: blockV, stream: streamV, mlp: mlpV, order: orderV, pos: posV, next: nextV, mask: maskV, out: outV },
+    steps,
+    values: () => ({}),
+  });
+})();
+</script>
+</body>
+</html>
