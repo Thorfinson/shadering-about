@@ -1,0 +1,29 @@
+# Bioluminescent jellyfish. Tentacles (t, u) are drawn after the outline so they stay 1px thin.
+@sprite jelly
+@outline ink
+@thin tu
+@map B=vio3 h=pearl b=vio2 t=vio3 u=glow
+
+@frame pulse0
+..BBB..
+.BhBBB.
+BhBBBBB
+BBBBBBB
+bbbbbbb
+.t.u.t.
+.t.u.t.
+t..u..t
+t.u..t.
+..u..t.
+
+@frame pulse1
+.......
+..BBB..
+.BhBBB.
+BBBBBBB
+.bbbbb.
+.t.u.t.
+t..u..t
+t.u...t
+.tu..t.
+..u.t..

@@ -1,0 +1,13 @@
+# The Mate's pressure gauge (test runner). The needle is drawn at runtime.
+@sprite gauge
+@outline ink
+@point pivot 3,3
+
+@frame idle
+..999..
+.9aaa9.
+9aaaaa9
+9aa7aa9
+9aaaaa9
+.9aaa9.
+..787..

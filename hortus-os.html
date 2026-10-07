@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Hortus OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Pixelify+Sans:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap" />
+<link rel="stylesheet" href="assets/os/os.css" />
+<style>
+  /* Hortus: a garden at the golden hour — moss-dark panels, honey and leaf */
+  :root {
+    --bg: #0d120e;
+    --bg-glow: #2a2418;
+    --panel: rgba(17, 24, 17, 0.93);
+    --panel-hi: rgba(30, 40, 26, 0.93);
+    --line: rgba(200, 196, 140, 0.22);
+    --line-2: rgba(220, 210, 160, 0.46);
+    --leaf: rgba(143, 211, 95, 0.55);
+    --accent: #e3b250;
+    --accent-hi: #f6d98a;
+    --accent-lo: #7a5a24;
+    --on-accent: #1a1206;
+    --hub: #f2c14e;
+    --cyan: #a8e6a0;
+    --ink: #f1ecdc;
+    --muted: rgba(241, 236, 220, 0.68);
+    --faint: rgba(241, 236, 220, 0.42);
+    --good: #8fd35f;
+    --warn: #f2b13b;
+    --bad: #ff7a6a;
+    --build: #7fd35f;
+    --model: #4fd1b0;
+    --test: #6cc3f5;
+    --deploy: #b58cf0;
+    --remember: #f3e9ff;
+    --map-bg: #171a18;
+    --card-bg: rgba(16, 22, 15, 0.9);
+    --card-head: linear-gradient(180deg, rgba(52, 66, 38, 0.92), rgba(22, 30, 20, 0.92));
+    --pop-bg: rgba(16, 22, 15, 0.97);
+    --btn-bg: rgba(32, 42, 28, 0.9);
+    --option-bg: #1c261c;
+    --corner-bg: #0c0a08;
+    --radius: 6px;
+    --display: "Cormorant Garamond", Georgia, serif;
+    --ui: "Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --caps: "Silkscreen", "Pixelify Sans", ui-monospace, monospace;
+    --book: "Cormorant Garamond", Georgia, serif;
+  }
+  /* a sprig of leaves in two corners of every panel */
+  .panel {
+    background:
+      radial-gradient(ellipse 5px 2.5px at 9px 6px, var(--leaf) 60%, transparent 70%),
+      radial-gradient(ellipse 2.5px 5px at 6px 9px, var(--leaf) 60%, transparent 70%),
+      radial-gradient(ellipse 5px 2.5px at calc(100% - 9px) calc(100% - 6px), var(--leaf) 60%, transparent 70%),
+      radial-gradient(ellipse 2.5px 5px at calc(100% - 6px) calc(100% - 9px), var(--leaf) 60%, transparent 70%),
+      linear-gradient(180deg, var(--panel-hi), var(--panel) 42%);
+  }
+  .brand h1 { font-size: 22px; letter-spacing: 0.08em; }
+  .quote blockquote, .nav .motto, .regions p, .empty { font-size: 16px; }
+  .plaque { border-radius: 2px 2px 8px 8px; font-family: var(--display); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="panel brand">
+      <canvas id="brand-mark" width="11" height="12" aria-hidden="true"></canvas>
+      <div>
+        <h1>HORTUS OS</h1>
+        <small>Agent orchestration</small>
+        <i>Tend what grows</i>
+      </div>
+    </div>
+    <div class="panel project">
+      <label for="project">Project</label>
+      <select id="project"></select>
+    </div>
+    <div class="panel pipe">
+      <small id="pipe-note">From the order to the beds</small>
+      <ol id="pipeline"></ol>
+    </div>
+    <figure class="panel quote">
+      <blockquote id="quote">“If you look the right way, you can see that the whole world is a garden.”</blockquote>
+      <figcaption id="quote-src">The Secret Garden</figcaption>
+    </figure>
+    <div class="panel clock">
+      <div class="row"><time id="clock">Day 1 · 17:40</time><span class="meter-v"><canvas id="meter-icon" width="12" height="10" aria-hidden="true"></canvas><span id="meter">— °C</span></span></div>
+      <div class="row"><small>Garden time</small><small>Soil</small></div>
+      <div class="ctl" role="group" aria-label="Simulation speed">
+        <button type="button" id="play" aria-pressed="false" title="Pause">❚❚</button>
+        <button type="button" data-speed="1" class="on">1×</button>
+        <button type="button" data-speed="2">2×</button>
+        <button type="button" data-speed="4">4×</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Places">
+    <div class="panel nav" id="nav">
+      <p class="motto">“Where you tend a rose, a thistle cannot grow.”<span>The Secret Garden</span></p>
+    </div>
+    <div class="panel corner">
+      <canvas id="corner-art" width="180" height="236" aria-hidden="true"></canvas>
+      <div class="plaque">TEND WHAT GROWS</div>
+    </div>
+  </nav>
+
+  <main class="map" id="map-frame">
+    <div class="map-inner" id="map">
+      <canvas class="world" id="world" role="img" aria-label="A garden at dusk seen from above: the orchestrator’s great oak in the middle, gravel paths to seven places — a seed library, a glasshouse, topiary, an apiary, a nursery, a lily pond and a windmill — and bumblebee agents flying between them."></canvas>
+      <canvas class="glow" id="glow" aria-hidden="true"></canvas>
+      <div class="overlay" id="overlay"></div>
+      <div class="boot" id="boot">
+        <div>
+          <h2>Loading sprite assets</h2>
+          <div id="boot-what">assets/garden/atlas.js</div>
+          <div class="bar"><i id="boot-bar"></i></div>
+          <pre id="boot-log"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="dock">
+    <div class="panel" id="agents-panel">
+      <header><h2 class="ptitle">Active agents <span id="agents-n" style="color:var(--accent)"></span></h2><span class="aside">the bees</span></header>
+      <div class="scroll"><ul class="agents" id="agents"></ul></div>
+    </div>
+    <div class="panel">
+      <header>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="feed" aria-selected="true">Recent activity</button>
+          <button type="button" role="tab" data-tab="diff" aria-selected="false">Changes <span class="n" id="diff-n"></span></button>
+          <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
+        </div>
+      </header>
+      <div class="scroll tabbody" id="tab-feed" role="tabpanel"><ol class="feed" id="feed"></ol></div>
+      <div class="scroll tabbody" id="tab-diff" role="tabpanel" hidden></div>
+      <div class="scroll tabbody" id="tab-tests" role="tabpanel" hidden></div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Season progress</h2><span class="aside" id="phase-n"></span></header>
+      <div class="progress">
+        <div class="meter"><span class="track"><i id="prog-bar"></i></span><b id="prog-pct">0%</b></div>
+        <ul class="checks" id="checks"></ul>
+        <div class="ledger" id="ledger">Bees read in their own contexts; only short reports reach the orchestrator.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Garden map</h2><span class="aside">places</span></header>
+      <div class="regions">
+        <canvas id="minimap" aria-label="Minimap of the places"></canvas>
+        <ul class="legend">
+          <li><i style="background:var(--good)"></i>Visited</li>
+          <li><i style="background:var(--warn)"></i>In progress</li>
+          <li><i style="border:1px solid var(--muted)"></i>Planned</li>
+        </ul>
+        <p>“Il faut cultiver notre jardin.”</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="assets/garden/atlas.js"></script>
+<script src="assets/os/engine.js"></script>
+<script>
+"use strict";
+// The world's own names stay in this block; the engine sees them through startOS().
+{
+// ============================================================
+// Stations, bees, projects
+// ============================================================
+const QUOTES = [
+  ["“If you look the right way, you can see that the whole world is a garden.”", "The Secret Garden"],
+  ["“Might I have a bit of earth?”", "The Secret Garden"],
+  ["“Where you tend a rose, my lad, a thistle cannot grow.”", "The Secret Garden"],
+  ["“Il faut cultiver notre jardin.”", "Voltaire · Candide"],
+  ["“If you look the right way, you can see that the whole world is a garden.”", "The Secret Garden"],
+];
+
+// fx/fy: where each place's plot sits on screen, as a fraction of the map.
+const STATIONS = {
+  hub:       { name: "Agent Orchestrator", sub: "Plan · Coordinate · Execute", frame: "hub.orchestrator", icon: "icon.observe", color: "honey3", fx: 0.48, fy: 0.6, prefer: ["below", "above"] },
+  knowledge: { name: "Knowledge Base", frame: "station.knowledge", icon: "icon.knowledge", color: "research", fx: 0.17, fy: 0.36, prefer: ["below", "right", "left"] },
+  documents: { name: "Documents", frame: "station.documents", icon: "icon.documents", color: "analyze", fx: 0.6, fy: 0.3, prefer: ["right", "left", "below"] },
+  models:    { name: "Model Registry", frame: "station.models", icon: "icon.models", color: "model", fx: 0.87, fy: 0.34, prefer: ["below", "left"] },
+  repos:     { name: "Repositories", frame: "station.repos", icon: "icon.repos", color: "build", fx: 0.15, fy: 0.7, prefer: ["below", "right", "above"] },
+  tests:     { name: "Testing Lab", frame: "station.tests", icon: "icon.tests", color: "test", fx: 0.75, fy: 0.64, prefer: ["below", "left", "right"] },
+  memory:    { name: "Memory", frame: "station.memory", icon: "icon.memory", color: "remember", fx: 0.37, fy: 0.88, prefer: ["right", "left", "above"] },
+  deploy:    { name: "Deployments", frame: "station.deploy", icon: "icon.deploy", color: "deploy", fx: 0.89, fy: 0.87, prefer: ["left", "above"] },
+};
+
+const ROW_ICON = {
+  knowledge: { papers: "ri.paper", reports: "ri.report", datasets: "ri.data", web: "ri.web" },
+  documents: { project: "ri.paper", specs: "ri.spec", notes: "ri.note", designs: "ri.design", diagrams: "ri.diagram" },
+  tests: { unit: "ri.check", integration: "ri.check", eval: "ri.model", sim: "ri.sim", data: "ri.data" },
+  memory: { short: "ri.clock", long: "ri.pearl", episodic: "ri.note", vector: "ri.grid" },
+};
+
+const AGENTS = [
+  { id: "mary", name: "Mary", role: "Researcher", home: "knowledge", color: "research", verb: "Researching", blurb: "reads botany papers, field notes and bloom counts" },
+  { id: "colin", name: "Colin", role: "Analyst", home: "documents", color: "analyze", verb: "Analyzing", blurb: "sorts the findings; writes specs and plans" },
+  { id: "dickon", name: "Dickon", role: "Engineer", home: "repos", color: "build", verb: "Coding", blurb: "writes the code; weeds out failing tests" },
+  { id: "martha", name: "Martha", role: "Model engineer", home: "models", color: "model", verb: "Training", blurb: "trains, prunes and registers models" },
+  { id: "susan", name: "Susan", role: "Tester", home: "tests", color: "test", verb: "Testing", blurb: "runs the suites, simulations and evals" },
+  { id: "robin", name: "Robin", role: "Launcher", home: "deploy", color: "deploy", verb: "Deploying", blurb: "carries every release out to the beds" },
+  { id: "soot", name: "Soot", role: "Chronicler", home: "memory", color: "remember", verb: "Remembering", blurb: "keeps the garden journal — long-term memory" },
+];
+
+const EDITS = {
+  blooms: {
+    file: "api/blooms.js", hunk: "@@ -0,0 +1,8 @@", create: true,
+    lines: [
+      '+import { classify } from "../models/bloom-classifier.js";',
+      "+",
+      "+export async function getBloom(req) {",
+      "+  const img = await req.image();",
+      '+  const { label, confidence } = await classify(img, { v: "1.0" });',
+      '+  if (confidence < 0.6) return { label: "unknown", confidence };',
+      "+  return { label, confidence };",
+      "+}",
+    ],
+  },
+  routes: {
+    file: "api/routes.js", hunk: "@@ -12,4 +12,5 @@",
+    lines: [
+      ' router.get("/beds", listBeds);',
+      ' router.get("/beds/:id", getBed);',
+      '+router.get("/blooms/:id", getBloom);',
+      ' router.get("/health", health);',
+    ],
+  },
+  frost: {
+    file: "climate/frost.js", hunk: "@@ -10,4 +10,4 @@ frost line",
+    lines: [
+      " // the coldest night the seedlings are kept through",
+      "-export const FROST_C = -1;      // °C",
+      "+export const FROST_C = -4;      // tonight's forecast",
+      " export const WARN_HOURS = 6;    // before dawn",
+    ],
+  },
+  heaters: {
+    file: "climate/heaters.js", hunk: "@@ -38,5 +38,8 @@ function heat",
+    lines: [
+      " function heat(house, watts) {",
+      "   const t = airTemp(house);",
+      "+  if (t < 0) {                   // °C",
+      "+    return staged(house, watts, t);",
+      "+  }",
+      "   return drive(house, watts, t);",
+      " }",
+    ],
+  },
+  cloche: {
+    file: "glass/cloche.js", hunk: "@@ -4,3 +4,4 @@",
+    lines: [
+      "-export const GLASS_MM = 3;      // rated −1 °C",
+      "+export const GLASS_MM = 4;      // rated −6 °C",
+      "+export const DOUBLE_GLAZED = true;",
+      " export const VENT_CM = 10;",
+    ],
+  },
+  bramblealert: {
+    file: "alerts/bramble.js", hunk: "@@ -0,0 +1,8 @@", create: true,
+    lines: [
+      '+import { model } from "../models/bramble-scout.js";',
+      "+",
+      "+export function onRootCam(frame) {",
+      "+  const p = model.score(frame);                // 0..1",
+      "+  if (p > 0.8 && frame.distanceM < 3) {",
+      '+    alarm("bramble", { bed: frame.bed, warnH: frame.distanceM / frame.growthMH });',
+      "+  }",
+      "+}",
+    ],
+  },
+};
+
+// A project runs research (parallel) → analyze → build (parallel) → test → deploy.
+const PROJECTS = [
+  {
+    id: "census", name: "Pollinator Census", meter: 14,
+    order: "Count every bee and bloom in the garden, Mary. Begin with the roses.",
+    ticket: "Ship Bloom-Classifier v1.0 behind the Garden API",
+    research: [
+      { agent: "mary", station: "knowledge", task: "Survey the botany literature", doing: "Reading papers",
+        steps: [["read", "papers", "Darwin · Cross and Self Fertilisation", 6200], ["read", "reports", "Bee counts · spring transects", 2900], ["read", "datasets", "Bloom photos · 36k", 1800]],
+        report: "Wilting shows in 27% of bloom photos, and the training set has no label for it.", rtok: 180 },
+      { agent: "colin", station: "documents", task: "Read the Garden API spec", doing: "Reading specs",
+        steps: [["docread", "specs", "Garden API v2", 2100], ["docread", "notes", "Meeting notes · 12 May", 900]],
+        report: "The API serves /blooms/{id}; the classifier must return a confidence.", rtok: 120 },
+      { agent: "soot", station: "memory", task: "Recall the last census", doing: "Recalling",
+        steps: [["recall", "Last census: wilted roses were labelled “dead”", 420]],
+        report: "Memory: wilted roses were mislabelled as dead last time.", rtok: 60 },
+    ],
+    analyze: { agent: "colin", station: "documents", task: "Write the research brief and the plan", doing: "Writing the brief",
+      steps: [["docwrite", "project", "Research brief · Bloom classifier v1.0"], ["plan"]], report: "Brief filed; five-step plan.", rtok: 140 },
+    plan: [
+      ["Add a wilting label to the training set", "martha", 2],
+      ["Train Bloom-Classifier v1.0", "martha", 2],
+      ["Serve /blooms on the Garden API", "dickon", 2],
+      ["Validate on the held-out census", "susan", 3],
+      ["Deploy to staging, production and the drones", "robin", 4],
+    ],
+    build: [
+      { agent: "dickon", station: "repos", task: "Serve /blooms on the Garden API", doing: "Coding",
+        steps: [["grep", "garden-atlas", "router.get", ["api/routes.js"]], ["edit", "garden-atlas", "feature/blooms-api", "blooms"], ["edit", "garden-atlas", "feature/blooms-api", "routes"]],
+        report: "GET /blooms/{id} returns a label and a confidence.", rtok: 110 },
+      { agent: "martha", station: "models", task: "Train Bloom-Classifier v1.0", doing: "Training",
+        steps: [["train", "Bloom-Classifier", "1.0", "36k photos, wilting label added"]], report: "v1.0 trained: 0.93 accuracy overall.", rtok: 120 },
+    ],
+    test: {
+      agent: "susan", task: "Run the suites and the model eval", doing: "Testing",
+      first: [["suite", "unit", 346, null], ["suite", "integration", 128, null], ["suite", "eval", 12, "wilted roses: precision 0.68 < 0.85"]],
+      fix: { agent: "martha", station: "models", task: "Retrain with more wilting examples", doing: "Retraining",
+             steps: [["train", "Bloom-Classifier", "1.0", "+2,400 wilting labels"]], report: "Wilted-rose precision 0.68 → 0.91.", rtok: 100 },
+      rerun: [["suite", "eval", 12, null], ["suite", "data", 89, null]],
+      report: "All green: unit 346, integration 128, eval 12/12, data 89/89.", rtok: 70,
+    },
+    deploy: [
+      { agent: "robin", station: "deploy", task: "Release the Census 1.0", doing: "Deploying",
+        steps: [["deploy", "staging", "census 1.0"], ["deploy", "production", "census 1.0"], ["deploy", "edge", "classifier 1.0"], ["deploy", "api", "census 1.0"]],
+        report: "Census 1.0 is live on staging, production, the drone fleet and the Garden API.", rtok: 90 },
+      { agent: "dickon", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "garden-atlas", "b100m5", "blooms: serve classifier v1.0"]], report: "Merged into main.", rtok: 40 },
+      { agent: "soot", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Wilting needs its own label — never “dead”"]], report: "Lesson stored.", rtok: 30 },
+    ],
+  },
+  {
+    id: "frost", name: "Frost Guard", meter: 6, finalMeter: -4,
+    order: "Frost is coming tonight. Keep every seedling alive down to four below.",
+    ticket: "Protect the seedlings down to −4 °C",
+    research: [
+      { agent: "mary", station: "knowledge", task: "Survey the frost literature", doing: "Reading the almanac",
+        steps: [["read", "papers", "The Gardener's Almanac · Frost", 3400], ["read", "papers", "Loudon · Encyclopaedia of Gardening", 5200]],
+        report: "The cloches are rated to −1 °C; expect −4 °C tonight.", rtok: 160 },
+      { agent: "dickon", station: "repos", task: "Find every frost limit in the code", doing: "Searching code",
+        steps: [["grep", "greenhouse", "FROST_C", ["climate/frost.js", "climate/heaters.js"]]],
+        report: "FROST_C is set in climate/frost.js and read by climate/heaters.js.", rtok: 120 },
+      { agent: "soot", station: "memory", task: "Recall past frosts", doing: "Recalling",
+        steps: [["recall", "Glass tests are slow — run them last", 380]], report: "Memory: the glass suite is slow; run it last.", rtok: 50 },
+    ],
+    analyze: { agent: "colin", station: "documents", task: "Write the frost envelope and the plan", doing: "Writing the spec",
+      steps: [["docwrite", "specs", "Spec · Frost envelope to −4 °C"], ["plan"]], report: "Spec filed; five-step plan.", rtok: 130 },
+    plan: [
+      ["Lower FROST_C to −4 °C", "dickon", 2],
+      ["Stage the heaters below 0 °C", "dickon", 2],
+      ["Simulate the frost night", "susan", 3],
+      ["Run the glass suite last", "susan", 3],
+      ["Ship climate 2.4 to the glasshouses", "robin", 4],
+    ],
+    build: [
+      { agent: "dickon", station: "repos", task: "Lower the limit and stage the heaters", doing: "Coding",
+        steps: [["edit", "greenhouse", "feature/frost-guard", "frost"], ["edit", "greenhouse", "feature/frost-guard", "heaters"]],
+        report: "FROST_C −4; heaters staged below 0 °C.", rtok: 110 },
+    ],
+    test: {
+      agent: "susan", task: "Simulate the frost, then the glass suite", doing: "Testing",
+      first: [["suite", "sim", 3, null], ["suite", "unit", 342, "cloche.test.js › seedlings survive −4 °C — glass rated −1 °C"]],
+      fix: { agent: "dickon", station: "repos", task: "Weed out the failing cloche test", doing: "Fixing glass/cloche.js",
+             steps: [["edit", "greenhouse", "feature/frost-guard", "cloche"]], report: "Cloches double-glazed: rated −6 °C.", rtok: 100 },
+      rerun: [["suite", "unit", 342, null]],
+      report: "Simulations 3/3; glass suite 342/342.", rtok: 60,
+    },
+    deploy: [
+      { agent: "robin", station: "deploy", task: "Ship climate 2.4", doing: "Deploying",
+        steps: [["deploy", "staging", "climate 2.4 · potting shed"], ["deploy", "production", "climate 2.4 · glasshouses"]],
+        report: "climate 2.4 is running in every glasshouse.", rtok: 70 },
+      { agent: "dickon", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "greenhouse", "f4057c", "climate: frost guard to −4 °C"]], report: "Merged into main.", rtok: 40 },
+      { agent: "soot", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Frost changes need a glass review"]], report: "Lesson stored.", rtok: 30 },
+    ],
+  },
+  {
+    id: "bramble", name: "Bramble early warning", meter: 12,
+    order: "Something is creeping under the wall and choking the beds. I want warning before it comes.",
+    ticket: "Spot bramble runners before they reach the beds",
+    research: [
+      { agent: "mary", station: "knowledge", task: "Study Rubus fruticosus", doing: "Reading papers",
+        steps: [["read", "papers", "A monograph of the British brambles", 4400], ["read", "datasets", "Root-cam frames · 214 sightings", 3100]],
+        report: "Runners show as slow, branching shadows on the root-cams; 9 of 214 sightings match.", rtok: 170 },
+      { agent: "colin", station: "documents", task: "Read the weeding drill", doing: "Reading the runbook",
+        steps: [["docread", "notes", "Runbook · weeding drill", 1200]], report: "The gardeners need 90 minutes of warning to dig it out.", rtok: 90 },
+      { agent: "soot", station: "memory", task: "Recall past false alarms", doing: "Recalling",
+        steps: [["recall", "Ivy set off the last alarm", 400]], report: "Memory: ivy triggered the last false alarm.", rtok: 50 },
+    ],
+    analyze: { agent: "colin", station: "documents", task: "Design the alert pipeline", doing: "Drawing the design",
+      steps: [["docwrite", "designs", "Design · Root-cam alert pipeline"], ["docwrite", "diagrams", "Diagram · Frame to alarm"], ["plan"]], report: "Design and diagram filed; five-step plan.", rtok: 150 },
+    plan: [
+      ["Train Bramble-Scout v0.3 with ivy as negatives", "martha", 2],
+      ["Wire the alarm into root-alerts", "dickon", 2],
+      ["Evaluate false alarms", "susan", 3],
+      ["Simulate five incursions", "susan", 3],
+      ["Ship to the drones and the potting shed", "robin", 4],
+    ],
+    build: [
+      { agent: "martha", station: "models", task: "Train Bramble-Scout v0.3", doing: "Training",
+        steps: [["train", "Bramble-Scout", "0.3", "214 sightings, ivy as negatives"]], report: "v0.3: recall 0.97, false alarms 2%.", rtok: 110 },
+      { agent: "dickon", station: "repos", task: "Wire the alarm", doing: "Coding",
+        steps: [["edit", "root-alerts", "feature/bramble-alarm", "bramblealert"]], report: "onRootCam() raises a bramble alarm inside 3 m.", rtok: 90 },
+    ],
+    test: {
+      agent: "susan", task: "Evaluate, simulate, integrate", doing: "Testing",
+      first: [["suite", "eval", 12, null], ["suite", "sim", 5, null], ["suite", "integration", 128, null]],
+      report: "Eval 12/12, five simulated incursions caught, integration 128/128.", rtok: 60,
+    },
+    deploy: [
+      { agent: "robin", station: "deploy", task: "Ship scout 0.3", doing: "Deploying",
+        steps: [["deploy", "edge", "scout 0.3"], ["deploy", "production", "scout 0.3"]], report: "scout 0.3 is live on the drones and in the potting shed.", rtok: 70 },
+      { agent: "dickon", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "root-alerts", "b4a3b1", "alerts: bramble early warning"]], report: "Merged into main.", rtok: 40 },
+      { agent: "soot", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Train scout models with ivy as negatives"]], report: "Lesson stored.", rtok: 30 },
+    ],
+    finale: [
+      ["sys", "Bramble-Scout · runner 2.4 m under the east wall — 96 min of warning", "alarm"],
+      ["persona", "dig it out at dawn · the bramble draws back under the wall"],
+    ],
+  },
+];
+
+// What the cards and popovers show
+function freshState() {
+  return {
+    knowledge: { rows: { papers: ["Botany papers", 12430], reports: ["Field notes", 2981], datasets: ["Bloom counts", 1204], web: ["Web sources", 890] }, read: [] },
+    documents: { rows: { project: ["Project docs", 342], specs: ["Specifications", 28], notes: ["Meeting notes", 76], designs: ["Designs", 19], diagrams: ["Diagrams", 41] }, written: [], read: [] },
+    models: {
+      list: [
+        { name: "Garden-LLM", v: "2.1", status: "live" },
+        { name: "PlantVision", v: "1.4", status: "live" },
+        { name: "Bloom-Classifier", v: "0.9", status: "live" },
+        { name: "Bramble-Scout", v: "0.2", status: "draft" },
+        { name: "Embedding-XL", v: "3.0", status: "live" },
+      ],
+      log: [],
+    },
+    repos: {
+      list: [
+        { name: "garden-atlas", branch: "main", add: 0, del: 0 },
+        { name: "greenhouse", branch: "main", add: 0, del: 0 },
+        { name: "root-alerts", branch: "main", add: 0, del: 0 },
+        { name: "data-pipeline", branch: "dev", add: 0, del: 0 },
+        { name: "infrastructure", branch: "main", add: 0, del: 0 },
+      ],
+      commits: [["a3f9c1", "greenhouse", "vents: open at 24 → 22 °C"], ["7be2d0", "garden-atlas", "beds: add the walled garden"], ["e41a77", "root-alerts", "roots: denoise the night frames"]],
+    },
+    tests: {
+      suites: {
+        unit: { name: "Unit tests", done: 342, total: 342, state: "pass" },
+        integration: { name: "Integration", done: 128, total: 128, state: "pass" },
+        eval: { name: "Model eval", done: 6, total: 12, state: "idle" },
+        sim: { name: "Simulations", done: 0, total: 0, state: "queued" },
+        data: { name: "Data validation", done: 89, total: 89, state: "pass" },
+      },
+    },
+    memory: {
+      rows: { short: ["Short-term", 42, "notes"], long: ["Long-term", 1208, "lessons"], episodic: ["Episodic", 316, "seasons"], vector: ["Vector store", 88410, "vectors"] },
+      lessons: ["Glass tests are slow — run them last", "Stage risky heater changes behind a flag", "Ivy set off the last alarm", "Last census: wilted roses were labelled “dead”"],
+    },
+    deploy: {
+      envs: {
+        staging: { name: "Staging", v: "census 0.9", status: "healthy" },
+        production: { name: "Production", v: "census 0.9", status: "healthy" },
+        edge: { name: "Edge (drones)", v: "7 drones", status: "syncing" },
+        api: { name: "Garden API", v: "census 0.9", status: "healthy" },
+      },
+      log: [],
+    },
+    hub: { plan: [], ctx: 0, reports: 0 },
+    visited: new Set(),
+    hot: {},
+  };
+}
+
+// ============================================================
+// The garden, painted: a dusk sky over hills in the haze, a line of
+// woods behind the old wall, a meadow rolling down to us with gravel
+// paths between the places, flower beds, hedges, and two great trees
+// framing it all. Colours mix in RGB; texture is clustered noise.
+// ============================================================
+const K = 9; // screen pixels per unit of lawn height: the meadow rolls, it has no cliffs
+const HORIZON = 0.31;
+let decor = [];
+let TONE = null;
+let sun = { x: 0, y: 0 };
+function tones() {
+  const R = (...names) => names.map((n) => hexRGB(P[n]));
+  TONE = {
+    sky: R("sky0", "sky1", "sky2", "sky3", "sky4", "sky5"),
+    grass: R("grass1", "grass2", "grass3", "grass4", "grass5", "grass6"),
+    leaf: R("leaf0", "leaf1", "leaf2", "leaf3", "leaf4", "leaf5"),
+    stone: R("stone0", "stone1", "stone2", "stone3", "stone4"),
+    wood: R("wood0", "wood1", "wood2", "wood3"),
+    haze: hexRGB(P.haze), sun: hexRGB(P.sun), gold: hexRGB(P.sky5), rim: hexRGB(P.leafLit), deep: hexRGB(P.ink),
+    flowers: [P.rose2, P.sunny, P.daisy, P.lav1, P.poppy, P.blue1, P.rose3].map(hexRGB),
+  };
+}
+
+function heightAt(x, y) {
+  return fbm(x * 0.011, y * 0.024, 7, 3) * 1.4 + Math.max(0, fbm(x * 0.02 + 5, y * 0.04, 13, 2) - 0.55) * 2.2;
+}
+
+function buildStatic() {
+  const { W, H } = map;
+  tones();
+  decor = [];
+  const u = new Uint32Array(W * H);
+  const hz = Math.round(H * HORIZON);
+  sun = { x: W * 0.3, y: hz - 6 };
+  const put = (x, y, c) => {
+    x = Math.round(x);
+    y = Math.round(y);
+    if (x >= 0 && y >= 0 && x < W && y < H) u[y * W + x] = rgb32(c);
+  };
+  const skyAt = (x, y) => {
+    let c = rampRGB(TONE.sky, clamp(y / (hz + 4), 0, 1));
+    const k = Math.exp(-(((x - sun.x) / (W * 0.22)) ** 2 + ((y - sun.y) / (H * 0.2)) ** 2));
+    return mixRGB(c, TONE.gold, k * 0.55);
+  };
+  const lamp = (x, y, fog, r = 4, a = 0.4) => {
+    put(x, y, mixRGB(hexRGB(P.lamp), skyAt(x, y), fog * 0.6));
+    emitters.push({ x, y, col: P.lamp, r, a: a * (1 - fog * 0.6) });
+  };
+
+  // 1. the sky: dusk overhead, gold at the horizon, clouds lit from beneath
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      let c = skyAt(x, y);
+      const band = smooth(0.02, 0.1, y / H) * (1 - smooth(0.2, 0.3, y / H));
+      const d = smooth(0.5, 0.64, fbm(x * 0.009 + 3, y * 0.04, 31, 4)) * band;
+      if (d > 0) {
+        const under = fbm(x * 0.009 + 3, (y + 3) * 0.04, 31, 4) < fbm(x * 0.009 + 3, y * 0.04, 31, 4);
+        const cloud = mixRGB(rampRGB(TONE.sky, clamp(y / hz, 0, 1) * 0.55 + 0.2), rampRGB(TONE.sky, 0.95), under ? 0.75 : 0.25);
+        c = mixRGB(c, cloud, d * 0.85);
+      }
+      if (y < H * 0.14 && hash2(x, y, 5) < 0.0015) c = mixRGB(c, [255, 250, 230], 0.7); // the first stars
+      u[y * W + x] = rgb32(c);
+    }
+  }
+  for (let y = -10; y <= 10; y++) for (let x = -10; x <= 10; x++) if (x * x + y * y <= 72) put(sun.x + x, sun.y + y, mixRGB(TONE.sun, TONE.gold, (x * x + y * y) / 90));
+
+  // 2. hills in the haze, the far ones palest; a village and a spire on the middle one
+  const hills = [
+    { base: hz + 1, amp: 20, f: 0.007, seed: 3, col: hexRGB(P.hill0), fog: 0.62 },
+    { base: hz + 4, amp: 13, f: 0.012, seed: 7, col: hexRGB(P.hill1), fog: 0.42, village: true },
+    { base: hz + 8, amp: 8, f: 0.02, seed: 11, col: hexRGB(P.hill2), fog: 0.25 },
+  ];
+  for (const L of hills) {
+    const top = (x) => L.base - L.amp * (0.4 + fbm(x * L.f, 0, L.seed, 3)) + 4;
+    for (let x = 0; x < W; x++) {
+      const t0 = Math.round(top(x));
+      const slope = top(x + 2) - top(x - 2);
+      for (let y = Math.max(0, t0); y < hz + 20; y++) {
+        const lit = clamp(0.5 + slope * 0.12 - (y - t0) * 0.02, 0, 1);
+        let c = mixRGB(L.col, TONE.gold, lit * 0.25 * (1 - L.fog));
+        c = mixRGB(c, skyAt(x, y), L.fog + (1 - L.fog) * smooth(6, 30, y - t0) * 0.3);
+        if (y === t0) c = mixRGB(c, TONE.gold, 0.35);
+        u[y * W + x] = rgb32(c);
+      }
+      // hedgerow trees along the ridge
+      if (hash2(x, L.seed, 1) < 0.05) {
+        const r = 1.5 + hash2(x, L.seed, 2) * 2.5;
+        for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (i * i + j * j <= r * r) put(x + i, t0 - r + j, mixRGB(mixRGB(TONE.leaf[1], TONE.leaf[3], j < 0 ? 0.6 : 0.1), skyAt(x, t0), L.fog * 0.8));
+      }
+    }
+    if (L.village) {
+      const vx = Math.round(W * 0.66), vy = Math.round(top(vx));
+      const fog = L.fog * 0.9;
+      const tint = (c) => mixRGB(c, skyAt(vx, vy), fog);
+      for (let k = 0; k < 6; k++) {
+        const hx = vx - 14 + k * 5, hy = Math.round(top(hx)) + 1;
+        for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) put(hx + i, hy - j, tint(hexRGB(j === 3 ? P.soil2 : P.stone2)));
+        if (k % 2) lamp(hx + 1, hy - 1, fog, 3, 0.35);
+      }
+      for (let j = 0; j < 14; j++) put(vx + 16, Math.round(top(vx + 16)) - j, tint(hexRGB(P.stone2)));
+      for (let j = 0; j < 6; j++) put(vx + 16, Math.round(top(vx + 16)) - 14 - j, tint(hexRGB(P.stone1)));
+    }
+  }
+
+  // 3. a line of woods behind the garden wall, backlit: gold along the crowns
+  const woods = hz + 12;
+  for (let n = 0; n < W / 5; n++) {
+    const x = (n / (W / 5)) * W + (hash2(n, 1, 21) - 0.5) * 8;
+    const r = 5 + hash2(n, 2, 21) * 7;
+    const cy = woods - r * 0.8 - hash2(n, 3, 21) * 6;
+    for (let j = -Math.ceil(r); j <= Math.ceil(r); j++) {
+      for (let i = -Math.ceil(r); i <= Math.ceil(r); i++) {
+        const d = Math.hypot(i, j * 1.1);
+        if (d > r * (0.85 + 0.25 * vnoise((x + i) * 0.4, (cy + j) * 0.4, 23))) continue;
+        let c = rampRGB(TONE.leaf, 0.28 - j / (r * 4) + (vnoise((x + i) * 0.5, (cy + j) * 0.5, 25) - 0.5) * 0.3);
+        if (j < -r * 0.55 && vnoise((x + i) * 0.5, (cy + j) * 0.5, 27) > 0.4) c = mixRGB(c, TONE.gold, 0.45);
+        put(x + i, cy + j, mixRGB(c, skyAt(x + i, cy + j), 0.28));
+      }
+    }
+    for (let j = 0; j < 10; j++) put(x, woods - 2 + j, mixRGB(TONE.wood[0], skyAt(x, woods), 0.3));
+  }
+
+  // 4. the meadow: an oblique heightfield, rows back to front, fading into the haze
+  const R0 = woods, R1 = H + 30;
+  const HI_W = W + 2;
+  const hg = new Float32Array((R1 - R0 + 4) * HI_W);
+  for (let y = R0 - 2; y <= R1 + 1; y++) for (let x = -1; x <= W; x++) hg[(y - R0 + 2) * HI_W + (x + 1)] = heightAt(x, y);
+  const HI = (x, y) => hg[(y - R0 + 2) * HI_W + (x + 1)];
+  const rowFog = (y) => 0.7 * clamp(1 - (y - woods) / (H * 0.4), 0, 1) ** 1.6;
+  const topMask = new Uint8Array(W * H);
+  for (let y = R0; y < R1; y++) {
+    const fog = rowFog(y);
+    for (let x = 0; x < W; x++) {
+      const h = HI(x, y);
+      const top = Math.round(y - h * K);
+      const next = Math.round(y + 1 - HI(x, y + 1) * K);
+      if (top >= H) continue;
+      const slope = (HI(x - 1, y) - HI(x + 1, y)) * 2.6 + (HI(x, y + 2) - HI(x, y - 2)) * 1.6;
+      // evening: the near meadow already in shade, slopes that face the sun still gold
+      const near = (y - woods) / (H - woods);
+      let lit = 0.46 + slope * 1.2 + (vnoise(x * 0.45, y * 0.9, 9) - 0.5) * 0.34 + (hash2(x, y, 3) - 0.5) * 0.14 - near * 0.3;
+      let c = rampRGB(TONE.grass, lit);
+      c = mixRGB(c, TONE.gold, clamp(slope * 1.5, 0, 0.28) * (1 - near * 0.5));
+      // wildflowers in drifts, one kind to a drift
+      const drift = vnoise(x * 0.05, y * 0.09, 41);
+      if (drift > 0.7 && hash2(x, y, 43) < 0.26 * smooth(0.7, 0.82, drift)) c = TONE.flowers[Math.floor(vnoise(x * 0.02, y * 0.04, 47) * TONE.flowers.length)];
+      else if (hash2(x, y, 45) < 0.003) c = TONE.flowers[2]; // a daisy
+      const paint = (yy, col) => {
+        if (yy < 0 || yy >= H) return;
+        u[yy * W + x] = rgb32(mixRGB(col, skyAt(x, yy), fog));
+      };
+      paint(top, c);
+      if (top >= 0 && top < H) topMask[top * W + x] = 1;
+      for (let sy = top + 1; sy < next; sy++) paint(sy, rampRGB(TONE.grass, lit - 0.2 - (sy - top) * 0.05));
+    }
+  }
+
+  // 5. the old garden wall across the back, ivy on it, a door in it
+  const wallY = woods + 4;
+  const doorX = Math.round(W * 0.34);
+  for (let x = 0; x < W; x++) {
+    for (let j = 0; j < 9; j++) {
+      const y = wallY - j;
+      const course = Math.floor(j / 2.5);
+      const gap = j % 2.5 < 0.6 || (x + course * 4) % 7 === 0;
+      let c = gap ? TONE.stone[1] : rampRGB(TONE.stone, 0.55 + (hash2(Math.floor((x + course * 4) / 7), course, 5) - 0.5) * 0.35 + (j > 6 ? 0.15 : 0));
+      if (vnoise(x * 0.08, j * 0.3, 51) > 0.55 && hash2(x, y, 53) < 0.7) c = rampRGB(TONE.leaf, 0.3 + hash2(x, y, 55) * 0.4); // ivy
+      if (j === 8) c = mixRGB(TONE.stone[3], TONE.gold, 0.3);
+      put(x, y, mixRGB(c, skyAt(x, y), 0.3));
+    }
+  }
+  for (let j = 0; j < 12; j++) {
+    const half = j > 8 ? Math.sqrt(Math.max(0, 16 - (j - 8) ** 2 * 1.6)) : 4;
+    for (let i = -Math.round(half); i <= Math.round(half); i++) put(doorX + i, wallY - j, mixRGB(i === -Math.round(half) || j === 11 ? TONE.stone[3] : (i + 10) % 3 ? TONE.wood[2] : TONE.wood[1], skyAt(doorX, wallY), 0.25));
+  }
+  put(doorX + 2, wallY - 5, hexRGB(P.honey3));
+
+  // 6. gravel paths from the oak to every place, the routes run along them
+  for (const k of SPOKES) {
+    const p = paths[k];
+    for (let d = 0; d < p.L; d += 0.7) {
+      const q = pathAt(k, d / p.L);
+      const r = 1.6 + (q.y / H) * 1.8;
+      const fog = rowFog(q.y) * 0.8;
+      for (let j = -Math.ceil(r); j <= Math.ceil(r); j++) {
+        for (let i = -Math.ceil(r) - 1; i <= Math.ceil(r) + 1; i++) {
+          const e = Math.hypot(i / (r + 1), j / r);
+          if (e > 1) continue;
+          const x = Math.round(q.x + i), y = Math.round(q.y + 2 + j);
+          const c = e > 0.8 ? rampRGB(TONE.grass, 0.3) : rampRGB(TONE.stone, 0.62 + (hash2(x, y, 61) - 0.5) * 0.4 - j * 0.04);
+          put(x, y, mixRGB(c, skyAt(x, y), fog));
+        }
+      }
+    }
+  }
+
+  // 7. set dressing where the meadow shows: flower beds, hedges, trees, a bench
+  const nearPlace = (x, y, pad) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.prx + 16 + pad), (y - s.y) / (s.pry + 12 + pad)) < 1);
+  const nearPath = (x, y, pad) => SPOKES.some((k) => paths[k].pts.some((q) => Math.abs(q.x - x) < pad && Math.abs(q.y - y) < pad * 0.6));
+  const tree = (x, y, size, fog, seed) => {
+    const r = rng(seed);
+    for (let j = 0; j < size * 1.6; j++) for (let i = -1; i <= 1; i++) put(x + i, y - j, mixRGB(TONE.wood[i < 0 ? 2 : 1], skyAt(x, y), fog));
+    const blobs = Array.from({ length: 4 + Math.round(size / 3) }, () => ({ x: x + (r() - 0.5) * size * 1.6, y: y - size * 1.6 - r() * size * 0.9, r: size * (0.4 + r() * 0.35) }));
+    for (const b of blobs) {
+      for (let j = -Math.ceil(b.r); j <= Math.ceil(b.r); j++) {
+        for (let i = -Math.ceil(b.r); i <= Math.ceil(b.r); i++) {
+          if (i * i + j * j > b.r * b.r) continue;
+          const X = Math.round(b.x + i), Y = Math.round(b.y + j);
+          let c = rampRGB(TONE.leaf, 0.5 - i / (b.r * 3) - j / (b.r * 2.5) + (vnoise(X * 0.6, Y * 0.6, seed) - 0.5) * 0.35);
+          if (i < -b.r * 0.4 && j < -b.r * 0.3 && vnoise(X * 0.6, Y * 0.6, seed + 1) > 0.5) c = TONE.rim;
+          put(X, Y, mixRGB(c, skyAt(X, Y), fog));
+        }
+      }
+    }
+  };
+  const hedge = (x, y, w, fog, seed) => {
+    for (let i = 0; i < w; i++) {
+      const hh = 5 + Math.round(Math.sin((i / w) * Math.PI) * 1.5);
+      for (let j = 0; j < hh; j++) {
+        const c = rampRGB(TONE.leaf, 0.55 - j / 14 - i / (w * 3) + (hash2(x + i, y - j, seed) - 0.5) * 0.25 + (j === hh - 1 ? 0.2 : 0));
+        put(x + i, y - j, mixRGB(c, skyAt(x + i, y - j), fog));
+      }
+    }
+  };
+  const bed = (x, y, w, fog, seed) => {
+    const col = TONE.flowers[Math.floor(hash2(seed, 0, 1) * TONE.flowers.length)];
+    for (let i = 0; i < w; i++) {
+      for (let j = 0; j < 5; j++) {
+        let c = j < 3 ? (j === 0 && i % 2 ? col : (i + j) % 2 ? rampRGB(TONE.leaf, 0.5) : col) : j === 3 ? hexRGB(P.wood3) : hexRGB(P.wood1);
+        put(x + i, y - 4 + j, mixRGB(c, skyAt(x + i, y), fog));
+      }
+    }
+  };
+  const standOn = (x, y) => {
+    x = Math.round(x);
+    for (let yy = Math.round(y); yy < Math.min(H, y + 8); yy++) if (x >= 0 && x < W && topMask[yy * W + x]) return yy;
+    return -1;
+  };
+  const r = rng(71);
+  for (let n = 0; n < Math.round(W / 22); n++) {
+    const x = r() * W, y = woods + 16 + r() ** 0.8 * (H - woods - 20), kind = r(), seed = 100 + n;
+    const base = standOn(x, y);
+    if (base < 0 || nearPlace(x, base, 0) || nearPath(x, base, 10)) continue;
+    const fog = rowFog(base);
+    if (kind < 0.35) tree(Math.round(x), base, 5 + Math.round((base / H) * 6), fog, seed);
+    else if (kind < 0.7) hedge(Math.round(x) - 8, base, 16 + Math.round(r() * 12), fog, seed);
+    else bed(Math.round(x) - 7, base, 14 + Math.round(r() * 8), fog, seed);
+  }
+
+  // 8. two great trees framing the view, lanterns in their lower boughs
+  for (const [fx, side] of [[0.015, 1], [0.985, -1]]) {
+    const x = Math.round(W * fx);
+    for (let y = Math.round(H * 0.2); y < H; y++) {
+      const half = 6 + (y / H) * 5;
+      for (let i = -half; i <= half; i++) put(x + i, y, rampRGB(TONE.wood, 0.45 + side * i / (half * 3) + (vnoise((x + i) * 0.8, y * 0.1, 5) - 0.5) * 0.4));
+    }
+    const rr = rng(fx * 1000);
+    for (let k = 0; k < 16; k++) {
+      const bx = x + side * rr() * W * 0.13, by = rr() * H * 0.28, br = 10 + rr() * 16;
+      for (let j = -Math.ceil(br); j <= Math.ceil(br); j++) {
+        for (let i = -Math.ceil(br); i <= Math.ceil(br); i++) {
+          if (i * i + (j * 1.15) ** 2 > br * br * (0.8 + 0.3 * vnoise((bx + i) * 0.3, (by + j) * 0.3, 7))) continue;
+          const X = Math.round(bx + i), Y = Math.round(by + j);
+          let c = rampRGB(TONE.leaf, 0.3 - j / (br * 3) + side * i / (br * 5) + (vnoise(X * 0.5, Y * 0.5, 9) - 0.5) * 0.4);
+          if (-side * i < -br * 0.3 && j < 0 && vnoise(X * 0.5, Y * 0.5, 11) > 0.55) c = mixRGB(c, TONE.gold, 0.4);
+          put(X, Y, c);
+        }
+      }
+    }
+    for (let k = 0; k < 3; k++) {
+      const lx = x + side * (18 + k * 16), ly = Math.round(H * (0.26 + k * 0.03));
+      for (let j = 0; j < 6; j++) put(lx, ly - 6 + j, TONE.wood[0]);
+      lamp(lx, ly + 1, 0, 6, 0.6);
+    }
+  }
+
+  const c = makeCanvas(W, H);
+  const g = c.getContext("2d", { willReadFrequently: true });
+  const img = g.createImageData(W, H);
+  new Uint32Array(img.data.buffer).set(u);
+  g.putImageData(img, 0, 0);
+
+  // swaying grass, flowers and mushrooms along the front; tall grass at the sides
+  for (let n = 0; n < W * 0.5; n++) {
+    const x = Math.floor(hash2(n, 1, 77) * W);
+    const y = Math.floor(woods + 30 + hash2(n, 2, 77) * (H - woods - 30));
+    if (!topMask[y * W + x] || nearPlace(x, y, 4) || nearPath(x, y, 4)) continue;
+    decor.push({ kind: "tuft", x, y, h: 2 + Math.floor(hash2(n, 4, 77) * 5), ph: n * 0.7, bloom: hash2(n, 5, 77) < 0.4 ? TONE.flowers[n % TONE.flowers.length] : null });
+  }
+  const kr = rng(73);
+  for (let n = 0; n < 30; n++) {
+    const fx = kr();
+    decor.push({ kind: "grass", x: Math.round(fx * W), y: H + 2, h: Math.round(lerp(12, fx < 0.12 || fx > 0.88 ? 46 : 22, kr())), ph: n * 1.3, bloom: kr() < 0.35 ? TONE.flowers[n % TONE.flowers.length] : null });
+  }
+
+  // warm light pooling round each place, and a soft vignette
+  const out = g.getImageData(0, 0, W, H);
+  const s32 = new Uint32Array(out.data.buffer);
+  const warm = hexRGB(P.honey3);
+  for (const st of Object.values(STATIONS)) {
+    const rx = st.prx + 34, ry = st.pry + 26;
+    for (let y = Math.max(0, st.y - ry); y < Math.min(H, st.y + ry); y++) {
+      for (let x = Math.max(0, st.x - rx); x < Math.min(W, st.x + rx); x++) {
+        const d = Math.hypot((x - st.x) / rx, (y - st.y) / ry);
+        if (d < 1) s32[y * W + x] = mix32(s32[y * W + x], warm, (1 - d) * (1 - d) * 0.22);
+      }
+    }
+  }
+  const deep = hexRGB(P.sky0);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x / W - 0.5) * 1.1, (y / H - 0.5) * 1.25);
+      const k = smooth(0.48, 0.9, d);
+      if (k > 0) s32[y * W + x] = mix32(s32[y * W + x], deep, k * 0.5);
+    }
+  }
+  g.putImageData(out, 0, 0);
+  staticCanvas = c;
+}
+
+// ============================================================
+// Ambient life: butterflies, birds, fireflies, drifting seeds
+// ============================================================
+const ambient = { butterflies: [], birds: [], flies: [], seeds: [], smokeT: 0 };
+function seedAmbient() {
+  const { W, H } = map;
+  const hz = H * HORIZON;
+  const kinds = ["rose", "lemon", "blue", "lilac"];
+  ambient.butterflies = Array.from({ length: 6 }, (_, i) => ({ x: Math.random() * W, y: hz + 30 + Math.random() * (H - hz - 40), kind: kinds[i % 4], ph: Math.random() * 6, vx: (Math.random() < 0.5 ? -1 : 1) * (4 + Math.random() * 4) }));
+  ambient.birds = [0, 1].map((i) => ({ x: Math.random() * W, y: H * (0.06 + i * 0.07), dir: i ? -1 : 1, n: 4 + i * 2 }));
+  ambient.flies = Array.from({ length: 46 }, () => ({ x: Math.random() * W, y: hz + 10 + Math.random() * (H - hz - 10), ph: Math.random() * 20, vx: 0, vy: 0 }));
+  ambient.seeds = Array.from({ length: 40 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 2 + Math.random() * 3, ph: Math.random() * 6 }));
+}
+function updateAmbient(dt) {
+  const { W, H } = map;
+  const t = clock.t;
+  for (const b of ambient.butterflies) {
+    b.x += (b.vx + Math.sin(t * 0.7 + b.ph) * 6) * dt;
+    b.y += Math.sin(t * 1.9 + b.ph) * 8 * dt;
+    if (b.x > W + 10) b.x = -10;
+    if (b.x < -10) b.x = W + 10;
+  }
+  for (const b of ambient.birds) {
+    b.x += b.dir * 9 * dt;
+    if (b.x > W + 40) { b.dir = -1; b.y = H * (0.04 + Math.random() * 0.12); }
+    if (b.x < -40) { b.dir = 1; b.y = H * (0.04 + Math.random() * 0.12); }
+  }
+  for (const f of ambient.flies) {
+    f.vx += (Math.random() - 0.5) * 12 * dt;
+    f.vy += (Math.random() - 0.5) * 12 * dt;
+    f.vx *= 1 - dt;
+    f.vy *= 1 - dt;
+    f.x = (f.x + f.vx * dt + W) % W;
+    f.y = clamp(f.y + f.vy * dt, H * HORIZON + 8, H - 2);
+  }
+  for (const s of ambient.seeds) {
+    s.x += s.s * 1.6 * dt;
+    s.y += (Math.sin(t * 0.8 + s.ph) * 1.2 + 0.6) * dt;
+    if (s.x > W + 2) { s.x = -2; s.y = Math.random() * H; }
+  }
+  ambient.smokeT -= dt;
+  if (ambient.smokeT <= 0) {
+    ambient.smokeT = 0.4;
+    for (const s of Object.values(STATIONS)) {
+      for (const [sx, sy] of s.parts?.smoke ?? []) particles.push({ kind: "smoke", x: s.sx + sx, y: s.sy + sy, vx: 2 + Math.random() * 2, vy: -(4 + Math.random() * 2), t0: clock.t, life: 5 + Math.random() * 2, ph: Math.random() * 6 });
+    }
+  }
+}
+function updateParticle(p, dt) {
+  if (p.kind === "pollen" || p.kind === "leaf") {
+    p.x += (p.vx ?? 0) * dt + Math.sin(clock.t * 3 + p.ph) * 2 * dt;
+    p.y += p.vy * dt;
+    if (p.kind === "leaf") { p.vx *= 1 - dt; p.vy += 8 * dt; }
+  } else if (p.kind === "smoke") {
+    p.x += (p.vx + Math.sin(clock.t * 0.8 + p.ph) * 1.5) * dt;
+    p.y += p.vy * dt;
+    p.vy *= 1 - dt * 0.2;
+  }
+}
+function drawParticle(g, p, t, age) {
+  if (p.kind === "pollen") px(g, p.x, p.y, age < p.life * 0.6 ? P.bee3 : P.honey2);
+  else if (p.kind === "leaf") {
+    const k = age / p.life;
+    if (k < 0.85) px(g, p.x, p.y, k < 0.4 ? P.thorn2 : P.leaf2);
+  } else if (p.kind === "smoke") {
+    const k = age / p.life;
+    g.globalAlpha = 0.3 * (1 - k) * Math.min(1, age * 2);
+    disc(g, p.x, p.y, 1 + k * 4.5, k < 0.3 ? P.pearlD : P.haze);
+    g.globalAlpha = 1;
+  }
+}
+
+// ============================================================
+// Drawing the living garden
+// ============================================================
+function drawDecor(g, t, front) {
+  for (const d of decor) {
+    if ((d.kind === "grass") !== front) continue;
+    const tall = d.kind === "grass";
+    for (let s = 0; s < d.h; s++) {
+      const f = s / d.h;
+      const x = Math.round(d.x + Math.sin(t * (tall ? 0.8 : 1.4) + d.ph + s * (tall ? 0.07 : 0.3)) * f * (tall ? 4 : 1.2));
+      if (tall) {
+        g.fillStyle = P.grass0;
+        g.fillRect(x - 1, d.y - s, 3, 1);
+        g.fillStyle = f > 0.7 ? P.grass5 : s % 3 ? P.grass3 : P.grass4;
+        g.fillRect(x, d.y - s, 1, 1);
+        if (s % 5 === 2 && s < d.h - 3) {
+          const side = (s / 5) & 1 ? 1 : -1;
+          g.fillStyle = P.grass4;
+          g.fillRect(x + side, d.y - s - 1, 1, 1);
+          g.fillRect(x + side * 2, d.y - s - 2, 1, 1);
+        }
+      } else px(g, x, d.y - s, s % 2 ? P.grass3 : P.grass4);
+    }
+    if (d.bloom) {
+      const x = Math.round(d.x + Math.sin(t * (tall ? 0.8 : 1.4) + d.ph + d.h * (tall ? 0.07 : 0.3)) * (tall ? 4 : 1.2));
+      const col = `rgb(${d.bloom.map(Math.round).join(",")})`;
+      g.fillStyle = col;
+      g.fillRect(x - 1, d.y - d.h, 3, 1);
+      g.fillRect(x, d.y - d.h - 1, 1, 3);
+      g.fillStyle = P.sunny;
+      g.fillRect(x, d.y - d.h, 1, 1);
+    }
+  }
+}
+
+// The moving parts of each place: the windmill's sails turn, koi circle the
+// pond, bees come and go at the hives.
+function drawStationFx(g, t, s) {
+  const fx = s.parts;
+  if (fx.sails) {
+    const n = ATLAS.meta.fx.sailFrames;
+    const f = spr(`fx.sails${cycle(t * 3, n)}`);
+    g.drawImage(f, s.sx + fx.sails[0] - f.width / 2, s.sy + fx.sails[1] - f.height / 2);
+  }
+  if (fx.koi) {
+    const [cx, cy, rx, ry] = fx.koi;
+    for (let k = 0; k < 3; k++) {
+      const a = t * (0.5 + k * 0.12) + k * 2.1;
+      const x = s.sx + cx + Math.cos(a) * rx * (0.5 + k * 0.2), y = s.sy + cy + Math.sin(a) * ry * (0.5 + k * 0.2);
+      const dx = -Math.sin(a) > 0 ? 1 : -1;
+      px(g, x, y, k === 1 ? P.pearl : P.poppy);
+      px(g, x - dx, y, P.poppy);
+      px(g, x - dx * 2, y, k === 1 ? P.poppy : P.pearl);
+    }
+  }
+  if (fx.hives) {
+    fx.hives.forEach(([hx, hy], i) => {
+      for (let k = 0; k < 3; k++) {
+        const a = t * (2.4 + k * 0.7) + i * 1.7 + k * 2;
+        px(g, s.sx + hx + Math.cos(a) * (6 + k * 2), s.sy + hy + Math.sin(a * 1.3) * 4 - 2, k ? P.bee3 : P.bee0);
+      }
+    });
+  }
+}
+
+// The bramble — a failing test — pushes up through the soil below the
+// Testing Lab and reaches for it.
+function villainHead() {
+  const t = STATIONS.tests;
+  return { x: t.x - 36, y: Math.round(lerp(map.H + 6, map.H - 48, villain.k)) };
+}
+function drawBramble(g, t) {
+  if (villain.state === "hidden") return;
+  const h = villain.head();
+  const roots = ATLAS.meta.bramble.roots;
+  arms(g, t * 0.6, h.x, h.y, villain.grab > 0 ? roots.slice(1) : roots, 12, P.thorn2, P.thorn3, 0.4, 3, P.thorn0, 2);
+  g.drawImage(spr("bramble.head"), h.x, h.y);
+  drawGrab(g, t * 0.6, { x: h.x + 16, y: h.y + 8 }, P.thorn2, P.berry, P.thorn0, 2);
+}
+// it withers and drops its leaves
+function onVillainSink() {
+  const h = villain.head();
+  for (let i = 0; i < 36; i++) {
+    const a = Math.random() * Math.PI * 2, s = 6 + Math.random() * 12;
+    particles.push({ kind: "leaf", x: h.x + 16, y: h.y + 14, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 6, ph: Math.random() * 6, t0: clock.t, life: 1.6 + Math.random() * 0.8 });
+  }
+}
+
+// The agents: bumblebees, each with a lantern for the dusk and a stream of
+// pollen for whatever it works on.
+function drawBees(g, t) {
+  const [lx, ly] = ATLAS.meta.bee.port;
+  for (const b of Object.values(fleet)) {
+    if (!b.visible) continue;
+    const bob = Math.round(Math.sin(t * 5 + b.ph) * 1.2);
+    const x = Math.round(b.x) - 9, y = Math.round(b.y) - 9 + bob;
+    if (b.beam) drawBeam(g, t, b, { x: b.face > 0 ? x + lx : x + 17 - lx, y: y + ly });
+    g.drawImage(spr(`bee.${b.a.id}.fly${cycle(t * 16 + b.ph)}`, b.face < 0), x, y);
+  }
+}
+function onAgentStep(b, dt) {
+  b.trailT -= dt;
+  if (b.trailT <= 0) {
+    particles.push({ kind: "pollen", x: b.x - b.face * 7, y: b.y + 2, vy: 3 + Math.random() * 3, ph: Math.random() * 6, t0: clock.t, life: 2.4 });
+    b.trailT = 0.18 + Math.random() * 0.25;
+  }
+}
+
+function drawAmbient(g, t) {
+  for (const b of ambient.birds) {
+    for (let k = 0; k < b.n; k++) {
+      const x = Math.round(b.x - b.dir * (k * 6 + (k % 2) * 2)), y = Math.round(b.y + Math.abs(k - (b.n >> 1)) * 2.5 + (k % 2) * 3);
+      const up = cycle(t * 4 + k * 0.7);
+      g.fillStyle = P.sky0;
+      g.fillRect(x - 2, y - up, 2, 1);
+      g.fillRect(x + 1, y - up, 2, 1);
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+  for (const b of ambient.butterflies) g.drawImage(spr(`butterfly.${b.kind}.fly${cycle(t * 8 + b.ph)}`), Math.round(b.x), Math.round(b.y));
+}
+function drawFlies(g, t) {
+  for (const f of ambient.flies) if (Math.sin(t * 1.7 + f.ph) > 0.2) px(g, f.x, f.y, Math.sin(t * 1.7 + f.ph) > 0.7 ? P.lamp : P.glow);
+  g.fillStyle = P.pearl;
+  for (const s of ambient.seeds) g.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
+}
+
+function render(t) {
+  ctx.drawImage(staticCanvas, 0, 0);
+  drawDecor(ctx, t, false);
+  drawPaths(ctx, t);
+  drawAmbient(ctx, t);
+  drawStations(ctx, t);
+  drawBramble(ctx, t);
+  drawBees(ctx, t);
+  drawParticles(ctx, t);
+  drawFlies(ctx, t);
+  drawDecor(ctx, t, true);
+  renderGlow(t);
+}
+
+// The glow layer: the low sun and its rays, lamps and lanterns, the routes,
+// the bees' lanterns, fireflies.
+function renderGlow(t) {
+  const { W, H } = map;
+  beginGlow();
+  const sx = sun.x / 2, sy = sun.y / 2;
+  const halo = gctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.4);
+  halo.addColorStop(0, "rgba(255, 214, 140, 0.4)");
+  halo.addColorStop(0.25, "rgba(255, 170, 110, 0.1)");
+  halo.addColorStop(1, "rgba(255, 150, 110, 0)");
+  gctx.globalAlpha = 1;
+  gctx.fillStyle = halo;
+  gctx.fillRect(0, 0, gcv.width, gcv.height);
+  for (let i = 0; i < 7; i++) {
+    const a = -0.35 + i * 0.26 + Math.sin(t * 0.04 + i * 1.7) * 0.04;
+    const spread = 0.03 + (i % 3) * 0.015, len = gcv.width * (0.7 + (i % 2) * 0.3);
+    const grd = gctx.createLinearGradient(sx, sy, sx + Math.cos(a) * len, sy + Math.sin(a) * len);
+    grd.addColorStop(0, `rgba(255, 220, 150, ${0.09 + 0.03 * Math.sin(t * 0.3 + i)})`);
+    grd.addColorStop(1, "rgba(255, 200, 140, 0)");
+    gctx.fillStyle = grd;
+    gctx.beginPath();
+    gctx.moveTo(sx, sy);
+    gctx.lineTo(sx + Math.cos(a - spread) * len, sy + Math.sin(a - spread) * len);
+    gctx.lineTo(sx + Math.cos(a + spread) * len, sy + Math.sin(a + spread) * len);
+    gctx.closePath();
+    gctx.fill();
+  }
+  for (const k of STATION_KEYS) {
+    const s = STATIONS[k];
+    const busy = S?.busy?.[k] > 0;
+    const hubK = k === "hub" ? 1.5 : 1;
+    glowAt(s.x, s.y - 12 * hubK, P.honey3, 44 * hubK, busy ? 0.3 : 0.18);
+    if (k !== "hub") glowAt(s.x, s.y + 8, s.col, 48, busy ? 0.4 : 0.14);
+    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.lamp, 8, 0.5 + 0.15 * Math.sin(t * 3 + lx));
+    if (k === "tests" && villain.state === "rising") glowAt(s.x, s.y - 10, P.red, 70, 0.45 + Math.sin(t * 6) * 0.2);
+  }
+  glowRoutes(t);
+  const [bx, by] = ATLAS.meta.bee.lamp;
+  for (const b of Object.values(fleet)) {
+    if (!b.visible) continue;
+    const lx = b.face > 0 ? b.x - 9 + bx : b.x - 9 + 17 - bx;
+    glowAt(lx, b.y - 9 + by, P.lamp, 14, 0.75);
+    glowAt(b.x, b.y, P[b.a.color], 20, 0.25);
+    if (b.beam) glowAt(b.beam.x, b.beam.y, b.beam.col, 24, 0.5);
+  }
+  glowEmitters(t);
+  for (const f of ambient.flies) {
+    const k = Math.sin(t * 1.7 + f.ph);
+    if (k > 0.2) glowAt(f.x, f.y, P.glow, 7, (k - 0.2) * 0.9);
+  }
+  if (villain.state !== "hidden") {
+    const h = villain.head();
+    for (const [ex, ey] of ATLAS.meta.bramble.eyes) glowAt(h.x + ex, h.y + ey, P.berry, 8, 0.9);
+  }
+  endGlow();
+}
+
+// The potting shed by lamplight: the lamp's warm pool flickers over the
+// bench, Weatherstaff and Mary; the corners fall away into the dusk.
+function drawShed(t) {
+  const c = $("#corner-art");
+  const g = c.getContext("2d");
+  const [lx, ly] = ATLAS.meta.shed.lamp;
+  const flick = 0.85 + 0.1 * Math.sin(t * 7.3) + 0.05 * Math.sin(t * 17.1 + 1);
+  g.globalCompositeOperation = "source-over";
+  g.globalAlpha = 1;
+  g.drawImage(spr("shed.window"), 0, 0);
+  const shade = g.createRadialGradient(lx, ly, 20, lx - 20, ly - 30, 190);
+  shade.addColorStop(0, "rgba(255, 255, 255, 1)");
+  shade.addColorStop(0.55, "rgba(190, 170, 190, 1)");
+  shade.addColorStop(1, "rgba(70, 55, 80, 1)");
+  g.globalCompositeOperation = "multiply";
+  g.fillStyle = shade;
+  g.fillRect(0, 0, c.width, c.height);
+  const warm = g.createRadialGradient(lx, ly, 0, lx, ly, 110);
+  warm.addColorStop(0, `rgba(255, 200, 110, ${0.7 * flick})`);
+  warm.addColorStop(0.3, `rgba(255, 160, 70, ${0.26 * flick})`);
+  warm.addColorStop(1, "rgba(255, 140, 60, 0)");
+  g.globalCompositeOperation = "screen";
+  g.fillStyle = warm;
+  g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = "source-over";
+}
+
+// ============================================================
+// The world, handed to the engine
+// ============================================================
+startOS({
+  atlas: window.GARDEN_ATLAS,
+  atlasFile: "assets/garden/atlas.js",
+  stations: STATIONS,
+  agents: AGENTS,
+  who: { ben: ["Weatherstaff", "var(--accent-hi)"], sys: ["System", "var(--faint)"], bramble: ["Bramble", "var(--bad)"] },
+  persona: "ben",
+  villain: { id: "bramble" },
+  rowIcons: ROW_ICON,
+  quotes: QUOTES,
+  projects: PROJECTS,
+  edits: EDITS,
+  freshState,
+  nav: [
+    ["garden", "icon.garden", "Garden View"], ["agents", "icon.agents", "Bees"], ["hub", "icon.observe", "Orchestrator"],
+    ["knowledge", "icon.knowledge", "Knowledge"], ["repos", "icon.repos", "Repositories"], ["documents", "icon.documents", "Documents"],
+    ["memory", "icon.memory", "Memory"], ["tests", "icon.tests", "Tests"], ["models", "icon.models", "Models"], ["deploy", "icon.deploy", "Deployments"],
+  ],
+  clockStart: 17 * 60 + 40,
+  text: {
+    run: "season", runs: "seasons", crew: "bees", Crew: "Bees",
+    idle: "In the hive", docked: "resting in the hive", orders: "orders", pipeNote: "From the order to the beds",
+    meter: (v) => `${v < 0 ? "−" : ""}${Math.abs(v)} °C`,
+    villainRises: (fail) => `creeps up under the Testing Lab · ✗ ${esc(fail)}`,
+    villainSinks: "withers and draws back under the wall",
+    settled: (v) => `the night settles at <b>−${Math.abs(v)} °C</b> · every seedling lives`,
+    done: "season complete · <q>Il faut cultiver notre jardin.</q>",
+    about: {
+      hub: "Weatherstaff, the head gardener, holds the order, sends the bees out to the places, and keeps only the short reports that come back.",
+      knowledge: "Botany papers, field notes, bloom counts and web sources, in the seed library. The bees read here; nothing is changed.",
+      documents: "Specs, notes, designs and the plans the garden writes, pinned up in the glasshouse.",
+      models: "Every model the garden runs, clipped into shape in the topiary, with the version in service.",
+      repos: "The codebase, kept in the hives. Branches open while a bee works and close when the change merges.",
+      tests: "Suites, simulations and model evals, grown in the nursery beds. A failing test brings the bramble.",
+      memory: "What the garden keeps between seasons, in the still water of the pond. Recalled before work; a lesson is stored after it.",
+      deploy: "Where releases go out on the wind from the mill.",
+    },
+  },
+  meterStep: 1,
+  beadDim: "#22302a",
+  agentLift: 11,
+  agentIcon: (a) => `bee.${a.id}.fly0`,
+  agentPort: (b) => ({ x: b.x + b.face * 7, y: b.y }),
+  buildStatic,
+  render,
+  seedAmbient,
+  updateAmbient,
+  updateParticle,
+  drawParticle,
+  onAgentStep,
+  villainHead,
+  onVillainSink,
+  drawStationFx,
+  drawCorner: drawShed,
+  decorateChrome() {
+    $("#brand-mark").getContext("2d").drawImage(spr("ri.sprout"), 0, 0);
+    $("#meter-icon").getContext("2d").drawImage(spr("icon.garden"), 0, 0);
+  },
+});
+}
+</script>
+</body>
+</html>

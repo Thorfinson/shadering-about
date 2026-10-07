@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>NEON//3D Pixel</title>
+<!-- NEON//3D Pixel: the same three.js city rendered at the map’s art resolution, outlined by depth and reduced to the NEON palette. See assets/neon/city3d.js. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600&family=Share+Tech+Mono&display=swap" />
+<link rel="stylesheet" href="assets/os/os.css" />
+<style>
+  /* NEON//3D Pixel: neon-os.html’s ink panels over a pixel-rendered 3D city */
+  :root {
+    --bg: #06050c;
+    --bg-glow: #1c0e30;
+    --panel: rgba(10, 8, 22, 0.92);
+    --panel-hi: rgba(22, 16, 44, 0.92);
+    --line: rgba(130, 140, 255, 0.24);
+    --line-2: rgba(62, 240, 255, 0.45);
+    --accent: #ff3d8b;
+    --accent-hi: #ff8ac0;
+    --accent-lo: #7a1440;
+    --on-accent: #12020a;
+    --hub: #3ef0ff;
+    --cyan: #3ef0ff;
+    --ink: #eae8ff;
+    --muted: rgba(234, 232, 255, 0.66);
+    --faint: rgba(234, 232, 255, 0.42);
+    --good: #39ff8a;
+    --warn: #ffb000;
+    --bad: #ff3344;
+    --research: #ffb000;
+    --analyze: #ff5c8a;
+    --build: #39ff8a;
+    --model: #22e6ff;
+    --test: #4d9bff;
+    --deploy: #b36bff;
+    --remember: #f0e6ff;
+    --map-bg: #07060f;
+    --card-bg: rgba(8, 6, 20, 0.88);
+    --card-head: linear-gradient(180deg, rgba(48, 20, 76, 0.92), rgba(12, 8, 30, 0.92));
+    --pop-bg: rgba(8, 6, 20, 0.97);
+    --btn-bg: rgba(20, 14, 40, 0.9);
+    --option-bg: #140e28;
+    --corner-bg: #05040a;
+    --radius: 2px;
+    --display: "Orbitron", "Eurostile", sans-serif;
+    --ui: "Share Tech Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --caps: "Orbitron", "Share Tech Mono", ui-monospace, monospace;
+    --book: "Rajdhani", "Share Tech Mono", sans-serif;
+  }
+  /* a neon rule along the top of every panel */
+  .panel::before {
+    content: ""; position: absolute; left: 10px; right: 10px; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .brand h1 { font-weight: 900; letter-spacing: 0.1em; color: var(--accent-hi); text-shadow: 0 0 8px var(--accent), 0 0 18px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .ptitle, .scard .h, .tabs button, .pop header h2, .pop h3, .feed li.phase, .brand small, .quote figcaption { font-size: 10.5px; letter-spacing: 0.08em; }
+  .quote blockquote, .nav .motto, .regions p, .empty { font-style: normal; font-weight: 600; }
+  .map::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
+  }
+  .clock time { font-size: 14px; }
+  .clock .meter-v { font-size: 13px; gap: 4px; }
+  .plaque { font-size: 9px; color: var(--cyan); border-color: var(--cyan); background: rgba(6, 16, 24, 0.9); box-shadow: 0 0 10px color-mix(in srgb, var(--cyan) 45%, transparent), inset 0 0 8px color-mix(in srgb, var(--cyan) 25%, transparent); text-shadow: 0 0 6px var(--cyan); }
+  .map canvas.world, .map canvas.glow { visibility: hidden; }
+  .map canvas.city3d { position: absolute; display: block; }
+  .map canvas.city3d { image-rendering: crisp-edges; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="panel brand">
+      <canvas id="brand-mark" width="11" height="12" aria-hidden="true"></canvas>
+      <div>
+        <h1>NEON//3D</h1>
+        <small>Agent orchestration</small>
+        <i>Pixel · 3D</i>
+      </div>
+    </div>
+    <div class="panel project">
+      <label for="project">Project</label>
+      <select id="project"></select>
+    </div>
+    <div class="panel pipe">
+      <small id="pipe-note">From the order to the grid</small>
+      <ol id="pipeline"></ol>
+    </div>
+    <figure class="panel quote">
+      <blockquote id="quote">“Read everything. Trust the logs.”</blockquote>
+      <figcaption id="quote-src">Halcyon · boot banner</figcaption>
+    </figure>
+    <div class="panel clock">
+      <div class="row"><time id="clock">Day 1 · 23:40</time><span class="meter-v"><canvas id="meter-icon" width="12" height="10" aria-hidden="true"></canvas><span id="meter">— km/h</span></span></div>
+      <div class="row"><small>City time</small><small>Maglev</small></div>
+      <div class="ctl" role="group" aria-label="Simulation speed">
+        <button type="button" id="play" aria-pressed="false" title="Pause">❚❚</button>
+        <button type="button" data-speed="1" class="on">1×</button>
+        <button type="button" data-speed="2">2×</button>
+        <button type="button" data-speed="4">4×</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Blocks">
+    <div class="panel nav" id="nav">
+      <p class="motto">“Every lit window is somebody still shipping.”<span>Graffiti · Sector 7</span></p>
+    </div>
+    <div class="panel corner">
+      <canvas id="corner-art" width="180" height="236" aria-hidden="true"></canvas>
+      <div class="plaque">SHIP TO THE GRID</div>
+    </div>
+  </nav>
+
+  <main class="map" id="map-frame">
+    <div class="map-inner" id="map">
+      <canvas class="world" id="world" role="img" aria-label="A rainy megacity at night in three dimensions, seen from high above: the orchestrator’s arcology in the middle of a district plate, neon routes to seven blocks — a data archive, a holo kiosk, an AI lab, container stacks, a firewall, a memory pagoda and a skyport — hover-car agents flying between them, and megatowers falling away into the smog past the plate’s edge."></canvas>
+      <canvas class="glow" id="glow" aria-hidden="true"></canvas>
+      <div class="overlay" id="overlay"></div>
+      <div class="boot" id="boot">
+        <div>
+          <h2>Building the city</h2>
+          <div id="boot-what">three.js · assets/neon/city3d.js</div>
+          <div class="bar"><i id="boot-bar"></i></div>
+          <pre id="boot-log"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="dock">
+    <div class="panel" id="agents-panel">
+      <header><h2 class="ptitle">Active agents <span id="agents-n" style="color:var(--accent)"></span></h2><span class="aside">the runners</span></header>
+      <div class="scroll"><ul class="agents" id="agents"></ul></div>
+    </div>
+    <div class="panel">
+      <header>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="feed" aria-selected="true">Recent activity</button>
+          <button type="button" role="tab" data-tab="diff" aria-selected="false">Changes <span class="n" id="diff-n"></span></button>
+          <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
+        </div>
+      </header>
+      <div class="scroll tabbody" id="tab-feed" role="tabpanel"><ol class="feed" id="feed"></ol></div>
+      <div class="scroll tabbody" id="tab-diff" role="tabpanel" hidden></div>
+      <div class="scroll tabbody" id="tab-tests" role="tabpanel" hidden></div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Run progress</h2><span class="aside" id="phase-n"></span></header>
+      <div class="progress">
+        <div class="meter"><span class="track"><i id="prog-bar"></i></span><b id="prog-pct">0%</b></div>
+        <ul class="checks" id="checks"></ul>
+        <div class="ledger" id="ledger">Runners read in their own contexts; only short reports reach the orchestrator.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">City grid</h2><span class="aside">blocks</span></header>
+      <div class="regions">
+        <canvas id="minimap" aria-label="Minimap of the blocks"></canvas>
+        <ul class="legend">
+          <li><i style="background:var(--good)"></i>Visited</li>
+          <li><i style="background:var(--warn)"></i>In progress</li>
+          <li><i style="border:1px solid var(--muted)"></i>Planned</li>
+        </ul>
+        <p>“Ship to the grid. Sleep at dawn.”</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/" } }
+</script>
+<script src="assets/neon/atlas.js"></script>
+<script src="assets/os/engine.js"></script>
+<script src="assets/neon/story.js"></script>
+<script src="assets/os/city3d.js"></script>
+<script src="assets/neon/city3d.js"></script>
+<script type="module">
+// three.js comes from the CDN; the city is built once it has arrived.
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
+import { Reflector } from "three/addons/objects/Reflector.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+window.NEON_3D_READY = true;
+try {
+  const world = NeonCity3D(THREE, { EffectComposer, RenderPass, UnrealBloomPass, OutputPass, ShaderPass, FullScreenQuad, Reflector, mergeGeometries }, { pixel: true });
+  startOS({ ...NEON_STORY, ...world });
+} catch (e) {
+  document.getElementById("boot-what").innerHTML = `<span class="err">${esc(e.message)}</span>`;
+  throw e;
+}
+</script>
+<script>
+// Offline, the module above never runs: say so rather than wait forever.
+setTimeout(() => {
+  if (window.NEON_3D_READY) return;
+  document.getElementById("boot-what").innerHTML = '<span class="err">three.js did not arrive from cdn.jsdelivr.net.\nThis console needs a network connection.</span>';
+}, 15000);
+</script>
+</body>
+</html>

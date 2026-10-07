@@ -1,0 +1,9 @@
+@sprite starfish
+@outline ink
+
+@frame idle
+..r..
+.rsr.
+rrsrr
+.r.r.
+r...r

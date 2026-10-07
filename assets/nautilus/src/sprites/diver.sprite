@@ -1,0 +1,47 @@
+# Brass-helmet diving suit (Rouquayrol–Denayrouze pattern), facing right.
+# S / T / U are the suit colours; each @variant recolours them for one crew member.
+@sprite diver
+@outline ink
+@point port 10,4
+@point hand 10,9
+@variant nemo    S=#2d3f66 T=#1c2946 U=#4a6296
+@variant aronnax S=#5a6f9a T=#3a4a70 U=#8aa0c8
+@variant conseil S=#3f8f7a T=#2a6456 U=#76c4a8
+@variant ned     S=#a8503a T=#733324 U=#dc8a5e
+@variant mate    S=#7d62a6 T=#533f78 U=#b09ad6
+
+@frame stand
+....9988...
+...999887..
+..99988799.
+..998879fg9
+..988779gh9
+..887769hh9
+...7766799.
+23..6666...
+347899887..
+34TSUUSSS8.
+23TSSUSTT7.
+236788766..
+12.TSSST...
+...TS.ST...
+...TS.ST...
+..122.122..
+
+@frame walk
+....9988...
+...999887..
+..99988799.
+..998879fg9
+..988779gh9
+..887769hh9
+...7766799.
+23..6666...
+347899887..
+34TSUUSSS8.
+23TSSUSTT7.
+236788766..
+12.TSSST...
+..TS..ST...
+..TS...ST..
+.122...122.

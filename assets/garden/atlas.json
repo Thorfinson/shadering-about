@@ -1,0 +1,737 @@
+{
+  "generator": "tools/build-sprites.mjs",
+  "hash": "859ea7500ff433cd",
+  "version": 1,
+  "size": [440, 504],
+  "palette": {
+    "ink": "#120e1a",
+    "ink2": "#1c1626",
+    "honey2": "#c98a2e",
+    "honey3": "#f2c14e",
+    "lamp": "#fff2b0",
+    "glow": "#d8ff8a",
+    "glass": "#7fc8c0",
+    "pearl": "#fbf6ea",
+    "pearlD": "#d8cfc0",
+    "stone3": "#b7ad98",
+    "stone4": "#e2d8c0",
+    "red": "#e2463c",
+    "green": "#8fd35f",
+    "white": "#ffffff",
+    "research": "#f2b13b",
+    "analyze": "#ff8a7a",
+    "build": "#7fd35f",
+    "model": "#4fd1b0",
+    "test": "#6cc3f5",
+    "deploy": "#b58cf0",
+    "remember": "#f3e9ff",
+    "sky0": "#2b2d5c",
+    "sky1": "#4a3f78",
+    "sky2": "#7c5a8c",
+    "sky3": "#c2708a",
+    "sky4": "#ee9d78",
+    "sky5": "#ffd08a",
+    "sun": "#fff0c2",
+    "haze": "#9a86b8",
+    "hill0": "#3a3f6a",
+    "hill1": "#4d5a7a",
+    "hill2": "#5f7a78",
+    "hill3": "#6f8c6a",
+    "grass0": "#0f231c",
+    "grass1": "#173524",
+    "grass2": "#22492a",
+    "grass3": "#336230",
+    "grass4": "#4f7f38",
+    "grass5": "#7ea046",
+    "grass6": "#b9c25a",
+    "leaf0": "#0c2020",
+    "leaf1": "#133526",
+    "leaf2": "#1d4d30",
+    "leaf3": "#2e6a38",
+    "leaf4": "#4f8c40",
+    "leaf5": "#93b85a",
+    "leafLit": "#d8d27a",
+    "soil0": "#22150e",
+    "soil1": "#3a2416",
+    "soil2": "#5a3a22",
+    "soil3": "#7e5430",
+    "wood0": "#2a1a12",
+    "wood1": "#452c1c",
+    "wood2": "#6a4428",
+    "wood3": "#946038",
+    "wood4": "#c08850",
+    "stone0": "#2c2830",
+    "stone1": "#463f44",
+    "stone2": "#6a6060",
+    "straw0": "#6a4a1c",
+    "straw1": "#9c7430",
+    "straw2": "#d0a048",
+    "straw3": "#f0cc70",
+    "pond0": "#1e2a4a",
+    "pond1": "#2c4466",
+    "pond2": "#466a86",
+    "pond3": "#7aa0b0",
+    "pond4": "#c8d8d0",
+    "pane0": "#2a4a4a",
+    "pane1": "#3e6a66",
+    "pane2": "#5e908a",
+    "pane3": "#92c0b4",
+    "pane4": "#d4ece2",
+    "iron2": "#b8b4a8",
+    "iron3": "#dcd8ca",
+    "rose0": "#7a1e3a",
+    "rose1": "#c2365a",
+    "rose2": "#f06a8a",
+    "rose3": "#ffb0c4",
+    "poppy": "#e8453a",
+    "sunny": "#f6c43a",
+    "lav0": "#6a4a9c",
+    "lav1": "#9a78d0",
+    "lav2": "#c8b0f0",
+    "blue0": "#3a6ac8",
+    "blue1": "#7ab0f0",
+    "daisy": "#f4f0e0",
+    "bee0": "#1a1410",
+    "bee1": "#3a2a18",
+    "bee2": "#e8a82a",
+    "bee3": "#ffd650",
+    "wing": "#e8eef8",
+    "thorn0": "#1a0e18",
+    "thorn1": "#34182a",
+    "thorn2": "#5a2838",
+    "thorn3": "#8a4048",
+    "berry": "#d8584a",
+    "coat0": "#1c2030",
+    "coat1": "#2c3450",
+    "coat2": "#445070",
+    "skin0": "#6b4a36",
+    "skin1": "#b8866a",
+    "tweed0": "#3a4a3a",
+    "tweed1": "#5a6a4e"
+  },
+  "sprites": {
+    "icon": {
+      "source": "assets/garden/src/sprites/icons.sprite",
+      "frames": [
+        "icon.garden",
+        "icon.agents",
+        "icon.knowledge",
+        "icon.repos",
+        "icon.documents",
+        "icon.memory",
+        "icon.tests",
+        "icon.models",
+        "icon.deploy",
+        "icon.observe"
+      ]
+    },
+    "ri": {
+      "source": "assets/garden/src/sprites/rowicons.sprite",
+      "frames": [
+        "ri.paper",
+        "ri.report",
+        "ri.data",
+        "ri.web",
+        "ri.note",
+        "ri.spec",
+        "ri.design",
+        "ri.diagram",
+        "ri.model",
+        "ri.repo",
+        "ri.check",
+        "ri.clock",
+        "ri.grid",
+        "ri.pearl",
+        "ri.env",
+        "ri.sim",
+        "ri.sprout"
+      ]
+    },
+    "bee": {
+      "source": "assets/garden/src/creatures.mjs",
+      "frames": [
+        "bee.mary.fly0",
+        "bee.mary.fly1",
+        "bee.colin.fly0",
+        "bee.colin.fly1",
+        "bee.dickon.fly0",
+        "bee.dickon.fly1",
+        "bee.martha.fly0",
+        "bee.martha.fly1",
+        "bee.susan.fly0",
+        "bee.susan.fly1",
+        "bee.robin.fly0",
+        "bee.robin.fly1",
+        "bee.soot.fly0",
+        "bee.soot.fly1"
+      ]
+    },
+    "butterfly": {
+      "source": "assets/garden/src/creatures.mjs",
+      "frames": [
+        "butterfly.rose.fly0",
+        "butterfly.rose.fly1",
+        "butterfly.lemon.fly0",
+        "butterfly.lemon.fly1",
+        "butterfly.blue.fly0",
+        "butterfly.blue.fly1",
+        "butterfly.lilac.fly0",
+        "butterfly.lilac.fly1"
+      ]
+    },
+    "bramble": {
+      "source": "assets/garden/src/creatures.mjs",
+      "frames": [
+        "bramble.head"
+      ]
+    },
+    "shed": {
+      "source": "assets/garden/src/creatures.mjs",
+      "frames": [
+        "shed.window"
+      ]
+    },
+    "station": {
+      "source": "assets/garden/src/places.mjs",
+      "frames": [
+        "station.knowledge",
+        "station.documents",
+        "station.models",
+        "station.repos",
+        "station.tests",
+        "station.memory",
+        "station.deploy"
+      ]
+    },
+    "hub": {
+      "source": "assets/garden/src/places.mjs",
+      "frames": [
+        "hub.orchestrator"
+      ]
+    },
+    "fx": {
+      "source": "assets/garden/src/places.mjs",
+      "frames": [
+        "fx.sails0",
+        "fx.sails1",
+        "fx.sails2",
+        "fx.sails3",
+        "fx.sails4",
+        "fx.sails5",
+        "fx.sails6",
+        "fx.sails7"
+      ]
+    }
+  },
+  "frames": {
+    "icon.garden": {
+      "x": 223,
+      "y": 480,
+      "w": 12,
+      "h": 10
+    },
+    "icon.agents": {
+      "x": 262,
+      "y": 480,
+      "w": 12,
+      "h": 9
+    },
+    "icon.knowledge": {
+      "x": 184,
+      "y": 480,
+      "w": 12,
+      "h": 11
+    },
+    "icon.repos": {
+      "x": 159,
+      "y": 480,
+      "w": 12,
+      "h": 12
+    },
+    "icon.documents": {
+      "x": 146,
+      "y": 480,
+      "w": 12,
+      "h": 12
+    },
+    "icon.memory": {
+      "x": 236,
+      "y": 480,
+      "w": 12,
+      "h": 10
+    },
+    "icon.tests": {
+      "x": 210,
+      "y": 480,
+      "w": 12,
+      "h": 11
+    },
+    "icon.models": {
+      "x": 197,
+      "y": 480,
+      "w": 12,
+      "h": 11
+    },
+    "icon.deploy": {
+      "x": 133,
+      "y": 480,
+      "w": 12,
+      "h": 12
+    },
+    "icon.observe": {
+      "x": 249,
+      "y": 480,
+      "w": 12,
+      "h": 10
+    },
+    "ri.paper": {
+      "x": 365,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.report": {
+      "x": 395,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.data": {
+      "x": 295,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.web": {
+      "x": 425,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.note": {
+      "x": 355,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.spec": {
+      "x": 415,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.design": {
+      "x": 305,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.diagram": {
+      "x": 315,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.model": {
+      "x": 345,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.repo": {
+      "x": 385,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.check": {
+      "x": 275,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.clock": {
+      "x": 285,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.grid": {
+      "x": 335,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.pearl": {
+      "x": 375,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.env": {
+      "x": 325,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.sim": {
+      "x": 405,
+      "y": 480,
+      "w": 9,
+      "h": 9
+    },
+    "ri.sprout": {
+      "x": 172,
+      "y": 480,
+      "w": 11,
+      "h": 12
+    },
+    "bee.mary.fly0": {
+      "x": 409,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.mary.fly1": {
+      "x": 0,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "bee.colin.fly0": {
+      "x": 295,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.colin.fly1": {
+      "x": 314,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.dickon.fly0": {
+      "x": 333,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.dickon.fly1": {
+      "x": 352,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.martha.fly0": {
+      "x": 371,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.martha.fly1": {
+      "x": 390,
+      "y": 415,
+      "w": 18,
+      "h": 16
+    },
+    "bee.susan.fly0": {
+      "x": 95,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "bee.susan.fly1": {
+      "x": 114,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "bee.robin.fly0": {
+      "x": 19,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "bee.robin.fly1": {
+      "x": 38,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "bee.soot.fly0": {
+      "x": 57,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "bee.soot.fly1": {
+      "x": 76,
+      "y": 480,
+      "w": 18,
+      "h": 16
+    },
+    "butterfly.rose.fly0": {
+      "x": 60,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.rose.fly1": {
+      "x": 70,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.lemon.fly0": {
+      "x": 20,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.lemon.fly1": {
+      "x": 30,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.blue.fly0": {
+      "x": 0,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.blue.fly1": {
+      "x": 10,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.lilac.fly0": {
+      "x": 40,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "butterfly.lilac.fly1": {
+      "x": 50,
+      "y": 497,
+      "w": 9,
+      "h": 7
+    },
+    "bramble.head": {
+      "x": 260,
+      "y": 415,
+      "w": 34,
+      "h": 32
+    },
+    "shed.window": {
+      "x": 0,
+      "y": 0,
+      "w": 180,
+      "h": 236
+    },
+    "station.knowledge": {
+      "x": 89,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.documents": {
+      "x": 0,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.models": {
+      "x": 267,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.repos": {
+      "x": 0,
+      "y": 326,
+      "w": 88,
+      "h": 88
+    },
+    "station.tests": {
+      "x": 89,
+      "y": 326,
+      "w": 88,
+      "h": 88
+    },
+    "station.memory": {
+      "x": 178,
+      "y": 237,
+      "w": 88,
+      "h": 88
+    },
+    "station.deploy": {
+      "x": 314,
+      "y": 0,
+      "w": 88,
+      "h": 88
+    },
+    "hub.orchestrator": {
+      "x": 181,
+      "y": 0,
+      "w": 132,
+      "h": 126
+    },
+    "fx.sails0": {
+      "x": 178,
+      "y": 326,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails1": {
+      "x": 243,
+      "y": 326,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails2": {
+      "x": 308,
+      "y": 326,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails3": {
+      "x": 373,
+      "y": 326,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails4": {
+      "x": 0,
+      "y": 415,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails5": {
+      "x": 65,
+      "y": 415,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails6": {
+      "x": 130,
+      "y": 415,
+      "w": 64,
+      "h": 64
+    },
+    "fx.sails7": {
+      "x": 195,
+      "y": 415,
+      "w": 64,
+      "h": 64
+    }
+  },
+  "meta": {
+    "bee": {
+      "lamp": [8, 15],
+      "port": [15, 9]
+    },
+    "bramble": {
+      "roots": [
+        [8, 26],
+        [12, 28],
+        [17, 29],
+        [22, 28],
+        [26, 25]
+      ],
+      "eyes": [
+        [12, 14],
+        [21, 13]
+      ]
+    },
+    "shed": {
+      "lamp": [84, 150]
+    },
+    "station": {
+      "base": [44, 58],
+      "prx": 30,
+      "pry": 9,
+      "lamps": {
+        "knowledge": [
+          [36, 52],
+          [63, 46],
+          [30, 63],
+          [58, 63],
+          [36, 50]
+        ],
+        "documents": [
+          [44, 42],
+          [44, 14],
+          [13, 63],
+          [75, 63]
+        ],
+        "models": [
+          [26, 63],
+          [62, 63]
+        ],
+        "repos": [
+          [11, 58],
+          [78, 56]
+        ],
+        "tests": [
+          [12, 58],
+          [76, 56]
+        ],
+        "memory": [
+          [70, 46],
+          [24, 65]
+        ],
+        "deploy": [
+          [41, 40],
+          [48, 32],
+          [16, 60],
+          [74, 61]
+        ]
+      },
+      "fx": {
+        "knowledge": {
+          "smoke": [
+            [61, 10]
+          ]
+        },
+        "documents": {},
+        "models": {},
+        "repos": {
+          "hives": [
+            [21, 49],
+            [35, 47],
+            [52, 47],
+            [66, 49]
+          ]
+        },
+        "tests": {},
+        "memory": {
+          "koi": [44, 58, 22, 6]
+        },
+        "deploy": {
+          "sails": [44, 17]
+        }
+      }
+    },
+    "hub": {
+      "base": [66, 86],
+      "prx": 46,
+      "pry": 13,
+      "lamps": [
+        [60, 46],
+        [30, 39],
+        [104, 35],
+        [44, 27],
+        [92, 23],
+        [18, 51],
+        [114, 47],
+        [38, 94],
+        [94, 94]
+      ]
+    },
+    "fx": {
+      "sailFrames": 8
+    }
+  }
+}

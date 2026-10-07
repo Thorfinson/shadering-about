@@ -1,0 +1,20 @@
+# Sea turtle, facing right.
+@sprite turtle
+@outline ink
+@map F=skin
+
+@frame swim0
+......uuuuu.....
+....uvwvwvwvu...
+...uvwvvwvvwvuFF
+..uvvvvvvvvvvu0F
+.FDDDDDDDDDDFF..
+FF.........FFF..
+
+@frame swim1
+......uuuuu.....
+....uvwvwvwvu...
+...uvwvvwvvwvuFF
+..uvvvvvvvvvvu0F
+.FDDDDDDDDDDF...
+.F..........FF..

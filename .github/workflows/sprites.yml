@@ -1,0 +1,24 @@
+name: sprites
+
+on:
+  push:
+    paths:
+      - 'assets/**'
+      - 'tools/build-sprites.mjs'
+      - 'tools/pixelkit.mjs'
+  pull_request:
+    paths:
+      - 'assets/**'
+      - 'tools/build-sprites.mjs'
+      - 'tools/pixelkit.mjs'
+
+jobs:
+  atlas-up-to-date:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # No npm install needed: the pipeline has no dependencies.
+      - run: node tools/build-sprites.mjs --check

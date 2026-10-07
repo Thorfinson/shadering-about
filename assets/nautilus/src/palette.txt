@@ -1,0 +1,186 @@
+# Nautilus palette — the single source of colour for the sprite atlas and the page.
+#
+# key  hex      name
+#
+# `key` is the character a .sprite file uses for that colour ("-" = no key,
+# name-only). `name` is how procedural.mjs, @map / @variant lines, and the page
+# refer to it. Every colour ships in atlas.json, so the page never hard-codes one.
+
+0  #070b14  ink
+G  #0c1626  ink2
+
+1  #1c2530  iron0
+2  #2e3b48  iron1
+3  #475866  iron2
+4  #6d8290  iron3
+5  #a3b6bf  iron4
+
+6  #4a2f14  brass0
+7  #7d5220  brass1
+8  #b8812e  brass2
+9  #e6b64f  brass3
+a  #fff0a8  lamp
+
+b  #2e1c12  wood0
+c  #4d3020  wood1
+d  #74492c  wood2
+e  #a06a3c  wood3
+
+f  #7ff0ff  glow
+g  #3fb6c8  glass
+h  #1f6f85  glassD
+i  #f4f0ff  pearl
+j  #c8c0e0  pearlD
+
+k  #2f3a40  stone0
+l  #4b5a5e  stone1
+m  #73817f  stone2
+n  #a4ada3  stone3
+o  #d6d8c8  stone4
+
+p  #7a2a3a  coral0
+q  #c2475a  coral1
+r  #ef7a6a  coral2
+s  #ffb08a  coral3
+
+t  #16392e  kelp0
+u  #22563a  kelp1
+v  #3d7d45  kelp2
+w  #6aa85a  kelp3
+
+x  #2a1838  vio0
+y  #4e2a5e  vio1
+z  #86407e  vio2
+A  #c86a9a  vio3
+
+B  #ff5a4a  red
+C  #7fd96a  green
+D  #e8dcb8  paper
+E  #ffffff  white
+F  #9ab07a  skin
+
+# Water, deep -> surface. The page dithers between these every frame.
+-  #050d1b  water0
+-  #081729  water1
+-  #0b2138  water2
+-  #0e2b46  water3
+-  #123652  water4
+-  #16425e  water5
+-  #1b506a  water6
+-  #225f75  water7
+-  #2c6f80  water8
+-  #3a8189  water9
+-  #4f9492  water10
+-  #6caa9e  water11
+-  #98c9b6  water12
+-  #cfeadb  foam
+
+# Sea floor, deep -> lit.
+-  #1d2a2c  sand0
+-  #2c3b3a  sand1
+-  #415249  sand2
+-  #5c6c5c  sand3
+-  #7f8e76  sand4
+-  #a8b394  sand5
+
+# Pipeline stages in nautilus-os.html — also each station's route colour.
+-  #f2b13b  research
+-  #ff8a7a  analyze
+-  #5ee08a  build
+-  #3fd0c9  model
+-  #4cc9f0  test
+-  #a78bfa  deploy
+-  #e8e0ff  remember
+
+# Abyssal terrain for the top-down map, deep -> lit.
+-  #040914  abyss0
+-  #081326  abyss1
+-  #0d1d36  abyss2
+-  #132a48  abyss3
+-  #1b3a5c  abyss4
+-  #264d71  abyss5
+-  #356587  abyss6
+-  #4d819e  abyss7
+-  #7fb8c8  rim
+
+# Octopus and anemones in nautilus-os.html.
+-  #4a1535  pink0
+-  #86285c  pink1
+-  #c4478a  pink2
+-  #ef7fb8  pink3
+-  #ffc6e0  pink4
+
+# Hue-shifted ramps for the sea floor, mesa tops and cliffs in nautilus-os.html.
+-  #0a1628  floor0
+-  #10243a  floor1
+-  #173450  floor2
+-  #214663  floor3
+-  #2e5a74  floor4
+-  #3f6f82  floor5
+-  #0c2230  moss0
+-  #123433  moss1
+-  #1a4a41  moss2
+-  #255f4c  moss3
+-  #357656  moss4
+-  #4f8f62  moss5
+-  #6fa872  moss6
+-  #060b18  cliff0
+-  #0b1428  cliff1
+-  #121f3a  cliff2
+-  #1a2c4d  cliff3
+-  #253b60  cliff4
+-  #2c5a78  fog
+
+# Ghostly background creatures, and the gardens under the domes.
+-  #3b2a4a  ghost0
+-  #6a4a74  ghost1
+-  #9a6f9c  ghost2
+-  #c79bc3  ghost3
+-  #0d2a22  leaf0
+-  #16432f  leaf1
+-  #22603e  leaf2
+-  #3b8a55  leaf3
+-  #7cc47a  leaf4
+
+# Lit figures on the bridge.
+-  #141a2c  coat0
+-  #222c46  coat1
+-  #34466a  coat2
+-  #6b4a36  skin0
+-  #a0765a  skin1
+
+# The painted map in nautilus-os.html: open water from the surface to the deep,
+# rock from shadow to lit, silt on the terraces, and the lit windows.
+-  #3b82a0  mist4
+-  #23648c  mist3
+-  #1a4f75  mist2
+-  #123a5c  mist1
+-  #0b2642  mist0
+-  #05111f  rock0
+-  #0a1f35  rock1
+-  #112f4c  rock2
+-  #1b4465  rock3
+-  #2b5e7e  rock4
+-  #14344c  silt0
+-  #1d4760  silt1
+-  #2a5b72  silt2
+-  #3d7487  silt3
+-  #ffc462  window
+
+# Station fortresses in nautilus-os.html: aged metal with a green-teal patina,
+# dark bronze, and old glass (the page shows the sea through it).
+-  #0c161c  patina0
+-  #16252d  patina1
+-  #22363d  patina2
+-  #324b50  patina3
+-  #4d6a69  patina4
+-  #2a1f14  bronze0
+-  #47341f  bronze1
+-  #6c4f2c  bronze2
+-  #9c7640  bronze3
+-  #d2a45a  bronze4
+-  #123542  pane0
+-  #1d4f5c  pane1
+-  #2d6e76  pane2
+-  #56979a  pane3
+-  #a9d6cf  pane4

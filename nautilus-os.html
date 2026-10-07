@@ -1,0 +1,1357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Nautilus OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Pixelify+Sans:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap" />
+<link rel="stylesheet" href="assets/os/os.css" />
+<style>
+  /* Nautilus: brass and deep water */
+  :root {
+    --bg: #030812;
+    --bg-glow: #0b1a33;
+    --panel: rgba(7, 17, 34, 0.93);
+    --panel-hi: rgba(14, 32, 58, 0.93);
+    --line: rgba(120, 172, 208, 0.26);
+    --line-2: rgba(140, 196, 230, 0.5);
+    --rivet: rgba(222, 176, 88, 0.75);
+    --accent: #d9a94f;
+    --accent-hi: #f3cf7a;
+    --accent-lo: #8a6420;
+    --on-accent: #150f04;
+    --map-bg: #081326;
+    --display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --ui: "Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --caps: "Silkscreen", "Pixelify Sans", ui-monospace, monospace;
+    --book: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  }
+  /* riveted plates */
+  .panel {
+    background:
+      radial-gradient(circle at 5px 5px, var(--rivet) 1.2px, transparent 1.8px),
+      radial-gradient(circle at calc(100% - 5px) 5px, var(--rivet) 1.2px, transparent 1.8px),
+      radial-gradient(circle at 5px calc(100% - 5px), var(--rivet) 1.2px, transparent 1.8px),
+      radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), var(--rivet) 1.2px, transparent 1.8px),
+      linear-gradient(180deg, var(--panel-hi), var(--panel) 42%);
+  }
+</style>
+</head>
+
+<body>
+<div class="app">
+  <header class="top">
+    <div class="panel brand">
+      <canvas id="brand-mark" width="11" height="12" aria-hidden="true"></canvas>
+      <div>
+        <h1>NAUTILUS OS</h1>
+        <small>Agent orchestration</small>
+        <i>Mobilis in mobili</i>
+      </div>
+    </div>
+    <div class="panel project">
+      <label for="project">Project</label>
+      <select id="project"></select>
+    </div>
+    <div class="panel pipe">
+      <small id="pipe-note">From the order to the fleet</small>
+      <ol id="pipeline"></ol>
+    </div>
+    <figure class="panel quote">
+      <blockquote id="quote">“The sea is everything.”</blockquote>
+      <figcaption id="quote-src">Twenty Thousand Leagues Under the Seas</figcaption>
+    </figure>
+    <div class="panel clock">
+      <div class="row"><time id="clock">Day 1 · 06:00</time><span class="meter-v"><canvas id="meter-icon" width="12" height="10" aria-hidden="true"></canvas><span id="meter">— m</span></span></div>
+      <div class="row"><small>Ship's time</small><small>Depth</small></div>
+      <div class="ctl" role="group" aria-label="Simulation speed">
+        <button type="button" id="play" aria-pressed="false" title="Pause">❚❚</button>
+        <button type="button" data-speed="1" class="on">1×</button>
+        <button type="button" data-speed="2">2×</button>
+        <button type="button" data-speed="4">4×</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Stations">
+    <div class="panel nav" id="nav">
+      <p class="motto">“The sea is everything.”<span>Captain Nemo</span></p>
+    </div>
+    <div class="panel corner">
+      <canvas id="corner-art" width="180" height="236" aria-hidden="true"></canvas>
+      <div class="plaque">MOBILIS IN MOBILI</div>
+    </div>
+  </nav>
+
+  <main class="map" id="map-frame">
+    <div class="map-inner" id="map">
+      <canvas class="world" id="world" role="img" aria-label="Top-down map of the sea floor: an orchestrator dome in the middle, routes to seven glass-domed stations, and submarine agents travelling between them."></canvas>
+      <canvas class="glow" id="glow" aria-hidden="true"></canvas>
+      <div class="overlay" id="overlay"></div>
+      <div class="boot" id="boot">
+        <div>
+          <h2>Loading sprite assets</h2>
+          <div id="boot-what">assets/nautilus/atlas.js</div>
+          <div class="bar"><i id="boot-bar"></i></div>
+          <pre id="boot-log"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="dock">
+    <div class="panel" id="agents-panel">
+      <header><h2 class="ptitle">Active agents <span id="agents-n" style="color:var(--accent)"></span></h2><span class="aside">sub-agents</span></header>
+      <div class="scroll"><ul class="agents" id="agents"></ul></div>
+    </div>
+    <div class="panel">
+      <header>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="feed" aria-selected="true">Recent activity</button>
+          <button type="button" role="tab" data-tab="diff" aria-selected="false">Changes <span class="n" id="diff-n"></span></button>
+          <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
+        </div>
+      </header>
+      <div class="scroll tabbody" id="tab-feed" role="tabpanel"><ol class="feed" id="feed"></ol></div>
+      <div class="scroll tabbody" id="tab-diff" role="tabpanel" hidden></div>
+      <div class="scroll tabbody" id="tab-tests" role="tabpanel" hidden></div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Voyage progress</h2><span class="aside" id="phase-n"></span></header>
+      <div class="progress">
+        <div class="meter"><span class="track"><i id="prog-bar"></i></span><b id="prog-pct">0%</b></div>
+        <ul class="checks" id="checks"></ul>
+        <div class="ledger" id="ledger">Divers read in their own contexts; only short reports reach the orchestrator.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Ocean regions</h2><span class="aside">stations</span></header>
+      <div class="regions">
+        <canvas id="minimap" aria-label="Minimap of the stations"></canvas>
+        <ul class="legend">
+          <li><i style="background:var(--good)"></i>Visited</li>
+          <li><i style="background:var(--warn)"></i>In progress</li>
+          <li><i style="border:1px solid var(--muted)"></i>Planned</li>
+        </ul>
+        <p>“Mobilis in mobili.”</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="assets/nautilus/atlas.js"></script>
+<script src="assets/os/engine.js"></script>
+<script>
+"use strict";
+// The world's own names stay in this block; the engine sees them through startOS().
+{
+// ============================================================
+// Stations, agents, projects
+// ============================================================
+const QUOTES = [
+  ["“The sea is everything.”", "Twenty Thousand Leagues Under the Seas"],
+  ["“The sea is everything.”", "Twenty Thousand Leagues Under the Seas"],
+  ["“Mobilis in mobili.”", "Motto of the Nautilus"],
+  ["“We may brave human laws, but we cannot resist natural ones.”", "Captain Nemo"],
+  ["“Mobilis in mobili.”", "Motto of the Nautilus"],
+];
+
+// fx/fy: where the platform's centre sits on screen, as a fraction of the map.
+const NAUTILUS_STATIONS = {
+  hub:       { name: "Agent Orchestrator", sub: "Plan · Coordinate · Execute", frame: "hub.orchestrator", icon: "icon.observe", color: "brass3", fx: 0.48, fy: 0.6, pr: 64, ph: 1.3, prefer: ["below", "above"] },
+  knowledge: { name: "Knowledge Base", frame: "station.knowledge", icon: "icon.knowledge", color: "research", fx: 0.17, fy: 0.34, pr: 40, ph: 1.0, prefer: ["below", "right", "left"] },
+  documents: { name: "Documents", frame: "station.documents", icon: "icon.documents", color: "analyze", fx: 0.6, fy: 0.25, pr: 40, ph: 1.0, prefer: ["right", "left", "below"] },
+  models:    { name: "Model Registry", frame: "station.models", icon: "icon.models", color: "model", fx: 0.87, fy: 0.3, pr: 40, ph: 1.0, prefer: ["below", "left"] },
+  repos:     { name: "Repositories", frame: "station.repos", icon: "icon.repos", color: "build", fx: 0.15, fy: 0.7, pr: 40, ph: 1.0, prefer: ["below", "right", "above"] },
+  tests:     { name: "Testing Lab", frame: "station.tests", icon: "icon.tests", color: "test", fx: 0.75, fy: 0.62, pr: 40, ph: 1.0, prefer: ["below", "left", "right"] },
+  memory:    { name: "Memory", frame: "station.memory", icon: "icon.memory", color: "remember", fx: 0.37, fy: 0.88, pr: 40, ph: 0.9, prefer: ["right", "left", "above"] },
+  deploy:    { name: "Deployments", frame: "station.deploy", icon: "icon.deploy", color: "deploy", fx: 0.89, fy: 0.87, pr: 40, ph: 0.9, prefer: ["left", "above"] },
+};
+
+// card rows get a small icon each
+const ROW_ICON = {
+  knowledge: { papers: "ri.paper", reports: "ri.report", datasets: "ri.data", web: "ri.web" },
+  documents: { project: "ri.paper", specs: "ri.spec", notes: "ri.note", designs: "ri.design", diagrams: "ri.diagram" },
+  tests: { unit: "ri.check", integration: "ri.check", eval: "ri.model", sim: "ri.sim", data: "ri.data" },
+  memory: { short: "ri.clock", long: "ri.pearl", episodic: "ri.note", vector: "ri.grid" },
+};
+
+const NAUTILUS_AGENTS = [
+  { id: "aronnax", name: "Aronnax", role: "Researcher", home: "knowledge", color: "research", verb: "Researching", blurb: "reads papers, field reports and datasets" },
+  { id: "conseil", name: "Conseil", role: "Analyst", home: "documents", color: "analyze", verb: "Analyzing", blurb: "classifies findings; writes specs and plans" },
+  { id: "ned", name: "Ned Land", role: "Engineer", home: "repos", color: "build", verb: "Coding", blurb: "writes the code; harpoons failing tests" },
+  { id: "cyrus", name: "Cyrus Smith", role: "Model engineer", home: "models", color: "model", verb: "Training", blurb: "trains, evaluates and registers models" },
+  { id: "lidenbrock", name: "Lidenbrock", role: "Tester", home: "tests", color: "test", verb: "Testing", blurb: "runs the suites, simulations and evals" },
+  { id: "barbicane", name: "Barbicane", role: "Launcher", home: "deploy", color: "deploy", verb: "Deploying", blurb: "ships releases to every fleet" },
+  { id: "axel", name: "Axel", role: "Chronicler", home: "memory", color: "remember", verb: "Remembering", blurb: "keeps the voyage journal — long-term memory" },
+];
+
+const EDITS = {
+  species: {
+    file: "api/species.js", hunk: "@@ -0,0 +1,8 @@", create: true,
+    lines: [
+      '+import { classify } from "../models/species-classifier.js";',
+      "+",
+      "+export async function getSpecies(req) {",
+      "+  const img = await req.image();",
+      '+  const { label, confidence } = await classify(img, { v: "1.0" });',
+      '+  if (confidence < 0.6) return { label: "unknown", confidence };',
+      "+  return { label, confidence };",
+      "+}",
+    ],
+  },
+  routes: {
+    file: "api/routes.js", hunk: "@@ -12,4 +12,5 @@",
+    lines: [
+      ' router.get("/regions", listRegions);',
+      ' router.get("/regions/:id", getRegion);',
+      '+router.get("/species/:id", getSpecies);',
+      ' router.get("/health", health);',
+    ],
+  },
+  depth: {
+    file: "helm/depth.js", hunk: "@@ -10,4 +10,4 @@ diving planes",
+    lines: [
+      " // hard floor for the diving planes",
+      "-export const MAX_DEPTH = 8000;   // metres",
+      "+export const MAX_DEPTH = 16000;  // the Atlantic floor",
+      " export const DESCENT_RATE = 1.2; // m/s",
+    ],
+  },
+  pumps: {
+    file: "ballast/pumps.js", hunk: "@@ -38,5 +38,8 @@ function pumpOut",
+    lines: [
+      " function pumpOut(tank, litres) {",
+      "   const p = seaPressure(depth());",
+      "+  if (p > 800) {                  // atm",
+      "+    return staged(tank, litres, p);",
+      "+  }",
+      "   return drive(tank, litres, p);",
+      " }",
+    ],
+  },
+  plates: {
+    file: "hull/plates.js", hunk: "@@ -4,3 +4,4 @@",
+    lines: [
+      "-export const PLATE_CM = 4;       // rated 8 000 m",
+      "+export const PLATE_CM = 6.5;     // rated 16 500 m",
+      "+export const DOUBLE_HULL = true;",
+      " export const RIVET_CM = 10;",
+    ],
+  },
+  krakenalert: {
+    file: "alerts/kraken.js", hunk: "@@ -0,0 +1,8 @@", create: true,
+    lines: [
+      '+import { model } from "../models/kraken-sonar.js";',
+      "+",
+      "+export function onEcho(echo) {",
+      "+  const p = model.score(echo);                 // 0..1",
+      "+  if (p > 0.8 && echo.rangeKm < 3) {",
+      '+    alarm("kraken", { bearing: echo.bearing, warnS: echo.rangeKm / echo.closingKmS });',
+      "+  }",
+      "+}",
+    ],
+  },
+};
+
+// A project runs research (parallel) → analyze → build (parallel) → test → deploy.
+const PROJECTS = [
+  {
+    id: "atlas", name: "Ocean Biodiversity Atlas", meter: 220,
+    order: "Chart every living thing between the reef and the abyss, Professor. Begin with the corals.",
+    ticket: "Ship Species-Classifier v1.0 behind the Atlas API",
+    research: [
+      { agent: "aronnax", station: "knowledge", task: "Survey the coral literature", doing: "Reading papers",
+        steps: [["read", "papers", "Veron · Corals of the World", 6200], ["read", "reports", "Red Sea reef transects, 1867", 2900], ["read", "datasets", "Reef survey images · 48k", 1800]],
+        report: "Bleaching shows in 31% of reef images, and the training set has no label for it.", rtok: 180 },
+      { agent: "conseil", station: "documents", task: "Read the Atlas API spec", doing: "Reading specs",
+        steps: [["docread", "specs", "Atlas API v2", 2100], ["docread", "notes", "Meeting notes · 12 March", 900]],
+        report: "The API serves /species/{id}; the classifier must return a confidence.", rtok: 120 },
+      { agent: "axel", station: "memory", task: "Recall the last reef survey", doing: "Recalling",
+        steps: [["recall", "Last survey: bleached corals were labelled “dead”", 420]],
+        report: "Memory: bleached corals were mislabelled as dead last time.", rtok: 60 },
+    ],
+    analyze: { agent: "conseil", station: "documents", task: "Write the research brief and the plan", doing: "Writing the brief",
+      steps: [["docwrite", "project", "Research brief · Coral classifier v1.0"], ["plan"]], report: "Brief filed; five-step plan.", rtok: 140 },
+    plan: [
+      ["Add a bleaching label to the training set", "cyrus", 2],
+      ["Train Species-Classifier v1.0", "cyrus", 2],
+      ["Serve /species on the Atlas API", "ned", 2],
+      ["Validate on the held-out reef survey", "lidenbrock", 3],
+      ["Deploy to staging, production and the AUVs", "barbicane", 4],
+    ],
+    build: [
+      { agent: "ned", station: "repos", task: "Serve /species on the Atlas API", doing: "Coding",
+        steps: [["grep", "ocean-atlas", "router.get", ["api/routes.js"]], ["edit", "ocean-atlas", "feature/species-api", "species"], ["edit", "ocean-atlas", "feature/species-api", "routes"]],
+        report: "GET /species/{id} returns a label and a confidence.", rtok: 110 },
+      { agent: "cyrus", station: "models", task: "Train Species-Classifier v1.0", doing: "Training",
+        steps: [["train", "Species-Classifier", "1.0", "48k images, bleaching label added"]], report: "v1.0 trained: 0.93 accuracy overall.", rtok: 120 },
+    ],
+    test: {
+      agent: "lidenbrock", task: "Run the suites and the model eval", doing: "Testing",
+      first: [["suite", "unit", 346, null], ["suite", "integration", 128, null], ["suite", "eval", 12, "bleached corals: precision 0.71 < 0.85"]],
+      fix: { agent: "cyrus", station: "models", task: "Retrain with more bleaching examples", doing: "Retraining",
+             steps: [["train", "Species-Classifier", "1.0", "+2,400 bleaching labels"]], report: "Bleached-coral precision 0.71 → 0.91.", rtok: 100 },
+      rerun: [["suite", "eval", 12, null], ["suite", "data", 89, null]],
+      report: "All green: unit 346, integration 128, eval 12/12, data 89/89.", rtok: 70,
+    },
+    deploy: [
+      { agent: "barbicane", station: "deploy", task: "Release Atlas 1.0", doing: "Deploying",
+        steps: [["deploy", "staging", "atlas 1.0"], ["deploy", "production", "atlas 1.0"], ["deploy", "edge", "classifier 1.0"], ["deploy", "api", "atlas 1.0"]],
+        report: "Atlas 1.0 is live on staging, production, the AUV fleet and the Research API.", rtok: 90 },
+      { agent: "ned", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "ocean-atlas", "c0a1f0", "species: serve classifier v1.0"]], report: "Merged into main.", rtok: 40 },
+      { agent: "axel", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Bleaching needs its own label — never “dead”"]], report: "Lesson stored.", rtok: 30 },
+    ],
+  },
+  {
+    id: "depth", name: "Dive to 16 000 metres", meter: 8000, finalMeter: 16000,
+    order: "Take us down to the floor of the Atlantic — sixteen thousand metres.",
+    ticket: "Raise the Nautilus depth limit to 16 000 m",
+    research: [
+      { agent: "aronnax", station: "knowledge", task: "Survey the hull and pressure literature", doing: "Reading the manual",
+        steps: [["read", "papers", "Nautilus Manual §4 · Hull", 3400], ["read", "papers", "Maury · Physical Geography of the Sea", 5200]],
+        report: "The hull is rated to 8 000 m; expect about 1 600 atm at 16 km.", rtok: 160 },
+      { agent: "ned", station: "repos", task: "Find every depth limit in the code", doing: "Searching code",
+        steps: [["grep", "nautilus-helm", "MAX_DEPTH", ["helm/depth.js", "ballast/pumps.js"]]],
+        report: "MAX_DEPTH is set in helm/depth.js and read by ballast/pumps.js.", rtok: 120 },
+      { agent: "axel", station: "memory", task: "Recall past dives", doing: "Recalling",
+        steps: [["recall", "Hull tests are slow — run them last", 380]], report: "Memory: the hull suite is slow; run it last.", rtok: 50 },
+    ],
+    analyze: { agent: "conseil", station: "documents", task: "Write the dive envelope and the plan", doing: "Writing the spec",
+      steps: [["docwrite", "specs", "Spec · Deep-dive envelope to 16 000 m"], ["plan"]], report: "Spec filed; five-step plan.", rtok: 130 },
+    plan: [
+      ["Raise MAX_DEPTH to 16 000 m", "ned", 2],
+      ["Stage the ballast pumps above 800 atm", "ned", 2],
+      ["Simulate the descent", "lidenbrock", 3],
+      ["Run the hull suite last", "lidenbrock", 3],
+      ["Ship helm 2.4 to the Nautilus", "barbicane", 4],
+    ],
+    build: [
+      { agent: "ned", station: "repos", task: "Raise the limit and stage the pumps", doing: "Coding",
+        steps: [["edit", "nautilus-helm", "feature/deep-dive", "depth"], ["edit", "nautilus-helm", "feature/deep-dive", "pumps"]],
+        report: "MAX_DEPTH 16 000; pumps staged above 800 atm.", rtok: 110 },
+    ],
+    test: {
+      agent: "lidenbrock", task: "Simulate the descent, then the hull suite", doing: "Testing",
+      first: [["suite", "sim", 3, null], ["suite", "unit", 342, "hull.test.js › plates survive 16 000 m — rated 8 000"]],
+      fix: { agent: "ned", station: "repos", task: "Harpoon the failing hull test", doing: "Fixing hull/plates.js",
+             steps: [["edit", "nautilus-helm", "feature/deep-dive", "plates"]], report: "Plates 4 → 6.5 cm, double hull: rated 16 500 m.", rtok: 100 },
+      rerun: [["suite", "unit", 342, null]],
+      report: "Simulations 3/3; hull suite 342/342.", rtok: 60,
+    },
+    deploy: [
+      { agent: "barbicane", station: "deploy", task: "Ship helm 2.4", doing: "Deploying",
+        steps: [["deploy", "staging", "helm 2.4 · dry dock"], ["deploy", "production", "helm 2.4 · Nautilus"]],
+        report: "helm 2.4 is running on the Nautilus.", rtok: 70 },
+      { agent: "ned", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "nautilus-helm", "16d000", "helm: dive to 16 000 m"]], report: "Merged into main.", rtok: 40 },
+      { agent: "axel", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Depth changes need a hull-plate review"]], report: "Lesson stored.", rtok: 30 },
+    ],
+  },
+  {
+    id: "kraken", name: "Kraken early warning", meter: 3800,
+    order: "Something vast has been fouling our screw. I want warning before it comes.",
+    ticket: "Detect a giant squid on sonar before contact",
+    research: [
+      { agent: "aronnax", station: "knowledge", task: "Study Architeuthis", doing: "Reading papers",
+        steps: [["read", "papers", "Steenstrup · On Architeuthis dux", 4400], ["read", "datasets", "Sonar logs · 214 contacts", 3100]],
+        report: "Architeuthis returns a slow, broad echo at 18–24 kHz; 9 of 214 contacts match.", rtok: 170 },
+      { agent: "conseil", station: "documents", task: "Read the collision drill", doing: "Reading the runbook",
+        steps: [["docread", "notes", "Runbook · collision drill", 1200]], report: "The helm needs 90 s of warning to change heading.", rtok: 90 },
+      { agent: "axel", station: "memory", task: "Recall past false alarms", doing: "Recalling",
+        steps: [["recall", "Whale song set off the last alarm", 400]], report: "Memory: whale song triggered the last false alarm.", rtok: 50 },
+    ],
+    analyze: { agent: "conseil", station: "documents", task: "Design the alert pipeline", doing: "Drawing the design",
+      steps: [["docwrite", "designs", "Design · Sonar alert pipeline"], ["docwrite", "diagrams", "Diagram · Echo to alarm"], ["plan"]], report: "Design and diagram filed; five-step plan.", rtok: 150 },
+    plan: [
+      ["Train Kraken-Sonar v0.3 with whale song as negatives", "cyrus", 2],
+      ["Wire the alarm into sonar-alerts", "ned", 2],
+      ["Evaluate false alarms", "lidenbrock", 3],
+      ["Simulate five approaches", "lidenbrock", 3],
+      ["Ship to the AUV fleet and the Nautilus", "barbicane", 4],
+    ],
+    build: [
+      { agent: "cyrus", station: "models", task: "Train Kraken-Sonar v0.3", doing: "Training",
+        steps: [["train", "Kraken-Sonar", "0.3", "214 contacts, whale song as negatives"]], report: "v0.3: recall 0.97, false alarms 2%.", rtok: 110 },
+      { agent: "ned", station: "repos", task: "Wire the alarm", doing: "Coding",
+        steps: [["edit", "sonar-alerts", "feature/kraken-alarm", "krakenalert"]], report: "onEcho() raises a kraken alarm inside 3 km.", rtok: 90 },
+    ],
+    test: {
+      agent: "lidenbrock", task: "Evaluate, simulate, integrate", doing: "Testing",
+      first: [["suite", "eval", 12, null], ["suite", "sim", 5, null], ["suite", "integration", 128, null]],
+      report: "Eval 12/12, five simulated approaches caught, integration 128/128.", rtok: 60,
+    },
+    deploy: [
+      { agent: "barbicane", station: "deploy", task: "Ship sonar 0.3", doing: "Deploying",
+        steps: [["deploy", "edge", "sonar 0.3"], ["deploy", "production", "sonar 0.3"]], report: "sonar 0.3 is live on the AUVs and the Nautilus.", rtok: 70 },
+      { agent: "ned", station: "repos", task: "Merge the feature branch", doing: "Merging",
+        steps: [["merge", "sonar-alerts", "5ea1a4", "alerts: kraken early warning"]], report: "Merged into main.", rtok: 40 },
+      { agent: "axel", station: "memory", task: "Record the lesson", doing: "Remembering",
+        steps: [["remember", "Train sonar models with whale song as negatives"]], report: "Lesson stored.", rtok: 30 },
+    ],
+    finale: [
+      ["sys", "Kraken-Sonar · contact at 2.4 km, bearing 070 — 96 s of warning", "alarm"],
+      ["persona", "evasive heading 160 · the kraken passes astern"],
+    ],
+  },
+];
+
+
+// ============================================================
+// Station state — what the cards and popovers show
+// ============================================================
+function freshState() {
+  return {
+    knowledge: { rows: { papers: ["Scientific papers", 12430], reports: ["Field reports", 2981], datasets: ["Datasets", 1204], web: ["Web sources", 890] }, read: [] },
+    documents: { rows: { project: ["Project docs", 342], specs: ["Specifications", 28], notes: ["Meeting notes", 76], designs: ["Designs", 19], diagrams: ["Diagrams", 41] }, written: [], read: [] },
+    models: {
+      list: [
+        { name: "Biodiversity-LLM", v: "2.1", status: "live" },
+        { name: "OceanVision", v: "1.4", status: "live" },
+        { name: "Species-Classifier", v: "0.9", status: "live" },
+        { name: "Kraken-Sonar", v: "0.2", status: "draft" },
+        { name: "Embedding-XL", v: "3.0", status: "live" },
+      ],
+      log: [],
+    },
+    repos: {
+      list: [
+        { name: "ocean-atlas", branch: "main", add: 0, del: 0 },
+        { name: "nautilus-helm", branch: "main", add: 0, del: 0 },
+        { name: "sonar-alerts", branch: "main", add: 0, del: 0 },
+        { name: "data-pipeline", branch: "dev", add: 0, del: 0 },
+        { name: "infrastructure", branch: "main", add: 0, del: 0 },
+      ],
+      commits: [["a3f9c1", "nautilus-helm", "hull: rivet spacing 12 → 10 cm"], ["7be2d0", "ocean-atlas", "regions: add the Sargasso"], ["e41a77", "sonar-alerts", "echo: denoise below 5 kHz"]],
+    },
+    tests: {
+      suites: {
+        unit: { name: "Unit tests", done: 342, total: 342, state: "pass" },
+        integration: { name: "Integration", done: 128, total: 128, state: "pass" },
+        eval: { name: "Model eval", done: 6, total: 12, state: "idle" },
+        sim: { name: "Simulations", done: 0, total: 0, state: "queued" },
+        data: { name: "Data validation", done: 89, total: 89, state: "pass" },
+      },
+    },
+    memory: {
+      rows: { short: ["Short-term", 42, "notes"], long: ["Long-term", 1208, "lessons"], episodic: ["Episodic", 316, "voyages"], vector: ["Vector store", 88410, "vectors"] },
+      lessons: ["Hull tests are slow — run them last", "Stage risky engine changes behind a flag", "Whale song set off the last alarm", "Last survey: bleached corals were labelled “dead”"],
+    },
+    deploy: {
+      envs: {
+        staging: { name: "Staging", v: "atlas 0.9", status: "healthy" },
+        production: { name: "Production", v: "atlas 0.9", status: "healthy" },
+        edge: { name: "Edge (AUVs)", v: "7 vessels", status: "syncing" },
+        api: { name: "Research API", v: "atlas 0.9", status: "healthy" },
+      },
+      log: [],
+    },
+    hub: { plan: [], ctx: 0, reports: 0 },
+    visited: new Set(),
+    hot: {},
+  };
+}
+
+
+// ============================================================
+// Terrain — painted, not dithered: open water with spires in
+// the mist, a terraced sea floor fading out of the haze, and a
+// floating island under every station. Colours mix in RGB, so
+// gradients stay soft; texture comes from clustered noise.
+// ============================================================
+const K = 16; // screen pixels per unit of terrain height
+let static32 = null;
+let light32 = null;
+let rayIdx = null;
+let frameImg = null;
+let frame32 = null;
+let rayBuf = null;
+let decorAnim = [];
+
+const HORIZON = 0.38; // where the sea floor comes out of the mist, as a fraction of the map height
+let TONE = null;
+function tones() {
+  const R = (...names) => names.map((n) => hexRGB(P[n]));
+  TONE = {
+    water: R("mist4", "mist3", "mist2", "mist1", "mist0"), // under the surface → the deep
+    rock: R("rock0", "rock1", "rock2", "rock3", "rock4"),
+    silt: R("silt0", "silt1", "silt2", "silt3"),
+    moss: R("moss2", "moss3", "moss4", "moss5"),
+    rim: hexRGB(P.rim), sun: hexRGB(P.rim), window: hexRGB(P.window), warm: hexRGB(P.brass3), deep: hexRGB(P.rock0),
+    coral: {
+      pink: R("pink1", "pink2", "pink3", "pink4"), violet: R("vio1", "vio2", "vio3", "pink4"),
+      orange: R("coral0", "coral1", "coral2", "coral3"), teal: R("glassD", "glass", "glow", "pearl"),
+    },
+  };
+}
+
+// The sea floor: rolling silt, and outcrops of rock standing up out of it in
+// a step or two.
+function heightAt(x, y) {
+  const ground = fbm(x * 0.012, y * 0.028, 7, 3) * 0.7;
+  // ragged edges: the outcrops break up into boulders and rubble at their rims
+  const out = Math.max(0, fbm(x * 0.017 + 9, y * 0.04 + 4, 21, 2) - 0.54 + (vnoise(x * 0.22, y * 0.4, 31) - 0.5) * 0.22) * 3.8;
+  return ground + (out > 0.04 ? 0.3 + Math.min(1, Math.floor(out * 2) / 2) : 0);
+}
+
+// A sprite pulled toward the colour of the water around it.
+const HAZED = new Map();
+function hazed(name, k) {
+  const key = `${name}|${k}`;
+  if (!HAZED.has(key)) {
+    const src = spr(name);
+    const c = makeCanvas(src.width, src.height);
+    const g = c.getContext("2d");
+    g.drawImage(src, 0, 0);
+    g.globalCompositeOperation = "source-atop";
+    g.globalAlpha = k;
+    g.fillStyle = P.mist1;
+    g.fillRect(0, 0, c.width, c.height);
+    HAZED.set(key, c);
+  }
+  return HAZED.get(key);
+}
+
+function buildStatic() {
+  const { W, H } = map;
+  const N = W * H;
+  tones();
+  decorAnim = [];
+  const u = new Uint32Array(N);
+  const topMask = new Uint8Array(N);
+  const hz = Math.round(H * HORIZON);
+  const water = [];
+  for (let y = 0; y < H; y++) water.push(rampRGB(TONE.water, 0.1 + (y / H) * 0.95));
+  const put = (x, y, c) => {
+    x = Math.round(x);
+    y = Math.round(y);
+    if (x >= 0 && y >= 0 && x < W && y < H) u[y * W + x] = rgb32(c);
+  };
+  const lamp = (x, y, fog, r = 4, a = 0.4) => {
+    put(x, y, mixRGB(TONE.window, water[clamp(Math.round(y), 0, H - 1)], fog * 0.75));
+    emitters.push({ x, y, col: P.window, r, a: a * (1 - fog * 0.7) });
+  };
+
+  // 1. open water, brightest under the light from the surface
+  const sunX = W * 0.52;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const n = fbm(x * 0.012, y * 0.02, 3, 3) - 0.5;
+      const k = Math.exp(-(((x - sunX) / (W * 0.34)) ** 2)) * (1 - y / H) ** 2 * 0.3;
+      const c = mixRGB(water[y], TONE.sun, k);
+      u[y * W + x] = rgb32([c[0] * (1 + n * 0.24), c[1] * (1 + n * 0.22), c[2] * (1 + n * 0.18)]);
+    }
+  }
+
+  // 2. crags: massifs of rock in layers of mist. Each is a cluster of
+  //    pinnacles and mesas with steep, stepped sides; faces turned to the light
+  //    catch it, the others fall into shadow, and the feet dissolve in haze.
+  //    Only a rare ruin up there still has a light.
+  const massif = (cx, bw, peak, base, fog, seed, ruins) => {
+    const r = rng(seed);
+    const pins = Array.from({ length: 6 + Math.floor(r() * 7) }, (_, j) => ({
+      c: cx + (r() - 0.5) * bw * (j ? 1 : 0.4),
+      top: base - (base - peak) * (j ? lerp(0.25, 0.92, r() ** 0.8) : 1),
+      flat: r() < 0.5 ? 1 + r() * 4 : r() * 1.5, // a mesa or a needle
+      slope: lerp(3.5, 9, r()),
+    }));
+    pins.push({ c: cx, top: base - (base - peak) * 0.22, flat: bw * 0.45, slope: 1.6 }); // the talus it all stands on
+    const x0 = Math.max(0, Math.floor(Math.min(...pins.map((p) => p.c - p.flat - (base - p.top) / p.slope)) - 4));
+    const x1 = Math.min(W - 1, Math.ceil(Math.max(...pins.map((p) => p.c + p.flat + (base - p.top) / p.slope)) + 4));
+    const tops = new Float32Array(x1 - x0 + 3).fill(1e9);
+    for (let x = x0 - 1; x <= x1 + 1; x++) {
+      let t = 1e9;
+      for (const p of pins) t = Math.min(t, p.top + p.slope * Math.max(0, Math.abs(x - p.c) - p.flat));
+      t += Math.round(((vnoise(x * 0.35, 0, seed) - 0.5) * 5 + (vnoise(x * 0.09, 1, seed) - 0.5) * 8) / 2) * 2; // ragged, in steps
+      tops[x - x0 + 1] = t;
+    }
+    const topAt = (x) => tops[clamp(x - x0 + 1, 0, tops.length - 1)];
+    for (let x = x0; x <= x1; x++) {
+      const top = Math.max(0, Math.round(topAt(x)));
+      if (top >= base) continue;
+      for (let y = top; y < Math.min(H, base); y++) {
+        const d = y - top;
+        const t = (y - peak) / Math.max(1, base - peak);
+        let lit = 0.34 + (vnoise(x * 0.55, y * 0.07, seed) - 0.5) * 0.3 + (vnoise(x * 0.05, y * 0.3, seed + 2) - 0.5) * 0.18 + (hash2(x, y, seed) - 0.5) * 0.06;
+        if (topAt(x - 1) > y + 0.5) lit += 0.3; // a face turned to the light
+        else if (topAt(x + 1) > y + 0.5) lit -= 0.2; // a face in shadow
+        if (d < 2) lit += 0.35 - d * 0.12; // light along the crest
+        let c = rampRGB(TONE.rock, lit - t * 0.15);
+        if (d < 1 && topAt(x - 1) >= topAt(x)) c = mixRGB(c, TONE.rim, 0.4 * (1 - fog));
+        u[y * W + x] = rgb32(mixRGB(c, water[y], fog + (1 - fog) * smooth(0.45, 1, t) * 0.85));
+      }
+    }
+    // a ruin on the highest crest: a broken gothic tower, an arch, one light
+    if (ruins) {
+      const p = pins[0];
+      const tx = Math.round(p.c), ty = Math.round(topAt(tx)) + 1;
+      const tw = 4 + Math.floor(r() * 3), th = 8 + Math.floor(r() * 10);
+      const body = (lit) => mixRGB(rampRGB(TONE.rock, lit), water[clamp(ty, 0, H - 1)], fog);
+      for (let j = 0; j < th; j++) {
+        for (let i = 0; i < tw; i++) {
+          const win = i > 0 && i < tw - 1 && j > 2 && j < th - 2 && (j % 5 === 2 || j % 5 === 3) && i === (tw >> 1);
+          put(tx - (tw >> 1) + i, ty - j, win ? body(0.05) : body(i === 0 ? 0.62 : 0.38 - i * 0.04));
+        }
+      }
+      for (let k = 0; k < 3; k++) for (let i = -1 + k; i <= tw - k; i++) put(tx - (tw >> 1) + i, ty - th - k, body(0.5));
+      if (r() < 0.6) lamp(tx, ty - th + 3, fog, 4, 0.45);
+    }
+  };
+  const layers = [
+    { fog: 0.72, base: 0.5, peak: [0, 0.16], per: 70, bw: [22, 44], ruins: 0, seed: 11 },
+    { fog: 0.5, base: 0.56, peak: [0.05, 0.24], per: 95, bw: [24, 48], ruins: 0.3, seed: 23 },
+    { fog: 0.28, base: 0.62, peak: [0.12, 0.32], per: 150, bw: [26, 52], ruins: 0.4, seed: 37 },
+    // great massifs framing the view at both edges
+    { fog: 0.12, base: 0.7, peak: [0, 0.06], at: [0.02, 0.98], bw: [36, 46], ruins: 0.5, seed: 51 },
+  ];
+  for (const L of layers) {
+    const r = rng(L.seed);
+    const n = L.at ? L.at.length : Math.max(3, Math.round(W / L.per));
+    for (let i = 0; i < n; i++) {
+      const cx = L.at ? L.at[i] * W : ((i + 0.5 + (r() - 0.5) * 0.8) / n) * W;
+      massif(cx, lerp(L.bw[0], L.bw[1], r()), H * lerp(L.peak[0], L.peak[1], r()), H * L.base, L.fog, L.seed * 100 + i, r() < L.ruins);
+    }
+  }
+
+  // 3. the sea floor: an oblique heightfield of terraces, rows drawn back to front
+  const R0 = hz, R1 = H + 44;
+  const HI_W = W + 2;
+  const hg = new Float32Array((R1 - R0 + 4) * HI_W);
+  for (let y = R0 - 2; y <= R1 + 1; y++) for (let x = -1; x <= W; x++) hg[(y - R0 + 2) * HI_W + (x + 1)] = heightAt(x, y);
+  const HI = (x, y) => hg[(y - R0 + 2) * HI_W + (x + 1)];
+  const rowFog = (y) => 0.94 * clamp(1 - (y - hz) / (H * 0.42), 0, 1) ** 1.3;
+  const nearStation = (x, y, pad) => Object.values(STATIONS).some((s) => Math.hypot((x - s.x) / (s.prx + 14 + pad), (y - s.y) / (s.pry + 10 + pad)) < 1);
+  function ruin(x, base, kind, fog, seed) {
+    const r = rng(seed);
+    const body = (lit) => mixRGB(rampRGB(TONE.rock, lit), water[clamp(base, 0, H - 1)], fog);
+    const col = (x0, w, h0, lit) => {
+      for (let j = 0; j < h0; j++) for (let i = 0; i < w; i++) put(x0 + i, base - j, body(i === 0 ? lit + 0.3 : lit - i * 0.06 + (hash2(x0 + i, base - j, seed) - 0.5) * 0.1));
+    };
+    if (kind < 0.45) {
+      // a tower: pointed or domed, windows lit
+      const w = 3 + Math.floor(r() * 3), h0 = 7 + Math.floor(r() * r() * 16);
+      col(x, w, h0, 0.42);
+      const cx = x + (w - 1) / 2;
+      if (r() < 0.5) for (let j = 0; j < 3; j++) for (let i = -1 + j; i < w + 1 - j; i++) put(x + i, base - h0 - j, body(0.5 - i * 0.05));
+      else for (let i = 0; i < w; i++) put(x + i, base - h0, body(0.55)), put(x + i, base - h0 - 1, body(0.6)), i && i < w - 1 && put(x + i, base - h0 - 2, body(0.62));
+      put(cx, base - h0 - (w > 3 ? 4 : 3), body(0.7));
+      for (let k = 0; k < 1 + Math.floor(h0 / 6); k++) if (r() < 0.75) lamp(Math.round(x + 1 + r() * (w - 2)), base - 2 - Math.floor(r() * (h0 - 3)), fog, 3, 0.4);
+    } else if (kind < 0.7) {
+      // an arch
+      const w = 9 + Math.floor(r() * 5), h0 = 7 + Math.floor(r() * 4);
+      col(x, 2, h0, 0.4);
+      col(x + w - 2, 2, h0, 0.36);
+      for (let i = 0; i < w; i++) {
+        const lift = Math.round(Math.sin((i / (w - 1)) * Math.PI) * 2);
+        put(x + i, base - h0 - lift, body(0.62));
+        put(x + i, base - h0 + 1 - lift, body(0.44));
+      }
+      if (r() < 0.5) lamp(x + (w >> 1), base - h0 + 3, fog, 4, 0.5);
+    } else if (kind < 0.88) {
+      // a column, sometimes broken
+      const h0 = 4 + Math.floor(r() * 7);
+      col(x, 2, h0, 0.45);
+      for (let i = -1; i < 3; i++) put(x + i, base - h0, body(0.6));
+    } else {
+      // a lantern post
+      for (let j = 0; j < 6; j++) put(x, base - j, body(0.4));
+      lamp(x, base - 6, fog, 6, 0.6);
+    }
+  }
+
+  // corals: little clumps of colour, darkest at the root
+  const coral = (x, y, fam, size, fog, seed) => {
+    const r = rng(seed), ramp = TONE.coral[fam];
+    const blobs = [];
+    for (let k = 0; k < 2 + size; k++) blobs.push([x + (r() - 0.5) * size * 3, y - r() * size * 1.4 - 1, 0.8 + r() * (0.6 + size * 0.35)]);
+    const shade = (c) => mixRGB(c, water[clamp(Math.round(y), 0, H - 1)], fog);
+    for (const [bx, by, rad] of blobs) {
+      for (let j = -Math.ceil(rad) - 1; j <= Math.ceil(rad) + 1; j++) {
+        for (let i = -Math.ceil(rad) - 1; i <= Math.ceil(rad) + 1; i++) {
+          if (i * i + j * j > (rad + 1) ** 2) continue;
+          put(bx + i, by + j, shade(mixRGB(ramp[0], TONE.deep, 0.55)));
+        }
+      }
+    }
+    for (const [bx, by, rad] of blobs) {
+      for (let j = -Math.ceil(rad); j <= Math.ceil(rad); j++) {
+        for (let i = -Math.ceil(rad); i <= Math.ceil(rad); i++) {
+          if (i * i + j * j > rad * rad) continue;
+          const lit = 0.45 - (i + j) / (rad * 3) + (hash2(Math.round(bx + i), Math.round(by + j), seed) - 0.5) * 0.3;
+          put(bx + i, by + j, shade(rampRGB(ramp, lit)));
+        }
+      }
+      if (rad > 1.2) put(bx - 1, by - Math.round(rad) + 1, shade(ramp[3]));
+    }
+    if (r() < 0.5) emitters.push({ x, y: y - size, col: P[{ pink: "pink3", violet: "vio3", orange: "coral3", teal: "glow" }[fam]], r: 5 + size * 2, a: 0.3 * (1 - fog) });
+  };
+  const fams = ["pink", "violet", "orange", "teal", "violet", "pink"];
+
+  for (let y = R0; y < R1; y++) {
+    const fog = rowFog(y);
+    for (let x = 0; x < W; x++) {
+      const h = HI(x, y);
+      const top = Math.round(y - h * K);
+      const next = Math.round(y + 1 - HI(x, y + 1) * K);
+      if (top >= H) continue;
+      const cliff = next - top - 1;
+      let lit = 0.5 + (vnoise(x * 0.3, y * 0.45, 9) - 0.5) * 0.4 + (hash2(x, y, 3) - 0.5) * 0.12 + (HI(x - 1, y) - HI(x + 1, y)) * 2.2 + (HI(x, y + 2) - HI(x, y - 2)) * 1.2;
+      if (h < 0.35) lit += (0.3 - h) * 0.5; // pale sand in the hollows
+      if (cliff >= 3) lit += 0.22; // the lit lip of a rock
+      else if (HI(x, y - 2) > h + 0.1) lit -= 0.25; // in the shadow at the foot of one
+      const peb = hash2(x, y, 17);
+      if (peb < 0.035) lit -= 0.3;
+      else if (peb > 0.975) lit += 0.3;
+      let c = rampRGB(TONE.silt, lit);
+      const m = fbm(x * 0.045, y * 0.09, 41, 2);
+      if (m > 0.56) c = mixRGB(c, rampRGB(TONE.moss, lit * 0.8), smooth(0.56, 0.68, m) * 0.6);
+      if (top >= 0) {
+        u[top * W + x] = rgb32(mixRGB(c, water[top], fog));
+        topMask[top * W + x] = 1;
+      }
+      for (let sy = Math.max(0, top + 1); sy < Math.min(H, next); sy++) {
+        const kk = (sy - top) / Math.max(1, cliff);
+        const v = 0.5 - kk * 0.42 + (vnoise(x * 0.7, sy * 0.12, 13) - 0.5) * 0.3 + (HI(x - 1, y) - HI(x + 1, y)) * 0.5;
+        // a slope of silt is only a little darker than the ground; a rock face is rock
+        const face = cliff <= 2 ? mixRGB(c, rampRGB(TONE.silt, lit - 0.25), 0.7) : rampRGB(TONE.rock, v);
+        u[sy * W + x] = rgb32(mixRGB(face, water[sy], fog));
+        topMask[sy * W + x] = 0;
+      }
+      if (cliff >= 6 && hash2(x, y, 8) < 0.02) lamp(x, top + Math.round(cliff * 0.45), fog, 3, 0.4);
+    }
+  }
+
+  // set dressing, stood only where a terrace top shows: ruins (towers, arches,
+  // columns, each with a light somewhere), a few drowned villages, corals
+  const standOn = (x, y) => {
+    x = Math.round(x);
+    for (let yy = Math.round(y); yy < Math.min(H, y + 8); yy++) if (x >= 0 && x < W && topMask[yy * W + x] && topMask[yy * W + x + 1]) return yy;
+    return -1;
+  };
+  const rr = rng(5);
+  const addRuin = (x, y, kind, seed) => {
+    const base = standOn(x, y);
+    if (base > 0 && !nearStation(x, base, 0)) ruin(Math.round(x), base, kind, rowFog(base + 4), seed);
+  };
+  for (let v = 0; v < Math.round(W / 110); v++) {
+    const vx = rr() * W, vy = hz + 10 + rr() * (H - hz - 30);
+    for (let k = 0; k < 6; k++) addRuin(vx + (rr() - 0.5) * 36, vy + (rr() - 0.5) * 14, k ? rr() * 0.5 : 0.5, 900 + v * 10 + k);
+  }
+  for (let n = 0; n < Math.round(W / 8); n++) addRuin(rr() * W, hz + 4 + rr() ** 0.8 * (H - hz), rr(), n * 13 + 1);
+  const cr = rng(9);
+  for (let n = 0; n < Math.round(W / 4.5); n++) {
+    const x = Math.round(cr() * W), y = Math.round(hz + 20 + cr() ** 0.7 * (H - hz - 10));
+    const near = (y - hz) / (H - hz);
+    const fam = fams[Math.floor(cr() * fams.length)], size = 1 + Math.floor(cr() * (2 + near * 3));
+    const base = standOn(x, y);
+    if (base > 0 && !nearStation(x, base, -6)) coral(x, base, fam, size, rowFog(base + 4), 300 + n);
+  }
+
+  // 4. floating islands: one under every station, a few more adrift
+  const island = (cx, cy, rx, ry, depth, seed, lamps) => {
+    const r = rng(seed);
+    const front = new Map();
+    const inTop = (x, y) => {
+      const a = Math.atan2((y - cy) / ry, (x - cx) / rx);
+      const edge = 1 + (vnoise(a * 2.2 + 7, 0, seed) - 0.5) * 0.22;
+      return Math.hypot((x - cx) / rx, (y - cy) / ry) <= edge;
+    };
+    const x0 = Math.floor(cx - rx * 1.15), x1 = Math.ceil(cx + rx * 1.15);
+    const y0 = Math.floor(cy - ry * 1.15), y1 = Math.ceil(cy + ry * 1.15);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (inTop(x, y)) front.set(x, Math.max(front.get(x) ?? -1e9, y));
+    // the hanging rock: thickest in the middle, ragged with stalactites
+    const spikes = Array.from({ length: Math.max(2, Math.round(rx / 6)) }, () => ({ x: cx + (r() - 0.5) * rx * 1.6, w: 1.5 + r() * 3, len: depth * lerp(0.25, 0.7, r()) }));
+    for (const [x, fy] of front) {
+      const across = (x - cx) / rx;
+      let d = depth * Math.sqrt(Math.max(0, 1 - across * across)) * (0.65 + 0.35 * vnoise(x * 0.15, 1, seed));
+      for (const sp of spikes) d += Math.max(0, 1 - Math.abs(x - sp.x) / sp.w) * sp.len;
+      d += (hash2(x, 2, seed) - 0.5) * 3;
+      for (let y = fy + 1; y <= fy + d; y++) {
+        const kk = (y - fy) / Math.max(1, d);
+        let v = 0.5 - kk * 0.45 - across * 0.12 + (vnoise(x * 0.8, y * 0.1, seed) - 0.5) * 0.35;
+        if (y - fy <= 1) v += 0.35;
+        const yy = clamp(y, 0, H - 1);
+        put(x, y, mixRGB(rampRGB(TONE.rock, v), water[yy], smooth(0.45, 1, kk) * 0.6));
+      }
+    }
+    // the top: silt and moss, a bright lip along the front edge
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        if (!inTop(x, y)) continue;
+        let lit = 0.52 + (vnoise(x * 0.35, y * 0.5, seed) - 0.5) * 0.4 + (hash2(x, y, seed) - 0.5) * 0.12 - ((x - cx) / rx) * 0.1;
+        if (!inTop(x, y + 1)) lit += 0.45;
+        else if (!inTop(x, y - 1)) lit += 0.2;
+        let c = rampRGB(TONE.silt, lit);
+        if (fbm(x * 0.08, y * 0.12, seed, 2) > 0.55) c = mixRGB(c, rampRGB(TONE.moss, lit * 0.85), 0.55);
+        put(x, y, c);
+      }
+    }
+    // windows in the rock below, and a few lanterns on the rim
+    for (let k = 0; k < Math.round(rx / 7); k++) {
+      const x = Math.round(cx + (r() - 0.5) * rx * 1.3);
+      const fy = front.get(x);
+      if (fy === undefined) continue;
+      lamp(x, fy + 3 + Math.floor(r() * depth * 0.35), 0, 3, 0.45);
+    }
+    for (let k = 0; k < lamps; k++) {
+      const a = Math.PI * (0.15 + 0.7 * r()) + (k % 2 ? Math.PI : 0);
+      const x = Math.round(cx + Math.cos(a) * rx * 0.86), y = Math.round(cy + Math.abs(Math.sin(a)) * ry * 0.7);
+      const pole = mixRGB(rampRGB(TONE.rock, 0.35), TONE.warm, 0.15);
+      for (let j = 0; j < 5; j++) put(x, y - j, pole);
+      lamp(x, y - 5, 0, 6, 0.55);
+    }
+    for (let k = 0; k < Math.round(rx / 9); k++) {
+      const a = r() * Math.PI;
+      coral(Math.round(cx + Math.cos(a) * rx * 0.9), Math.round(cy + Math.sin(a) * ry * 0.85), fams[Math.floor(r() * fams.length)], 1 + Math.floor(r() * 2), 0, seed + k);
+    }
+  };
+  const drift = [[0.35, 0.19, 17, 101], [0.735, 0.15, 13, 102], [0.035, 0.47, 15, 103], [0.975, 0.5, 13, 104], [0.615, 0.45, 11, 105]];
+  const isles = [
+    ...drift.map(([fx, fy, rx, seed]) => ({ x: W * fx, y: H * fy, rx, ry: rx * 0.36, depth: rx * 0.9, seed, lamps: 1, ruin: true })),
+    ...Object.values(STATIONS).map((s, i) => ({ x: s.x, y: s.y + 2, rx: s.prx + 14, ry: s.pry + 7, depth: (s.prx + 14) * 0.62, seed: 200 + i, lamps: 2 })),
+  ].sort((a, b) => a.y - b.y);
+  for (const it of isles) {
+    island(it.x, it.y, it.rx, it.ry, it.depth, it.seed, it.lamps);
+    if (it.ruin) ruin(Math.round(it.x - 2), Math.round(it.y + 1), hash2(it.seed, 0, 1) * 0.7, 0, it.seed);
+  }
+
+  const c = makeCanvas(W, H);
+  const g = c.getContext("2d", { willReadFrequently: true });
+  const img = g.createImageData(W, H);
+  new Uint32Array(img.data.buffer).set(u);
+  g.putImageData(img, 0, 0);
+
+  // sprite set dressing in the foreground, sunk a little into the haze
+  const place = (name, fx, fy, fog = 0.18) => {
+    const s = hazed(name, fog);
+    const x = Math.round(W * fx - s.width / 2), y = Math.round(H * fy - s.height);
+    g.drawImage(s, x, y);
+    return { x, y, w: s.width, h: s.height };
+  };
+  const reefSpots = [
+    ["reef.anemonePink", 0.08, 0.8], ["reef.tubesViolet", 0.04, 0.86], ["reef.anemoneOrange", 0.27, 0.95], ["reef.anemoneTeal", 0.25, 0.7],
+    ["reef.anemoneViolet", 0.53, 0.96], ["reef.tubesOrange", 0.61, 0.76], ["reef.anemonePink", 0.69, 0.84], ["reef.anemoneTeal", 0.82, 0.74],
+    ["reef.anemoneOrange", 0.97, 0.96], ["reef.tubesViolet", 0.99, 0.74], ["reef.anemoneTeal", 0.46, 0.86], ["coral.fan", 0.13, 0.92],
+    ["coral.branch0", 0.79, 0.97], ["coral.branch1", 0.02, 0.66],
+  ];
+  const tipCol = { anemonePink: P.pink3, anemoneViolet: P.vio3, anemoneOrange: P.coral3, anemoneTeal: P.glow };
+  for (const [name, fx, fy] of reefSpots) {
+    if (nearStation(W * fx, H * fy, -6)) continue;
+    const r = place(name, fx, fy);
+    const kind = name.split(".")[1];
+    if (tipCol[kind]) emitters.push({ x: r.x + r.w / 2, y: r.y + 3, col: tipCol[kind], r: 7, a: 0.35 });
+  }
+  g.drawImage(hazed("galleon.wreck", 0.42), Math.round(W * 0.55), H - 44);
+  place("ruin.arch", 0.58, 0.99, 0.3);
+  for (const [f, fx, fy] of [["anchor.idle", 0.7, 0.8], ["rock.r1", 0.9, 0.68], ["rock.r0", 0.45, 0.74], ["coral.brain", 0.2, 0.99]]) place(f, fx, fy);
+
+  // kelp and glowing plants over the floor
+  let seed = 1;
+  for (let n = 0; n < W * 0.9; n++) {
+    const x = Math.floor(hash2(n, 1, 77) * W);
+    const y = Math.floor(hz + 24 + hash2(n, 2, 77) * (H - hz - 24));
+    if (!topMask[y * W + x] || nearStation(x, y, 4)) continue;
+    const kind = hash2(n, 3, 77);
+    if (kind < 0.55) decorAnim.push({ kind: "kelp", x, y, h: 4 + Math.floor(hash2(n, 4, 77) * 10), ph: n * 0.7 });
+    else {
+      decorAnim.push({ kind: "glow", x, y, ph: (seed = (seed * 7) % 13) });
+      emitters.push({ x, y, col: P.glow, r: 3, a: 0.5 });
+    }
+  }
+  // a kelp forest at both edges of the view, and a few fronds along the bottom
+  const kr = rng(71);
+  for (let n = 0; n < 22; n++) {
+    const side = n % 2 ? 1 : 0;
+    const fx = side ? 1 - kr() ** 1.6 * 0.09 : kr() ** 1.6 * 0.09;
+    decorAnim.push({ kind: "tallkelp", x: Math.round(W * fx), y: H + 2, h: Math.round(lerp(34, 96, kr() * (1 - Math.abs(fx - side) * 6))), ph: n * 1.7 });
+  }
+  for (const fx of [0.2, 0.33, 0.52, 0.66, 0.8]) decorAnim.push({ kind: "tallkelp", x: Math.round(W * fx), y: H + 2, h: 18 + Math.round(kr() * 16), ph: fx * 30 });
+
+  // warm light pooling round each station, and a soft vignette
+  const out = g.getImageData(0, 0, W, H);
+  const s32 = new Uint32Array(out.data.buffer);
+  const warm = hexRGB(P.bronze3);
+  for (const st of Object.values(STATIONS)) {
+    const tint = st.key === "hub" ? warm : hexRGB(P[st.color]);
+    const rx = st.prx + 34, ry = st.pry + 26;
+    for (let y = Math.max(0, st.y - ry); y < Math.min(H, st.y + ry); y++) {
+      for (let x = Math.max(0, st.x - rx); x < Math.min(W, st.x + rx); x++) {
+        const d = Math.hypot((x - st.x) / rx, (y - st.y) / ry);
+        if (d >= 1) continue;
+        const k = (1 - d) * (1 - d);
+        s32[y * W + x] = mix32(mix32(s32[y * W + x], warm, k * 0.2), tint, k * 0.1);
+      }
+    }
+  }
+  const deep = hexRGB(P.ink);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x / W - 0.5) * 1.1, (y / H - 0.5) * 1.25);
+      const k = smooth(0.46, 0.85, d);
+      if (k > 0) s32[y * W + x] = mix32(s32[y * W + x], deep, k * 0.6);
+    }
+  }
+  g.putImageData(out, 0, 0);
+
+  staticCanvas = c;
+  static32 = new Uint32Array(g.getImageData(0, 0, W, H).data.buffer);
+  light32 = new Uint32Array(N);
+  const sun = [168, 226, 232];
+  for (let i = 0; i < N; i++) light32[i] = mix32(static32[i], sun, 0.34);
+  // god rays fan out from a point above the surface
+  const RAYS = 720;
+  rayIdx = new Uint16Array(N);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) rayIdx[y * W + x] = Math.round(((Math.atan2(x - sunX, y + H * 0.35) + 1.25) / 2.5) * (RAYS - 1));
+  }
+  rayBuf = new Float32Array(RAYS);
+  frameImg = ctx.createImageData(W, H);
+  frame32 = new Uint32Array(frameImg.data.buffer);
+}
+
+function renderSea(t) {
+  const { W, H } = map;
+  for (let k = 0; k < rayBuf.length; k++) {
+    const a = Math.max(0, Math.sin(k * 0.05 + t * 0.11));
+    const b = Math.max(0, Math.sin(k * 0.083 - t * 0.08 + 2));
+    const c = Math.max(0, Math.sin(k * 0.031 + t * 0.05 + 4.4));
+    rayBuf[k] = 0.5 * a ** 12 + 0.35 * b ** 16 + 0.45 * c ** 9;
+  }
+  const u = frame32, st = static32, lt = light32, ri = rayIdx;
+  for (let y = 0; y < H; y++) {
+    const fall = 0.9 * Math.pow(1 - y / H, 1.5) + 0.04;
+    const row = y * W;
+    for (let x = 0; x < W; x++) {
+      const i = row + x;
+      const a = (rayBuf[ri[i]] * fall * 256) | 0;
+      if (a < 6) {
+        u[i] = st[i];
+        continue;
+      }
+      const s = st[i], l = lt[i], k = a > 256 ? 256 : a;
+      u[i] = 0xff000000 | ((((s & 0xff00ff) * (256 - k) + (l & 0xff00ff) * k) >>> 8) & 0xff00ff) | ((((s & 0xff00) * (256 - k) + (l & 0xff00) * k) >>> 8) & 0xff00);
+    }
+  }
+  ctx.putImageData(frameImg, 0, 0);
+}
+
+
+// The glow layer: light from the surface, lamplight through the glass, the
+// routes, the submarines' headlights, bioluminescence.
+function renderGlow(t) {
+  const { W, H } = map;
+  beginGlow();
+  // light from the surface: a haze at the top and shafts fanning down
+  const top = gctx.createLinearGradient(0, 0, 0, gcv.height * 0.5);
+  top.addColorStop(0, "rgba(110, 190, 205, 0.26)");
+  top.addColorStop(1, "rgba(110, 190, 205, 0)");
+  gctx.globalAlpha = 1;
+  gctx.fillStyle = top;
+  gctx.fillRect(0, 0, gcv.width, gcv.height * 0.5);
+  const sx = (W * 0.52) / 2, sy = -H * 0.175;
+  for (let i = 0; i < 5; i++) {
+    const a = -0.62 + i * 0.3 + Math.sin(t * 0.05 + i * 2.1) * 0.06;
+    const spread = 0.035 + (i % 3) * 0.02, len = gcv.height * (0.9 + (i % 2) * 0.35);
+    const grd = gctx.createLinearGradient(sx, sy, sx + Math.sin(a) * len, sy + Math.cos(a) * len);
+    grd.addColorStop(0, `rgba(160, 222, 230, ${0.12 + 0.05 * Math.sin(t * 0.3 + i)})`);
+    grd.addColorStop(1, "rgba(160, 222, 230, 0)");
+    gctx.fillStyle = grd;
+    gctx.beginPath();
+    gctx.moveTo(sx, sy);
+    gctx.lineTo(sx + Math.sin(a - spread) * len, sy + Math.cos(a - spread) * len);
+    gctx.lineTo(sx + Math.sin(a + spread) * len, sy + Math.cos(a + spread) * len);
+    gctx.closePath();
+    gctx.fill();
+  }
+  // stations: warm light through the glass, their colour at the base, every lamp
+  for (const k of STATION_KEYS) {
+    const s = STATIONS[k];
+    const busy = S?.busy?.[k] > 0;
+    const pulse = busy ? 0.8 + Math.sin(t * 4) * 0.12 : 0.55;
+    const hubK = k === "hub" ? 1.5 : 1;
+    glowAt(s.x, s.y - 6 * hubK, P.bronze3, 40 * hubK, pulse * 0.3); // lamplight inside the glass
+    glowAt(s.x - 8 * hubK, s.y - 18 * hubK, P.pane3, 30 * hubK, 0.12); // the sheen on the dome
+    if (k !== "hub") glowAt(s.x, s.y + 8, s.col, 48, busy ? 0.42 : 0.16);
+    for (const [lx, ly] of s.lamps) glowAt(lx, ly, P.window, 7, 0.4 + 0.15 * Math.sin(t * 3 + lx));
+    if (k === "tests" && villain.state === "rising") glowAt(s.x, s.y - 10, P.red, 70, 0.5 + Math.sin(t * 6) * 0.2);
+    const fx = s.parts, at = ([x, y]) => [s.sx + x, s.sy + y];
+    if (k === "hub") glowAt(s.sx + s.globe[0], s.sy + s.globe[1], P.glow, 44, 0.22 + Math.sin(t * 1.5) * 0.05);
+    if (fx.books) {
+      fx.books.forEach((b, i) => glowAt(...at(b), P.glow, 16, 0.45 + Math.sin(t * 1.4 + i * 2.1) * 0.1));
+      glowAt(...at(fx.beam), P.glow, 26, 0.35);
+    }
+    if (fx.holo) glowAt(...at(fx.holo), P.glow, 40, 0.3 + Math.sin(t * 9) * 0.05);
+    if (fx.core) {
+      glowAt(...at(fx.core), P.glow, 40, 0.45 + Math.sin(t * 3) * 0.12);
+      glowAt(...at(fx.core), P.white, 12, 0.6 + Math.sin(t * 3) * 0.2);
+    }
+    if (fx.brain) glowAt(s.sx + fx.brain[0], s.sy + fx.brain[1], P.vio3, 48, 0.32 + Math.sin(t * 2) * 0.08);
+    if (fx.dock) glowAt(...at(fx.dock), P.pane3, 40, 0.18);
+  }
+  glowRoutes(t);
+  // submarines: headlights, and whatever their lamp is lighting
+  for (const sb of Object.values(fleet)) {
+    if (!sb.visible) continue;
+    glowAt(sb.x + sb.face * 12, sb.y + 1, P.lamp, 14, 0.65);
+    glowAt(sb.x + sb.face * 6, sb.y, P.glow, 10, 0.45);
+    glowAt(sb.x, sb.y, P[sb.a.color], 22, 0.28);
+    if (sb.beam) glowAt(sb.beam.x, sb.beam.y, sb.beam.col, 24, 0.55);
+  }
+  // bioluminescence, lit ruins, anemone tips, jellies, eyes in the dark
+  glowEmitters(t);
+  for (const j of ambient.jellies) glowAt(j.x + 4, j.y + 4, P.pink3, 14, 0.45);
+  if (villain.state !== "hidden") {
+    const h = villain.head();
+    for (const [ex, ey] of ATLAS.meta.kraken.eyes) glowAt(h.x + ex, h.y + ey, P.red, 8, 0.9);
+  }
+  const o = ambient.octo;
+  if (o) glowAt(o.x + 20, o.y + 30, P.ghost3, 60, 0.18);
+  const w = ambient.whale;
+  if (w) glowAt(w.x, w.y + 22, P.mist4, 70, 0.14);
+  endGlow();
+}
+
+
+// ============================================================
+// Ambient life
+// ============================================================
+const ambient = { schools: [], jellies: [], whale: null, snow: [], octo: null, smokeT: 0 };
+function seedAmbient() {
+  const { W, H } = map;
+  const kinds = ["coral", "blue", "silver"];
+  ambient.schools = [0, 1, 2].map((i) => ({
+    x: Math.random() * W, y: H * (0.3 + i * 0.2), dir: i % 2 ? -1 : 1, speed: 7 + i * 3, kind: kinds[i],
+    fish: Array.from({ length: 6 + i }, (_, j) => ({ dx: j * 8 + Math.random() * 6, dy: (Math.random() - 0.5) * 16, ph: Math.random() * 6 })),
+  }));
+  ambient.jellies = [0.24, 0.52, 0.68].map((fx, i) => ({ x: W * fx, y: H * (0.45 + i * 0.16), ph: i * 2 }));
+  ambient.whale = { x: W * 0.36, y: 26, dir: 1 };
+  ambient.octo = { x: W - 78, y: 6, ph: 0 };
+  ambient.snow = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 2 + Math.random() * 4, ph: Math.random() * 6 }));
+}
+function updateAmbient(dt) {
+  const { W, H } = map;
+  for (const s of ambient.schools) {
+    s.x += s.dir * s.speed * dt;
+    if (s.dir > 0 && s.x > W + 30) s.x = -80;
+    if (s.dir < 0 && s.x < -80) s.x = W + 30;
+  }
+  for (const j of ambient.jellies) {
+    j.y -= 2 * dt;
+    if (j.y < 30) { j.y = H + 10; j.x = Math.random() * W; }
+  }
+  const w = ambient.whale;
+  w.x += w.dir * 5 * dt;
+  if (w.x > W + 120) { w.dir = -1; w.y = 18 + Math.random() * 18; }
+  if (w.x < -120) { w.dir = 1; w.y = 18 + Math.random() * 18; }
+  for (const f of ambient.snow) {
+    f.y += f.s * dt;
+    if (f.y > H) { f.y = -2; f.x = Math.random() * W; }
+  }
+  ambient.smokeT -= dt;
+  if (ambient.smokeT <= 0) {
+    ambient.smokeT = 0.35;
+    for (const s of Object.values(STATIONS)) {
+      for (const [sx, sy] of s.parts?.smoke ?? []) particles.push({ kind: "smoke", x: s.sx + sx, y: s.sy + sy, vx: 2 + Math.random() * 2, vy: -(4 + Math.random() * 2), t0: clock.t, life: 5 + Math.random() * 2, ph: Math.random() * 6 });
+    }
+  }
+}
+function updateParticle(p, dt) {
+  if (p.kind === "bubble") {
+    p.y += p.vy * dt;
+    p.x += Math.sin(clock.t * 3 + p.ph) * 3 * dt;
+  } else if (p.kind === "smoke") {
+    p.x += (p.vx + Math.sin(clock.t * 0.8 + p.ph) * 1.5) * dt;
+    p.y += p.vy * dt;
+    p.vy *= 1 - dt * 0.2;
+  } else if (p.kind === "ink") {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 1 - dt * 1.5;
+    p.vy *= 1 - dt * 1.5;
+  }
+}
+
+
+// ============================================================
+// Rendering
+// ============================================================
+function drawDecor(g, t, foreground) {
+  for (const d of decorAnim) {
+    if ((d.kind === "tallkelp") !== foreground) continue;
+    if (d.kind === "kelp" || d.kind === "tallkelp") {
+      const tall = d.kind === "tallkelp";
+      for (let s = 0; s < d.h; s++) {
+        const f = s / d.h;
+        const x = Math.round(d.x + Math.sin(t * (tall ? 0.9 : 1.3) + d.ph + s * (tall ? 0.08 : 0.4)) * f * (tall ? 6 : 1.4));
+        if (tall) {
+          // a frond: a dark stalk with round leaves on alternate sides
+          g.fillStyle = P.kelp0;
+          g.fillRect(x - 1, d.y - s, 3, 1);
+          g.fillStyle = s % 3 ? P.kelp1 : P.kelp2;
+          g.fillRect(x, d.y - s, 1, 1);
+          if (s % 4 === 1 && s < d.h - 2) {
+            const side = (s >> 2) & 1 ? 1 : -1, lx = x + side * 2 - (side < 0 ? 1 : 0);
+            g.fillStyle = P.kelp0;
+            g.fillRect(lx - 1, d.y - s - 2, 4, 4);
+            g.fillStyle = f > 0.6 ? P.leaf3 : P.kelp2;
+            g.fillRect(lx, d.y - s - 1, 2, 2);
+            g.fillStyle = f > 0.6 ? P.leaf4 : P.kelp3;
+            g.fillRect(lx, d.y - s - 1, 1, 1);
+          }
+        } else px(g, x, d.y - s, s % 2 ? P.kelp1 : P.kelp2);
+      }
+      if (!tall) px(g, d.x, d.y - d.h, P.kelp3);
+    } else if (d.kind === "glow" && cycle(t * 1.5 + d.ph, 5) !== 0) {
+      px(g, d.x, d.y, P.glow);
+    }
+  }
+}
+
+// The moving parts of each place: the orchestrator's globe turns, books float
+// over the Documents plaza, a hologram whale swims in the Model Registry's
+// tank, sparks orbit the Testing Lab's core, Memory's synapses fire.
+function drawStationFx(g, t, s) {
+  const fx = s.parts;
+  if (s.key === "hub") {
+    const n = ATLAS.meta.fx.globeFrames;
+    g.drawImage(spr(`fx.globe${cycle(t * 2, n)}`), s.sx + s.globe[0] - 20, s.sy + s.globe[1] - 20);
+  } else if (fx.books) {
+    fx.books.forEach(([bx, by], i) => {
+      const b = spr(`fx.book${cycle(t * 0.6 + i * 0.7)}`);
+      g.globalAlpha = 0.92;
+      g.drawImage(b, Math.round(s.sx + bx - b.width / 2), Math.round(s.sy + by - b.height / 2 + Math.sin(t * 1.4 + i * 2.1) * 1.5));
+      g.globalAlpha = 1;
+    });
+  } else if (fx.holo) {
+    const w = spr(`fx.holowhale${cycle(t * 1.1)}`);
+    const flicker = hash2(Math.floor(t * 12), 0, 7) < 0.06 ? 0.35 : 0.8 + Math.sin(t * 9) * 0.1;
+    g.globalAlpha = flicker;
+    g.drawImage(w, Math.round(s.sx + fx.holo[0] - w.width / 2 + Math.sin(t * 0.7) * 3), Math.round(s.sy + fx.holo[1] - w.height / 2 + Math.sin(t * 1.3) * 1));
+    g.globalAlpha = 1;
+  } else if (fx.core) {
+    const [cx, cy] = fx.core, [rx, ry] = fx.orbit;
+    for (let k = 0; k < 3; k++) {
+      const a = t * (2.2 - k * 0.4) + (k * Math.PI * 2) / 3;
+      const tilt = k % 2 ? -0.5 : 0.45;
+      const u = Math.cos(a) * rx, v = Math.sin(a) * ry;
+      px(g, s.sx + cx + u * Math.cos(tilt) - v * Math.sin(tilt), s.sy + cy + u * Math.sin(tilt) + v * Math.cos(tilt), k ? P.glow : P.white);
+    }
+  } else if (fx.brain) {
+    const [bx, by, rx, ry] = fx.brain;
+    const tick = Math.floor(t * 7);
+    for (let k = 0; k < 5; k++) {
+      const a = hash2(tick, k, 3) * Math.PI * 2, r = Math.sqrt(hash2(tick, k, 4)) * 0.85;
+      px(g, s.sx + bx + Math.cos(a) * rx * r, s.sy + by + Math.sin(a) * ry * r, k % 2 ? P.pink4 : P.white);
+    }
+  }
+}
+
+// The kraken — a failing test — surfaces from the trench below the Testing
+// Lab and reaches for it.
+function villainHead() {
+  const t = STATIONS.tests;
+  return { x: t.x - 34, y: Math.round(lerp(map.H + 6, map.H - 50, villain.k)) };
+}
+function drawKraken(g, t) {
+  if (villain.state === "hidden") return;
+  const h = villain.head();
+  const roots = ATLAS.meta.kraken.roots;
+  arms(g, t, h.x, h.y, villain.grab > 0 ? roots.slice(1) : roots, 13, P.vio2, P.vio3, 0.33, 0);
+  g.drawImage(spr("kraken.head"), h.x, h.y);
+  drawGrab(g, t, { x: h.x + 14, y: h.y + 6 }, P.vio2, P.vio3);
+}
+// it lets go in a cloud of ink
+function onVillainSink() {
+  const h = villain.head();
+  for (let i = 0; i < 40; i++) {
+    const a = Math.random() * Math.PI * 2, s = 6 + Math.random() * 14;
+    particles.push({ kind: "ink", x: h.x + 14, y: h.y + 24, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t0: clock.t, life: 1.4 + Math.random() * 0.8 });
+  }
+}
+
+// The octopus drifts at the edge of the light, half seen: drawn whole
+// onto its own layer, then laid over the sea translucent.
+let octoLayer = null;
+function drawOctopus(g, t) {
+  const o = ambient.octo;
+  octoLayer ??= makeCanvas(110, 130);
+  const og = octoLayer.getContext("2d");
+  og.clearRect(0, 0, octoLayer.width, octoLayer.height);
+  arms(og, t, 35, 4, ATLAS.meta.octopus.roots, 26, P.ghost1, P.ghost3, 0.34, 2, P.ghost0, 2.6);
+  og.drawImage(spr("octopus.head"), 35, 4);
+  g.globalAlpha = 0.62;
+  g.drawImage(octoLayer, Math.round(o.x - 35 + Math.sin(t * 0.3) * 4), Math.round(o.y - 4 + Math.sin(t * 0.45) * 3));
+  g.globalAlpha = 1;
+}
+
+// The agents: a brass bathyscaphe each, its headlamp on what it works on.
+function drawSubs(g, t) {
+  for (const sb of Object.values(fleet)) {
+    if (!sb.visible) continue;
+    const bob = Math.round(Math.sin(t * 2.4 + sb.ph));
+    const x = Math.round(sb.x) - 16, y = Math.round(sb.y) - 11 + bob;
+    if (sb.beam) {
+      const [mx, my] = ATLAS.meta.sub.lamp;
+      drawBeam(g, t, sb, { x: sb.face > 0 ? x + mx : x + 31 - mx, y: y + my });
+    }
+    g.drawImage(spr(`sub.${sb.a.id}.run${cycle(t * 8 + sb.ph)}`, sb.face < 0), x, y);
+  }
+}
+// bubbles trail behind them
+function onAgentStep(sb, dt) {
+  sb.trailT -= dt;
+  if (sb.trailT <= 0) {
+    particles.push({ kind: "bubble", x: sb.x - sb.face * 17, y: sb.y - 2, vy: -(6 + Math.random() * 5), ph: Math.random() * 6, t0: clock.t, life: 5 });
+    sb.trailT = 0.25 + Math.random() * 0.45;
+  }
+}
+
+function drawAmbient(g, t) {
+  const w = ambient.whale;
+  const ws = spr(`whale.swim${cycle(t * 0.7)}`, w.dir < 0);
+  g.globalAlpha = 0.6; // far off in the blue
+  g.drawImage(ws, Math.round(w.x - ws.width / 2), Math.round(w.y + Math.sin(t * 0.5) * 2));
+  g.globalAlpha = 1;
+  for (const s of ambient.schools) {
+    for (const f of s.fish) {
+      const fx = Math.round(s.x - s.dir * f.dx);
+      if (fx < -12 || fx > map.W + 2) continue;
+      g.drawImage(spr(`fish.${s.kind}.swim${cycle(t * 5 + f.ph)}`, s.dir < 0), fx, Math.round(s.y + f.dy + Math.sin(t * 1.3 + f.ph) * 2));
+    }
+  }
+  for (const j of ambient.jellies) g.drawImage(spr(`jelly.pulse${cycle(t * 1.5 + j.ph)}`), Math.round(j.x + Math.sin(t * 0.5 + j.ph) * 3), Math.round(j.y));
+}
+
+// the sea's own particles: bubbles, smoke from the stacks, the kraken's ink
+function drawParticle(g, p, t, age) {
+  if (p.kind === "bubble") px(g, p.x, p.y, P.water11);
+  else if (p.kind === "smoke") {
+    const k = age / p.life;
+    g.globalAlpha = 0.34 * (1 - k) * Math.min(1, age * 2);
+    disc(g, p.x, p.y, 1 + k * 4.5, k < 0.3 ? P.mist4 : P.pane3);
+    g.globalAlpha = 1;
+  } else if (p.kind === "ink") {
+    const k = age / p.life;
+    if (hash2(Math.round(p.x), Math.round(p.y), Math.floor(t * 10)) > k * 0.9) disc(g, p.x, p.y, 1 + k * 2.5, k < 0.5 ? P.vio0 : P.ink2);
+  }
+}
+function drawSnow(g, t) {
+  g.fillStyle = P.water9;
+  for (const f of ambient.snow) g.fillRect(Math.round(f.x + Math.sin(t * 0.7 + f.ph) * 2), Math.round(f.y), 1, 1);
+}
+
+function render(t) {
+  renderSea(t);
+  drawDecor(ctx, t, false);
+  drawPaths(ctx, t);
+  drawAmbient(ctx, t);
+  drawOctopus(ctx, t);
+  drawStations(ctx, t);
+  drawKraken(ctx, t);
+  drawSubs(ctx, t);
+  drawParticles(ctx, t);
+  drawSnow(ctx, t);
+  drawDecor(ctx, t, true);
+  renderGlow(t);
+}
+
+
+// The bridge by lamplight: the lantern's warm pool flickers over the desk,
+// the men and the brass; the corners of the salon fall away into shadow.
+function drawBridge(t) {
+  const c = $("#corner-art");
+  const g = c.getContext("2d");
+  const [lx, ly] = ATLAS.meta.bridge.lamp;
+  const flick = 0.85 + 0.1 * Math.sin(t * 7.3) + 0.05 * Math.sin(t * 17.1 + 1);
+  g.globalCompositeOperation = "source-over";
+  g.globalAlpha = 1;
+  g.drawImage(spr("bridge.salon"), 0, 0);
+  const shade = g.createRadialGradient(lx, ly, 20, lx - 20, ly - 30, 190);
+  shade.addColorStop(0, "rgba(255, 255, 255, 1)");
+  shade.addColorStop(0.55, "rgba(150, 165, 200, 1)");
+  shade.addColorStop(1, "rgba(40, 50, 80, 1)");
+  g.globalCompositeOperation = "multiply";
+  g.fillStyle = shade;
+  g.fillRect(0, 0, c.width, c.height);
+  const warm = g.createRadialGradient(lx, ly, 0, lx, ly, 110);
+  warm.addColorStop(0, `rgba(255, 200, 110, ${0.7 * flick})`);
+  warm.addColorStop(0.3, `rgba(255, 160, 70, ${0.26 * flick})`);
+  warm.addColorStop(1, "rgba(255, 140, 60, 0)");
+  g.globalCompositeOperation = "screen";
+  g.fillStyle = warm;
+  g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = "source-over";
+}
+
+// ============================================================
+// The world, handed to the engine
+// ============================================================
+startOS({
+  atlas: window.NAUTILUS_ATLAS,
+  atlasFile: "assets/nautilus/atlas.js",
+  stations: NAUTILUS_STATIONS,
+  agents: NAUTILUS_AGENTS,
+  who: { nemo: ["Nemo", "var(--accent-hi)"], sys: ["System", "var(--faint)"], kraken: ["Kraken", "var(--bad)"] },
+  persona: "nemo",
+  villain: { id: "kraken" },
+  rowIcons: ROW_ICON,
+  quotes: QUOTES,
+  projects: PROJECTS,
+  edits: EDITS,
+  freshState,
+  nav: [
+    ["ocean", "icon.ocean", "Ocean View"], ["agents", "icon.agents", "Agents"], ["hub", "icon.observe", "Orchestrator"],
+    ["knowledge", "icon.knowledge", "Knowledge"], ["repos", "icon.repos", "Repositories"], ["documents", "icon.documents", "Documents"],
+    ["memory", "icon.memory", "Memory"], ["tests", "icon.tests", "Tests"], ["models", "icon.models", "Models"], ["deploy", "icon.deploy", "Deployments"],
+  ],
+  text: {
+    run: "voyage", runs: "voyages", crew: "divers", Crew: "Divers",
+    idle: "Docked", docked: "docked at the orchestrator", orders: "orders", pipeNote: "From the order to the fleet",
+    meter: (v) => `${fmtNum(v)} m`,
+    villainRises: (fail) => `rises beside the Testing Lab · ✗ ${esc(fail)}`,
+    villainSinks: "lets go and sinks back into the dark",
+    settled: (v) => `the Nautilus settles at <b>${fmtNum(v)} m</b>`,
+    done: "voyage complete · <q>Mobilis in mobili.</q>",
+    about: {
+      hub: "Captain Nemo holds the order, fans work out to the stations, and keeps only the short reports that come back.",
+      knowledge: "Papers, field reports, datasets and web sources. Divers read here; nothing is changed.",
+      documents: "Specs, notes, designs and the plans the crew writes.",
+      models: "Every model the fleet runs, with the version in service.",
+      repos: "The codebase. Branches open while a diver works and close when the change merges.",
+      tests: "Suites, simulations and model evals. A failing test brings the kraken.",
+      memory: "What the crew keeps between voyages. Recalled before work; a lesson is stored after it.",
+      deploy: "Where releases run.",
+    },
+  },
+  beadDim: "#0b2642",
+  agentLift: 10,
+  agentIcon: (a) => `sub.${a.id}.run0`,
+  agentPort: (sb) => ({ x: sb.x + sb.face * 11, y: sb.y + 1 }),
+  layoutStation(s, m) {
+    if (s.key === "hub") s.globe = m.globe;
+  },
+  buildStatic,
+  render,
+  seedAmbient,
+  updateAmbient,
+  updateParticle,
+  drawParticle,
+  onAgentStep,
+  villainHead,
+  onVillainSink,
+  drawStationFx,
+  drawCorner: drawBridge,
+  decorateChrome() {
+    $("#brand-mark").getContext("2d").drawImage(spr("ri.trident"), 0, 0);
+    $("#meter-icon").getContext("2d").drawImage(spr("icon.ocean"), 0, 0);
+  },
+});
+}
+</script>
+</body>
+</html>

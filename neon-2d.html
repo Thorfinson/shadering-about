@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>NEON//2D</title>
+<!-- NEON//2D: the NEON orchestration console as a side-on city drawn in vectors at full resolution. The skyline plan is shared with neon-2d-pixel.html (assets/neon/skyline.js). -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="assets/os/os.css" />
+<style>
+  /* high fidelity: smoked glass over the city, soft neon, smooth type */
+  :root {
+    --bg: #05040b;
+    --bg-glow: #1d0c33;
+    --panel: rgba(16, 11, 34, 0.62);
+    --panel-hi: rgba(34, 22, 66, 0.52);
+    --line: rgba(170, 160, 255, 0.16);
+    --line-2: rgba(62, 240, 255, 0.4);
+    --accent: #ff3d8b;
+    --accent-hi: #ff8ac0;
+    --accent-lo: #7a1440;
+    --on-accent: #12020a;
+    --hub: #3ef0ff;
+    --cyan: #3ef0ff;
+    --ink: #f3f1ff;
+    --muted: rgba(243, 241, 255, 0.7);
+    --faint: rgba(243, 241, 255, 0.46);
+    --good: #39ff8a;
+    --warn: #ffb000;
+    --bad: #ff3355;
+    --research: #ffb000;
+    --analyze: #ff5c8a;
+    --build: #39ff8a;
+    --model: #22e6ff;
+    --test: #4d9bff;
+    --deploy: #b36bff;
+    --remember: #f0e6ff;
+    --map-bg: #0c0618;
+    --card-bg: rgba(12, 8, 28, 0.66);
+    --card-head: linear-gradient(180deg, rgba(255, 61, 139, 0.16), rgba(62, 240, 255, 0.05));
+    --pop-bg: rgba(12, 8, 28, 0.9);
+    --btn-bg: rgba(255, 255, 255, 0.05);
+    --option-bg: #150f2c;
+    --corner-bg: #05040a;
+    --radius: 14px;
+    --display: "Orbitron", "Eurostile", sans-serif;
+    --ui: "Exo 2", "Segoe UI", system-ui, sans-serif;
+    --caps: "Orbitron", "Exo 2", sans-serif;
+    --book: "Exo 2", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  body { font-size: 14.5px; }
+  .panel, .scard, .tag, .pop {
+    -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+  }
+  .panel { box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+  /* a hairline of light along the top edge of every panel */
+  .panel::before {
+    content: ""; position: absolute; left: 18px; right: 18px; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 80%, white), var(--cyan), transparent);
+    opacity: 0.8;
+  }
+  .brand h1 { font-weight: 700; letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 12px var(--accent), 0 0 28px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .brand small { color: var(--accent-hi); }
+  .ptitle, .scard .h, .tabs button, .pop header h2, .pop h3, .feed li.phase, .brand small, .quote figcaption { font-size: 10px; letter-spacing: 0.12em; }
+  .quote blockquote { font-style: italic; font-weight: 400; }
+  .nav .motto, .regions p, .empty { font-style: italic; }
+  .nav button { border-radius: 10px; }
+  .nav button.on { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .ctl button { border-radius: 8px; }
+  .scard { border-radius: 12px; overflow: hidden; }
+  .scard .h { border-radius: 0; }
+  .tag { border-radius: 10px; }
+  .pop { border-radius: 14px; overflow: hidden; }
+  .file, .commit { border-radius: 10px; }
+  .file pre, .pop code, .feed time, .scard li em { font-family: var(--mono); }
+  .file pre { font-size: 11.5px; }
+  .brand canvas, .nav button canvas, .scard .h canvas, .agents canvas, .clock .meter-v canvas, .scard li .ri { image-rendering: auto; }
+  .brand canvas { width: 24px; height: 26px; }
+  .map { border-color: rgba(62, 240, 255, 0.28); }
+  .regions canvas { image-rendering: auto; border-radius: 8px; }
+  .corner canvas { image-rendering: auto; }
+  .plaque { font-size: 9px; border-radius: 999px; color: #fff; border-color: color-mix(in srgb, var(--cyan) 60%, transparent); background: rgba(6, 16, 24, 0.55); box-shadow: 0 0 16px color-mix(in srgb, var(--cyan) 35%, transparent); }
+  .clock time { font-size: 15px; }
+  .clock .meter-v { font-size: 14px; gap: 5px; }
+  .map canvas.world, .map canvas.glow { visibility: hidden; }
+  .map canvas.vec2d { position: absolute; display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="panel brand">
+      <canvas id="brand-mark" width="44" height="48" aria-hidden="true"></canvas>
+      <div>
+        <h1>NEON//2D</h1>
+        <small>Agent orchestration</small>
+        <i>High fidelity · side-on</i>
+      </div>
+    </div>
+    <div class="panel project">
+      <label for="project">Project</label>
+      <select id="project"></select>
+    </div>
+    <div class="panel pipe">
+      <small id="pipe-note">From the order to the grid</small>
+      <ol id="pipeline"></ol>
+    </div>
+    <figure class="panel quote">
+      <blockquote id="quote">“Read everything. Trust the logs.”</blockquote>
+      <figcaption id="quote-src">Halcyon · boot banner</figcaption>
+    </figure>
+    <div class="panel clock">
+      <div class="row"><time id="clock">Day 1 · 23:40</time><span class="meter-v"><canvas id="meter-icon" width="48" height="40" aria-hidden="true"></canvas><span id="meter">— km/h</span></span></div>
+      <div class="row"><small>City time</small><small>Maglev</small></div>
+      <div class="ctl" role="group" aria-label="Simulation speed">
+        <button type="button" id="play" aria-pressed="false" title="Pause">❚❚</button>
+        <button type="button" data-speed="1" class="on">1×</button>
+        <button type="button" data-speed="2">2×</button>
+        <button type="button" data-speed="4">4×</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Blocks">
+    <div class="panel nav" id="nav">
+      <p class="motto">“Every lit window is somebody still shipping.”<span>Graffiti · Sector 7</span></p>
+    </div>
+    <div class="panel corner">
+      <canvas id="corner-art" width="360" height="472" aria-hidden="true"></canvas>
+      <div class="plaque">SHIP TO THE GRID</div>
+    </div>
+  </nav>
+
+  <main class="map" id="map-frame">
+    <div class="map-inner" id="map">
+      <canvas class="world" id="world" role="img" aria-label="A rainy megacity at night seen side-on, drawn in full resolution: towers in three ranks fading into magenta smog under a hidden moon, the orchestrator’s arcology in the middle with a turning globe on its crown, seven blocks on towers of their own — a data archive, a holo kiosk, an AI lab, container stacks under a crane, a firewall dome, a memory pagoda and a skyport — hover-car agents flying the arcs between them, a maglev train and the wet street holding it all upside down."></canvas>
+      <canvas class="glow" id="glow" aria-hidden="true"></canvas>
+      <div class="overlay" id="overlay"></div>
+      <div class="boot" id="boot">
+        <div>
+          <h2>Drawing the city</h2>
+          <div id="boot-what">assets/neon/skyline.js</div>
+          <div class="bar"><i id="boot-bar"></i></div>
+          <pre id="boot-log"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="dock">
+    <div class="panel" id="agents-panel">
+      <header><h2 class="ptitle">Active agents <span id="agents-n" style="color:var(--accent)"></span></h2><span class="aside">the runners</span></header>
+      <div class="scroll"><ul class="agents" id="agents"></ul></div>
+    </div>
+    <div class="panel">
+      <header>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="feed" aria-selected="true">Recent activity</button>
+          <button type="button" role="tab" data-tab="diff" aria-selected="false">Changes <span class="n" id="diff-n"></span></button>
+          <button type="button" role="tab" data-tab="tests" aria-selected="false">Tests <span class="n" id="tests-n"></span></button>
+        </div>
+      </header>
+      <div class="scroll tabbody" id="tab-feed" role="tabpanel"><ol class="feed" id="feed"></ol></div>
+      <div class="scroll tabbody" id="tab-diff" role="tabpanel" hidden></div>
+      <div class="scroll tabbody" id="tab-tests" role="tabpanel" hidden></div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">Run progress</h2><span class="aside" id="phase-n"></span></header>
+      <div class="progress">
+        <div class="meter"><span class="track"><i id="prog-bar"></i></span><b id="prog-pct">0%</b></div>
+        <ul class="checks" id="checks"></ul>
+        <div class="ledger" id="ledger">Runners read in their own contexts; only short reports reach the orchestrator.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <header><h2 class="ptitle">City grid</h2><span class="aside">blocks</span></header>
+      <div class="regions">
+        <canvas id="minimap" aria-label="Minimap of the blocks"></canvas>
+        <ul class="legend">
+          <li><i style="background:var(--good)"></i>Visited</li>
+          <li><i style="background:var(--warn)"></i>In progress</li>
+          <li><i style="border:1px solid var(--muted)"></i>Planned</li>
+        </ul>
+        <p>“Ship to the grid. Sleep at dawn.”</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="assets/neon/atlas.js"></script>
+<script src="assets/os/engine.js"></script>
+<script src="assets/os/hifi-icons.js"></script>
+<script src="assets/neon/story.js"></script>
+<script src="assets/neon/skyline.js"></script>
+<script>
+"use strict";
+// The world's own names stay in this block; the engine sees them through startOS().
+{
+// ============================================================
+// The city side-on, drawn as vectors at the screen's own resolution: the
+// same plan as neon-2d-pixel.html (assets/neon/skyline.js), the same blocks
+// on their towers, but in gradients, soft light and smoke. Everything is
+// drawn in the map's art pixels and scaled to the device.
+// ============================================================
+const MAP_H2D = 560; // the city from further off: the map is finer than the default
+const LAYOUT = {
+  hub: [0.5, 0.53, ["below", "above"]],
+  knowledge: [0.12, 0.32, ["right", "below", "above"]],
+  documents: [0.66, 0.25, ["left", "right", "below"]],
+  models: [0.88, 0.36, ["below", "left"]],
+  repos: [0.24, 0.66, ["right", "above", "below"]],
+  tests: [0.74, 0.61, ["below", "left", "right"]],
+  memory: [0.4, 0.8, ["right", "left", "above"]],
+  deploy: [0.9, 0.78, ["left", "above"]],
+};
+// Each block's box on the map (for the cards to keep clear of), relative to its deck.
+const BOX = { hub: [-56, -186, 112, 186], knowledge: [-40, -60, 80, 62], documents: [-36, -62, 72, 64], models: [-26, -104, 52, 106], repos: [-44, -80, 88, 82], tests: [-40, -42, 80, 44], memory: [-34, -78, 68, 80], deploy: [-46, -70, 92, 72] };
+
+const cvs = document.createElement("canvas");
+cvs.className = "vec2d";
+cvs.setAttribute("role", "img");
+cvs.setAttribute("aria-label", $("#world").getAttribute("aria-label"));
+$("#world").setAttribute("aria-hidden", "true");
+$("#map").insertBefore(cvs, $("#world"));
+const g2 = cvs.getContext("2d");
+let K = 1; // device pixels per art pixel
+let PLAN = null;
+let bg = null, blocks = null; // the city behind, the blocks' still parts
+const rgba = (hex, a) => {
+  const [r, g, b] = hexRGB(hex);
+  return `rgba(${r},${g},${b},${a})`;
+};
+const NEON = () => [P.neonPink, P.neonCyan, P.neonAmber, P.neonViolet, P.neonGreen];
+
+// ------------------------------------------------------------ helpers --
+function lin(g, x0, y0, x1, y1, stops) {
+  const grd = g.createLinearGradient(x0, y0, x1, y1);
+  for (const [o, c] of stops) grd.addColorStop(o, c);
+  return grd;
+}
+function rad(g, x, y, r0, r1, stops) {
+  const grd = g.createRadialGradient(x, y, r0, x, y, r1);
+  for (const [o, c] of stops) grd.addColorStop(o, c);
+  return grd;
+}
+function rr(g, x, y, w, h, r) {
+  g.beginPath();
+  g.roundRect(x, y, w, h, r);
+}
+// a soft light, drawn additively from a cached sprite
+const BLOOM = new Map();
+function bloom(g, x, y, r, col, a) {
+  if (a <= 0.01) return;
+  let spr2 = BLOOM.get(col);
+  if (!spr2) {
+    spr2 = makeCanvas(64, 64);
+    const q = spr2.getContext("2d");
+    q.fillStyle = rad(q, 32, 32, 0, 32, [[0, rgba(col, 1)], [0.35, rgba(col, 0.35)], [1, rgba(col, 0)]]);
+    q.fillRect(0, 0, 64, 64);
+    BLOOM.set(col, spr2);
+  }
+  const op = g.globalCompositeOperation, al = g.globalAlpha;
+  g.globalCompositeOperation = "lighter";
+  g.globalAlpha = Math.min(1, a);
+  g.drawImage(spr2, x - r, y - r, r * 2, r * 2);
+  g.globalCompositeOperation = op;
+  g.globalAlpha = al;
+}
+// a neon line: a wide faint stroke under a thin bright one
+function neon(g, draw, col, w = 1, a = 1) {
+  g.save();
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  g.globalCompositeOperation = "lighter";
+  for (const [lw, al] of [[w * 6, 0.08], [w * 3, 0.18], [w, 0.9]]) {
+    g.strokeStyle = rgba(col, al * a);
+    g.lineWidth = lw;
+    draw(g);
+    g.stroke();
+  }
+  g.restore();
+}
+
+// ============================================================
+// The city behind: sky, moon, ranks of towers, the blocks' towers,
+// the viaduct, the street and what it reflects
+// ============================================================
+function tower(g, T, fog, fogCol, near, strip) {
+  const { x, w, top } = T;
+  const street = PLAN.street;
+  const r = rng(T.seed);
+  const WIN = [P.winWarm, P.winCool, P.winPink, P.winWarm, P.winCool];
+  g.save();
+  // the silhouette, with its crown
+  g.beginPath();
+  if (T.crown === "pyramid") {
+    g.moveTo(x, street);
+    g.lineTo(x, top + w * 0.5);
+    g.lineTo(x + w / 2, top);
+    g.lineTo(x + w, top + w * 0.5);
+    g.lineTo(x + w, street);
+  } else if (T.crown === "dome") {
+    g.moveTo(x, street);
+    g.lineTo(x, top + w * 0.35);
+    g.ellipse(x + w / 2, top + w * 0.35, w / 2, w * 0.35, 0, Math.PI, 0);
+    g.lineTo(x + w, street);
+  } else if (T.crown === "setback" || T.crown === "stepped") {
+    const a = T.crown === "stepped" ? 0.28 : 0.19, h = T.crown === "stepped" ? 6 : 8;
+    g.moveTo(x, street);
+    g.lineTo(x, top + h * 2);
+    g.lineTo(x + w * (a / 2), top + h * 2);
+    g.lineTo(x + w * (a / 2), top + h);
+    g.lineTo(x + w * a, top + h);
+    g.lineTo(x + w * a, top);
+    g.lineTo(x + w * (1 - a), top);
+    g.lineTo(x + w * (1 - a), top + h);
+    g.lineTo(x + w * (1 - a / 2), top + h);
+    g.lineTo(x + w * (1 - a / 2), top + h * 2);
+    g.lineTo(x + w, top + h * 2);
+    g.lineTo(x + w, street);
+  } else g.rect(x, top, w, street - top);
+  g.closePath();
+  const face = strip ? ["#2a2e4a", "#171a2c", "#0b0b16"] : near ? ["#1c1f36", "#10111e", "#07070f"] : ["#1b1d33", "#12131f", "#0c0c16"];
+  g.fillStyle = lin(g, x, 0, x + w, 0, [[0, face[0]], [0.35, face[1]], [1, face[2]]]);
+  g.fill();
+  g.clip();
+  // windows after the tower's own pattern; lights come in clusters
+  const far = fog > 0.7;
+  for (let y = top + 3; y < street - 2; y += T.windows === "bands" ? 4 : 3) {
+    const floorLit = hash2(T.seed, Math.round(y), 3) < (T.windows === "office" ? 0.55 : 0.78);
+    for (let wx = x + 2; wx < x + w - 2; wx += T.windows === "sparse" ? 3.3 : 2.2) {
+      const patch = vnoise(wx * 0.15, y * 0.08, T.seed) > 0.55 ? 3 : 0.4;
+      const on = floorLit && hash2(Math.round(wx * 3), Math.round(y), T.seed + 1) < (T.windows === "office" ? 0.7 : T.lit * patch);
+      if (!on && (far || !near)) continue;
+      if (on) g.fillStyle = rgba(T.windows === "office" ? P.winCool : WIN[Math.floor(hash2(Math.round(wx / 6), Math.round(y / 2), T.seed + 2) * 5)], 0.9);
+      else g.fillStyle = "rgba(40, 36, 80, 0.45)";
+      g.fillRect(wx, y, T.windows === "bands" ? 1.9 : 1.1, T.windows === "bands" ? 1 : 1.4);
+    }
+  }
+  // grime: streaks down from the sills, rust
+  for (let k = 0; k < w / 3; k++) {
+    if (r() > 0.4) continue;
+    const sx = x + r() * w, sy = top + r() * (street - top), len = 5 + r() * 26;
+    g.fillStyle = lin(g, 0, sy, 0, sy + len, [[0, r() < 0.3 ? "rgba(90,40,24,0.45)" : "rgba(4,3,8,0.5)"], [1, "rgba(4,3,8,0)"]]);
+    g.fillRect(sx, sy, 0.6 + r() * 1.2, len);
+  }
+  // the edge the smog lights, and the neon strip of a block's tower
+  g.fillStyle = lin(g, x, 0, x + 3, 0, [[0, rgba(P.smogHi, near ? 0.5 : 0.3)], [1, rgba(P.smogHi, 0)]]);
+  g.fillRect(x, top, 3, street - top);
+  if (strip) {
+    g.fillStyle = rgba(strip, 0.95);
+    g.fillRect(x + 2.2, top, 0.8, street - top);
+  }
+  for (const p of T.pipes ?? []) {
+    g.fillStyle = "rgba(92,100,128,0.7)";
+    g.fillRect(x + p, top + 4, 0.6, street - top - 4);
+    for (let y = top + 8; y < street; y += 7) g.fillRect(x + p - 0.3, y, 1.2, 0.5);
+  }
+  // the smog over it is the sky behind it, thicker far away and low down;
+  // orange where the lamps light it
+  g.globalAlpha = fog;
+  g.fillStyle = SKY;
+  g.fillRect(x - 1, top - 1, w + 2, street - top + 2);
+  g.globalAlpha = 1;
+  g.fillStyle = lin(g, 0, street - 90, 0, street, [[0, rgba(fogCol, 0)], [1, rgba(fogCol, (1 - fog) * 0.3)]]);
+  g.fillRect(x - 1, street - 90, w + 2, 90);
+  g.fillStyle = lin(g, 0, street - 110, 0, street, [[0, "rgba(255,150,70,0)"], [1, "rgba(255,150,70,0.16)"]]);
+  g.fillRect(x - 1, street - 110, w + 2, 110);
+  g.restore();
+  const shade = 1 - fog * 0.6;
+  // air-conditioners and a fire escape on the sides
+  for (const a of T.ac ?? []) {
+    const ax = a.side < 0 ? x - 3 : x + w;
+    g.fillStyle = rgba("#5c6480", shade);
+    g.fillRect(ax, a.y, 3, 2);
+    g.fillStyle = "rgba(4,3,8,0.4)";
+    g.fillRect(ax + 1, a.y + 2, 0.5, 4);
+  }
+  if (T.escape) {
+    const e = T.escape, ex = e.side < 0 ? x - 5 : x + w;
+    g.strokeStyle = rgba("#3c4258", shade);
+    g.lineWidth = 0.5;
+    g.beginPath();
+    for (let y = e.y0, k = 0; y < e.y1; y += 7, k++) {
+      g.moveTo(ex, y);
+      g.lineTo(ex + 5, y);
+      g.moveTo(ex + (k % 2 ? 0.5 : 4.5), y);
+      g.lineTo(ex + (k % 2 ? 4.5 : 0.5), y + 7);
+    }
+    g.stroke();
+  }
+  // the roof's clutter
+  for (const it of T.roof ?? []) {
+    const rx = x + it.x;
+    if (it.kind === "tank") {
+      g.fillStyle = lin(g, rx, 0, rx + it.w, 0, [[0, rgba("#454c6e", shade)], [1, rgba("#141626", shade)]]);
+      rr(g, rx, top - it.h - 2, it.w, it.h, 1);
+      g.fill();
+      g.fillStyle = rgba("#3c4258", shade);
+      g.fillRect(rx + 0.5, top - 2, 0.6, 2);
+      g.fillRect(rx + it.w - 1, top - 2, 0.6, 2);
+    } else if (it.kind === "billboard") {
+      g.fillStyle = rgba("#262a3c", shade);
+      g.fillRect(rx + 1, top - 3, 0.6, 3);
+      g.fillRect(rx + it.w - 2, top - 3, 0.6, 3);
+      g.fillStyle = "#07060f";
+      g.fillRect(rx, top - it.h - 3, it.w, it.h);
+      for (let j = 1; j < it.h - 1; j += 1.5) {
+        g.fillStyle = rgba(P[it.col], (0.45 + 0.45 * hash2(Math.round(rx), Math.round(j * 2), 7)) * shade);
+        g.fillRect(rx + 1, top - it.h - 3 + j, (it.w - 2) * (0.4 + 0.6 * hash2(Math.round(rx), Math.round(j * 2), 8)), 0.8);
+      }
+      lights.push({ x: rx + it.w / 2, y: top - it.h / 2 - 3, col: P[it.col], r: it.w * 0.9, a: 0.3 * shade });
+    } else if (it.kind === "dish") {
+      g.strokeStyle = rgba("#8a90b0", shade);
+      g.lineWidth = 0.6;
+      g.beginPath();
+      g.ellipse(rx, top - 3, 2.4, 1, -0.4, Math.PI, 0);
+      g.moveTo(rx, top - 2.6);
+      g.lineTo(rx, top);
+      g.stroke();
+    } else {
+      g.fillStyle = rgba(it.kind === "shed" ? "#1f2238" : "#3c4258", shade);
+      g.fillRect(rx, top - it.h, it.w, it.h);
+      if (it.kind === "shed") lights.push({ x: rx + 1, y: top - 1.5, col: P.winWarm, r: 3, a: 0.5 * shade });
+    }
+  }
+  if (T.crown === "spire") {
+    g.strokeStyle = rgba(P.conc3, shade);
+    g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(x + w / 2, top);
+    g.lineTo(x + w / 2, top - 10 - (T.seed % 12));
+    g.stroke();
+    lights.push({ x: x + w / 2, y: top - 10 - (T.seed % 12), col: P.red, r: 5, a: 0.7 * (1 - fog * 0.5), blink: r() * 6 });
+  }
+  if (T.antenna) {
+    g.strokeStyle = rgba(P.steel2, shade);
+    g.lineWidth = 0.6;
+    g.beginPath();
+    g.moveTo(x + w * 0.3, top);
+    g.lineTo(x + w * 0.3, top - T.antenna);
+    g.stroke();
+    lights.push({ x: x + w * 0.3, y: top - T.antenna, col: P.red, r: 4, a: 0.6 * (1 - fog * 0.5), blink: r() * 6 });
+  }
+  // neon: vertical signs (some with dead letters), bars across the face, screens
+  for (const s of T.signs ?? []) {
+    const sx = s.side < 0 ? x - 4 : x + w + 1;
+    g.fillStyle = "#07060f";
+    g.fillRect(sx - 0.5, s.y - 0.5, 4, s.h + 1);
+    for (let j = 0; j < s.h - 1; j += 3.2) {
+      const dead = s.dead >= 0 && Math.abs(j - s.dead) < 3;
+      g.fillStyle = rgba(P[s.col], (dead ? 0.18 : 0.95) * (1 - fog * 0.4));
+      const gw = hash2(Math.round(sx), Math.round(j), 5) < 0.5 ? 3 : 2;
+      g.fillRect(sx + (3 - gw) / 2, s.y + j, gw, 2.2);
+    }
+    signs.push({ x: sx, y: s.y, h: s.h, col: P[s.col], ph: s.ph, fog });
+  }
+  for (const s of T.hsigns ?? []) {
+    const sx = x + w / 2 - s.w / 2;
+    for (let i = 0; i < s.w; i += 4) {
+      g.fillStyle = rgba(P[s.col], 0.9 * (1 - fog * 0.4));
+      g.fillRect(sx + i, s.y, 3, 1);
+    }
+    lights.push({ x: x + w / 2, y: s.y, col: P[s.col], r: s.w * 0.6, a: 0.3 * (1 - fog) });
+  }
+  if (T.screen) {
+    const s = T.screen;
+    screensAt.push({ x: x + 3, y: s.y, w: w - 6, h: s.h, col: P[s.col], fog });
+  }
+}
+let lights = [], signs = [], screensAt = [];
+let SKY = null;
+
+function buildBg() {
+  const { W, H } = map;
+  PLAN = neonSkyline(W, H);
+  const street = PLAN.street;
+  lights = [];
+  signs = [];
+  screensAt = [];
+  const c = makeCanvas(Math.round(W * K), Math.round(H * K));
+  const g = c.getContext("2d", { willReadFrequently: true }); // drawn once, on the CPU: thousands of small shapes
+  g.scale(K, K);
+  // the sky, lit from beneath by the city (the smog on every tower is this same gradient)
+  SKY = lin(g, 0, 0, 0, street, [[0, P.night0], [0.3, P.night1], [0.55, P.night3], [0.8, P.night4], [0.95, P.smog], [1, P.smogHi]]);
+  g.fillStyle = SKY;
+  g.fillRect(0, 0, W, H);
+  // the moon behind the smog
+  const mx = W * 0.2, my = H * 0.1;
+  g.fillStyle = rad(g, mx, my, 0, 60, [[0, "rgba(255,235,255,0.22)"], [1, "rgba(255,235,255,0)"]]);
+  g.fillRect(mx - 60, my - 60, 120, 120);
+  g.fillStyle = rad(g, mx - 4, my - 4, 2, 16, [[0, "#fff6ff"], [0.7, "#e8d8f4"], [1, "#b8a0d0"]]);
+  g.beginPath();
+  g.arc(mx, my, 15, 0, Math.PI * 2);
+  g.fill();
+  // soft things, drawn at half size and blurred there: clouds, and the low cloud between ranks
+  const soft = (draw) => {
+    const cl = makeCanvas(Math.ceil(W / 2), Math.ceil(H / 2));
+    const cg = cl.getContext("2d");
+    cg.scale(0.5, 0.5);
+    cg.filter = "blur(3px)";
+    draw(cg);
+    g.drawImage(cl, 0, 0, W, H);
+  };
+  soft((cg) => {
+    const cr = rng(9);
+    for (let i = 0; i < 26; i++) {
+      const x = cr() * W, y = H * (0.05 + cr() * 0.3), rx = 30 + cr() * 90, ry = 5 + cr() * 10;
+      cg.fillStyle = rad(cg, x, y + ry * 0.5, 0, rx, [[0, rgba(P.smogHi, 0.28 + (y / H) * 0.3)], [1, rgba(P.smog, 0)]]);
+      cg.beginPath();
+      cg.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      cg.fill();
+    }
+  });
+  // the colossi, far back in the smog
+  for (const C of PLAN.colossi) {
+    for (let k = 0; k <= C.steps; k++) {
+      const inset = (C.steps - k) * C.w * 0.08, y0 = C.top + k * 18;
+      g.fillStyle = lin(g, C.x, 0, C.x + C.w, 0, [[0, "#1f1a36"], [1, "#0d0b1a"]]);
+      g.fillRect(C.x + inset, y0, C.w - inset * 2, street - y0);
+    }
+    const cr2 = rng(C.seed);
+    for (let i = 0; i < C.w * 3; i++) {
+      g.fillStyle = rgba([P.winWarm, P.winCool, P.winPink][Math.floor(cr2() * 3)], 0.5);
+      g.fillRect(C.x + 2 + cr2() * (C.w - 4), C.top + 20 + cr2() * (street - C.top - 20), 1, 1);
+    }
+    g.globalAlpha = 0.62;
+    g.fillStyle = SKY;
+    g.fillRect(C.x - 1, C.top - 1, C.w + 2, street - C.top + 2);
+    g.globalAlpha = 1;
+    if (C.mast) {
+      g.fillStyle = rgba(P.conc3, 0.5);
+      g.fillRect(C.x + C.w / 2 - 0.4, C.top - C.mast, 0.8, C.mast);
+      lights.push({ x: C.x + C.w / 2, y: C.top - C.mast, col: P.red, r: 6, a: 0.7, blink: C.seed });
+    }
+    if (C.screen) screensAt.push({ x: C.x + 4, y: C.screen.y, w: C.w - 8, h: C.screen.h, col: P[C.screen.col], fog: 0.7 });
+  }
+  // the ranks, far to near, with their bridges and cables, and low cloud between them
+  PLAN.ranks.forEach((R, ri) => {
+    for (const T of R.towers) tower(g, T, R.fog, P.smog, ri === 3, null);
+    const shade = 1 - R.fog * 0.6;
+    for (const b of PLAN.bridges) {
+      if (b.rank !== ri) continue;
+      g.fillStyle = lin(g, 0, b.y, 0, b.y + b.h, [[0, rgba("#454c6e", shade)], [1, rgba("#0e0f1c", shade)]]);
+      g.fillRect(b.x0, b.y, b.x1 - b.x0, b.h);
+      for (let x = b.x0 + 1; x < b.x1 - 1; x += 2.5) {
+        if (hash2(Math.round(x), b.seed, 3) < 0.6) {
+          g.fillStyle = rgba(P.winCool, 0.8 * shade);
+          g.fillRect(x, b.y + 1, 1.2, b.h - 2);
+        }
+      }
+    }
+    g.lineWidth = 0.45;
+    for (const cb of PLAN.cables) {
+      if (cb.rank !== ri) continue;
+      g.strokeStyle = rgba("#050408", 0.9 * shade + 0.1);
+      g.beginPath();
+      g.moveTo(cb.x0, cb.y0);
+      g.quadraticCurveTo((cb.x0 + cb.x1) / 2, (cb.y0 + cb.y1) / 2 + cb.sag * 2, cb.x1, cb.y1);
+      g.stroke();
+      if (cb.washing) {
+        for (let x = cb.x0 + 3; x < cb.x1 - 2; x += 5) {
+          if (hash2(Math.round(x), cb.y0, 4) > 0.7) continue;
+          const f = (x - cb.x0) / (cb.x1 - cb.x0);
+          const y = lerp(cb.y0, cb.y1, f) + 4 * cb.sag * f * (1 - f);
+          g.fillStyle = [P.neonPink2, P.pearlD, P.teal1, P.mustard1, P.rust2][Math.floor(hash2(Math.round(x), cb.y0, 5) * 5)];
+          g.globalAlpha = 0.7;
+          g.fillRect(x - 1, y, 2, 2 + hash2(Math.round(x), cb.y0, 6) * 2);
+          g.globalAlpha = 1;
+        }
+      }
+    }
+    if (ri < 3) {
+      const band = H * [0.42, 0.55, 0.66][ri], thick = H * [0.16, 0.12, 0.09][ri];
+      soft((cg) => {
+        const cr3 = rng(40 + ri);
+        for (let i = 0; i < W / 26; i++) {
+          const x = cr3() * W, y = band + (cr3() - 0.5) * thick, rx = 40 + cr3() * 120, ry = thick * (0.25 + cr3() * 0.35);
+          cg.fillStyle = rad(cg, x, y, 0, rx, [[0, rgba(ri === 2 ? P.smogHi : P.smog, [0.4, 0.34, 0.26][ri])], [1, rgba(P.smog, 0)]]);
+          cg.beginPath();
+          cg.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+          cg.fill();
+        }
+      });
+    }
+  });
+  // the blocks' own towers, grimy, with their colour down one edge
+  for (const s of Object.values(STATIONS)) {
+    const w = s.key === "hub" ? 84 : 60;
+    const r = rng(500 + Math.round(s.x));
+    tower(g, { x: s.x - w / 2, w, top: s.y + 5, crown: "flat", seed: 500 + Math.round(s.x), lit: 0.22, windows: ["grid", "bands", "sparse"][Math.floor(r() * 3)], signs: [], hsigns: [], screen: null, antenna: 0, roof: [], pipes: [Math.round(8 + r() * (w - 16))], ac: Array.from({ length: 6 }, () => ({ side: r() < 0.5 ? -1 : 1, y: s.y + 10 + r() * (street - s.y - 20) })), escape: r() < 0.5 ? { side: r() < 0.5 ? -1 : 1, y0: s.y + 12, y1: street - 6 } : null }, 0.03, P.smog, true, s.col);
+  }
+  // the highway and the viaduct
+  const hy = PLAN.highway.y;
+  for (const px0 of PLAN.highway.pylons) {
+    g.fillStyle = lin(g, px0, 0, px0 + 5, 0, [[0, "#262a3c"], [1, "#0a0a14"]]);
+    g.fillRect(px0, hy + 4, 5, street - hy - 4);
+  }
+  g.fillStyle = lin(g, 0, hy, 0, hy + 4, [[0, "#5c6480"], [0.3, "#262a3c"], [1, "#0e0f1c"]]);
+  g.fillRect(0, hy, W, 4);
+  g.fillStyle = "rgba(60,66,88,0.9)";
+  for (let x = 0; x < W; x += 3) g.fillRect(x, hy - 1.5, 0.5, 1.5);
+  g.fillRect(0, hy - 1.6, W, 0.4);
+  for (let x = 0; x < W; x += 40) lights.push({ x, y: hy - 4, col: P.lamp, r: 5, a: 0.4 });
+  const my2 = PLAN.maglev.y;
+  for (const px0 of PLAN.maglev.pylons) {
+    g.fillStyle = lin(g, px0, 0, px0 + 6, 0, [[0, "#2e3350"], [1, "#0e0f1c"]]);
+    g.fillRect(px0, my2 + 5, 6, street - my2 - 5);
+  }
+  g.fillStyle = lin(g, 0, my2, 0, my2 + 5, [[0, "#6a7494"], [0.3, "#2e3350"], [1, "#141626"]]);
+  g.fillRect(0, my2, W, 5);
+  neon(g, (q) => { q.beginPath(); q.moveTo(0, my2 + 5.5); q.lineTo(W, my2 + 5.5); }, P.neonCyan, 0.7, 0.8);
+  // the street front: shops, awnings, lamps
+  for (const sh of PLAN.shops) {
+    g.fillStyle = lin(g, sh.x, 0, sh.x + sh.w, 0, [[0, "#2e3350"], [1, "#101220"]]);
+    g.fillRect(sh.x, street - 11, sh.w, 11);
+    if (sh.lit) {
+      g.fillStyle = lin(g, 0, street - 7, 0, street - 1, [[0, P[sh.col]], [1, rgba(P[sh.col], 0.6)]]);
+      g.fillRect(sh.x + 1, street - 7, sh.w - 2, 6);
+      lights.push({ x: sh.x + sh.w / 2, y: street - 4, col: P[sh.col], r: sh.w * 1.2, a: 0.4 });
+    }
+    if (sh.awning) {
+      for (let i = 0; i < sh.w; i += 2) {
+        g.fillStyle = (i / 2) % 2 ? P[sh.awning] : P.pearlD;
+        g.fillRect(sh.x + i, street - 10, 2, 1.6);
+      }
+    }
+  }
+  for (const lx of PLAN.lamps) {
+    g.fillStyle = "#3c4258";
+    g.fillRect(lx, street - 18, 0.8, 18);
+    g.fillRect(lx, street - 18, 2.5, 0.8);
+    lights.push({ x: lx + 2.5, y: street - 17, col: P.lamp, r: 10, a: 0.55 });
+  }
+  // the street: wet, and holding the city upside down
+  g.fillStyle = lin(g, 0, street, 0, H, [[0, "#1a1424"], [1, "#07060e"]]);
+  g.fillRect(0, street, W, H - street);
+  const depth = H - street;
+  const rf = makeCanvas(Math.ceil(W / 2), Math.ceil(depth / 2));
+  const rg = rf.getContext("2d");
+  rg.filter = "blur(1px)";
+  rg.setTransform(0.5, 0, 0, -0.5 * 0.55, 0, 0);
+  rg.drawImage(c, 0, 0, c.width, c.height, 0, -street, W, H);
+  g.globalAlpha = 0.55;
+  g.drawImage(rf, 0, street, W, depth);
+  g.globalAlpha = 1;
+  g.fillStyle = "#3a4058";
+  g.fillRect(0, street, W, 0.8);
+  for (let x = 0; x < W; x += 14) {
+    g.fillStyle = "rgba(255,210,122,0.35)";
+    g.fillRect(x, street + 14, 6, 0.6);
+  }
+  // grit: a fine grain over everything, and the vignette
+  const grain = makeCanvas(128, 128);
+  const gg = grain.getContext("2d");
+  const gr = rng(3);
+  for (let i = 0; i < 1400; i++) {
+    gg.fillStyle = gr() < 0.7 ? "rgba(0,0,0,0.5)" : "rgba(255,230,255,0.25)";
+    gg.fillRect(gr() * 128, gr() * 128, 1, 1);
+  }
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalAlpha = 0.35;
+  g.fillStyle = g.createPattern(grain, "repeat");
+  g.fillRect(0, 0, c.width, c.height);
+  g.restore();
+  g.fillStyle = rad(g, W / 2, H / 2, H * 0.35, W * 0.62, [[0, "rgba(5,4,12,0)"], [1, "rgba(5,4,12,0.5)"]]);
+  g.fillRect(0, 0, W, H);
+  bg = c;
+}
+
+// ============================================================
+// The eight blocks, drawn once; their moving parts drawn every frame
+// ============================================================
+function deckOf(g, s, half) {
+  g.fillStyle = lin(g, 0, 0, 0, 5, [[0, "#5c6480"], [0.3, "#2e3350"], [1, "#0e0f1c"]]);
+  g.fillRect(s.x - half, s.y, half * 2, 5);
+  neon(g, (q) => { q.beginPath(); q.moveTo(s.x - half, s.y + 0.4); q.lineTo(s.x + half, s.y + 0.4); }, s.col, 0.9);
+  for (let x = s.x - half + 4; x < s.x + half - 2; x += 8) lights.push({ x, y: s.y + 5.5, col: P.lamp, r: 4, a: 0.5 });
+}
+function concrete(g, x, y, w, h, shade = 0) {
+  g.fillStyle = lin(g, x, 0, x + w, 0, [[0, shade ? "#3a4058" : "#2e3350"], [0.4, "#1f2238"], [1, "#101220"]]);
+  g.fillRect(x, y, w, h);
+}
+const BLOCK = {
+  hub(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 60);
+    const tiers = [[108, 32, P.cyan3], [88, 32, P.neonPink], [68, 32, P.cyan3]];
+    let top = y;
+    tiers.forEach(([w, h, band], i) => {
+      top -= h;
+      g.save();
+      g.beginPath();
+      g.rect(x - w / 2, top, w, h);
+      g.clip();
+      tower(g, { x: x - w / 2, w, top, crown: "flat", seed: 70 + i, lit: 0.5, signs: [], screen: null, antenna: 0 }, 0, P.smog, true, i === 1 ? P.neonPink : null);
+      g.restore();
+      neon(g, (q) => { q.beginPath(); q.moveTo(x - w / 2, top); q.lineTo(x + w / 2, top); }, band, 1);
+    });
+    // the core
+    const coreTop = top - 40;
+    g.save();
+    g.beginPath();
+    g.rect(x - 22, coreTop, 44, 40);
+    g.clip();
+    tower(g, { x: x - 22, w: 44, top: coreTop, crown: "flat", seed: 75, lit: 0.6, signs: [], screen: null, antenna: 0 }, 0, P.smog, true, null);
+    g.restore();
+    neon(g, (q) => { q.beginPath(); q.moveTo(x - 21, coreTop); q.lineTo(x - 21, top); }, P.cyan3, 0.8);
+    neon(g, (q) => { q.beginPath(); q.moveTo(x + 21, coreTop); q.lineTo(x + 21, top); }, P.neonPink, 0.8);
+    // the crown and the projector
+    for (let k = 0; k < 4; k++) {
+      g.fillStyle = k % 2 ? "#5c6480" : "#3c4258";
+      g.fillRect(x - 18 + k * 3, coreTop - 2 - k * 2, 36 - k * 6, 2);
+    }
+    g.fillStyle = "#5c6480";
+    g.fillRect(x - 4, coreTop - 14, 8, 4);
+    s.globeAt = [x, coreTop - 30];
+    s.haloY = coreTop + 16;
+    lights.push({ x: x - 12, y: coreTop - 4, col: P.red, r: 4, a: 0.8, blink: 1 }, { x: x + 11, y: coreTop - 4, col: P.red, r: 4, a: 0.8, blink: 3 });
+    // tiers drawn over the lower tower
+    s.coreTop = coreTop;
+  },
+  knowledge(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 40);
+    concrete(g, x - 34, y - 36, 68, 36, 1);
+    neon(g, (q) => { q.beginPath(); q.moveTo(x - 34, y - 36); q.lineTo(x + 34, y - 36); }, s.col, 0.8);
+    g.fillStyle = lin(g, 0, y - 31, 0, y - 4, [[0, "#0d1c30"], [1, "#070a14"]]);
+    rr(g, x - 29, y - 31, 58, 27, 1.5);
+    g.fill();
+    for (let k = 0; k < 6; k++) {
+      g.fillStyle = "#1b1f33";
+      rr(g, x - 27 + k * 9.4, y - 29.5, 7, 24, 1);
+      g.fill();
+    }
+    // dishes, tilted to the sky
+    for (const [dx, dy, r] of [[-18, -42, 8], [14, -41, 6]]) {
+      g.strokeStyle = "#5c6480";
+      g.lineWidth = 0.8;
+      g.beginPath();
+      g.moveTo(x + dx, y - 36);
+      g.lineTo(x + dx, y + dy + 2);
+      g.stroke();
+      g.fillStyle = lin(g, x + dx - r, 0, x + dx + r, 0, [[0, "#e8ecff"], [1, "#6a7494"]]);
+      g.beginPath();
+      g.ellipse(x + dx, y + dy, r, r * 0.42, -0.4, Math.PI, 0);
+      g.fill();
+      lights.push({ x: x + dx - 1, y: y + dy - 3, col: P.research, r: 4, a: 0.7, blink: dx });
+    }
+    g.strokeStyle = "#5c6480";
+    g.beginPath();
+    g.moveTo(x + 26, y - 36);
+    g.lineTo(x + 26, y - 54);
+    g.stroke();
+    lights.push({ x: x + 26, y: y - 54, col: P.red, r: 5, a: 0.8, blink: 2 });
+    signs.push({ x: x + 36, y: y - 32, h: 26, col: s.col, ph: 1, fog: 0, glyph: true });
+  },
+  documents(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 40);
+    concrete(g, x - 18, y - 22, 36, 22, 1);
+    g.fillStyle = lin(g, 0, y - 16, 0, y - 10, [[0, P.neonPink2], [1, s.col]]);
+    rr(g, x - 15, y - 15, 30, 5, 1);
+    g.fill();
+    lights.push({ x, y: y - 12, col: s.col, r: 14, a: 0.5 });
+    // the awning, striped, scalloped
+    g.save();
+    g.beginPath();
+    g.moveTo(x - 22, y - 28);
+    g.lineTo(x + 22, y - 28);
+    g.lineTo(x + 25, y - 22);
+    g.lineTo(x - 25, y - 22);
+    g.closePath();
+    g.clip();
+    for (let k = -25; k < 25; k += 4) {
+      g.fillStyle = (k + 25) % 8 < 4 ? s.col : "#f4f0ff";
+      g.fillRect(x + k, y - 28, 4, 6);
+    }
+    g.restore();
+    for (let k = -25; k < 25; k += 4) {
+      g.fillStyle = (k + 25) % 8 < 4 ? s.col : "#f4f0ff";
+      g.beginPath();
+      g.arc(x + k + 2, y - 22, 2, 0, Math.PI);
+      g.fill();
+    }
+    for (const [dx, dy, col] of [[-34, -20, P.neonCyan], [24, -18, P.neonPink]]) {
+      g.fillStyle = lin(g, x + dx, 0, x + dx + 10, 0, [[0, "#5c6480"], [1, "#262a3c"]]);
+      rr(g, x + dx, y + dy, 10, -dy, 1.2);
+      g.fill();
+      g.fillStyle = col;
+      rr(g, x + dx + 2, y + dy + 2, 6, 9, 0.8);
+      g.fill();
+      lights.push({ x: x + dx + 5, y: y + dy + 6, col, r: 10, a: 0.55 });
+    }
+    g.fillStyle = "#5c6480";
+    g.fillRect(x - 4, y - 31, 8, 2);
+  },
+  models(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 40);
+    g.fillStyle = lin(g, x - 16, 0, x + 16, 0, [[0, "rgba(90,200,240,0.55)"], [0.5, "rgba(30,90,138,0.55)"], [1, "rgba(16,42,74,0.7)"]]);
+    g.fillRect(x - 16, y - 58, 32, 58);
+    g.fillStyle = lin(g, x - 4, 0, x + 4, 0, [[0, "rgba(138,228,255,0.2)"], [0.5, "rgba(200,248,255,0.85)"], [1, "rgba(138,228,255,0.2)"]]);
+    g.fillRect(x - 4, y - 58, 8, 58);
+    for (let fy = y - 54; fy < y; fy += 6) neon(g, (q) => { q.beginPath(); q.moveTo(x - 16, fy); q.lineTo(x + 16, fy); }, s.col, 0.5, 0.8);
+    g.strokeStyle = "rgba(255,255,255,0.18)";
+    g.lineWidth = 1.2;
+    for (let k = 0; k < 5; k++) {
+      g.beginPath();
+      g.moveTo(x - 16, y - 50 + k * 12);
+      g.lineTo(x - 6, y - 58 + k * 12);
+      g.stroke();
+    }
+    g.fillStyle = lin(g, 0, y - 62, 0, y - 58, [[0, "#6a7494"], [1, "#3c4258"]]);
+    g.fillRect(x - 18, y - 62, 36, 4);
+    g.fillRect(x - 8, y - 65, 16, 3);
+    neon(g, (q) => { q.beginPath(); q.moveTo(x - 6, y - 65.5); q.lineTo(x + 6, y - 65.5); }, s.col, 0.8);
+    s.headAt = [x, y - 84];
+  },
+  repos(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 42);
+    const PAINT = [["#6a2e1c", "#a04a24"], ["#1a3a4a", "#2a6a7a"], ["#6a5a1a", "#b09a2a"], ["#2e3350", "#5c6480"], ["#1e5a8a", "#3aa0d8"]];
+    [[-34, 3], [-10, 2], [14, 4]].forEach(([dx, n], si) => {
+      for (let k = 0; k < n; k++) {
+        const [a, b] = PAINT[(si * 3 + k) % PAINT.length];
+        const cx = x + dx, cy = y - 9 - k * 9;
+        g.fillStyle = lin(g, 0, cy, 0, cy + 9, [[0, b], [1, a]]);
+        rr(g, cx, cy, 22, 8.6, 0.8);
+        g.fill();
+        g.fillStyle = "rgba(0,0,0,0.25)";
+        for (let r2 = 1; r2 < 22; r2 += 2) g.fillRect(cx + r2, cy + 1, 0.7, 7);
+        if (hash2(si, k, 4) < 0.6) {
+          const wx = cx + 4 + hash2(si, k, 5) * 12;
+          const col = hash2(si, k, 6) < 0.7 ? P.winWarm : s.col;
+          g.fillStyle = col;
+          g.fillRect(wx, cy + 3, 3, 3);
+          lights.push({ x: wx + 1.5, y: cy + 4.5, col, r: 6, a: 0.6 });
+        }
+      }
+    });
+    g.fillStyle = "#3c4258";
+    g.fillRect(x - 2, y - 36, 3, 6);
+    signs.push({ x: x + 42, y: y - 36, h: 22, col: s.col, ph: 2, fog: 0, glyph: true });
+    s.craneAt = [x - 37, y];
+  },
+  tests(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 40);
+    g.fillStyle = lin(g, x - 26, 0, x + 26, 0, [[0, "#2e3350"], [0.4, "#141626"], [1, "#07060f"]]);
+    g.beginPath();
+    g.moveTo(x - 26, y);
+    g.lineTo(x - 26, y - 16);
+    g.lineTo(x - 22, y - 20);
+    g.lineTo(x + 22, y - 20);
+    g.lineTo(x + 26, y - 16);
+    g.lineTo(x + 26, y);
+    g.closePath();
+    g.fill();
+    g.save();
+    g.beginPath();
+    g.rect(x - 26, y - 8, 52, 4);
+    g.clip();
+    for (let k = -30; k < 30; k += 4) {
+      g.fillStyle = "#b09a2a";
+      g.beginPath();
+      g.moveTo(x + k, y - 4);
+      g.lineTo(x + k + 2, y - 4);
+      g.lineTo(x + k + 6, y - 8);
+      g.lineTo(x + k + 4, y - 8);
+      g.fill();
+    }
+    g.restore();
+  },
+  memory(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 40);
+    const tiers = [[22, 18, 34, 8], [16, 10, 28, 8], [10, 8, 20, 8]];
+    let base = y;
+    s.lanterns = [];
+    tiers.forEach(([hw, h, rw, rh], i) => {
+      g.fillStyle = lin(g, x - hw, 0, x + hw, 0, [[0, "#6a2e1c"], [0.5, "#3a1a14"], [1, "#1a0c0c"]]);
+      g.fillRect(x - hw, base - h, hw * 2, h);
+      for (let wx = x - hw + 3; wx < x + hw - 4; wx += 8) {
+        g.fillStyle = lin(g, 0, base - h + 2, 0, base - 2, [[0, "#ffd9a0"], [1, P.winWarm]]);
+        g.fillRect(wx, base - h + 2, 5, h - 4);
+        g.fillStyle = "rgba(106,46,28,0.8)";
+        g.fillRect(wx + 2, base - h + 2, 0.8, h - 4);
+        lights.push({ x: wx + 2.5, y: base - h / 2, col: P.winWarm, r: 8, a: 0.35 });
+      }
+      base -= h;
+      // the roof: curved, the tips turned up
+      const top = base - rh;
+      g.fillStyle = lin(g, 0, top, 0, base, [[0, "#2e3350"], [1, "#0e0f1c"]]);
+      g.beginPath();
+      g.moveTo(x - rw, base - 2);
+      g.quadraticCurveTo(x - rw * 0.55, base, x - rw * 0.35, top + rh * 0.3);
+      g.lineTo(x - rw * 0.2, top);
+      g.lineTo(x + rw * 0.2, top);
+      g.lineTo(x + rw * 0.35, top + rh * 0.3);
+      g.quadraticCurveTo(x + rw * 0.55, base, x + rw, base - 2);
+      g.lineTo(x + rw * 0.9, base);
+      g.lineTo(x - rw * 0.9, base);
+      g.closePath();
+      g.fill();
+      const edge = i % 2 ? P.neonPink : s.col;
+      neon(g, (q) => { q.beginPath(); q.moveTo(x - rw, base - 2); q.quadraticCurveTo(x - rw * 0.55, base, x - rw * 0.35, top + rh * 0.3); q.lineTo(x - rw * 0.2, top); q.lineTo(x + rw * 0.2, top); q.lineTo(x + rw * 0.35, top + rh * 0.3); q.quadraticCurveTo(x + rw * 0.55, base, x + rw, base - 2); }, edge, 0.7);
+      for (const tx of [x - rw + 0.5, x + rw - 0.5]) s.lanterns.push([tx, base + 2, i % 2 ? P.neonAmber : P.red]);
+      base = top;
+    });
+    g.strokeStyle = "#5c6480";
+    g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(x, base);
+    g.lineTo(x, base - 14);
+    g.stroke();
+    lights.push({ x, y: base - 15, col: P.neonAmber, r: 5, a: 0.8 });
+  },
+  deploy(g, s) {
+    const x = s.x, y = s.y;
+    deckOf(g, s, 40);
+    for (const dx of [-22, 0, 22]) {
+      g.fillStyle = "#3c4258";
+      g.fillRect(x + dx - 0.6, y - 18, 1.2, 18);
+    }
+    g.fillStyle = lin(g, 0, y - 22, 0, y - 18, [[0, "#5c6480"], [1, "#262a3c"]]);
+    rr(g, x - 30, y - 22, 74, 4, 1);
+    g.fill();
+    s.padY = y - 22;
+    // the control tower
+    g.fillStyle = lin(g, x - 42, 0, x - 34, 0, [[0, "#2e3350"], [1, "#0a0a14"]]);
+    g.fillRect(x - 42, y - 58, 8, 58);
+    g.fillStyle = lin(g, 0, y - 66, 0, y - 58, [[0, "#1e5a8a"], [1, "#102a4a"]]);
+    rr(g, x - 46, y - 66, 16, 8, 1.5);
+    g.fill();
+    g.fillStyle = rgba(P.neonCyan, 0.85);
+    g.fillRect(x - 45, y - 63, 14, 2.5);
+    lights.push({ x: x - 38, y: y - 62, col: P.neonCyan, r: 10, a: 0.5 });
+    s.beaconAt = [x - 38, y - 70];
+  },
+};
+function buildBlocks() {
+  const { W, H } = map;
+  const c = makeCanvas(Math.round(W * K), Math.round(H * K));
+  const g = c.getContext("2d", { willReadFrequently: true }); // drawn once, on the CPU: thousands of small shapes
+  g.scale(K, K);
+  // the lower tiers of the arcology stand in front of its core; draw in order
+  for (const k of [...STATION_KEYS].sort((a, b) => STATIONS[a].y - STATIONS[b].y)) {
+    g.save();
+    if (k !== "hub") {
+      // the block stands on its deck: nothing of it below
+      g.beginPath();
+      g.rect(0, 0, W, STATIONS[k].y + 5);
+      g.clip();
+    } else {
+      g.beginPath();
+      g.rect(0, 0, W, STATIONS.hub.y + 5);
+      g.clip();
+    }
+    BLOCK[k](g, STATIONS[k]);
+    g.restore();
+  }
+  // the blocks' own signs, lit
+  for (const s of signs) {
+    if (!s.glyph) continue;
+    g.fillStyle = "#07060f";
+    g.fillRect(s.x - 0.5, s.y - 0.5, 4, s.h + 1);
+    g.fillStyle = s.col;
+    for (let j = 0; j < s.h - 1; j += 3.2) {
+      const wide = hash2(Math.round(s.x), Math.round(j), 5) < 0.5;
+      g.fillRect(s.x + (wide ? 0 : 0.5), s.y + j, wide ? 3 : 2, 2.2);
+    }
+  }
+  // the routes as they are at rest; a busy one is lit over this every frame
+  for (const k of SPOKES) {
+    const p = paths[k];
+    neon(g, (q) => {
+      q.beginPath();
+      p.pts.forEach((pt, i) => (i ? q.lineTo(pt.x, pt.y) : q.moveTo(pt.x, pt.y)));
+    }, STATIONS[k].col, 0.8, 0.55);
+  }
+  // every light that doesn't blink, baked in with the blocks: one layer to draw
+  for (const l of lights) if (l.blink === undefined) bloom(g, l.x, l.y, l.r, l.col, l.a);
+  for (const s2 of signs) bloom(g, s2.x + 1.5, s2.y + s2.h / 2, s2.h * 0.8, s2.col, 0.25 * (1 - (s2.fog ?? 0)));
+  for (const sc of screensAt) bloom(g, sc.x + sc.w / 2, sc.y + sc.h / 2, sc.w * 0.8, sc.col, 0.25);
+  blocks = c;
+}
+
+// ============================================================
+// Ambient life
+// ============================================================
+const ambient = { rain: [], blimp: null, koi: null, train: { x: -400, next: 5 }, steam: [], road: [], high: [] };
+let lanes = [];
+function seedAmbient() {
+  const { W, H } = map;
+  ambient.rain = Array.from({ length: 560 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 150 + Math.random() * 90, l: 3 + Math.random() * 4, a: 0.12 + Math.random() * 0.25 }));
+  ambient.road = Array.from({ length: Math.round(W / 60) }, (_, i) => ({ x: Math.random() * W, dir: i % 2 ? 1 : -1, v: 18 + Math.random() * 20, col: ["#222638", "#3a4058", "#6a2e1c", "#2a6a7a"][i % 4] }));
+  ambient.high = Array.from({ length: Math.round(W / 14) }, (_, i) => ({ x: Math.random() * W, dir: i % 2 ? 1 : -1, v: 30 + Math.random() * 25 }));
+  ambient.blimp = { x: W * 0.35, y: H * 0.09, dir: 1 };
+  ambient.koi = { x: W * 0.72, y: H * 0.15, dir: -1 };
+  lanes = [
+    { y: H * 0.16, size: 0.8, dir: 1, speed: 14, n: 16, a: 0.45 },
+    { y: H * 0.22, size: 0.9, dir: -1, speed: 18, n: 14, a: 0.55 },
+    { y: H * 0.42, size: 1.5, dir: 1, speed: 30, n: 9, a: 0.8 },
+    { y: H * 0.62, size: 2.2, dir: -1, speed: 44, n: 6, a: 1 },
+  ];
+}
+function updateAmbient(dt) {
+  const { W, H } = map;
+  for (const d of ambient.rain) {
+    d.y += d.s * dt;
+    d.x -= d.s * 0.22 * dt;
+    if (d.y > H) {
+      d.y = -6;
+      d.x = Math.random() * (W + 60);
+    }
+  }
+  const b = ambient.blimp;
+  b.x += b.dir * 4 * dt;
+  if (b.x > W + 60) b.dir = -1;
+  if (b.x < -60) b.dir = 1;
+  const k = ambient.koi;
+  k.x += k.dir * 7 * dt;
+  if (k.x > W + 50) { k.dir = -1; k.y = H * (0.1 + Math.random() * 0.1); }
+  if (k.x < -50) { k.dir = 1; k.y = H * (0.1 + Math.random() * 0.1); }
+  const tr = ambient.train;
+  if (tr.x > -400) {
+    tr.x += 230 * dt;
+    if (tr.x > W + 20) tr.x = -400;
+  } else if ((tr.next -= dt) <= 0) {
+    tr.x = -200;
+    tr.next = 16 + Math.random() * 10;
+  }
+  if (STATIONS.repos && Math.random() < dt * 3) ambient.steam.push({ x: STATIONS.repos.x, y: STATIONS.repos.y - 37, t0: clock.t, life: 4 + Math.random() * 2, ph: Math.random() * 6 });
+  // smoke from the roofs, steam from the street
+  for (const ch of PLAN?.chimneys ?? []) if (Math.random() < dt * 0.9) ambient.steam.push({ x: ch.x, y: ch.y, t0: clock.t, life: 5 + Math.random() * 3, ph: Math.random() * 6, drift: 3 });
+  for (const vx of PLAN?.vents ?? []) if (Math.random() < dt * 1.2) ambient.steam.push({ x: vx, y: PLAN.street + 3, t0: clock.t, life: 3 + Math.random() * 2, ph: Math.random() * 6, drift: 0 });
+  for (const c of [...ambient.road, ...ambient.high]) c.x = ((c.x + c.dir * c.v * dt) % (W + 20) + W + 20) % (W + 20);
+  for (const p of PLAN?.people ?? []) p.x = ((p.x + p.speed * dt) % W + W) % W;
+  ambient.steam = ambient.steam.filter((p) => clock.t - p.t0 < p.life);
+}
+function updateParticle(p, dt) {
+  if (p.kind === "spark" || p.kind === "glitch") {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 1 - dt * 2;
+    p.vy *= 1 - dt * 2;
+  }
+}
+
+// ============================================================
+// Every frame
+// ============================================================
+// the cars' profile (from the pixel sprite), smoothed
+const CAR = [[1, 8], [4, 5], [10, 3.5], [18, 3], [24, 4.5], [27, 6.5], [27, 9], [2, 10]];
+const GLASS = [[11, 4.5], [18, 4], [22, 5.5], [13, 6.2]];
+function carPath(g, pts) {
+  g.beginPath();
+  pts.forEach(([x, y], i) => {
+    const [nx, ny] = pts[(i + 1) % pts.length];
+    const mx = (x + nx) / 2, my = (y + ny) / 2;
+    if (i === 0) g.moveTo(mx, my);
+    else g.quadraticCurveTo(x, y, mx, my);
+  });
+  const [x0, y0] = pts[0], [x1, y1] = pts[1];
+  g.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+  g.closePath();
+}
+function drawCar(g, x, y, face, col, t, ph, scale = 1) {
+  g.save();
+  g.translate(x, y);
+  g.scale(face * scale, scale);
+  g.translate(-14, -7);
+  bloom(g, 14, 11, 16, col, 0.55); // the underglow
+  g.fillStyle = lin(g, 0, 3, 0, 10, [[0, "#6a7494"], [0.35, "#262a3c"], [1, "#0c0c16"]]);
+  carPath(g, CAR);
+  g.fill();
+  g.fillStyle = lin(g, 11, 4, 22, 6, [[0, "#b8f8ff"], [1, "#1e5a8a"]]);
+  carPath(g, GLASS);
+  g.fill();
+  g.fillStyle = col;
+  g.fillRect(5, 6.8, 18, 0.6);
+  g.fillStyle = rgba(col, 0.9);
+  g.fillRect(4, 10.2, 20, 0.8);
+  g.fillStyle = "#ffffff";
+  g.fillRect(26.2, 6.2, 1.2, 1.2);
+  g.fillStyle = P.red;
+  g.fillRect(1, 8, 1, 1.4);
+  // a headlight beam forward, thrusters under
+  g.globalCompositeOperation = "lighter";
+  g.fillStyle = lin(g, 27, 7, 50, 7, [[0, "rgba(220,240,255,0.35)"], [1, "rgba(220,240,255,0)"]]);
+  g.beginPath();
+  g.moveTo(27, 6.6);
+  g.lineTo(50, 3);
+  g.lineTo(50, 12);
+  g.closePath();
+  g.fill();
+  const fl = 0.6 + 0.4 * Math.sin(t * 40 + ph);
+  for (const tx of [7, 21]) {
+    g.fillStyle = lin(g, 0, 11, 0, 14, [[0, rgba(P.lamp, 0.9 * fl)], [1, rgba(P.neonAmber, 0)]]);
+    g.fillRect(tx - 0.6, 11, 1.2, 3);
+  }
+  g.restore();
+}
+function drawTraffic(g, t) {
+  for (const L of lanes) {
+    for (let k = 0; k < L.n; k++) {
+      const x = ((k / L.n) * (map.W + 80) + t * L.speed * L.dir + 4000) % (map.W + 80) - 40;
+      const y = L.y + Math.sin(k * 7.1) * 6;
+      g.globalAlpha = L.a;
+      g.fillStyle = "#222638";
+      rr(g, x - L.size * 2, y - L.size / 2, L.size * 4, L.size, L.size / 2);
+      g.fill();
+      g.globalAlpha = 1;
+      const hx = x + (L.dir > 0 ? L.size * 2 : -L.size * 2);
+      bloom(g, hx, y, 2 + L.size * 2, L.dir > 0 ? "#ffffff" : P.red, 0.5 * L.a);
+      // a streak behind, from the long exposure
+      g.fillStyle = rgba(L.dir > 0 ? P.red : "#ffffff", 0.18 * L.a);
+      g.fillRect(Math.min(x, x - L.dir * L.size * 12), y - 0.3, L.size * 12, 0.6);
+    }
+  }
+}
+function drawBlimp(g, t) {
+  const b = ambient.blimp;
+  const y = b.y + Math.sin(t * 0.4) * 2;
+  g.save();
+  g.translate(b.x, y);
+  g.fillStyle = lin(g, 0, -9, 0, 9, [[0, "#6a7494"], [0.4, "#3a4058"], [1, "#10121e"]]);
+  g.beginPath();
+  g.ellipse(0, 0, 27, 9, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "#222638";
+  g.beginPath();
+  g.moveTo(-24 * b.dir, -2);
+  g.lineTo(-32 * b.dir, -8);
+  g.lineTo(-32 * b.dir, 8);
+  g.lineTo(-24 * b.dir, 2);
+  g.fill();
+  // the screen on its flank: a scrolling advert
+  g.save();
+  rr(g, -16, -4.5, 32, 8, 1.5);
+  g.clip();
+  g.fillStyle = "#0a0614";
+  g.fillRect(-16, -5, 32, 9);
+  const page = Math.floor(t / 4) % 3;
+  if (page === 0) {
+    for (let k = -16; k < 16; k += 1.5) {
+      g.fillStyle = (k + 16) % 6 < 3 ? P.neonPink : P.neonCyan;
+      g.fillRect(k, Math.sin(k / 3 + t * 3) * 2.4 - 0.6, 1.2, 1.2);
+    }
+  } else {
+    g.fillStyle = page === 1 ? P.neonPink : P.neonCyan;
+    g.font = "700 5px Orbitron, sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(page === 1 ? "LINGO-NET" : "MAGLEV 9", 0, 0);
+  }
+  g.restore();
+  g.fillStyle = "#141626";
+  rr(g, -5, 8, 10, 3, 1);
+  g.fill();
+  g.restore();
+  bloom(g, b.x, y, 26, P.neonPink, 0.18);
+}
+function drawKoi(g, t, x, y, len, dir, col, a) {
+  g.save();
+  g.translate(x, y);
+  g.scale(dir, 1);
+  const sw = Math.sin(t * 3) * len * 0.08;
+  g.beginPath();
+  g.moveTo(len, 0);
+  g.quadraticCurveTo(len * 0.4, -len * 0.32, -len * 0.5, sw);
+  g.lineTo(-len, -len * 0.3 + sw * 1.6);
+  g.lineTo(-len * 0.8, sw);
+  g.lineTo(-len, len * 0.3 + sw * 1.6);
+  g.lineTo(-len * 0.5, sw);
+  g.quadraticCurveTo(len * 0.4, len * 0.32, len, 0);
+  g.globalCompositeOperation = "lighter";
+  g.fillStyle = rgba(col, 0.12 * a);
+  g.fill();
+  g.strokeStyle = rgba(col, 0.75 * a);
+  g.lineWidth = 0.7;
+  g.stroke();
+  g.fillStyle = rgba("#ffffff", 0.8 * a);
+  g.beginPath();
+  g.arc(len * 0.72, -len * 0.06, len * 0.04, 0, Math.PI * 2);
+  g.fill();
+  g.restore();
+}
+function drawTrain(g) {
+  const tr = ambient.train;
+  if (tr.x <= -400) return;
+  const y = PLAN.maglev.y - 7.5, x0 = tr.x, len = 190;
+  g.save();
+  g.fillStyle = lin(g, 0, y, 0, y + 7, [[0, "#f4f0ff"], [0.5, "#8a90b0"], [1, "#3c4258"]]);
+  g.beginPath();
+  g.moveTo(x0, y + 7);
+  g.lineTo(x0, y + 1);
+  g.lineTo(x0 + len - 12, y);
+  g.quadraticCurveTo(x0 + len, y + 1, x0 + len + 2, y + 7);
+  g.closePath();
+  g.fill();
+  for (let i = 6; i < len - 14; i += 5) {
+    g.fillStyle = (i >> 3) % 7 ? P.winWarm : P.winCool;
+    g.fillRect(x0 + i, y + 2.2, 3, 1.6);
+  }
+  g.fillStyle = P.neonCyan;
+  g.fillRect(x0, y + 4.6, len, 0.7);
+  g.restore();
+  bloom(g, x0 + len + 2, y + 5, 40, "#ffffff", 0.6);
+  for (let i = 20; i < len; i += 40) bloom(g, x0 + i, y + 3, 16, P.winWarm, 0.25);
+}
+function drawSearchlights(g, t) {
+  const street = PLAN.street;
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  for (const [fx, ph] of [[0.3, 0], [0.62, 2.4]]) {
+    const sx = map.W * fx, sy = street;
+    const a = -Math.PI / 2 + Math.sin(t * 0.22 + ph) * 0.55;
+    const len = map.H * 1.3, spread = 0.05;
+    g.fillStyle = lin(g, sx, sy, sx + Math.cos(a) * len, sy + Math.sin(a) * len, [[0, "rgba(190,230,255,0.22)"], [1, "rgba(190,230,255,0)"]]);
+    g.beginPath();
+    g.moveTo(sx, sy);
+    g.lineTo(sx + Math.cos(a - spread) * len, sy + Math.sin(a - spread) * len);
+    g.lineTo(sx + Math.cos(a + spread) * len, sy + Math.sin(a + spread) * len);
+    g.closePath();
+    g.fill();
+  }
+  g.restore();
+}
+function drawLights(g, t) {
+  for (const l of lights) if (l.blink !== undefined && Math.sin(t * 2.2 + l.blink) > -0.2) bloom(g, l.x, l.y, l.r, l.col, l.a);
+  // a few signs stutter out
+  g.fillStyle = "#07060f";
+  for (const s of signs) if (hash2(Math.floor(t * 9 + s.ph * 10), Math.round(s.x), 3) < 0.07) g.fillRect(s.x - 0.5, s.y - 0.5, 4, s.h + 1);
+  for (const sc of screensAt) {
+    g.globalAlpha = 1 - (sc.fog ?? 0) * 0.85;
+    const ph = Math.floor(t / 3 + sc.x) % 3;
+    g.fillStyle = "#0a0614";
+    g.fillRect(sc.x, sc.y, sc.w, sc.h);
+    for (let k = 0; k < sc.w; k += 1.5) {
+      g.fillStyle = ph === 0 ? (k % 6 < 3 ? sc.col : P.neonCyan) : ph === 1 ? rgba(sc.col, 0.4 + 0.6 * ((Math.sin(k * 0.4 + t * 4) + 1) / 2)) : rgba(P.neonCyan, (k + Math.floor(t * 8)) % 9 < 4 ? 0.9 : 0.25);
+      g.fillRect(sc.x + k, sc.y + 1, 1, sc.h - 2);
+    }
+    g.globalAlpha = 1;
+  }
+}
+
+// the moving parts of each block
+function drawBlockLife(g, t) {
+  const hub = STATIONS.hub;
+  // the halo deck's back arc behind the core is drawn before the core in buildBlocks;
+  // here the front arc, and the globe turning in holo light
+  neon(g, (q) => { q.beginPath(); q.ellipse(hub.x, hub.haloY, 52, 4, 0, 0, Math.PI); }, P.cyan3, 1);
+  const [gx, gy] = hub.globeAt;
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  g.fillStyle = lin(g, gx, gy + 16, gx, gy - 4, [[0, rgba(P.holo3, 0.35)], [1, rgba(P.holo3, 0)]]);
+  g.beginPath();
+  g.moveTo(gx - 3, hub.coreTop - 14);
+  g.lineTo(gx + 3, hub.coreTop - 14);
+  g.lineTo(gx + 16, gy + 6);
+  g.lineTo(gx - 16, gy + 6);
+  g.closePath();
+  g.fill();
+  const R = 17;
+  g.lineWidth = 0.55;
+  g.strokeStyle = rgba(P.cyan3, 0.85);
+  for (let la = -60; la <= 60; la += 30) {
+    const yy = gy + Math.sin((la * Math.PI) / 180) * R, rr2 = Math.cos((la * Math.PI) / 180) * R;
+    g.beginPath();
+    g.ellipse(gx, yy, rr2, rr2 * 0.18, 0, 0, Math.PI * 2);
+    g.stroke();
+  }
+  for (let lo = 0; lo < 6; lo++) {
+    const a = t * 0.5 + (lo / 6) * Math.PI;
+    g.beginPath();
+    g.ellipse(gx, gy, Math.abs(Math.cos(a)) * R, R, 0, 0, Math.PI * 2);
+    g.stroke();
+  }
+  g.strokeStyle = rgba(P.neonPink, 0.8);
+  g.beginPath();
+  g.ellipse(gx, gy, R * 1.35, R * 0.3, -0.25, 0, Math.PI * 2);
+  g.stroke();
+  g.restore();
+  bloom(g, gx, gy, 46, P.neonCyan, 0.3);
+
+  // the archive's LEDs
+  const kn = STATIONS.knowledge;
+  const tick = Math.floor(t * 6);
+  for (let k = 0; k < 6; k++) {
+    for (let r = 0; r < 11; r++) {
+      for (const l of [0, 1, 2]) {
+        const on = hash2(k * 31 + l, r + tick + k * 3, 3) < 0.45;
+        if (!on) continue;
+        g.fillStyle = hash2(k, r, 4) < 0.7 ? P.neonAmber : P.neonGreen;
+        g.fillRect(kn.x - 26 + k * 9.4 + l * 2.2, kn.y - 28 + r * 2.1, 1, 1);
+      }
+    }
+  }
+  bloom(g, kn.x, kn.y - 18, 34, P.research, 0.18);
+
+  // documents floating over the kiosk
+  const dc = STATIONS.documents;
+  [[-14, -46], [0, -56], [14, -44], [-6, -36], [8, -34]].forEach(([dx, dy], i) => {
+    const x = dc.x + dx, y = dc.y + dy + Math.sin(t * 1.3 + i * 2) * 1.6;
+    const a = hash2(Math.floor(t * 10), i, 3) < 0.05 ? 0.4 : 0.92;
+    g.save();
+    g.globalAlpha = a;
+    g.translate(x, y);
+    g.rotate(Math.sin(t * 0.7 + i) * 0.12);
+    g.fillStyle = "#f4ecff";
+    rr(g, -4, -5, 8, 10, 0.8);
+    g.fill();
+    g.fillStyle = P.analyze;
+    g.fillRect(-4, -5, 8, 1.4);
+    g.fillStyle = "#6a5a88";
+    for (let l = 0; l < 4; l++) g.fillRect(-2.8, -2.6 + l * 1.8, 3 + ((l * 7) % 3), 0.5);
+    g.restore();
+    bloom(g, x, y, 10, P.neonCyan, 0.3 * a);
+  });
+
+  // the AI lab's head: a dot-matrix face turning
+  const md = STATIONS.models;
+  const [hx, hy] = md.headAt;
+  const yaw = Math.sin(t * 0.5) * 0.9;
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  g.fillStyle = lin(g, hx, md.y - 66, hx, hy, [[0, rgba(P.model, 0.3)], [1, rgba(P.model, 0)]]);
+  g.beginPath();
+  g.moveTo(hx - 6, md.y - 66);
+  g.lineTo(hx + 6, md.y - 66);
+  g.lineTo(hx + 14, hy + 6);
+  g.lineTo(hx - 14, hy + 6);
+  g.fill();
+  const glitch = hash2(Math.floor(t * 12), 0, 5) < 0.06;
+  const buckets = [[], [], [], []];
+  for (let la = -8; la <= 8; la++) {
+    for (let lo = 0; lo < 22; lo++) {
+      const b = (la / 8) * (Math.PI / 2), a = (lo / 22) * Math.PI * 2;
+      let X = Math.cos(b) * Math.cos(a), Y = Math.sin(b) * 1.2, Z = Math.cos(b) * Math.sin(a);
+      if (Y < 0) {
+        X *= 1 + Y * 0.3;
+        Z *= 1 + Y * 0.3;
+      }
+      if (Z > 0.7 && Math.abs(X) < 0.2 && Y > -0.4 && Y < 0.2) Z += 0.18;
+      const rx = X * Math.cos(yaw) + Z * Math.sin(yaw), rz = -X * Math.sin(yaw) + Z * Math.cos(yaw);
+      const depth = (rz + 1.3) / 2.6;
+      buckets[clamp(Math.floor(depth * 4), 0, 3)].push(hx + rx * 11 + (glitch ? 2 : 0), hy - Y * 11);
+    }
+  }
+  buckets.forEach((b, i) => {
+    g.fillStyle = rgba(P.model, (glitch ? 0.3 : 0.75) * ((i + 0.5) / 4));
+    g.beginPath();
+    for (let j = 0; j < b.length; j += 2) g.rect(b[j], b[j + 1], 0.7, 0.7);
+    g.fill();
+  });
+  for (const ex of [-0.35, 0.35]) {
+    const rx = ex * Math.cos(yaw) + 0.95 * Math.sin(yaw), rz = -ex * Math.sin(yaw) + 0.95 * Math.cos(yaw);
+    if (rz > 0) bloom(g, hx + rx * 11, hy - 1.5, 3, "#ffffff", 0.9);
+  }
+  g.restore();
+  bloom(g, hx, hy, 30, P.neonCyan, 0.25);
+
+  // the crane, swinging its load
+  const rp = STATIONS.repos;
+  const [cx, cy] = rp.craneAt;
+  g.save();
+  g.strokeStyle = P.mustard1;
+  g.lineWidth = 0.7;
+  g.beginPath();
+  g.moveTo(cx - 1, cy);
+  g.lineTo(cx - 1, cy - 78);
+  g.moveTo(cx + 1.5, cy);
+  g.lineTo(cx + 1.5, cy - 78);
+  for (let y = cy - 2; y > cy - 78; y -= 4) {
+    g.moveTo(cx - 1, y);
+    g.lineTo(cx + 1.5, y - 2);
+  }
+  g.moveTo(cx - 6, cy - 79);
+  g.lineTo(cx + 72, cy - 79);
+  g.moveTo(cx - 6, cy - 77);
+  g.lineTo(cx + 72, cy - 77);
+  for (let x = cx - 6; x < cx + 72; x += 4) {
+    g.moveTo(x, cy - 79);
+    g.lineTo(x + 2, cy - 77);
+  }
+  g.stroke();
+  const sw = Math.sin(t * 0.8) * 0.08;
+  g.translate(cx + 60, cy - 77);
+  g.rotate(sw);
+  g.strokeStyle = "#8a90b0";
+  g.lineWidth = 0.4;
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.lineTo(0, 16);
+  g.stroke();
+  g.fillStyle = lin(g, 0, 16, 0, 25, [[0, "#2a6a7a"], [1, "#1a3a4a"]]);
+  rr(g, -11, 16, 22, 8.6, 0.8);
+  g.fill();
+  g.restore();
+  bloom(g, cx, cy - 80, 5, P.red, Math.sin(t * 3) > 0 ? 0.9 : 0.2);
+  for (const p of ambient.steam) {
+    const age = clock.t - p.t0, k = age / p.life;
+    const x = p.x + age * (p.drift ?? 2) + Math.sin(clock.t * 0.8 + p.ph) * 2, y = p.y - age * 6;
+    g.fillStyle = rad(g, x, y, 0, 2 + k * 8, [[0, `rgba(140,134,170,${0.3 * (1 - k)})`], [1, "rgba(140,134,170,0)"]]);
+    g.fillRect(x - 12, y - 12, 24, 24);
+  }
+
+  // the firewall's dome of hexagons, red when ICE is at it
+  const ts = STATIONS.tests;
+  const alarm = villain.state === "rising" ? Math.min(1, villain.k * 1.5) : villain.state === "sinking" ? villain.k : 0;
+  const col = alarm > 0.3 ? P.red : P.test;
+  const flick = alarm > 0 && hash2(Math.floor(t * 14), 1, 1) < 0.3 * alarm ? 0.35 : 1;
+  g.save();
+  g.beginPath();
+  g.ellipse(ts.x, ts.y, 40, 40, 0, Math.PI, 0);
+  g.closePath();
+  g.fillStyle = rad(g, ts.x, ts.y, 20, 40, [[0, rgba(col, 0.04)], [1, rgba(col, 0.16 * flick)]]);
+  g.fill();
+  g.clip();
+  g.globalCompositeOperation = "lighter";
+  g.strokeStyle = rgba(col, 0.35 * flick);
+  g.lineWidth = 0.5;
+  const hs = 6;
+  g.beginPath();
+  for (let q = -8; q <= 8; q++) {
+    for (let r = -1; r <= 8; r++) {
+      const hxp = ts.x + q * hs * 1.5, hyp = ts.y - r * hs * 1.732 - (q % 2 ? hs * 0.866 : 0);
+      for (let k = 0; k <= 6; k++) {
+        const a = (k / 6) * Math.PI * 2;
+        (k ? g.lineTo : g.moveTo).call(g, hxp + Math.cos(a) * hs, hyp + Math.sin(a) * hs);
+      }
+    }
+  }
+  g.stroke();
+  const wave = ts.y - ((t * 14) % 44);
+  g.fillStyle = lin(g, 0, wave - 3, 0, wave + 3, [[0, rgba(col, 0)], [0.5, rgba(col, 0.35 * flick)], [1, rgba(col, 0)]]);
+  g.fillRect(ts.x - 40, wave - 3, 80, 6);
+  g.restore();
+  neon(g, (q) => { q.beginPath(); q.ellipse(ts.x, ts.y, 40, 40, 0, Math.PI, 0); }, col, 0.9, flick);
+  const eye = 0.6 + 0.4 * Math.abs(Math.sin(t * 2));
+  g.fillStyle = rgba(P.test, 1);
+  g.fillRect(ts.x - 14 * eye, ts.y - 15, 28 * eye, 1.6);
+  bloom(g, ts.x, ts.y - 14, 12, P.test, 0.6);
+
+  // the pagoda's koi and lanterns
+  const mm = STATIONS.memory;
+  for (let k = 0; k < 3; k++) {
+    const a = t * (0.6 + k * 0.1) + k * 2.1;
+    if (Math.sin(a) < 0) continue;
+    drawKoi(g, t + k, mm.x + Math.cos(a) * 40, mm.y - 34 + Math.sin(a) * 6, 4, -Math.sin(a) > 0 ? 1 : -1, k === 1 ? P.neonCyan : P.neonPink, 1);
+  }
+  for (const [lx, ly, lc] of mm.lanterns) {
+    g.fillStyle = lc;
+    g.beginPath();
+    g.ellipse(lx, ly + Math.sin(t * 2 + lx) * 0.3, 1.2, 1.6, 0, 0, Math.PI * 2);
+    g.fill();
+    bloom(g, lx, ly, 7, lc, 0.6);
+  }
+
+  // the skyport: a VTOL on the pad, rotors turning, lights chasing round
+  const dp = STATIONS.deploy;
+  const vy = dp.padY;
+  g.save();
+  g.translate(dp.x + 8, vy);
+  g.fillStyle = lin(g, 0, -14, 0, 0, [[0, "#e8ecff"], [0.6, "#8a90b0"], [1, "#3c4258"]]);
+  g.beginPath();
+  g.moveTo(-18, -2);
+  g.quadraticCurveTo(-18, -10, -8, -11);
+  g.lineTo(10, -11);
+  g.quadraticCurveTo(20, -9, 20, -4);
+  g.quadraticCurveTo(18, -1, 12, -1);
+  g.lineTo(-16, -1);
+  g.closePath();
+  g.fill();
+  g.fillStyle = lin(g, 8, -10, 18, -5, [[0, "#b8f8ff"], [1, "#1e5a8a"]]);
+  g.beginPath();
+  g.moveTo(8, -10);
+  g.quadraticCurveTo(17, -9, 18, -5);
+  g.lineTo(8, -5);
+  g.closePath();
+  g.fill();
+  for (const rx of [-10, 6]) {
+    g.fillStyle = "#3c4258";
+    rr(g, rx - 3, -14, 6, 3, 1);
+    g.fill();
+    const blade = Math.abs(Math.cos(t * 9 + rx));
+    g.fillStyle = `rgba(200,204,224,${0.25 + 0.2 * blade})`;
+    g.beginPath();
+    g.ellipse(rx, -14.5, 9, 0.6, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.restore();
+  bloom(g, dp.x - 10, vy - 8, 5, P.deploy, Math.sin(t * 4) > 0 ? 0.9 : 0.2);
+  const lead = Math.floor(t * 12) % 18;
+  for (let i = 0; i < 18; i++) {
+    const x = dp.x - 29 + i * 4.1;
+    g.fillStyle = i === lead ? "#ffffff" : P.deploy;
+    g.fillRect(x - 0.5, vy - 0.6, 1, 1);
+    if (i === lead) bloom(g, x, vy, 8, P.deploy, 0.9);
+  }
+  const [bx, by] = dp.beaconAt;
+  g.fillStyle = P.red;
+  g.fillRect(bx - 0.6, by - 0.6, 1.2, 1.2);
+  bloom(g, bx, by, 9, P.red, Math.sin(t * 5) > 0 ? 0.9 : 0.1);
+}
+
+// the routes: glowing threads, bright where a runner is flying
+function drawRoutes(g, t) {
+  for (const k of SPOKES) {
+    const p = paths[k];
+    const s = STATIONS[k];
+    const busy = t < p.busyUntil;
+    if (busy) {
+      neon(g, (q) => {
+        q.beginPath();
+        p.pts.forEach((pt, i) => (i ? q.lineTo(pt.x, pt.y) : q.moveTo(pt.x, pt.y)));
+      }, s.col, 0.8, 0.5);
+    }
+    const flow = t * (busy ? 26 : 8) * p.dir;
+    g.save();
+    g.globalCompositeOperation = "lighter";
+    for (const b of p.beads) {
+      const lead = cycle((b.d - flow) / 6, busy ? 3 : 6) === 0;
+      if (!lead) continue;
+      g.fillStyle = busy ? "#ffffff" : b.col;
+      g.beginPath();
+      g.arc(b.x, b.y, busy ? 1.2 : 0.9, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.restore();
+    if (busy) for (const b of p.beads) if (cycle((b.d - flow) / 6, 3) === 0) bloom(g, b.x, b.y, 7, b.col, 0.7);
+    // light pooling round the block
+    bloom(g, s.x, s.y, 46, s.col, t < p.busyUntil || S?.busy?.[k] > 0 ? 0.35 : 0.16);
+  }
+  for (const pk of packets) {
+    const s2 = clamp((t - pk.t0) / pk.dur, 0, 1);
+    const f = pk.fromHub ? s2 : 1 - s2;
+    const q = pathAt(pk.key, f);
+    bloom(g, q.x, q.y, 14, pk.col, 0.9);
+    bloom(g, q.x, q.y, 5, "#ffffff", 0.9);
+  }
+}
+
+function villainHead() {
+  const s = STATIONS.tests;
+  return { x: s.x + 30, y: lerp(map.H + 6, s.y - 18, villain.k) }; // up the far side of the tower, clear of the docking runner
+}
+const MASK = [[-1, 0.55], [-0.86, 0.98], [0, 1.12], [0.86, 0.98], [1, 0.55], [0.76, -0.2], [0.36, -0.78], [0, -1.02], [-0.36, -0.78], [-0.76, -0.2]];
+function drawIce(g, t) {
+  if (villain.state === "hidden") return;
+  const h = villain.head();
+  const cx = h.x + 15, cy = h.y + 14, S = 13;
+  const ts = STATIONS.tests;
+  // the cables: reaching up the tower to the deck, wriggling
+  g.save();
+  for (let i = 0; i < 5; i++) {
+    const ex = ts.x - 30 + i * 15, ey = ts.y + 2;
+    const reach = villain.grab;
+    const tx = lerp(cx, ex, reach), ty = lerp(cy + S, ey, reach);
+    neon(g, (q) => {
+      q.beginPath();
+      q.moveTo(cx - 6 + i * 3, cy + S * 0.7);
+      q.bezierCurveTo(cx - 20 + i * 8 + Math.sin(t * 5 + i) * 6, cy + 30, tx - 10 + Math.cos(t * 4 + i) * 8, ty + 20, tx, ty);
+    }, P.iceRed, 0.9);
+  }
+  g.restore();
+  const jx = hash2(Math.floor(t * 8), 0, 9) < 0.12 ? 2 : 0;
+  g.save();
+  g.translate(cx + jx, cy);
+  g.beginPath();
+  MASK.forEach(([x, y], i) => (i ? g.lineTo(x * S, -y * S) : g.moveTo(x * S, -y * S)));
+  g.closePath();
+  g.fillStyle = lin(g, -S, -S, S, S, [[0, "#2a0a12"], [0.5, "#120408"], [1, "#050205"]]);
+  g.fill();
+  g.restore();
+  neon(g, (q) => {
+    q.beginPath();
+    MASK.forEach(([x, y], i) => (i ? q.lineTo(cx + jx + x * S, cy - y * S) : q.moveTo(cx + jx + x * S, cy - y * S)));
+    q.closePath();
+  }, P.iceRed, 0.7);
+  for (const sx of [-1, 1]) {
+    g.fillStyle = P.iceRed;
+    g.beginPath();
+    g.moveTo(cx + jx + sx * 0.22 * S, cy - 0.44 * S);
+    g.lineTo(cx + jx + sx * 0.78 * S, cy - 0.5 * S);
+    g.lineTo(cx + jx + sx * 0.72 * S, cy - 0.3 * S);
+    g.lineTo(cx + jx + sx * 0.26 * S, cy - 0.26 * S);
+    g.fill();
+    bloom(g, cx + jx + sx * 0.5 * S, cy - 0.38 * S, 9, P.iceRed, 0.9);
+  }
+  const beat = Math.floor(t * 10);
+  for (let i = 0; i < 5; i++) {
+    if (hash2(beat, i, 5) > 0.35) continue;
+    g.fillStyle = i % 2 ? P.iceRed : "#ffffff";
+    g.fillRect(cx - S + (hash2(beat, i, 6) - 0.5) * 6, cy + (hash2(beat, i, 7) - 0.5) * S * 1.6, S * 2, 0.8);
+  }
+}
+function onVillainSink() {
+  const h = villain.head();
+  for (let i = 0; i < 50; i++) {
+    const a = Math.random() * Math.PI * 2, s = 8 + Math.random() * 18;
+    particles.push({ kind: "glitch", x: h.x + 15, y: h.y + 14, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t0: clock.t, life: 1.2 + Math.random() * 0.8 });
+  }
+}
+function onAgentStep(c, dt) {
+  c.trailT -= dt;
+  if (c.trailT <= 0) {
+    particles.push({ kind: "spark", x: c.x - c.face * 12, y: c.y + 4, vx: -c.face * 6, vy: 4, col: c.a.color, t0: clock.t, life: 0.8 });
+    c.trailT = 0.06 + Math.random() * 0.08;
+  }
+}
+function drawAgents(g, t) {
+  for (const c of Object.values(fleet)) {
+    if (!c.visible) continue;
+    const y = c.y + Math.sin(t * 3 + c.ph) * 0.8;
+    if (c.beam) {
+      const px0 = c.x + c.face * 12, py0 = y;
+      g.save();
+      g.globalCompositeOperation = "lighter";
+      g.strokeStyle = lin(g, px0, py0, c.beam.x, c.beam.y, [[0, rgba(c.beam.col, 0.8)], [1, rgba(c.beam.col, 0.15)]]);
+      g.lineWidth = 1.2 + Math.sin(t * 20 + c.slot) * 0.4;
+      g.beginPath();
+      g.moveTo(px0, py0);
+      g.lineTo(c.beam.x, c.beam.y);
+      g.stroke();
+      g.restore();
+      bloom(g, c.beam.x, c.beam.y, 12, c.beam.col, 0.6);
+    }
+    drawCar(g, c.x, y, c.face, P[c.a.color], t, c.ph);
+  }
+}
+function drawSparks(g, t) {
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  for (const p of particles) {
+    const age = t - p.t0, k = age / p.life;
+    if (p.kind === "speck") {
+      const s = easeInOut(clamp(age / p.life, 0, 1));
+      const port = { x: p.ag.x + p.ag.face * 12, y: p.ag.y };
+      const from = p.out ? port : { x: p.tx, y: p.ty }, to = p.out ? { x: p.tx, y: p.ty } : port;
+      const x = lerp(from.x, to.x, s), y = lerp(from.y, to.y, s) + Math.sin(s * Math.PI) * p.wig;
+      g.fillStyle = rgba(p.col, 0.9);
+      g.beginPath();
+      g.arc(x, y, 0.8, 0, Math.PI * 2);
+      g.fill();
+    } else if (p.kind === "ring") {
+      g.strokeStyle = rgba(p.col, 0.8 * (1 - k));
+      g.lineWidth = 0.8;
+      g.beginPath();
+      g.ellipse(p.x, p.y, 2 + k * 12, 1 + k * 4, 0, 0, Math.PI * 2);
+      g.stroke();
+    } else if (p.kind === "spark") {
+      g.fillStyle = rgba(P[p.col], 0.8 * (1 - k));
+      g.fillRect(p.x - 0.4, p.y - 0.4, 0.8, 0.8);
+    } else if (p.kind === "glitch" && hash2(Math.round(p.x), Math.round(p.y), Math.floor(t * 12)) > k) {
+      g.fillStyle = k < 0.4 ? P.iceRed : P.pearl;
+      g.fillRect(p.x, p.y, 2 + hash2(p.t0 * 100, 0, 1) * 4, 0.8);
+    }
+  }
+  g.restore();
+}
+function drawHolos(g, t) {
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  for (const h of PLAN.holos) {
+    if (hash2(Math.floor(t * 10), h.x, 3) < 0.06) continue; // a dropped frame
+    const x0 = h.x - h.w / 2, y0 = h.y - h.h / 2;
+    const a = 0.3 + 0.1 * Math.sin(t * 2 + h.ph);
+    g.fillStyle = rgba(P[h.col], a);
+    g.beginPath();
+    if (h.kind === "face") g.ellipse(h.x, h.y, h.w * 0.3, h.h * 0.46, 0, 0, Math.PI * 2);
+    else if (h.kind === "koi") {
+      g.ellipse(h.x, h.y + Math.sin(t * 3) * 1.2, h.w * 0.36, h.h * 0.24, 0, 0, Math.PI * 2);
+      g.moveTo(x0 + h.w * 0.1, h.y);
+      g.lineTo(x0, h.y - h.h * 0.3);
+      g.lineTo(x0, h.y + h.h * 0.3);
+    } else if (h.kind === "bars") {
+      for (let i = 0; i < h.w; i += 2.5) {
+        const bh = h.h * (0.3 + 0.6 * Math.abs(Math.sin(i * 0.7 + t * 2 + h.ph)));
+        g.rect(x0 + i, y0 + h.h - bh, 1.8, bh);
+      }
+    } else for (let j = 1; j < h.h; j += 2.4) g.rect(x0, y0 + j, h.w * (0.3 + 0.7 * hash2(Math.round(j), Math.floor(t * 2), h.x)), 1);
+    g.fill();
+    // scanlines through it, a frame round it
+    g.fillStyle = "rgba(0,0,0,0.35)";
+    for (let j = 0; j < h.h; j += 1.5) g.fillRect(x0, y0 + j, h.w, 0.5);
+    g.strokeStyle = rgba(P[h.col], 0.5);
+    g.lineWidth = 0.4;
+    g.strokeRect(x0, y0, h.w, h.h);
+  }
+  g.restore();
+}
+function drawStreetLife(g, t) {
+  const hy = PLAN.highway.y, st = PLAN.street;
+  for (const c of ambient.high) {
+    const x = c.x - 10, y = hy - 2.2 + (c.dir > 0 ? 0 : 0.8);
+    g.fillStyle = "#222638";
+    rr(g, x - 2, y - 0.6, 4, 1.6, 0.6);
+    g.fill();
+    g.fillStyle = c.dir > 0 ? "rgba(255,255,255,0.9)" : P.red;
+    g.fillRect(x + (c.dir > 0 ? 2 : -2.8), y, 0.8, 0.8);
+    g.fillStyle = rgba(c.dir > 0 ? P.red : "#ffffff", 0.15);
+    g.fillRect(Math.min(x, x - c.dir * 10), y + 0.2, 10, 0.4);
+  }
+  for (const c of ambient.road) {
+    const x = c.x - 10, y = st + (c.dir > 0 ? 8 : 18);
+    g.fillStyle = c.col;
+    rr(g, x - 5, y - 2.4, 10, 2.4, 1);
+    g.fill();
+    g.fillStyle = "#101220";
+    rr(g, x - 3, y - 3.4, 6, 1.2, 0.6);
+    g.fill();
+    bloom(g, x + c.dir * 5, y - 1.2, 7, "#ffffff", 0.5);
+    bloom(g, x - c.dir * 5, y - 1.2, 4, P.red, 0.5);
+  }
+  for (const p of PLAN.people) {
+    const x = p.x, y = st - 0.5;
+    const step = Math.sin(t * 6 + p.ph) * 0.4;
+    g.fillStyle = "#0e0c1c";
+    rr(g, x - 0.5, y - p.h, 1.1, p.h, 0.4);
+    g.fill();
+    g.fillRect(x - 0.3 + step, y - 1, 0.5, 1);
+    if (p.umbrella) {
+      g.fillStyle = rgba(P[p.umbrella], 0.9);
+      g.beginPath();
+      g.ellipse(x, y - p.h - 0.6, 2.6, 1.4, 0, Math.PI, 0);
+      g.fill();
+    } else {
+      g.fillStyle = "#6b4a36";
+      g.beginPath();
+      g.arc(x, y - p.h - 0.5, 0.6, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+}
+function drawRain(g) {
+  g.save();
+  g.lineWidth = 0.35;
+  for (const [lo, hi, a] of [[0, 0.2, 0.16], [0.2, 0.3, 0.26], [0.3, 1, 0.34]]) {
+    g.strokeStyle = `rgba(190, 210, 255, ${a})`;
+    g.beginPath();
+    for (const d of ambient.rain) {
+      if (d.a < lo || d.a >= hi) continue;
+      g.moveTo(d.x, d.y);
+      g.lineTo(d.x + d.l * 0.22, d.y - d.l);
+    }
+    g.stroke();
+  }
+  g.restore();
+}
+
+let quality = 1, lastFrame = 0, slow = 0;
+function fit() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2) * quality;
+  const k = map.scale * dpr;
+  Object.assign(cvs.style, { left: `${map.ox}px`, top: `${map.oy}px`, width: `${map.W * map.scale}px`, height: `${map.H * map.scale}px` });
+  const w = Math.round(map.W * k), h = Math.round(map.H * k);
+  if (cvs.width === w && cvs.height === h && Math.abs(K - k) < 1e-6 && bg) return;
+  K = k;
+  cvs.width = w;
+  cvs.height = h;
+  buildBg();
+  buildBlocks();
+}
+function render(t) {
+  const now = performance.now();
+  if (lastFrame && now - lastFrame > 40 && now - lastFrame < 250 && ++slow > 60 && quality > 0.6) {
+    quality *= 0.8;
+    slow = 0;
+    fit();
+  }
+  lastFrame = now;
+  const g = g2;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.drawImage(bg, 0, 0);
+  g.setTransform(K, 0, 0, K, 0, 0);
+  drawLights(g, t);
+  drawSearchlights(g, t);
+  drawTraffic(g, t);
+  drawBlimp(g, t);
+  const kk = ambient.koi;
+  drawKoi(g, t, kk.x, kk.y + Math.sin(t * 0.6) * 3, 22, kk.dir, P.neonPink, hash2(Math.floor(t * 10), 7, 1) < 0.05 ? 0.3 : 0.8);
+  drawHolos(g, t);
+  drawTrain(g);
+  drawStreetLife(g, t);
+  // the halo's back arc, behind the core
+  neon(g, (q) => { q.beginPath(); q.ellipse(STATIONS.hub.x, STATIONS.hub.haloY, 52, 4, 0, Math.PI, Math.PI * 2); }, P.holo2, 0.8, 0.6);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.drawImage(blocks, 0, 0);
+  g.setTransform(K, 0, 0, K, 0, 0);
+  drawBlockLife(g, t);
+  drawRoutes(g, t);
+  drawIce(g, t);
+  drawAgents(g, t);
+  drawSparks(g, t);
+  drawRain(g);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// ============================================================
+// The den, in high fidelity: rain on the glass, the city beyond,
+// a hacker at three screens
+// ============================================================
+let denBase = null;
+const denDrops = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.8, v: Math.random() < 0.3 ? 4 + Math.random() * 10 : 0 }));
+function drawDen(now) {
+  const c = $("#corner-art");
+  const g = c.getContext("2d");
+  const s = c.width / 180;
+  if (!denBase) {
+    denBase = makeCanvas(c.width, c.height);
+    const d = denBase.getContext("2d");
+    d.scale(s, s);
+    d.fillStyle = "#07060f";
+    d.fillRect(0, 0, 180, 236);
+    // the city through the window, out of focus
+    d.save();
+    d.beginPath();
+    d.rect(12, 18, 156, 96);
+    d.clip();
+    d.fillStyle = lin(d, 0, 18, 0, 114, [[0, "#0c0a1e"], [0.6, "#3e2468"], [1, "#a8487e"]]);
+    d.fillRect(12, 18, 156, 96);
+    d.filter = `blur(${(1.2 * s).toFixed(1)}px)`;
+    const r = rng(4);
+    for (let i = 0; i < 14; i++) {
+      const bx = 10 + r() * 160, bw = 12 + r() * 20, bh = 30 + r() * 70;
+      d.fillStyle = "#12101f";
+      d.fillRect(bx, 114 - bh, bw, bh);
+      for (let k = 0; k < 20; k++) {
+        d.fillStyle = [P.winWarm, P.winCool, P.winPink][Math.floor(r() * 3)];
+        d.globalAlpha = 0.7;
+        d.fillRect(bx + 2 + r() * (bw - 4), 114 - bh + 3 + r() * (bh - 6), 1.4, 1.4);
+      }
+      d.globalAlpha = 1;
+    }
+    d.filter = `blur(${(3 * s).toFixed(1)}px)`;
+    for (let i = 0; i < 12; i++) {
+      d.fillStyle = rgba(NEON()[i % 5], 0.5);
+      d.beginPath();
+      d.arc(20 + r() * 140, 30 + r() * 80, 2 + r() * 5, 0, Math.PI * 2);
+      d.fill();
+    }
+    d.filter = "none";
+    d.fillStyle = P.neonPink;
+    d.fillRect(64, 70, 6, 26);
+    d.restore();
+    d.fillStyle = "#262a3c";
+    d.fillRect(10, 16, 160, 2);
+    d.fillRect(10, 114, 160, 2);
+    d.fillRect(10, 16, 2, 100);
+    d.fillRect(168, 16, 2, 100);
+    d.fillRect(89, 16, 2, 100);
+    // the desk and the screens
+    d.fillStyle = lin(d, 0, 150, 0, 236, [[0, "#1f2238"], [0.1, "#0e0f1c"], [1, "#05040a"]]);
+    d.fillRect(0, 150, 180, 86);
+    for (const [x, y, w, h, col] of [[62, 120, 30, 22, P.neonCyan], [96, 116, 38, 26, P.neonGreen], [138, 122, 28, 20, P.neonPink]]) {
+      d.fillStyle = "#262a3c";
+      rr(d, x - 1, y - 1, w + 2, h + 2, 1.5);
+      d.fill();
+      d.fillStyle = "#050a0c";
+      d.fillRect(x, y, w, h);
+      d.fillStyle = "#3c4258";
+      d.fillRect(x + w / 2 - 1.5, y + h, 3, 150 - y - h);
+    }
+    // the hacker, hooded, from behind
+    d.fillStyle = lin(d, 40, 0, 110, 0, [[0, "#141221"], [0.6, "#221e32"], [1, "#0c0a14"]]);
+    d.beginPath();
+    d.moveTo(44, 236);
+    d.quadraticCurveTo(46, 188, 60, 176);
+    d.quadraticCurveTo(62, 150, 76, 150);
+    d.quadraticCurveTo(92, 150, 92, 176);
+    d.quadraticCurveTo(106, 188, 108, 236);
+    d.closePath();
+    d.fill();
+    d.strokeStyle = rgba(P.holo2, 0.8);
+    d.lineWidth = 1;
+    d.beginPath();
+    d.moveTo(62, 176);
+    d.quadraticCurveTo(64, 152, 76, 151);
+    d.quadraticCurveTo(90, 152, 91, 172);
+    d.stroke();
+    // a cat asleep, a ramen cup
+    d.fillStyle = "#0e0c1c";
+    d.beginPath();
+    d.ellipse(150, 151, 11, 4, 0, Math.PI, 0);
+    d.fill();
+    d.fillStyle = "#f4f0ff";
+    d.fillRect(30, 144, 9, 8);
+    d.fillStyle = P.neonPink;
+    d.fillRect(30, 149, 9, 3);
+  }
+  const t = now;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.drawImage(denBase, 0, 0);
+  g.setTransform(s, 0, 0, s, 0, 0);
+  // code scrolling on the screens
+  const scroll = Math.floor(t * 4);
+  for (const [x, y, w, h, col] of [[62, 120, 30, 22, P.neonCyan], [96, 116, 38, 26, P.neonGreen], [138, 122, 28, 20, P.neonPink]]) {
+    for (let l = 0; l < h / 2.4 - 1; l++) {
+      const len = 4 + hash2(l + scroll, x, 2) * (w - 8);
+      g.fillStyle = rgba(col, 0.85);
+      g.fillRect(x + 2 + (hash2(l + scroll, x, 3) < 0.3 ? 3 : 0), y + 2 + l * 2.4, len, 1);
+    }
+    bloom(g, x + w / 2, y + h / 2, 40, col, 0.28);
+  }
+  // rain on the glass: drops, a few running down
+  for (const d of denDrops) {
+    const dy = d.v ? ((d.y * 96 + t * d.v) % 96) : d.y * 96;
+    const x = 12 + d.x * 156, y = 18 + dy;
+    g.fillStyle = "rgba(190,210,255,0.25)";
+    g.beginPath();
+    g.arc(x, y, d.r, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "rgba(255,255,255,0.5)";
+    g.fillRect(x - d.r * 0.4, y - d.r * 0.5, d.r * 0.4, d.r * 0.4);
+  }
+  const flick = hash2(Math.floor(t * 8), 1, 1) < 0.08 ? 0.3 : 1;
+  bloom(g, 67, 83, 40, P.neonPink, 0.25 * flick);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// ============================================================
+// The world, handed to the engine
+// ============================================================
+const STATIONS2D = NEON_STORY.place(LAYOUT);
+startOS({
+  ...NEON_STORY,
+  stations: STATIONS2D,
+  mapH: MAP_H2D,
+  atlas: window.NEON_ATLAS,
+  atlasFile: "assets/neon/atlas.js",
+  beadDim: "#1a1430",
+  agentLift: 10,
+  agentIcon: (a) => `hifi.car.${a.id}`,
+  agentPort: (c) => ({ x: c.x + c.face * 12, y: c.y }),
+  beamTarget: (key) => ({ x: STATIONS[key].x, y: STATIONS[key].y - (key === "hub" ? 60 : 24) }),
+  placeStation(s) {
+    const [bx, by, bw, bh] = BOX[s.key];
+    s.prx = s.key === "hub" ? 56 : 38;
+    s.pry = s.key === "hub" ? 5 : 4;
+    s.sx = s.x + bx;
+    s.sy = s.y + by;
+    s.w = bw;
+    s.h = bh;
+    s.lamps = [];
+    s.parts = {};
+  },
+  onResize: fit,
+  buildStatic() {
+    // the layout changed: redraw the city now, at the scale the map is about to get
+    const r = mapEl.getBoundingClientRect();
+    const scale = Math.min(r.width / map.W, r.height / map.H) || 1;
+    K = scale * Math.min(window.devicePixelRatio || 1, 2) * quality;
+    cvs.width = Math.round(map.W * K);
+    cvs.height = Math.round(map.H * K);
+    buildBg();
+    buildBlocks();
+    const c = makeCanvas(map.W, map.H);
+    const g = c.getContext("2d");
+    g.drawImage(bg, 0, 0, map.W, map.H);
+    g.drawImage(blocks, 0, 0, map.W, map.H);
+    staticCanvas = c; // the minimap
+  },
+  render,
+  seedAmbient,
+  updateAmbient,
+  updateParticle,
+  onAgentStep,
+  villainHead,
+  onVillainSink,
+  drawCorner: drawDen,
+  decorateChrome() {
+    useHifiIcons({ ink: "#eef2ff", accent: "#3ef0ff" });
+    const bm = $("#brand-mark"), mi = $("#meter-icon");
+    drawHifiIcon(bm.getContext("2d"), "icon.observe", bm.width, bm.height, { ink: "#ff8ac0", accent: "#3ef0ff", weight: 1.8 });
+    drawHifiIcon(mi.getContext("2d"), "icon.city", mi.width, mi.height, { ink: "#3ef0ff", accent: "#ff8ac0", weight: 1.8 });
+    for (const a of NEON_STORY.agents) {
+      const c = makeCanvas(80, 40), g = c.getContext("2d");
+      g.scale(80 / 28, 40 / 14);
+      g.fillStyle = "#2a2640";
+      carPath(g, CAR);
+      g.fill();
+      g.fillStyle = "#7fe8ff";
+      carPath(g, GLASS);
+      g.fill();
+      g.fillStyle = P[a.color];
+      g.fillRect(4, 10.4, 20, 1);
+      g.fillRect(5, 6.8, 18, 0.6);
+      FR.set(`hifi.car.${a.id}`, { c, flip: null });
+    }
+  },
+});
+}
+</script>
+</body>
+</html>

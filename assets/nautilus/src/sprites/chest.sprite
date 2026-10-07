@@ -1,0 +1,13 @@
+# Vigo Bay treasure chest, lid thrown back.
+@sprite chest
+@outline ink
+
+@frame idle
+.ccccccccc.
+.cdddddddc.
+.c9a99a99c.
+c99a9999a9c
+cdd77777ddc
+cddd898dddc
+cdddd7ddddc
+ccccccccccc

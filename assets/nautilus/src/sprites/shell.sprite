@@ -1,0 +1,11 @@
+# Chambered nautilus shell — the ship's namesake, lying on the sand.
+@sprite shell
+@outline ink
+
+@frame idle
+..DDDD.
+.DdDDdD
+DdDDdDD
+DDdDDdD
+.DddDD.
+..DDD..

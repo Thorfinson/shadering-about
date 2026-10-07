@@ -1,0 +1,192 @@
+# 9px icons for the rows of the station cards in neon-os.html (and the brand mark). No outline.
+@sprite ri
+
+@frame paper
+.ooooo...
+.o...oo..
+.o.nn.oo.
+.o.....o.
+.o.nnn.o.
+.o.....o.
+.o.nnn.o.
+.o.....o.
+.ooooooo.
+
+@frame report
+...999...
+.oo999oo.
+.o.....o.
+.o.nnn.o.
+.o.....o.
+.o.nnn.o.
+.o.....o.
+.o.nn..o.
+.ooooooo.
+
+@frame data
+..ggggg..
+.g.....g.
+.ggggggg.
+.g.....g.
+.ggggggg.
+.g.....g.
+.ggggggg.
+.g.....g.
+..ggggg..
+
+@frame web
+...fff...
+..f.f.f..
+.f..f..f.
+.fffffff.
+.f..f..f.
+.fffffff.
+.f..f..f.
+..f.f.f..
+...fff...
+
+@frame note
+.9.9.9.9.
+.ooooooo.
+.o.....o.
+.o.nnn.o.
+.o.....o.
+.o.nn..o.
+.o.....o.
+.ooooooo.
+.........
+
+@frame spec
+.ooooo...
+.o...oo..
+.o....oo.
+.o..9..o.
+.o.999.o.
+.o..9..o.
+.o.....o.
+.o.....o.
+.ooooooo.
+
+@frame design
+....9....
+....9....
+...9.9...
+...9.9...
+..9...9..
+..9...9..
+.9.....9.
+.9999999.
+.........
+
+@frame diagram
+.ff......
+.ff......
+..f......
+..fffff..
+..f...f..
+..f...ff.
+.ff...ff.
+.ff......
+.........
+
+@frame model
+...ggg...
+..g...g..
+.g..f..g.
+.g.fff.g.
+.g..f..g.
+..g...g..
+...ggg...
+.........
+.........
+
+@frame repo
+...BBB...
+..BBBBB..
+.BB.B.BB.
+.BBB.BBB.
+.BB.B.BB.
+..BBBBB..
+...BBB...
+.........
+.........
+
+@frame check
+..CCCCC..
+.C.....C.
+C.....C.C
+C....C..C
+C.C.C...C
+C..C....C
+.C.....C.
+..CCCCC..
+.........
+
+@frame clock
+..ooooo..
+.o..n..o.
+o...n...o
+o...n...o
+o...nnn.o
+o.......o
+.o.....o.
+..ooooo..
+.........
+
+@frame grid
+.f.f.f.f.
+.........
+.f.f.f.f.
+.........
+.f.f.f.f.
+.........
+.f.f.f.f.
+.........
+.........
+
+@frame pearl
+.........
+...iii...
+..iiEii..
+..iiiii..
+...iii...
+.9.....9.
+.99...99.
+..99999..
+.........
+
+@frame env
+.ooooooo.
+.o.C...o.
+.ooooooo.
+.o.C...o.
+.ooooooo.
+.o.C...o.
+.ooooooo.
+.........
+.........
+
+@frame sim
+.........
+.........
+.ff...ff.
+f..f.f..f
+....f....
+.........
+.........
+.........
+.........
+
+@frame eye
+...........
+...99999...
+..9.....9..
+.9..999..9.
+9..9fff9..9
+9..9faf9..9
+9..9fff9..9
+.9..999..9.
+..9.....9..
+...99999...
+...........
+...........

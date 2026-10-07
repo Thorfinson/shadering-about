@@ -1,0 +1,103 @@
+# Neon palette — the single source of colour for the neon atlas and for
+# neon-os.html. A megacity at night, in the rain.
+#
+# key  hex      name
+#
+# The icon sprites share their keys with the other sets: 8/9 the accent,
+# a lamp, f glow, g glass, i pearl, n/o pale greys, B red, C green, E white.
+
+0  #07060f  ink
+G  #0e0c1c  ink2
+
+8  #18a8c8  cyan2
+9  #3ef0ff  cyan3
+a  #ffd27a  lamp
+f  #b8f8ff  glow
+g  #4ab0e0  glass
+i  #f4f0ff  pearl
+j  #c8c0e0  pearlD
+n  #8a90b0  steel3
+o  #c8cce0  steel4
+B  #ff3344  red
+C  #39ff8a  green
+E  #ffffff  white
+
+# Pipeline stages — also each station's route colour.
+-  #ffb000  research
+-  #ff5c8a  analyze
+-  #39ff8a  build
+-  #22e6ff  model
+-  #4d9bff  test
+-  #b36bff  deploy
+-  #f0e6ff  remember
+
+# The night sky, overhead → the smog glowing over the city.
+-  #05040c  night0
+-  #0c0a1e  night1
+-  #16123a  night2
+-  #261a52  night3
+-  #3e2468  night4
+-  #6a2e78  smog
+-  #a8487e  smogHi
+
+# Concrete and steel, shadow → lit.
+-  #0a0a14  conc0
+-  #141626  conc1
+-  #1f2238  conc2
+-  #2e3350  conc3
+-  #454c6e  conc4
+-  #262a3c  steel0
+-  #3c4258  steel1
+-  #5c6480  steel2
+
+# Wet asphalt.
+-  #06060c  asph0
+-  #0d0d18  asph1
+-  #171a2a  asph2
+
+# Windows and neon.
+-  #ffb454  winWarm
+-  #7ad8ff  winCool
+-  #ff7ac8  winPink
+-  #2c2850  winDim
+-  #ff2e88  neonPink
+-  #ff9ac8  neonPink2
+-  #22e6ff  neonCyan
+-  #ffb000  neonAmber
+-  #a64dff  neonViolet
+-  #39ff8a  neonGreen
+
+# Holograms.
+-  #102a4a  holo0
+-  #1e5a8a  holo1
+-  #3aa0d8  holo2
+-  #8ae4ff  holo3
+
+# Rust and paint on the containers.
+-  #3a1a14  rust0
+-  #6a2e1c  rust1
+-  #a04a24  rust2
+-  #1a3a4a  teal0
+-  #2a6a7a  teal1
+-  #6a5a1a  mustard0
+-  #b09a2a  mustard1
+
+# Car bodies.
+-  #10121e  car0
+-  #222638  car1
+-  #3a4058  car2
+-  #6a7494  car3
+
+# ICE: black code with a red heart.
+-  #120408  ice0
+-  #2a0a12  ice1
+-  #5a1020  ice2
+-  #ff2233  iceRed
+
+# Figures in the den.
+-  #14121e  coat0
+-  #221e32  coat1
+-  #3a3450  coat2
+-  #6b4a36  skin0
+-  #b8866a  skin1
+-  #1a1a2a  hair
